@@ -14,7 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          arrival_date: string | null
+          authorize_guide_access: boolean | null
+          celebration_type: string | null
+          completion_percentage: number | null
+          concerns: string | null
+          created_at: string | null
+          departure_date: string | null
+          email: string | null
+          expectations: string | null
+          food_allergies: string | null
+          group_size: number | null
+          group_style: string | null
+          has_celebration: boolean | null
+          has_my_disney_experience: boolean | null
+          has_transport: boolean | null
+          hotel: string | null
+          hotel_type: string | null
+          id: string
+          is_locked: boolean | null
+          last_visit: string | null
+          my_disney_email: string | null
+          my_disney_password: string | null
+          park_dates: Json | null
+          parks: string[] | null
+          physical_restrictions: string | null
+          preferred_language: string | null
+          priority: string[] | null
+          responsible_name: string | null
+          special_requests: string | null
+          travelers: Json | null
+          updated_at: string | null
+          user_id: string
+          uses_stroller_or_wheelchair: string | null
+          visited_before: boolean | null
+          whatsapp: string | null
+        }
+        Insert: {
+          arrival_date?: string | null
+          authorize_guide_access?: boolean | null
+          celebration_type?: string | null
+          completion_percentage?: number | null
+          concerns?: string | null
+          created_at?: string | null
+          departure_date?: string | null
+          email?: string | null
+          expectations?: string | null
+          food_allergies?: string | null
+          group_size?: number | null
+          group_style?: string | null
+          has_celebration?: boolean | null
+          has_my_disney_experience?: boolean | null
+          has_transport?: boolean | null
+          hotel?: string | null
+          hotel_type?: string | null
+          id?: string
+          is_locked?: boolean | null
+          last_visit?: string | null
+          my_disney_email?: string | null
+          my_disney_password?: string | null
+          park_dates?: Json | null
+          parks?: string[] | null
+          physical_restrictions?: string | null
+          preferred_language?: string | null
+          priority?: string[] | null
+          responsible_name?: string | null
+          special_requests?: string | null
+          travelers?: Json | null
+          updated_at?: string | null
+          user_id: string
+          uses_stroller_or_wheelchair?: string | null
+          visited_before?: boolean | null
+          whatsapp?: string | null
+        }
+        Update: {
+          arrival_date?: string | null
+          authorize_guide_access?: boolean | null
+          celebration_type?: string | null
+          completion_percentage?: number | null
+          concerns?: string | null
+          created_at?: string | null
+          departure_date?: string | null
+          email?: string | null
+          expectations?: string | null
+          food_allergies?: string | null
+          group_size?: number | null
+          group_style?: string | null
+          has_celebration?: boolean | null
+          has_my_disney_experience?: boolean | null
+          has_transport?: boolean | null
+          hotel?: string | null
+          hotel_type?: string | null
+          id?: string
+          is_locked?: boolean | null
+          last_visit?: string | null
+          my_disney_email?: string | null
+          my_disney_password?: string | null
+          park_dates?: Json | null
+          parks?: string[] | null
+          physical_restrictions?: string | null
+          preferred_language?: string | null
+          priority?: string[] | null
+          responsible_name?: string | null
+          special_requests?: string | null
+          travelers?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          uses_stroller_or_wheelchair?: string | null
+          visited_before?: boolean | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

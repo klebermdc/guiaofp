@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   User, Users, Plane, Hotel, Heart, Smartphone, 
   Accessibility, PartyPopper, Star, ChevronDown, ChevronUp,
-  Check, AlertCircle
+  Check, AlertCircle, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -37,9 +37,14 @@ const sections: Section[] = [
 ];
 
 const TravelProfile = () => {
-  const { travelProfile, updateTravelProfile } = useAuth();
+  const { travelProfile, updateTravelProfile, loadProfile, isLoading: authLoading } = useAuth();
   const [openSections, setOpenSections] = useState<string[]>(['responsible']);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
@@ -49,11 +54,21 @@ const TravelProfile = () => {
     );
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Perfil salvo! ✨",
-      description: "Suas informações foram atualizadas com sucesso.",
-    });
+  const handleFieldChange = async (data: Parameters<typeof updateTravelProfile>[0]) => {
+    await updateTravelProfile(data);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Profile is already saved on each change, just show confirmation
+      toast({
+        title: "Perfil salvo! ✨",
+        description: "Suas informações foram atualizadas com sucesso.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const parks = [
@@ -75,6 +90,16 @@ const TravelProfile = () => {
     'Gastronomia',
     'Compras',
   ];
+
+  if (authLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -155,7 +180,7 @@ const TravelProfile = () => {
                           <Input
                             placeholder="Seu nome completo"
                             value={travelProfile.responsibleName}
-                            onChange={(e) => updateTravelProfile({ responsibleName: e.target.value })}
+                            onChange={(e) => handleFieldChange({ responsibleName: e.target.value })}
                           />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -165,7 +190,7 @@ const TravelProfile = () => {
                               type="email"
                               placeholder="seu@email.com"
                               value={travelProfile.email}
-                              onChange={(e) => updateTravelProfile({ email: e.target.value })}
+                              onChange={(e) => handleFieldChange({ email: e.target.value })}
                             />
                           </div>
                           <div className="space-y-2">
@@ -173,7 +198,7 @@ const TravelProfile = () => {
                             <Input
                               placeholder="(00) 00000-0000"
                               value={travelProfile.whatsapp}
-                              onChange={(e) => updateTravelProfile({ whatsapp: e.target.value })}
+                              onChange={(e) => handleFieldChange({ whatsapp: e.target.value })}
                             />
                           </div>
                         </div>
@@ -190,7 +215,7 @@ const TravelProfile = () => {
                             min="1"
                             placeholder="Número de viajantes"
                             value={travelProfile.groupSize || ''}
-                            onChange={(e) => updateTravelProfile({ groupSize: parseInt(e.target.value) || 0 })}
+                            onChange={(e) => handleFieldChange({ groupSize: parseInt(e.target.value) || 0 })}
                           />
                         </div>
                         <div className="p-4 bg-muted rounded-lg">
@@ -210,7 +235,7 @@ const TravelProfile = () => {
                             <Input
                               type="date"
                               value={travelProfile.arrivalDate}
-                              onChange={(e) => updateTravelProfile({ arrivalDate: e.target.value })}
+                              onChange={(e) => handleFieldChange({ arrivalDate: e.target.value })}
                             />
                           </div>
                           <div className="space-y-2">
@@ -218,7 +243,7 @@ const TravelProfile = () => {
                             <Input
                               type="date"
                               value={travelProfile.departureDate}
-                              onChange={(e) => updateTravelProfile({ departureDate: e.target.value })}
+                              onChange={(e) => handleFieldChange({ departureDate: e.target.value })}
                             />
                           </div>
                         </div>
@@ -234,7 +259,7 @@ const TravelProfile = () => {
                                     const newParks = checked
                                       ? [...travelProfile.parks, park]
                                       : travelProfile.parks.filter(p => p !== park);
-                                    updateTravelProfile({ parks: newParks });
+                                    handleFieldChange({ parks: newParks });
                                   }}
                                 />
                                 <Label htmlFor={park} className="text-sm cursor-pointer">
@@ -255,14 +280,14 @@ const TravelProfile = () => {
                           <Input
                             placeholder="Nome do hotel"
                             value={travelProfile.hotel}
-                            onChange={(e) => updateTravelProfile({ hotel: e.target.value })}
+                            onChange={(e) => handleFieldChange({ hotel: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label>Tipo de hotel</Label>
                           <RadioGroup
                             value={travelProfile.hotelType}
-                            onValueChange={(value) => updateTravelProfile({ hotelType: value })}
+                            onValueChange={(value) => handleFieldChange({ hotelType: value })}
                           >
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center space-x-2">
@@ -284,7 +309,7 @@ const TravelProfile = () => {
                           <Label>Já possui transporte?</Label>
                           <RadioGroup
                             value={travelProfile.hasTransport ? 'yes' : 'no'}
-                            onValueChange={(value) => updateTravelProfile({ hasTransport: value === 'yes' })}
+                            onValueChange={(value) => handleFieldChange({ hasTransport: value === 'yes' })}
                           >
                             <div className="flex gap-4">
                               <div className="flex items-center space-x-2">
@@ -308,7 +333,7 @@ const TravelProfile = () => {
                           <Label>Já visitou parques antes?</Label>
                           <RadioGroup
                             value={travelProfile.visitedBefore ? 'yes' : 'no'}
-                            onValueChange={(value) => updateTravelProfile({ visitedBefore: value === 'yes' })}
+                            onValueChange={(value) => handleFieldChange({ visitedBefore: value === 'yes' })}
                           >
                             <div className="flex gap-4">
                               <div className="flex items-center space-x-2">
@@ -326,7 +351,7 @@ const TravelProfile = () => {
                           <Label>Estilo do grupo</Label>
                           <RadioGroup
                             value={travelProfile.groupStyle}
-                            onValueChange={(value) => updateTravelProfile({ groupStyle: value })}
+                            onValueChange={(value) => handleFieldChange({ groupStyle: value })}
                           >
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center space-x-2">
@@ -356,7 +381,7 @@ const TravelProfile = () => {
                                     const newPriorities = checked
                                       ? [...travelProfile.priority, priority]
                                       : travelProfile.priority.filter(p => p !== priority);
-                                    updateTravelProfile({ priority: newPriorities });
+                                    handleFieldChange({ priority: newPriorities });
                                   }}
                                 />
                                 <Label htmlFor={priority} className="text-sm cursor-pointer">
@@ -376,7 +401,7 @@ const TravelProfile = () => {
                           <Label>Possui conta no My Disney Experience?</Label>
                           <RadioGroup
                             value={travelProfile.hasMyDisneyExperience ? 'yes' : 'no'}
-                            onValueChange={(value) => updateTravelProfile({ hasMyDisneyExperience: value === 'yes' })}
+                            onValueChange={(value) => handleFieldChange({ hasMyDisneyExperience: value === 'yes' })}
                           >
                             <div className="flex gap-4">
                               <div className="flex items-center space-x-2">
@@ -398,7 +423,7 @@ const TravelProfile = () => {
                                 type="email"
                                 placeholder="email@disney.com"
                                 value={travelProfile.myDisneyEmail}
-                                onChange={(e) => updateTravelProfile({ myDisneyEmail: e.target.value })}
+                                onChange={(e) => handleFieldChange({ myDisneyEmail: e.target.value })}
                               />
                             </div>
                             <div className="space-y-2">
@@ -407,14 +432,14 @@ const TravelProfile = () => {
                                 type="password"
                                 placeholder="••••••••"
                                 value={travelProfile.myDisneyPassword}
-                                onChange={(e) => updateTravelProfile({ myDisneyPassword: e.target.value })}
+                                onChange={(e) => handleFieldChange({ myDisneyPassword: e.target.value })}
                               />
                             </div>
                             <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
                               <Checkbox
                                 id="authorize"
                                 checked={travelProfile.authorizeGuideAccess}
-                                onCheckedChange={(checked) => updateTravelProfile({ authorizeGuideAccess: !!checked })}
+                                onCheckedChange={(checked) => handleFieldChange({ authorizeGuideAccess: !!checked })}
                               />
                               <Label htmlFor="authorize" className="cursor-pointer">
                                 Autorizo o guia a acessar e configurar o aplicativo em meu nome
@@ -433,7 +458,7 @@ const TravelProfile = () => {
                           <Textarea
                             placeholder="Descreva aqui qualquer condição que devemos considerar..."
                             value={travelProfile.physicalRestrictions}
-                            onChange={(e) => updateTravelProfile({ physicalRestrictions: e.target.value })}
+                            onChange={(e) => handleFieldChange({ physicalRestrictions: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
@@ -441,7 +466,7 @@ const TravelProfile = () => {
                           <Textarea
                             placeholder="Liste alergias ou restrições alimentares..."
                             value={travelProfile.foodAllergies}
-                            onChange={(e) => updateTravelProfile({ foodAllergies: e.target.value })}
+                            onChange={(e) => handleFieldChange({ foodAllergies: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
@@ -449,7 +474,7 @@ const TravelProfile = () => {
                           <Input
                             placeholder="Descreva se necessário..."
                             value={travelProfile.usesStrollerOrWheelchair}
-                            onChange={(e) => updateTravelProfile({ usesStrollerOrWheelchair: e.target.value })}
+                            onChange={(e) => handleFieldChange({ usesStrollerOrWheelchair: e.target.value })}
                           />
                         </div>
                       </>
@@ -462,7 +487,7 @@ const TravelProfile = () => {
                           <Label>A viagem envolve alguma comemoração especial?</Label>
                           <RadioGroup
                             value={travelProfile.hasCelebration ? 'yes' : 'no'}
-                            onValueChange={(value) => updateTravelProfile({ hasCelebration: value === 'yes' })}
+                            onValueChange={(value) => handleFieldChange({ hasCelebration: value === 'yes' })}
                           >
                             <div className="flex gap-4">
                               <div className="flex items-center space-x-2">
@@ -483,7 +508,7 @@ const TravelProfile = () => {
                               <Input
                                 placeholder="Ex: Aniversário, lua de mel, formatura..."
                                 value={travelProfile.celebrationType}
-                                onChange={(e) => updateTravelProfile({ celebrationType: e.target.value })}
+                                onChange={(e) => handleFieldChange({ celebrationType: e.target.value })}
                               />
                             </div>
                             <div className="space-y-2">
@@ -491,7 +516,7 @@ const TravelProfile = () => {
                               <Textarea
                                 placeholder="Conte-nos suas ideias..."
                                 value={travelProfile.specialRequests}
-                                onChange={(e) => updateTravelProfile({ specialRequests: e.target.value })}
+                                onChange={(e) => handleFieldChange({ specialRequests: e.target.value })}
                               />
                             </div>
                           </>
@@ -507,7 +532,7 @@ const TravelProfile = () => {
                           <Textarea
                             placeholder="Conte-nos seus sonhos para essa viagem..."
                             value={travelProfile.expectations}
-                            onChange={(e) => updateTravelProfile({ expectations: e.target.value })}
+                            onChange={(e) => handleFieldChange({ expectations: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
@@ -515,7 +540,7 @@ const TravelProfile = () => {
                           <Textarea
                             placeholder="O que te deixa apreensivo? Podemos ajudar!"
                             value={travelProfile.concerns}
-                            onChange={(e) => updateTravelProfile({ concerns: e.target.value })}
+                            onChange={(e) => handleFieldChange({ concerns: e.target.value })}
                           />
                         </div>
                       </>
@@ -529,8 +554,15 @@ const TravelProfile = () => {
 
         {/* Save Button */}
         <div className="flex justify-center">
-          <Button variant="premium" size="xl" onClick={handleSave}>
-            Salvar Perfil
+          <Button variant="premium" size="xl" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Salvando...
+              </span>
+            ) : (
+              'Salvar Perfil'
+            )}
           </Button>
         </div>
       </div>
