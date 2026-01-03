@@ -50,7 +50,7 @@ const Dashboard = () => {
               <span className="text-secondary text-sm font-medium">Área Exclusiva</span>
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
-              Olá, {user?.name?.split(' ')[0]}!
+              Olá, {user?.user_metadata?.name?.split(' ')[0] || 'Visitante'}!
             </h1>
             <p className="text-primary-foreground/80 text-lg">
               Sua viagem está sendo preparada ✨

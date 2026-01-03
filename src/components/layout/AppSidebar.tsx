@@ -77,10 +77,10 @@ export const AppSidebar = () => {
           <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full gradient-magic flex items-center justify-center text-accent-foreground font-semibold">
-                {user?.name?.charAt(0) || 'U'}
+                {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{user?.name || 'Visitante'}</p>
+                <p className="font-medium truncate">{user?.user_metadata?.name || 'Visitante'}</p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">{user?.email}</p>
               </div>
             </div>
