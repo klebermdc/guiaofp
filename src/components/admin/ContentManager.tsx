@@ -58,6 +58,14 @@ interface ContentItem {
   is_published: boolean;
   sort_order: number;
   created_at: string;
+  category_id: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
 }
 
 const CONTENT_TYPES = [
@@ -78,6 +86,7 @@ const COLOR_OPTIONS = [
 
 export function ContentManager() {
   const [contents, setContents] = useState<ContentItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -91,11 +100,25 @@ export function ContentManager() {
     thumbnail_url: '',
     color: 'gradient-primary',
     is_published: false,
+    category_id: '',
   });
 
   useEffect(() => {
     fetchContents();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('content_categories')
+      .select('id, name, icon, color')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (!error && data) {
+      setCategories(data);
+    }
+  };
 
   const fetchContents = async () => {
     const { data, error } = await supabase
@@ -155,6 +178,7 @@ export function ContentManager() {
       thumbnail_url: formData.thumbnail_url || null,
       color: formData.color,
       is_published: formData.is_published,
+      category_id: formData.category_id || null,
       sort_order: editingContent ? editingContent.sort_order : contents.length,
     };
 
@@ -216,6 +240,7 @@ export function ContentManager() {
       thumbnail_url: content.thumbnail_url || '',
       color: content.color,
       is_published: content.is_published,
+      category_id: content.category_id || '',
     });
     setIsDialogOpen(true);
   };
@@ -243,6 +268,7 @@ export function ContentManager() {
       thumbnail_url: '',
       color: 'gradient-primary',
       is_published: false,
+      category_id: '',
     });
     setEditingContent(null);
   };
@@ -294,6 +320,7 @@ export function ContentManager() {
               <TableRow>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Título</TableHead>
+                <TableHead>Categoria</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Arquivo</TableHead>
@@ -322,6 +349,15 @@ export function ContentManager() {
                           )}
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {content.category_id ? (
+                        <Badge variant="outline">
+                          {categories.find(c => c.id === content.category_id)?.name || 'Categoria'}
+                        </Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{getTypeLabel(content.type)}</Badge>
@@ -440,6 +476,26 @@ export function ContentManager() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem categoria</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
