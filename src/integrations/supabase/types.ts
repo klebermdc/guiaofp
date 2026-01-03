@@ -52,6 +52,8 @@ export type Database = {
       }
       content_items: {
         Row: {
+          attraction_description: string | null
+          attraction_name: string | null
           category_id: string | null
           color: string | null
           created_at: string | null
@@ -61,13 +63,17 @@ export type Database = {
           icon: string | null
           id: string
           is_published: boolean | null
+          min_height: string | null
           sort_order: number | null
+          thrill_level: number | null
           thumbnail_url: string | null
           title: string
           type: string
           updated_at: string | null
         }
         Insert: {
+          attraction_description?: string | null
+          attraction_name?: string | null
           category_id?: string | null
           color?: string | null
           created_at?: string | null
@@ -77,13 +83,17 @@ export type Database = {
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          min_height?: string | null
           sort_order?: number | null
+          thrill_level?: number | null
           thumbnail_url?: string | null
           title: string
           type: string
           updated_at?: string | null
         }
         Update: {
+          attraction_description?: string | null
+          attraction_name?: string | null
           category_id?: string | null
           color?: string | null
           created_at?: string | null
@@ -93,7 +103,9 @@ export type Database = {
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          min_height?: string | null
           sort_order?: number | null
+          thrill_level?: number | null
           thumbnail_url?: string | null
           title?: string
           type?: string
