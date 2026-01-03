@@ -11,6 +11,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Import park images
+import magicKingdomImg from '@/assets/parks/magic-kingdom.jpg';
+import epcotImg from '@/assets/parks/epcot.jpg';
+import hollywoodStudiosImg from '@/assets/parks/hollywood-studios.jpg';
+import animalKingdomImg from '@/assets/parks/animal-kingdom.jpg';
+import islandsOfAdventureImg from '@/assets/parks/islands-of-adventure.jpg';
+import universalStudiosImg from '@/assets/parks/universal-studios.jpg';
+import epicUniverseImg from '@/assets/parks/epic-universe.jpg';
+
 interface ContentItem {
   id: string;
   title: string;
@@ -37,43 +46,43 @@ const PARKS = [
   {
     id: 'magic-kingdom',
     name: 'Magic Kingdom',
-    image: 'https://images.unsplash.com/photo-1597466599360-3b9775841aec?w=600&h=400&fit=crop',
+    image: magicKingdomImg,
     color: 'from-blue-500 to-purple-600',
   },
   {
     id: 'epcot',
     name: 'Epcot',
-    image: 'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?w=600&h=400&fit=crop',
+    image: epcotImg,
     color: 'from-teal-500 to-blue-600',
   },
   {
     id: 'hollywood-studios',
     name: 'Hollywood Studios',
-    image: 'https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&h=400&fit=crop',
+    image: hollywoodStudiosImg,
     color: 'from-red-500 to-pink-600',
   },
   {
     id: 'animal-kingdom',
     name: 'Animal Kingdom',
-    image: 'https://images.unsplash.com/photo-1564386391954-61df52bbb935?w=600&h=400&fit=crop',
+    image: animalKingdomImg,
     color: 'from-green-500 to-emerald-600',
   },
   {
     id: 'islands-of-adventure',
     name: 'Island of Adventure',
-    image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=600&h=400&fit=crop',
+    image: islandsOfAdventureImg,
     color: 'from-orange-500 to-red-600',
   },
   {
     id: 'universal-studios',
     name: 'Universal Studios',
-    image: 'https://images.unsplash.com/photo-1559494007-9f5847c49d94?w=600&h=400&fit=crop',
+    image: universalStudiosImg,
     color: 'from-yellow-500 to-orange-600',
   },
   {
     id: 'epic-universe',
     name: 'Epic Universe',
-    image: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&h=400&fit=crop',
+    image: epicUniverseImg,
     color: 'from-indigo-500 to-purple-600',
   },
 ];
