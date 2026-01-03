@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Play, CheckSquare, Smartphone, Sparkles, FileText, Image as ImageIcon, Loader2, Folder, Star, Map, Camera, Utensils, Hotel, Plane, ShoppingBag, Ticket, Heart, Info } from 'lucide-react';
+import { Play, Sparkles, Loader2, ArrowLeft, MapPin } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,44 +32,57 @@ interface Category {
   color: string;
 }
 
-const ICON_MAP: Record<string, any> = {
-  video: Play,
-  pdf: FileText,
-  image: ImageIcon,
-  checklist: CheckSquare,
-  tutorial: Smartphone,
-  guide: BookOpen,
-  other: FileText,
-};
-
-const CATEGORY_ICON_MAP: Record<string, any> = {
-  folder: Folder,
-  star: Star,
-  map: Map,
-  camera: Camera,
-  utensils: Utensils,
-  hotel: Hotel,
-  plane: Plane,
-  'shopping-bag': ShoppingBag,
-  ticket: Ticket,
-  heart: Heart,
-  info: Info,
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  video: 'Vídeo',
-  pdf: 'PDF',
-  image: 'Imagem',
-  checklist: 'Checklist',
-  tutorial: 'Tutorial',
-  guide: 'Guia',
-  other: 'Arquivo',
-};
+// Parks data with their images
+const PARKS = [
+  {
+    id: 'magic-kingdom',
+    name: 'Magic Kingdom',
+    image: 'https://images.unsplash.com/photo-1597466599360-3b9775841aec?w=600&h=400&fit=crop',
+    color: 'from-blue-500 to-purple-600',
+  },
+  {
+    id: 'epcot',
+    name: 'Epcot',
+    image: 'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?w=600&h=400&fit=crop',
+    color: 'from-teal-500 to-blue-600',
+  },
+  {
+    id: 'hollywood-studios',
+    name: 'Hollywood Studios',
+    image: 'https://images.unsplash.com/photo-1568515045052-f9a854d70bfd?w=600&h=400&fit=crop',
+    color: 'from-red-500 to-pink-600',
+  },
+  {
+    id: 'animal-kingdom',
+    name: 'Animal Kingdom',
+    image: 'https://images.unsplash.com/photo-1564386391954-61df52bbb935?w=600&h=400&fit=crop',
+    color: 'from-green-500 to-emerald-600',
+  },
+  {
+    id: 'islands-of-adventure',
+    name: 'Island of Adventure',
+    image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=600&h=400&fit=crop',
+    color: 'from-orange-500 to-red-600',
+  },
+  {
+    id: 'universal-studios',
+    name: 'Universal Studios',
+    image: 'https://images.unsplash.com/photo-1559494007-9f5847c49d94?w=600&h=400&fit=crop',
+    color: 'from-yellow-500 to-orange-600',
+  },
+  {
+    id: 'epic-universe',
+    name: 'Epic Universe',
+    image: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&h=400&fit=crop',
+    color: 'from-indigo-500 to-purple-600',
+  },
+];
 
 const Content = () => {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPark, setSelectedPark] = useState<typeof PARKS[0] | null>(null);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -101,43 +114,8 @@ const Content = () => {
   };
 
   const handleOpenContent = (content: ContentItem) => {
-    if (content.file_url) {
-      // For videos, open in dialog
-      if (content.type === 'video') {
-        setSelectedContent(content);
-        setIsDialogOpen(true);
-      } else {
-        // For other files, open in new tab
-        window.open(content.file_url, '_blank');
-      }
-    } else {
-      setSelectedContent(content);
-      setIsDialogOpen(true);
-    }
-  };
-
-  const getIcon = (type: string) => {
-    return ICON_MAP[type] || FileText;
-  };
-
-  const getCategoryIcon = (iconName: string) => {
-    return CATEGORY_ICON_MAP[iconName] || Folder;
-  };
-
-  // Group contents by category
-  const groupedContents = () => {
-    const uncategorized = contents.filter(c => !c.category_id);
-    const categorized = categories.map(cat => ({
-      category: cat,
-      items: contents.filter(c => c.category_id === cat.id),
-    })).filter(g => g.items.length > 0);
-    
-    return { categorized, uncategorized };
-  };
-
-  const isVideoUrl = (url: string) => {
-    return url.includes('.mp4') || url.includes('.webm') || url.includes('.mov') || 
-           url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com');
+    setSelectedContent(content);
+    setIsDialogOpen(true);
   };
 
   const getYoutubeEmbedUrl = (url: string) => {
@@ -149,9 +127,26 @@ const Content = () => {
     return url;
   };
 
+  // Get contents for selected park based on category name matching
+  const getParkContents = () => {
+    if (!selectedPark) return [];
+    
+    // Find category that matches park name
+    const parkCategory = categories.find(cat => 
+      cat.name.toLowerCase().includes(selectedPark.name.toLowerCase()) ||
+      selectedPark.name.toLowerCase().includes(cat.name.toLowerCase())
+    );
+    
+    if (parkCategory) {
+      return contents.filter(c => c.category_id === parkCategory.id);
+    }
+    
+    return [];
+  };
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl gradient-gold p-8 text-secondary-foreground">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
@@ -161,185 +156,134 @@ const Content = () => {
               <span className="text-sm font-medium">Exclusivo para membros</span>
             </div>
             <h1 className="font-display text-3xl font-bold mb-2">
-              📚 Preparação para sua Viagem
+              🎢 Parques
             </h1>
             <p className="text-secondary-foreground/80">
-              Conteúdos exclusivos para tornar sua experiência ainda mais mágica
+              Explore os vídeos das atrações de cada parque
             </p>
           </div>
         </div>
 
-        {/* Content Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : contents.length === 0 ? (
-          <Card className="text-center p-8 border-dashed border-2">
-            <Sparkles className="w-12 h-12 mx-auto text-accent mb-4" />
-            <h3 className="font-display text-xl font-bold text-foreground mb-2">
-              Conteúdos em breve!
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Estamos preparando materiais exclusivos para tornar sua viagem ainda mais especial.
-            </p>
-          </Card>
+        ) : !selectedPark ? (
+          // Parks Grid
+          <div className="space-y-4">
+            <h2 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-primary" />
+              Escolha um Parque
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {PARKS.map((park) => (
+                <Card 
+                  key={park.id}
+                  className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  onClick={() => setSelectedPark(park)}
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <img 
+                      src={park.image} 
+                      alt={park.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t ${park.color} opacity-60`} />
+                    <div className="absolute inset-0 flex items-end p-4">
+                      <h3 className="font-display text-lg font-bold text-white drop-shadow-lg">
+                        {park.name}
+                      </h3>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
         ) : (
-          <div className="space-y-8">
-            {/* Categorized content */}
-            {groupedContents().categorized.map(({ category, items }) => {
-              const CategoryIcon = getCategoryIcon(category.icon);
-              return (
-                <div key={category.id} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${category.color} rounded-lg flex items-center justify-center text-primary-foreground`}>
-                      <CategoryIcon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h2 className="font-display text-xl font-bold text-foreground">{category.name}</h2>
-                      {category.description && (
-                        <p className="text-sm text-muted-foreground">{category.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {items.map((item) => {
-                      const Icon = getIcon(item.type);
-                      return (
-                        <Card 
-                          key={item.id} 
-                          className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                          onClick={() => handleOpenContent(item)}
-                        >
-                          {item.thumbnail_url && (
-                            <div className="relative h-40 overflow-hidden">
-                              <img 
-                                src={item.thumbnail_url} 
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                              />
-                              {item.type === 'video' && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                                    <Play className="h-8 w-8 text-primary ml-1" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              {!item.thumbnail_url && (
-                                <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0`}>
-                                  <Icon size={24} />
-                                </div>
-                              )}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h3 className="font-semibold text-foreground">{item.title}</h3>
-                                  <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                                    {TYPE_LABELS[item.type] || item.type}
-                                  </span>
-                                </div>
-                                {item.description && (
-                                  <p className="text-sm text-muted-foreground mb-4">
-                                    {item.description}
-                                  </p>
-                                )}
-                                <Button variant="outline" size="sm">
-                                  Acessar conteúdo
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
+          // Park Videos
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedPark(null)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 bg-gradient-to-br ${selectedPark.color} rounded-lg flex items-center justify-center text-white shadow-lg`}>
+                  <MapPin className="h-5 w-5" />
                 </div>
-              );
-            })}
+                <h2 className="font-display text-2xl font-bold text-foreground">
+                  {selectedPark.name}
+                </h2>
+              </div>
+            </div>
 
-            {/* Uncategorized content */}
-            {groupedContents().uncategorized.length > 0 && (
-              <div className="space-y-4">
-                {groupedContents().categorized.length > 0 && (
-                  <h2 className="font-display text-xl font-bold text-foreground">Outros Conteúdos</h2>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {groupedContents().uncategorized.map((item) => {
-                    const Icon = getIcon(item.type);
-                    return (
-                      <Card 
-                        key={item.id} 
-                        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => handleOpenContent(item)}
-                      >
-                        {item.thumbnail_url && (
-                          <div className="relative h-40 overflow-hidden">
-                            <img 
-                              src={item.thumbnail_url} 
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                            />
-                            {item.type === 'video' && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                                  <Play className="h-8 w-8 text-primary ml-1" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            {!item.thumbnail_url && (
-                              <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0`}>
-                                <Icon size={24} />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-foreground">{item.title}</h3>
-                                <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                                  {TYPE_LABELS[item.type] || item.type}
-                                </span>
-                              </div>
-                              {item.description && (
-                                <p className="text-sm text-muted-foreground mb-4">
-                                  {item.description}
-                                </p>
-                              )}
-                              <Button variant="outline" size="sm">
-                                Acessar conteúdo
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+            {getParkContents().length === 0 ? (
+              <Card className="text-center p-12 border-dashed border-2">
+                <Sparkles className="w-12 h-12 mx-auto text-accent mb-4" />
+                <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                  Vídeos em breve!
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Estamos preparando vídeos incríveis das atrações deste parque para você.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setSelectedPark(null)}
+                >
+                  Ver outros parques
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getParkContents().map((item) => (
+                  <Card 
+                    key={item.id} 
+                    className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+                    onClick={() => handleOpenContent(item)}
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-muted">
+                      {item.thumbnail_url ? (
+                        <img 
+                          src={item.thumbnail_url} 
+                          alt={item.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className={`w-full h-full bg-gradient-to-br ${selectedPark.color} flex items-center justify-center`}>
+                          <Play className="h-12 w-12 text-white/80" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl">
+                          <Play className="h-8 w-8 text-primary ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
         )}
-
-        {/* Coming Soon */}
-        {contents.length > 0 && (
-          <Card className="text-center p-8 border-dashed border-2">
-            <Sparkles className="w-12 h-12 mx-auto text-accent mb-4" />
-            <h3 className="font-display text-xl font-bold text-foreground mb-2">
-              Mais conteúdos em breve!
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Estamos sempre preparando novos materiais exclusivos para tornar sua viagem ainda mais especial.
-            </p>
-          </Card>
-        )}
       </div>
 
-      {/* Content Dialog */}
+      {/* Video Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
@@ -351,7 +295,7 @@ const Content = () => {
                 <p className="text-muted-foreground">{selectedContent.description}</p>
               )}
               
-              {selectedContent.file_url && selectedContent.type === 'video' && (
+              {selectedContent.file_url && (
                 <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   {selectedContent.file_url.includes('youtube') || selectedContent.file_url.includes('youtu.be') ? (
                     <iframe
@@ -370,25 +314,9 @@ const Content = () => {
                 </div>
               )}
 
-              {selectedContent.file_url && selectedContent.type === 'image' && (
-                <img 
-                  src={selectedContent.file_url} 
-                  alt={selectedContent.title}
-                  className="w-full rounded-lg"
-                />
-              )}
-
-              {selectedContent.file_url && !['video', 'image'].includes(selectedContent.type) && (
-                <Button asChild>
-                  <a href={selectedContent.file_url} target="_blank" rel="noopener noreferrer">
-                    Baixar arquivo
-                  </a>
-                </Button>
-              )}
-
               {!selectedContent.file_url && (
                 <p className="text-center text-muted-foreground py-8">
-                  Este conteúdo ainda não possui um arquivo associado.
+                  Este conteúdo ainda não possui um vídeo associado.
                 </p>
               )}
             </div>
