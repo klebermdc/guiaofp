@@ -20,6 +20,24 @@ import islandsOfAdventureImg from '@/assets/parks/islands-of-adventure.jpg';
 import universalStudiosImg from '@/assets/parks/universal-studios.jpg';
 import epicUniverseImg from '@/assets/parks/epic-universe.jpg';
 
+// Import attraction thumbnails
+import stardustRacersImg from '@/assets/attractions/stardust-racers.jpg';
+import marioKartImg from '@/assets/attractions/mario-kart.jpg';
+import ministryBattleImg from '@/assets/attractions/ministry-battle.jpg';
+import ripRideRockitImg from '@/assets/attractions/rip-ride-rockit.jpg';
+import revengeMummyImg from '@/assets/attractions/revenge-mummy.jpg';
+import etAdventureImg from '@/assets/attractions/et-adventure.jpg';
+
+// Attraction thumbnail mapping
+const ATTRACTION_THUMBNAILS: Record<string, string> = {
+  'Stardust Racers': stardustRacersImg,
+  "Mario Kart: Bowser's Challenge": marioKartImg,
+  'Harry Potter and the Battle at the Ministry': ministryBattleImg,
+  'Hollywood Rip Ride Rockit': ripRideRockitImg,
+  'Revenge of the Mummy': revengeMummyImg,
+  'E.T. Adventure': etAdventureImg,
+};
+
 interface ContentItem {
   id: string;
   title: string;
@@ -262,9 +280,9 @@ const Content = () => {
                     onClick={() => handleOpenContent(item)}
                   >
                     <div className="relative aspect-video overflow-hidden bg-muted">
-                      {item.thumbnail_url ? (
+                      {(item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]) ? (
                         <img 
-                          src={item.thumbnail_url} 
+                          src={item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]} 
                           alt={item.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
