@@ -59,6 +59,10 @@ interface ContentItem {
   sort_order: number;
   created_at: string;
   category_id: string | null;
+  attraction_name: string | null;
+  attraction_description: string | null;
+  min_height: string | null;
+  thrill_level: number | null;
 }
 
 interface Category {
@@ -67,6 +71,17 @@ interface Category {
   icon: string;
   color: string;
 }
+
+// Park category IDs for showing attraction fields
+const PARK_CATEGORY_NAMES = [
+  'Magic Kingdom',
+  'Epcot',
+  'Hollywood Studios',
+  'Animal Kingdom',
+  'Island of Adventure',
+  'Universal Studios',
+  'Epic Universe',
+];
 
 const CONTENT_TYPES = [
   { value: 'video', label: 'Vídeo', icon: FileVideo },
@@ -101,7 +116,17 @@ export function ContentManager() {
     color: 'gradient-primary',
     is_published: false,
     category_id: '',
+    attraction_name: '',
+    attraction_description: '',
+    min_height: '',
+    thrill_level: 0,
   });
+
+  // Check if selected category is a park
+  const isParkCategory = () => {
+    const selectedCategory = categories.find(c => c.id === formData.category_id);
+    return selectedCategory ? PARK_CATEGORY_NAMES.includes(selectedCategory.name) : false;
+  };
 
   useEffect(() => {
     fetchContents();
@@ -180,6 +205,10 @@ export function ContentManager() {
       is_published: formData.is_published,
       category_id: formData.category_id || null,
       sort_order: editingContent ? editingContent.sort_order : contents.length,
+      attraction_name: formData.attraction_name || null,
+      attraction_description: formData.attraction_description || null,
+      min_height: formData.min_height || null,
+      thrill_level: formData.thrill_level > 0 ? formData.thrill_level : null,
     };
 
     if (editingContent) {
@@ -241,6 +270,10 @@ export function ContentManager() {
       color: content.color,
       is_published: content.is_published,
       category_id: content.category_id || '',
+      attraction_name: content.attraction_name || '',
+      attraction_description: content.attraction_description || '',
+      min_height: content.min_height || '',
+      thrill_level: content.thrill_level || 0,
     });
     setIsDialogOpen(true);
   };
@@ -269,6 +302,10 @@ export function ContentManager() {
       color: 'gradient-primary',
       is_published: false,
       category_id: '',
+      attraction_name: '',
+      attraction_description: '',
+      min_height: '',
+      thrill_level: 0,
     });
     setEditingContent(null);
   };
@@ -497,6 +534,68 @@ export function ContentManager() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Attraction Technical Sheet - Only shown for park categories */}
+            {isParkCategory() && (
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg border border-border">
+                <h4 className="font-medium text-sm text-foreground flex items-center gap-2">
+                  🎢 Ficha Técnica da Atração
+                </h4>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="attraction_name">Nome da Atração</Label>
+                  <Input
+                    id="attraction_name"
+                    value={formData.attraction_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, attraction_name: e.target.value }))}
+                    placeholder="Ex: Space Mountain"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="attraction_description">Breve Descrição</Label>
+                  <Textarea
+                    id="attraction_description"
+                    value={formData.attraction_description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, attraction_description: e.target.value }))}
+                    placeholder="Descreva brevemente a atração..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min_height">Altura Mínima</Label>
+                    <Input
+                      id="min_height"
+                      value={formData.min_height}
+                      onChange={(e) => setFormData(prev => ({ ...prev, min_height: e.target.value }))}
+                      placeholder="Ex: 1,02m"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nível de Radicalidade</Label>
+                    <Select
+                      value={formData.thrill_level.toString()}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, thrill_level: parseInt(value) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Não definido</SelectItem>
+                        <SelectItem value="1">1 - Muito Leve</SelectItem>
+                        <SelectItem value="2">2 - Leve</SelectItem>
+                        <SelectItem value="3">3 - Moderado</SelectItem>
+                        <SelectItem value="4">4 - Intenso</SelectItem>
+                        <SelectItem value="5">5 - Extremo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Arquivo Principal</Label>
