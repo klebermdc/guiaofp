@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Play, Sparkles, Loader2, ArrowLeft, MapPin } from 'lucide-react';
+import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,10 @@ interface ContentItem {
   color: string;
   is_published: boolean;
   category_id: string | null;
+  attraction_name: string | null;
+  attraction_description: string | null;
+  min_height: string | null;
+  thrill_level: number | null;
 }
 
 interface Category {
@@ -300,6 +304,64 @@ const Content = () => {
           </DialogHeader>
           {selectedContent && (
             <div className="space-y-4">
+              {/* Ficha Técnica da Atração */}
+              {(selectedContent.attraction_name || selectedContent.min_height || selectedContent.thrill_level) && (
+                <div className="bg-muted/50 rounded-lg p-4 border">
+                  <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Ficha Técnica
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {selectedContent.attraction_name && (
+                      <div>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Nome da Atração</span>
+                        <p className="font-medium text-foreground">{selectedContent.attraction_name}</p>
+                      </div>
+                    )}
+                    {selectedContent.min_height && (
+                      <div className="flex items-start gap-2">
+                        <Ruler className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Altura Mínima</span>
+                          <p className="font-medium text-foreground">{selectedContent.min_height}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedContent.thrill_level && (
+                      <div className="flex items-start gap-2">
+                        <Flame className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Radicalidade</span>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {[1, 2, 3, 4, 5].map((level) => (
+                              <div
+                                key={level}
+                                className={`w-4 h-4 rounded-full ${
+                                  level <= selectedContent.thrill_level!
+                                    ? level <= 2
+                                      ? 'bg-green-500'
+                                      : level <= 3
+                                      ? 'bg-yellow-500'
+                                      : level <= 4
+                                      ? 'bg-orange-500'
+                                      : 'bg-red-500'
+                                    : 'bg-muted-foreground/20'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {selectedContent.attraction_description && (
+                    <p className="text-sm text-muted-foreground mt-3 pt-3 border-t">
+                      {selectedContent.attraction_description}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {selectedContent.description && (
                 <p className="text-muted-foreground">{selectedContent.description}</p>
               )}
