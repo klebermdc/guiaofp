@@ -11,9 +11,11 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -27,10 +29,17 @@ const menuItems = [
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
 ];
 
+const guideMenuItems = [
+  { icon: Shield, label: 'Painel do Guia', path: '/admin' },
+];
+
 export const AppSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { isGuide } = useUserRole();
+
+  const allMenuItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 
   return (
     <>
@@ -88,7 +97,7 @@ export const AppSidebar = () => {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => {
+            {allMenuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <NavLink
