@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Play, CheckSquare, Smartphone, Wifi, Sparkles, FileText, Image as ImageIcon, FileVideo, Loader2 } from 'lucide-react';
+import { BookOpen, Play, CheckSquare, Smartphone, Sparkles, FileText, Image as ImageIcon, Loader2, Folder, Star, Map, Camera, Utensils, Hotel, Plane, ShoppingBag, Ticket, Heart, Info } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,15 @@ interface ContentItem {
   icon: string;
   color: string;
   is_published: boolean;
+  category_id: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  color: string;
 }
 
 const ICON_MAP: Record<string, any> = {
@@ -31,6 +40,20 @@ const ICON_MAP: Record<string, any> = {
   tutorial: Smartphone,
   guide: BookOpen,
   other: FileText,
+};
+
+const CATEGORY_ICON_MAP: Record<string, any> = {
+  folder: Folder,
+  star: Star,
+  map: Map,
+  camera: Camera,
+  utensils: Utensils,
+  hotel: Hotel,
+  plane: Plane,
+  'shopping-bag': ShoppingBag,
+  ticket: Ticket,
+  heart: Heart,
+  info: Info,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -45,23 +68,34 @@ const TYPE_LABELS: Record<string, string> = {
 
 const Content = () => {
   const [contents, setContents] = useState<ContentItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    fetchContents();
+    fetchData();
   }, []);
 
-  const fetchContents = async () => {
-    const { data, error } = await supabase
-      .from('content_items')
-      .select('*')
-      .eq('is_published', true)
-      .order('sort_order', { ascending: true });
+  const fetchData = async () => {
+    const [contentsRes, categoriesRes] = await Promise.all([
+      supabase
+        .from('content_items')
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('content_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+    ]);
 
-    if (!error && data) {
-      setContents(data);
+    if (!contentsRes.error && contentsRes.data) {
+      setContents(contentsRes.data);
+    }
+    if (!categoriesRes.error && categoriesRes.data) {
+      setCategories(categoriesRes.data);
     }
     setIsLoading(false);
   };
@@ -84,6 +118,21 @@ const Content = () => {
 
   const getIcon = (type: string) => {
     return ICON_MAP[type] || FileText;
+  };
+
+  const getCategoryIcon = (iconName: string) => {
+    return CATEGORY_ICON_MAP[iconName] || Folder;
+  };
+
+  // Group contents by category
+  const groupedContents = () => {
+    const uncategorized = contents.filter(c => !c.category_id);
+    const categorized = categories.map(cat => ({
+      category: cat,
+      items: contents.filter(c => c.category_id === cat.id),
+    })).filter(g => g.items.length > 0);
+    
+    return { categorized, uncategorized };
   };
 
   const isVideoUrl = (url: string) => {
@@ -136,59 +185,143 @@ const Content = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {contents.map((item) => {
-              const Icon = getIcon(item.type);
+          <div className="space-y-8">
+            {/* Categorized content */}
+            {groupedContents().categorized.map(({ category, items }) => {
+              const CategoryIcon = getCategoryIcon(category.icon);
               return (
-                <Card 
-                  key={item.id} 
-                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleOpenContent(item)}
-                >
-                  {item.thumbnail_url && (
-                    <div className="relative h-40 overflow-hidden">
-                      <img 
-                        src={item.thumbnail_url} 
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {item.type === 'video' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                            <Play className="h-8 w-8 text-primary ml-1" />
-                          </div>
-                        </div>
+                <div key={category.id} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 ${category.color} rounded-lg flex items-center justify-center text-primary-foreground`}>
+                      <CategoryIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-xl font-bold text-foreground">{category.name}</h2>
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
                       )}
                     </div>
-                  )}
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      {!item.thumbnail_url && (
-                        <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0`}>
-                          <Icon size={24} />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground">{item.title}</h3>
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                            {TYPE_LABELS[item.type] || item.type}
-                          </span>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground mb-4">
-                            {item.description}
-                          </p>
-                        )}
-                        <Button variant="outline" size="sm">
-                          Acessar conteúdo
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {items.map((item) => {
+                      const Icon = getIcon(item.type);
+                      return (
+                        <Card 
+                          key={item.id} 
+                          className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                          onClick={() => handleOpenContent(item)}
+                        >
+                          {item.thumbnail_url && (
+                            <div className="relative h-40 overflow-hidden">
+                              <img 
+                                src={item.thumbnail_url} 
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                              {item.type === 'video' && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                                    <Play className="h-8 w-8 text-primary ml-1" />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              {!item.thumbnail_url && (
+                                <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0`}>
+                                  <Icon size={24} />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold text-foreground">{item.title}</h3>
+                                  <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                                    {TYPE_LABELS[item.type] || item.type}
+                                  </span>
+                                </div>
+                                {item.description && (
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    {item.description}
+                                  </p>
+                                )}
+                                <Button variant="outline" size="sm">
+                                  Acessar conteúdo
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
+
+            {/* Uncategorized content */}
+            {groupedContents().uncategorized.length > 0 && (
+              <div className="space-y-4">
+                {groupedContents().categorized.length > 0 && (
+                  <h2 className="font-display text-xl font-bold text-foreground">Outros Conteúdos</h2>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupedContents().uncategorized.map((item) => {
+                    const Icon = getIcon(item.type);
+                    return (
+                      <Card 
+                        key={item.id} 
+                        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => handleOpenContent(item)}
+                      >
+                        {item.thumbnail_url && (
+                          <div className="relative h-40 overflow-hidden">
+                            <img 
+                              src={item.thumbnail_url} 
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                            {item.type === 'video' && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                                  <Play className="h-8 w-8 text-primary ml-1" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            {!item.thumbnail_url && (
+                              <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center text-primary-foreground flex-shrink-0`}>
+                                <Icon size={24} />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-foreground">{item.title}</h3>
+                                <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                                  {TYPE_LABELS[item.type] || item.type}
+                                </span>
+                              </div>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  {item.description}
+                                </p>
+                              )}
+                              <Button variant="outline" size="sm">
+                                Acessar conteúdo
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
