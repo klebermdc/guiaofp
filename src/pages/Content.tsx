@@ -287,6 +287,48 @@ const Content = () => {
                           {item.description}
                         </p>
                       )}
+                      
+                      {/* Ficha Técnica no Card */}
+                      {(item.attraction_name || item.min_height || item.thrill_level) && (
+                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                          {item.attraction_name && (
+                            <p className="text-xs font-medium text-primary truncate">
+                              {item.attraction_name}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            {item.min_height && (
+                              <div className="flex items-center gap-1">
+                                <Ruler className="h-3 w-3" />
+                                <span>{item.min_height}</span>
+                              </div>
+                            )}
+                            {item.thrill_level && (
+                              <div className="flex items-center gap-1">
+                                <Flame className="h-3 w-3" />
+                                <div className="flex gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((level) => (
+                                    <div
+                                      key={level}
+                                      className={`w-2 h-2 rounded-full ${
+                                        level <= item.thrill_level!
+                                          ? level <= 2
+                                            ? 'bg-green-500'
+                                            : level <= 3
+                                            ? 'bg-yellow-500'
+                                            : level <= 4
+                                            ? 'bg-orange-500'
+                                            : 'bg-red-500'
+                                          : 'bg-muted-foreground/20'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
