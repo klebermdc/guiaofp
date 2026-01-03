@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame } from 'lucide-react';
+import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ interface ContentItem {
   attraction_description: string | null;
   min_height: string | null;
   thrill_level: number | null;
+  pass_type: string | null;
 }
 
 interface Category {
@@ -366,6 +367,15 @@ const Content = () => {
                         <div>
                           <span className="text-xs text-muted-foreground uppercase tracking-wide">Altura Mínima</span>
                           <p className="font-medium text-foreground">{selectedContent.min_height}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedContent.pass_type && (
+                      <div className="flex items-start gap-2">
+                        <Ticket className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <span className="text-xs text-muted-foreground uppercase tracking-wide">Tipo de Passe</span>
+                          <p className="font-medium text-foreground">{selectedContent.pass_type}</p>
                         </div>
                       </div>
                     )}
