@@ -541,27 +541,6 @@ export function ContentManager() {
                 <h4 className="font-medium text-sm text-foreground flex items-center gap-2">
                   🎢 Ficha Técnica da Atração
                 </h4>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="attraction_name">Nome da Atração</Label>
-                  <Input
-                    id="attraction_name"
-                    value={formData.attraction_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, attraction_name: e.target.value }))}
-                    placeholder="Ex: Space Mountain"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="attraction_description">Breve Descrição</Label>
-                  <Textarea
-                    id="attraction_description"
-                    value={formData.attraction_description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, attraction_description: e.target.value }))}
-                    placeholder="Descreva brevemente a atração..."
-                    rows={2}
-                  />
-                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
