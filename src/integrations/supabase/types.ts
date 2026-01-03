@@ -64,6 +64,7 @@ export type Database = {
           id: string
           is_published: boolean | null
           min_height: string | null
+          pass_type: string | null
           sort_order: number | null
           thrill_level: number | null
           thumbnail_url: string | null
@@ -84,6 +85,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           min_height?: string | null
+          pass_type?: string | null
           sort_order?: number | null
           thrill_level?: number | null
           thumbnail_url?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           min_height?: string | null
+          pass_type?: string | null
           sort_order?: number | null
           thrill_level?: number | null
           thumbnail_url?: string | null

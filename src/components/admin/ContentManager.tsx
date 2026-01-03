@@ -63,6 +63,7 @@ interface ContentItem {
   attraction_description: string | null;
   min_height: string | null;
   thrill_level: number | null;
+  pass_type: string | null;
 }
 
 interface Category {
@@ -120,6 +121,7 @@ export function ContentManager() {
     attraction_description: '',
     min_height: '',
     thrill_level: 0,
+    pass_type: '',
   });
 
   // Check if selected category is a park
@@ -209,6 +211,7 @@ export function ContentManager() {
       attraction_description: formData.attraction_description || null,
       min_height: formData.min_height || null,
       thrill_level: formData.thrill_level > 0 ? formData.thrill_level : null,
+      pass_type: formData.pass_type || null,
     };
 
     if (editingContent) {
@@ -274,6 +277,7 @@ export function ContentManager() {
       attraction_description: content.attraction_description || '',
       min_height: content.min_height || '',
       thrill_level: content.thrill_level || 0,
+      pass_type: content.pass_type || '',
     });
     setIsDialogOpen(true);
   };
@@ -306,6 +310,7 @@ export function ContentManager() {
       attraction_description: '',
       min_height: '',
       thrill_level: 0,
+      pass_type: '',
     });
     setEditingContent(null);
   };
@@ -549,29 +554,49 @@ export function ContentManager() {
                       id="min_height"
                       value={formData.min_height}
                       onChange={(e) => setFormData(prev => ({ ...prev, min_height: e.target.value }))}
-                      placeholder="Ex: 1,02m"
+                      placeholder="Ex: 102 cm"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Nível de Radicalidade</Label>
+                    <Label>Tipo de Passe</Label>
                     <Select
-                      value={formData.thrill_level.toString()}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, thrill_level: parseInt(value) }))}
+                      value={formData.pass_type}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, pass_type: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">Não definido</SelectItem>
-                        <SelectItem value="1">1 - Muito Leve</SelectItem>
-                        <SelectItem value="2">2 - Leve</SelectItem>
-                        <SelectItem value="3">3 - Moderado</SelectItem>
-                        <SelectItem value="4">4 - Intenso</SelectItem>
-                        <SelectItem value="5">5 - Extremo</SelectItem>
+                        <SelectItem value="Single Pass">Single Pass</SelectItem>
+                        <SelectItem value="Multi Pass (Grupo 1)">Multi Pass (Grupo 1)</SelectItem>
+                        <SelectItem value="Multi Pass (Grupo 2)">Multi Pass (Grupo 2)</SelectItem>
+                        <SelectItem value="Multi Pass">Multi Pass</SelectItem>
+                        <SelectItem value="Standby (Fila Comum)">Standby (Fila Comum)</SelectItem>
+                        <SelectItem value="Standby (Trilha)">Standby (Trilha)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Nível de Radicalidade</Label>
+                  <Select
+                    value={formData.thrill_level.toString()}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, thrill_level: parseInt(value) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Não definido</SelectItem>
+                      <SelectItem value="1">1 - Muito Leve</SelectItem>
+                      <SelectItem value="2">2 - Leve</SelectItem>
+                      <SelectItem value="3">3 - Moderado</SelectItem>
+                      <SelectItem value="4">4 - Intenso</SelectItem>
+                      <SelectItem value="5">5 - Extremo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
