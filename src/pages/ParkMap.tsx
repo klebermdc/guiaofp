@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet-routing-machine';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,12 +33,21 @@ interface Park {
   zoom: number;
 }
 
+interface WaitTimeData {
+  id: number;
+  name: string;
+  isOpen: boolean;
+  waitTime: number;
+  lastUpdated: string;
+}
+
 interface Attraction {
   id: string;
   name: string;
   position: LatLngTuple;
   description: string;
   waitTime?: number;
+  isOpen?: boolean;
   isNextInAgenda?: boolean;
   thrillLevel?: number;
   minHeight?: string;
@@ -79,6 +88,29 @@ interface RouteInfo {
   destinationName: string;
 }
 
+// Helper to normalize attraction names for matching
+const normalizeAttractionName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/[^\w\s']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Find matching wait time for an attraction
+const findWaitTime = (attractionName: string, waitTimes: WaitTimeData[]): WaitTimeData | undefined => {
+  const normalizedName = normalizeAttractionName(attractionName);
+  
+  return waitTimes.find(wt => {
+    const normalizedWtName = normalizeAttractionName(wt.name);
+    // Check if names match or one contains the other
+    return normalizedName === normalizedWtName || 
+           normalizedName.includes(normalizedWtName) || 
+           normalizedWtName.includes(normalizedName);
+  });
+};
+
 export default function ParkMap() {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -88,7 +120,10 @@ export default function ParkMap() {
 
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
   const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
+  const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
+  const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
   const [userPosition, setUserPosition] = useState<LatLngTuple | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -96,6 +131,30 @@ export default function ParkMap() {
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
 
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
+
+  // Fetch wait times from Queue-Times API
+  const fetchWaitTimes = useCallback(async (parkId: string) => {
+    setIsLoadingWaitTimes(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('queue-times', {
+        body: { parkId },
+      });
+
+      if (error) {
+        console.error('Error fetching wait times:', error);
+        setWaitTimes([]);
+      } else if (data?.success && data?.data) {
+        setWaitTimes(data.data);
+        setLastWaitTimeUpdate(new Date());
+      }
+    } catch (err) {
+      console.error('Failed to fetch wait times:', err);
+      setWaitTimes([]);
+    }
+    
+    setIsLoadingWaitTimes(false);
+  }, []);
 
   // Fetch attractions from database
   const fetchAttractions = async (parkId: string) => {
@@ -128,6 +187,16 @@ export default function ParkMap() {
     setIsLoadingAttractions(false);
   };
 
+  // Merge wait times with attractions
+  const attractionsWithWaitTimes = attractions.map(attraction => {
+    const waitTimeData = findWaitTime(attraction.name, waitTimes);
+    return {
+      ...attraction,
+      waitTime: waitTimeData?.waitTime,
+      isOpen: waitTimeData?.isOpen,
+    };
+  });
+
   // Initialize map
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
@@ -148,10 +217,20 @@ export default function ParkMap() {
     };
   }, []);
 
-  // Fetch attractions when park changes
+  // Fetch data when park changes
   useEffect(() => {
     fetchAttractions(selectedPark.id);
-  }, [selectedPark.id]);
+    fetchWaitTimes(selectedPark.id);
+  }, [selectedPark.id, fetchWaitTimes]);
+
+  // Auto-refresh wait times every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchWaitTimes(selectedPark.id);
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [selectedPark.id, fetchWaitTimes]);
 
   // Update map view when park changes
   useEffect(() => {
@@ -166,14 +245,34 @@ export default function ParkMap() {
 
     markersRef.current.clearLayers();
 
-    attractions.forEach((attraction) => {
+    attractionsWithWaitTimes.forEach((attraction) => {
       const icon = attraction.isNextInAgenda ? nextAttractionIcon : new L.Icon.Default();
       
+      const waitTimeColor = attraction.waitTime !== undefined 
+        ? attraction.waitTime > 60 ? '#EF4444' 
+          : attraction.waitTime > 30 ? '#F59E0B' 
+          : '#22C55E'
+        : '#6B7280';
+
       const popupContent = document.createElement('div');
       popupContent.innerHTML = `
         <div style="min-width: 200px;">
           <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
           ${attraction.description ? `<p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>` : ''}
+          
+          ${attraction.waitTime !== undefined ? `
+            <div style="background: ${waitTimeColor}; color: white; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; text-align: center;">
+              <div style="font-size: 11px; opacity: 0.9;">Tempo de espera</div>
+              <div style="font-size: 20px; font-weight: bold;">${attraction.waitTime} min</div>
+            </div>
+          ` : ''}
+          
+          ${attraction.isOpen === false ? `
+            <div style="background: #DC2626; color: white; padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; text-align: center; font-size: 12px;">
+              ❌ Fechada no momento
+            </div>
+          ` : ''}
+          
           <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;">
             ${attraction.thrillLevel ? `<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Nível ${attraction.thrillLevel}/5</span>` : ''}
             ${attraction.minHeight ? `<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${attraction.minHeight}</span>` : ''}
@@ -201,7 +300,7 @@ export default function ParkMap() {
       
       markersRef.current?.addLayer(marker);
     });
-  }, [attractions, userPosition]);
+  }, [attractionsWithWaitTimes, userPosition]);
 
   // Update user marker
   useEffect(() => {
@@ -341,6 +440,10 @@ export default function ParkMap() {
     }
   };
 
+  const handleRefreshWaitTimes = () => {
+    fetchWaitTimes(selectedPark.id);
+  };
+
   const formatDistance = (meters: number) => {
     if (meters < 1000) {
       return `${Math.round(meters)}m`;
@@ -358,6 +461,13 @@ export default function ParkMap() {
     return `${hours}h ${remainingMins}min`;
   };
 
+  const getWaitTimeColor = (waitTime: number | undefined) => {
+    if (waitTime === undefined) return 'bg-muted text-muted-foreground';
+    if (waitTime > 60) return 'bg-red-500 text-white';
+    if (waitTime > 30) return 'bg-amber-500 text-white';
+    return 'bg-green-500 text-white';
+  };
+
   return (
     <AppLayout>
       <div className="space-y-4 h-full">
@@ -368,10 +478,10 @@ export default function ParkMap() {
               <MapPin className="w-6 h-6 text-primary" />
               Mapa do Parque
             </h1>
-            <p className="text-muted-foreground text-sm">Localize-se e encontre as atrações</p>
+            <p className="text-muted-foreground text-sm">Localize-se e veja tempos de fila em tempo real</p>
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto flex-wrap">
             <Select value={selectedPark.id} onValueChange={handleParkChange}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Selecione o parque" />
@@ -384,6 +494,16 @@ export default function ParkMap() {
                 ))}
               </SelectContent>
             </Select>
+
+            <Button
+              onClick={handleRefreshWaitTimes}
+              disabled={isLoadingWaitTimes}
+              variant="outline"
+              size="icon"
+              title="Atualizar tempos de fila"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingWaitTimes ? 'animate-spin' : ''}`} />
+            </Button>
 
             <Button
               onClick={handleGetLocation}
@@ -400,6 +520,19 @@ export default function ParkMap() {
             </Button>
           </div>
         </div>
+
+        {/* Wait Time Status */}
+        {lastWaitTimeUpdate && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            Tempos de fila atualizados às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            {waitTimes.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {waitTimes.filter(w => w.isOpen).length} atrações abertas
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Location Error */}
         {locationError && (
@@ -493,7 +626,7 @@ export default function ParkMap() {
         {/* Map Container */}
         <div 
           ref={mapContainerRef}
-          className="h-[calc(100vh-320px)] min-h-[400px] rounded-xl overflow-hidden border shadow-lg z-0"
+          className="h-[calc(100vh-380px)] min-h-[350px] rounded-xl overflow-hidden border shadow-lg z-0"
         />
 
         {/* Attractions List */}
@@ -501,7 +634,7 @@ export default function ParkMap() {
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : attractions.length === 0 ? (
+        ) : attractionsWithWaitTimes.length === 0 ? (
           <Card className="p-6 text-center">
             <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
@@ -513,12 +646,12 @@ export default function ParkMap() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {attractions.map((attraction) => (
+            {attractionsWithWaitTimes.map((attraction) => (
               <Card
                 key={attraction.id}
                 className={`transition-all hover:shadow-md ${
                   attraction.isNextInAgenda ? 'ring-2 ring-amber-400' : ''
-                }`}
+                } ${attraction.isOpen === false ? 'opacity-60' : ''}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -529,15 +662,13 @@ export default function ParkMap() {
                         )}
                         {attraction.name}
                       </h3>
-                      {attraction.description && (
-                        <p className="text-xs text-muted-foreground truncate">{attraction.description}</p>
+                      {attraction.isOpen === false && (
+                        <p className="text-xs text-red-500 font-medium">Fechada</p>
                       )}
                     </div>
-                    {attraction.thrillLevel && (
-                      <Badge variant="outline" className="shrink-0 text-xs">
-                        Nível {attraction.thrillLevel}
-                      </Badge>
-                    )}
+                    <Badge className={`shrink-0 text-xs ${getWaitTimeColor(attraction.waitTime)}`}>
+                      {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : 'N/A'}
+                    </Badge>
                   </div>
                   <div className="flex gap-2">
                     <Button
