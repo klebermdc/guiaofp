@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Icon, LatLngTuple } from 'leaflet';
+import { useState, useEffect, useRef } from 'react';
+import L from 'leaflet';
 import { MapPin, Navigation, Loader2, AlertCircle, Star } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -9,10 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default marker icon in React-Leaflet
+// Fix default marker icons
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix Leaflet default icon
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+type LatLngTuple = [number, number];
 
 // Parks data with coordinates
 const PARKS = [
@@ -102,69 +111,100 @@ const ATTRACTIONS: Record<string, Array<{
 };
 
 // Custom marker icons
-const defaultIcon = new Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const userIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: `<div style="width: 24px; height: 24px; background: #3B82F6; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
-const userIcon = new Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3B82F6" width="32" height="32">
-      <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="3"/>
-      <circle cx="12" cy="12" r="4" fill="white"/>
-    </svg>
-  `),
+const nextAttractionIcon = L.divIcon({
+  className: 'next-attraction-marker',
+  html: `<div style="width: 32px; height: 32px; background: #F59E0B; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
+  </div>`,
   iconSize: [32, 32],
   iconAnchor: [16, 16],
-  popupAnchor: [0, -16],
 });
-
-const nextAttractionIcon = new Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#F59E0B" stroke="white" stroke-width="2"/>
-      <circle cx="12" cy="9" r="3" fill="white"/>
-    </svg>
-  `),
-  iconSize: [40, 48],
-  iconAnchor: [20, 48],
-  popupAnchor: [0, -48],
-});
-
-// Component to recenter map
-function RecenterMap({ center, zoom }: { center: LatLngTuple; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
-  return null;
-}
-
-// Component to fly to location
-function FlyToLocation({ position }: { position: LatLngTuple | null }) {
-  const map = useMap();
-  useEffect(() => {
-    if (position) {
-      map.flyTo(position, 18, { duration: 1.5 });
-    }
-  }, [position, map]);
-  return null;
-}
 
 export default function ParkMap() {
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [userPosition, setUserPosition] = useState<LatLngTuple | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [flyToPosition, setFlyToPosition] = useState<LatLngTuple | null>(null);
 
   const attractions = ATTRACTIONS[selectedPark.id] || [];
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const map = L.map(mapContainerRef.current).setView(selectedPark.center, selectedPark.zoom);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    mapRef.current = map;
+    markersRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = null;
+    };
+  }, []);
+
+  // Update map view when park changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    mapRef.current.setView(selectedPark.center, selectedPark.zoom);
+  }, [selectedPark]);
+
+  // Update markers when attractions or park changes
+  useEffect(() => {
+    if (!markersRef.current || !mapRef.current) return;
+
+    markersRef.current.clearLayers();
+
+    attractions.forEach((attraction) => {
+      const icon = attraction.isNextInAgenda ? nextAttractionIcon : new L.Icon.Default();
+      
+      const marker = L.marker(attraction.position, { icon })
+        .bindPopup(`
+          <div style="min-width: 180px;">
+            <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
+            <p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>
+            ${attraction.waitTime ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Espera: ~${attraction.waitTime} min</span>` : ''}
+            ${attraction.isNextInAgenda ? `<div style="background: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-size: 12px;">⭐ Próxima na Agenda</div>` : ''}
+          </div>
+        `);
+      
+      markersRef.current?.addLayer(marker);
+    });
+  }, [attractions, selectedPark]);
+
+  // Update user marker
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    if (userMarkerRef.current) {
+      mapRef.current.removeLayer(userMarkerRef.current);
+      userMarkerRef.current = null;
+    }
+
+    if (userPosition) {
+      userMarkerRef.current = L.marker(userPosition, { icon: userIcon })
+        .bindPopup('<strong>Você está aqui</strong>')
+        .addTo(mapRef.current);
+    }
+  }, [userPosition]);
 
   const handleGetLocation = () => {
     setIsLoadingLocation(true);
@@ -180,7 +220,7 @@ export default function ParkMap() {
       (position) => {
         const pos: LatLngTuple = [position.coords.latitude, position.coords.longitude];
         setUserPosition(pos);
-        setFlyToPosition(pos);
+        mapRef.current?.flyTo(pos, 18, { duration: 1.5 });
         setIsLoadingLocation(false);
       },
       (error) => {
@@ -204,14 +244,13 @@ export default function ParkMap() {
   };
 
   const handleNavigateToAttraction = (position: LatLngTuple) => {
-    setFlyToPosition(position);
+    mapRef.current?.flyTo(position, 18, { duration: 1.5 });
   };
 
   const handleParkChange = (parkId: string) => {
     const park = PARKS.find(p => p.id === parkId);
     if (park) {
       setSelectedPark(park);
-      setFlyToPosition(null);
     }
   };
 
@@ -295,59 +334,10 @@ export default function ParkMap() {
         )}
 
         {/* Map Container */}
-        <div className="h-[calc(100vh-320px)] min-h-[400px] rounded-xl overflow-hidden border shadow-lg">
-          <MapContainer
-            center={selectedPark.center}
-            zoom={selectedPark.zoom}
-            className="h-full w-full"
-            zoomControl={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            <RecenterMap center={selectedPark.center} zoom={selectedPark.zoom} />
-            <FlyToLocation position={flyToPosition} />
-
-            {/* User Position Marker */}
-            {userPosition && (
-              <Marker position={userPosition} icon={userIcon}>
-                <Popup>
-                  <div className="text-center">
-                    <strong>Você está aqui</strong>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Attraction Markers */}
-            {attractions.map((attraction) => (
-              <Marker
-                key={attraction.id}
-                position={attraction.position}
-                icon={attraction.isNextInAgenda ? nextAttractionIcon : defaultIcon}
-              >
-                <Popup>
-                  <div className="min-w-[200px]">
-                    <h3 className="font-bold text-base mb-1">{attraction.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{attraction.description}</p>
-                    {attraction.waitTime && (
-                      <Badge variant="secondary" className="mb-2">
-                        Espera: ~{attraction.waitTime} min
-                      </Badge>
-                    )}
-                    {attraction.isNextInAgenda && (
-                      <Badge className="bg-amber-500 text-white block text-center">
-                        ⭐ Próxima na Agenda
-                      </Badge>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
+        <div 
+          ref={mapContainerRef}
+          className="h-[calc(100vh-320px)] min-h-[400px] rounded-xl overflow-hidden border shadow-lg z-0"
+        />
 
         {/* Attractions List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
