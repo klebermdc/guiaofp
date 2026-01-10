@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { MapPin, Navigation, Loader2, AlertCircle, Star } from 'lucide-react';
+import 'leaflet-routing-machine';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
 // Fix default marker icons
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -127,16 +129,25 @@ const nextAttractionIcon = L.divIcon({
   iconAnchor: [16, 16],
 });
 
+interface RouteInfo {
+  distance: number;
+  time: number;
+  destinationName: string;
+}
+
 export default function ParkMap() {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const routingControlRef = useRef<L.Routing.Control | null>(null);
 
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [userPosition, setUserPosition] = useState<LatLngTuple | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
 
   const attractions = ATTRACTIONS[selectedPark.id] || [];
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
@@ -165,6 +176,7 @@ export default function ParkMap() {
   useEffect(() => {
     if (!mapRef.current) return;
     mapRef.current.setView(selectedPark.center, selectedPark.zoom);
+    clearRoute();
   }, [selectedPark]);
 
   // Update markers when attractions or park changes
@@ -176,19 +188,35 @@ export default function ParkMap() {
     attractions.forEach((attraction) => {
       const icon = attraction.isNextInAgenda ? nextAttractionIcon : new L.Icon.Default();
       
+      const popupContent = document.createElement('div');
+      popupContent.innerHTML = `
+        <div style="min-width: 200px;">
+          <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
+          <p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>
+          ${attraction.waitTime ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Espera: ~${attraction.waitTime} min</span>` : ''}
+          ${attraction.isNextInAgenda ? `<div style="background: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-size: 12px;">⭐ Próxima na Agenda</div>` : ''}
+          <button id="route-btn-${attraction.id}" style="margin-top: 10px; width: 100%; background: #3B82F6; color: white; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            🚶 Como Chegar
+          </button>
+        </div>
+      `;
+
       const marker = L.marker(attraction.position, { icon })
-        .bindPopup(`
-          <div style="min-width: 180px;">
-            <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
-            <p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>
-            ${attraction.waitTime ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Espera: ~${attraction.waitTime} min</span>` : ''}
-            ${attraction.isNextInAgenda ? `<div style="background: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-size: 12px;">⭐ Próxima na Agenda</div>` : ''}
-          </div>
-        `);
+        .bindPopup(popupContent);
+      
+      marker.on('popupopen', () => {
+        const btn = document.getElementById(`route-btn-${attraction.id}`);
+        if (btn) {
+          btn.onclick = () => {
+            calculateRoute(attraction.position, attraction.name);
+            marker.closePopup();
+          };
+        }
+      });
       
       markersRef.current?.addLayer(marker);
     });
-  }, [attractions, selectedPark]);
+  }, [attractions, selectedPark, userPosition]);
 
   // Update user marker
   useEffect(() => {
@@ -205,6 +233,67 @@ export default function ParkMap() {
         .addTo(mapRef.current);
     }
   }, [userPosition]);
+
+  const calculateRoute = (destination: LatLngTuple, destinationName: string) => {
+    if (!mapRef.current) return;
+
+    if (!userPosition) {
+      setLocationError('Ative sua localização primeiro para calcular a rota');
+      return;
+    }
+
+    setIsCalculatingRoute(true);
+    clearRoute();
+
+    const routingControl = (L.Routing as any).control({
+      waypoints: [
+        L.latLng(userPosition[0], userPosition[1]),
+        L.latLng(destination[0], destination[1])
+      ],
+      routeWhileDragging: false,
+      addWaypoints: false,
+      fitSelectedRoutes: true,
+      showAlternatives: false,
+      lineOptions: {
+        styles: [{ color: '#3B82F6', weight: 6, opacity: 0.8 }],
+        extendToWaypoints: true,
+        missingRouteTolerance: 0
+      },
+      router: (L.Routing as any).osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        profile: 'foot'
+      }),
+      createMarker: () => null,
+    }).addTo(mapRef.current);
+
+    routingControl.on('routesfound', (e: any) => {
+      const routes = e.routes;
+      if (routes && routes.length > 0) {
+        const route = routes[0];
+        setRouteInfo({
+          distance: route.summary.totalDistance,
+          time: route.summary.totalTime,
+          destinationName
+        });
+      }
+      setIsCalculatingRoute(false);
+    });
+
+    routingControl.on('routingerror', () => {
+      setLocationError('Não foi possível calcular a rota. Tente novamente.');
+      setIsCalculatingRoute(false);
+    });
+
+    routingControlRef.current = routingControl;
+  };
+
+  const clearRoute = () => {
+    if (routingControlRef.current && mapRef.current) {
+      mapRef.current.removeControl(routingControlRef.current);
+      routingControlRef.current = null;
+    }
+    setRouteInfo(null);
+  };
 
   const handleGetLocation = () => {
     setIsLoadingLocation(true);
@@ -243,8 +332,21 @@ export default function ParkMap() {
     );
   };
 
-  const handleNavigateToAttraction = (position: LatLngTuple) => {
+  const handleNavigateToAttraction = (position: LatLngTuple, name: string) => {
     mapRef.current?.flyTo(position, 18, { duration: 1.5 });
+  };
+
+  const handleRouteToAttraction = (position: LatLngTuple, name: string) => {
+    if (!userPosition) {
+      handleGetLocation();
+      setTimeout(() => {
+        if (userPosition) {
+          calculateRoute(position, name);
+        }
+      }, 2000);
+    } else {
+      calculateRoute(position, name);
+    }
   };
 
   const handleParkChange = (parkId: string) => {
@@ -252,6 +354,23 @@ export default function ParkMap() {
     if (park) {
       setSelectedPark(park);
     }
+  };
+
+  const formatDistance = (meters: number) => {
+    if (meters < 1000) {
+      return `${Math.round(meters)}m`;
+    }
+    return `${(meters / 1000).toFixed(1)}km`;
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMins = minutes % 60;
+    return `${hours}h ${remainingMins}min`;
   };
 
   return (
@@ -302,11 +421,49 @@ export default function ParkMap() {
           <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
             <AlertCircle className="w-4 h-4 shrink-0" />
             {locationError}
+            <button onClick={() => setLocationError(null)} className="ml-auto">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
+        {/* Route Info Card */}
+        {routeInfo && (
+          <Card className="border-2 border-blue-400 bg-blue-50 dark:bg-blue-950/20">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Route className="w-5 h-5 text-blue-500" />
+                  Rota para {routeInfo.destinationName}
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearRoute}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🚶</span>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Distância</p>
+                    <p className="font-bold text-lg">{formatDistance(routeInfo.distance)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⏱️</span>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tempo estimado</p>
+                    <p className="font-bold text-lg">{formatTime(routeInfo.time)}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Next Attraction Card */}
-        {nextAttraction && (
+        {nextAttraction && !routeInfo && (
           <Card className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/20">
             <CardHeader className="py-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -315,19 +472,34 @@ export default function ParkMap() {
               </CardTitle>
             </CardHeader>
             <CardContent className="py-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <p className="font-semibold">{nextAttraction.name}</p>
                   <p className="text-sm text-muted-foreground">{nextAttraction.description}</p>
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => handleNavigateToAttraction(nextAttraction.position)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
-                >
-                  <Navigation className="w-4 h-4 mr-1" />
-                  Ver no Mapa
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleNavigateToAttraction(nextAttraction.position, nextAttraction.name)}
+                  >
+                    <MapPin className="w-4 h-4 mr-1" />
+                    Ver
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleRouteToAttraction(nextAttraction.position, nextAttraction.name)}
+                    className="bg-amber-500 hover:bg-amber-600 text-white"
+                    disabled={isCalculatingRoute}
+                  >
+                    {isCalculatingRoute ? (
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    ) : (
+                      <Route className="w-4 h-4 mr-1" />
+                    )}
+                    Como Chegar
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -344,13 +516,12 @@ export default function ParkMap() {
           {attractions.map((attraction) => (
             <Card
               key={attraction.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
+              className={`transition-all hover:shadow-md ${
                 attraction.isNextInAgenda ? 'ring-2 ring-amber-400' : ''
               }`}
-              onClick={() => handleNavigateToAttraction(attraction.position)}
             >
               <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm truncate flex items-center gap-1">
                       {attraction.isNextInAgenda && (
@@ -365,6 +536,26 @@ export default function ParkMap() {
                       {attraction.waitTime}min
                     </Badge>
                   )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs"
+                    onClick={() => handleNavigateToAttraction(attraction.position, attraction.name)}
+                  >
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Ver
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => handleRouteToAttraction(attraction.position, attraction.name)}
+                    disabled={isCalculatingRoute}
+                  >
+                    <Route className="w-3 h-3 mr-1" />
+                    Rota
+                  </Button>
                 </div>
               </CardContent>
             </Card>
