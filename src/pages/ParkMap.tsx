@@ -46,9 +46,9 @@ const PARKS: Park[] = [
   { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 17 },
   { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
   { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3553, lng: -81.5901 }, zoom: 16 },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4753, lng: -81.4682 }, zoom: 17 },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4722, lng: -81.4710 }, zoom: 17 },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4422, lng: -81.4492 }, zoom: 17 },
+  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4780, lng: -81.4690 }, zoom: 17 },
+  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Island of Adventure', center: { lat: 28.4710, lng: -81.4720 }, zoom: 17 },
+  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4400, lng: -81.4485 }, zoom: 17 },
 ];
 
 const mapContainerStyle = {
