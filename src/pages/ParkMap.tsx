@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw, Search } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
+const LIBRARIES: ("places")[] = ["places"];
 
 type LatLng = { lat: number; lng: number };
 
@@ -17,14 +18,16 @@ interface Park {
   name: string;
   center: LatLng;
   zoom: number;
+  placeId?: string;
 }
 
 interface WaitTimeData {
-  id: number;
+  id: number | string;
   name: string;
   isOpen: boolean;
   waitTime: number;
   lastUpdated: string;
+  source?: string;
 }
 
 interface Attraction {
@@ -38,6 +41,7 @@ interface Attraction {
   thrillLevel?: number;
   minHeight?: string;
   passType?: string;
+  placeId?: string;
 }
 
 // Parks data with coordinates (category IDs from database)
@@ -46,9 +50,9 @@ const PARKS: Park[] = [
   { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 17 },
   { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
   { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3553, lng: -81.5901 }, zoom: 16 },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4780, lng: -81.4690 }, zoom: 17 },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Island of Adventure', center: { lat: 28.4710, lng: -81.4720 }, zoom: 17 },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4400, lng: -81.4485 }, zoom: 17 },
+  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios Florida', center: { lat: 28.4780, lng: -81.4690 }, zoom: 17 },
+  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4710, lng: -81.4720 }, zoom: 17 },
+  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 17 },
 ];
 
 const mapContainerStyle = {
@@ -94,9 +98,11 @@ interface RouteInfo {
 
 export default function ParkMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
+  const [dataSource, setDataSource] = useState<string>('');
   const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
   const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
   const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
@@ -111,7 +117,7 @@ export default function ParkMap() {
 
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
 
-  // Fetch wait times from Queue-Times API
+  // Fetch wait times from API
   const fetchWaitTimes = useCallback(async (parkId: string) => {
     setIsLoadingWaitTimes(true);
     
@@ -125,6 +131,7 @@ export default function ParkMap() {
         setWaitTimes([]);
       } else if (data?.success && data?.data) {
         setWaitTimes(data.data);
+        setDataSource(data.source || 'unknown');
         setLastWaitTimeUpdate(new Date());
       }
     } catch (err) {
@@ -135,55 +142,134 @@ export default function ParkMap() {
     setIsLoadingWaitTimes(false);
   }, []);
 
-  // Fetch attractions from database
-  const fetchAttractions = async (parkId: string) => {
+  // Search attractions using Google Places API
+  const searchAttractionsWithPlaces = useCallback(async (parkCenter: LatLng, parkName: string) => {
+    if (!placesServiceRef.current || !mapRef.current) {
+      console.log('Places service not ready');
+      return;
+    }
+
     setIsLoadingAttractions(true);
     
-    const { data, error } = await supabase
-      .from('content_items')
-      .select('id, title, description, latitude, longitude, thrill_level, min_height, pass_type')
-      .eq('category_id', parkId)
-      .eq('is_published', true)
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null);
+    const attractionsFound: Attraction[] = [];
+    
+    // Search for attractions, theme park rides, and points of interest
+    const searchTypes = ['amusement_park', 'tourist_attraction', 'point_of_interest'];
+    
+    const searchPromises = searchTypes.map(type => {
+      return new Promise<google.maps.places.PlaceResult[]>((resolve) => {
+        const request: google.maps.places.PlaceSearchRequest = {
+          location: parkCenter,
+          radius: 1500, // 1.5km radius
+          type: type,
+          keyword: parkName.includes('Universal') || parkName.includes('Epic') 
+            ? 'ride attraction' 
+            : parkName.includes('Disney') || parkName.includes('Magic') || parkName.includes('EPCOT') || parkName.includes('Hollywood') || parkName.includes('Animal')
+            ? 'Disney ride attraction'
+            : 'ride attraction',
+        };
 
-    if (error) {
-      console.error('Error fetching attractions:', error);
+        placesServiceRef.current!.nearbySearch(request, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            resolve(results);
+          } else {
+            resolve([]);
+          }
+        });
+      });
+    });
+
+    try {
+      const allResults = await Promise.all(searchPromises);
+      const combinedResults = allResults.flat();
+      
+      // Remove duplicates based on place_id
+      const uniquePlaces = new Map<string, google.maps.places.PlaceResult>();
+      combinedResults.forEach(place => {
+        if (place.place_id && place.geometry?.location) {
+          uniquePlaces.set(place.place_id, place);
+        }
+      });
+
+      uniquePlaces.forEach((place, placeId) => {
+        if (place.geometry?.location) {
+          attractionsFound.push({
+            id: placeId,
+            name: place.name || 'Atração',
+            position: {
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+            },
+            description: place.vicinity || '',
+            placeId: placeId,
+          });
+        }
+      });
+
+      console.log(`Found ${attractionsFound.length} attractions from Google Places`);
+      setAttractions(attractionsFound);
+    } catch (error) {
+      console.error('Error searching places:', error);
       setAttractions([]);
-    } else if (data) {
-      const mappedAttractions: Attraction[] = data.map((item) => ({
-        id: item.id,
-        name: item.title,
-        position: { lat: Number(item.latitude), lng: Number(item.longitude) },
-        description: item.description || '',
-        thrillLevel: item.thrill_level || undefined,
-        minHeight: item.min_height || undefined,
-        passType: item.pass_type || undefined,
-      }));
-      setAttractions(mappedAttractions);
     }
     
     setIsLoadingAttractions(false);
-  };
+  }, []);
+
+  // Alternative: Use wait times data directly as attractions (they have the correct names)
+  const useWaitTimesAsAttractions = useCallback((waitTimesData: WaitTimeData[], parkCenter: LatLng) => {
+    // Create attractions from wait times data
+    // Since we don't have exact coordinates, we'll place them around the park center
+    const attractionsFromWaitTimes: Attraction[] = waitTimesData.map((wt, index) => {
+      // Distribute attractions in a spiral pattern around the center
+      const angle = (index / waitTimesData.length) * 2 * Math.PI;
+      const radius = 0.002 + (index % 5) * 0.0005; // Vary radius slightly
+      
+      return {
+        id: String(wt.id),
+        name: wt.name,
+        position: {
+          lat: parkCenter.lat + radius * Math.cos(angle),
+          lng: parkCenter.lng + radius * Math.sin(angle),
+        },
+        description: wt.isOpen ? 'Aberto' : 'Fechado',
+        waitTime: wt.waitTime,
+        isOpen: wt.isOpen,
+      };
+    });
+
+    setAttractions(attractionsFromWaitTimes);
+  }, []);
 
   // Merge wait times with attractions
   const attractionsWithWaitTimes = attractions.map(attraction => {
     const waitTimeData = findWaitTime(attraction.name, waitTimes);
     return {
       ...attraction,
-      waitTime: waitTimeData?.waitTime,
-      isOpen: waitTimeData?.isOpen,
+      waitTime: waitTimeData?.waitTime ?? attraction.waitTime,
+      isOpen: waitTimeData?.isOpen ?? attraction.isOpen,
     };
   });
 
   // Fetch data when park changes
   useEffect(() => {
-    fetchAttractions(selectedPark.id);
     fetchWaitTimes(selectedPark.id);
     setDirections(null);
     setRouteInfo(null);
     setSelectedAttraction(null);
-  }, [selectedPark.id, fetchWaitTimes]);
+    
+    // If map is loaded, search for attractions
+    if (isMapLoaded && placesServiceRef.current) {
+      searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
+    }
+  }, [selectedPark.id, fetchWaitTimes, isMapLoaded, searchAttractionsWithPlaces, selectedPark.center, selectedPark.name]);
+
+  // When wait times are loaded, use them as attractions if no Places results
+  useEffect(() => {
+    if (waitTimes.length > 0 && attractions.length === 0) {
+      useWaitTimesAsAttractions(waitTimes, selectedPark.center);
+    }
+  }, [waitTimes, attractions.length, selectedPark.center, useWaitTimesAsAttractions]);
 
   // Auto-refresh wait times every 5 minutes
   useEffect(() => {
@@ -298,6 +384,7 @@ export default function ParkMap() {
     const park = PARKS.find(p => p.id === parkId);
     if (park) {
       setSelectedPark(park);
+      setAttractions([]); // Clear attractions when changing parks
     }
   };
 
@@ -305,9 +392,19 @@ export default function ParkMap() {
     fetchWaitTimes(selectedPark.id);
   };
 
+  const handleSearchAttractions = () => {
+    if (isMapLoaded && placesServiceRef.current) {
+      searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
+    }
+  };
+
   const onMapLoad = (map: google.maps.Map) => {
     mapRef.current = map;
+    placesServiceRef.current = new google.maps.places.PlacesService(map);
     setIsMapLoaded(true);
+    
+    // Search for attractions once map is loaded
+    searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
   };
 
   const getMarkerIcon = (attraction: Attraction): google.maps.Symbol | google.maps.Icon => {
@@ -373,6 +470,16 @@ export default function ParkMap() {
             </Select>
 
             <Button
+              onClick={handleSearchAttractions}
+              disabled={isLoadingAttractions || !isMapLoaded}
+              variant="outline"
+              size="icon"
+              title="Buscar atrações no Google Maps"
+            >
+              <Search className={`w-4 h-4 ${isLoadingAttractions ? 'animate-pulse' : ''}`} />
+            </Button>
+
+            <Button
               onClick={handleRefreshWaitTimes}
               disabled={isLoadingWaitTimes}
               variant="outline"
@@ -400,12 +507,17 @@ export default function ParkMap() {
 
         {/* Wait Time Status */}
         {lastWaitTimeUpdate && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <Clock className="w-3 h-3" />
             Tempos de fila atualizados às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             {waitTimes.length > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {waitTimes.filter(w => w.isOpen).length} atrações abertas
+              </Badge>
+            )}
+            {dataSource && (
+              <Badge variant="outline" className="text-xs">
+                via {dataSource}
               </Badge>
             )}
           </div>
@@ -500,185 +612,211 @@ export default function ParkMap() {
           </Card>
         )}
 
-        {/* Map Container */}
-        <div className="h-[calc(100vh-380px)] min-h-[350px] rounded-xl overflow-hidden border shadow-lg">
-          <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={selectedPark.center}
-              zoom={selectedPark.zoom}
-              options={mapOptions}
-              onLoad={onMapLoad}
-            >
-              {/* User Position Marker */}
-              {userPosition && (
-                <Marker
-                  position={userPosition}
-                  icon={{
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: '#3B82F6',
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 3,
-                    scale: 10,
-                  }}
-                  title="Você está aqui"
-                />
-              )}
+        {/* Map and Attractions Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-350px)] min-h-[400px]">
+          {/* Map */}
+          <div className="lg:col-span-2 rounded-xl overflow-hidden border shadow-lg">
+            <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={LIBRARIES}>
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={selectedPark.center}
+                zoom={selectedPark.zoom}
+                options={mapOptions}
+                onLoad={onMapLoad}
+              >
+                {/* User location marker */}
+                {userPosition && (
+                  <Marker
+                    position={userPosition}
+                    icon={{
+                      path: google.maps.SymbolPath.CIRCLE,
+                      fillColor: '#3B82F6',
+                      fillOpacity: 1,
+                      strokeColor: '#FFFFFF',
+                      strokeWeight: 3,
+                      scale: 10,
+                    }}
+                    title="Sua localização"
+                    zIndex={1000}
+                  />
+                )}
 
-              {/* Attraction Markers */}
-              {isMapLoaded && attractionsWithWaitTimes.map((attraction) => (
-                <Marker
-                  key={attraction.id}
-                  position={attraction.position}
-                  icon={getMarkerIcon(attraction)}
-                  onClick={() => setSelectedAttraction(attraction)}
-                  title={attraction.name}
-                />
-              ))}
+                {/* Attraction markers */}
+                {attractionsWithWaitTimes.map((attraction) => (
+                  <Marker
+                    key={attraction.id}
+                    position={attraction.position}
+                    icon={getMarkerIcon(attraction)}
+                    title={`${attraction.name}${attraction.waitTime !== undefined ? ` - ${attraction.waitTime} min` : ''}`}
+                    onClick={() => setSelectedAttraction(attraction)}
+                    zIndex={attraction.isNextInAgenda ? 999 : 1}
+                  />
+                ))}
 
-              {/* Info Window for selected attraction */}
-              {selectedAttraction && (
-                <InfoWindow
-                  position={selectedAttraction.position}
-                  onCloseClick={() => setSelectedAttraction(null)}
-                >
-                  <div className="p-2 min-w-[200px]">
-                    <h3 className="font-bold text-base mb-1">{selectedAttraction.name}</h3>
-                    {selectedAttraction.description && (
-                      <p className="text-sm text-gray-600 mb-2">{selectedAttraction.description}</p>
-                    )}
-                    
-                    {selectedAttraction.waitTime !== undefined && (
-                      <div 
-                        className="text-center p-2 rounded mb-2 text-white"
-                        style={{ 
-                          backgroundColor: selectedAttraction.waitTime > 60 ? '#EF4444' 
-                            : selectedAttraction.waitTime > 30 ? '#F59E0B' 
-                            : '#22C55E' 
-                        }}
-                      >
-                        <div className="text-xs opacity-90">Tempo de espera</div>
-                        <div className="text-xl font-bold">{selectedAttraction.waitTime} min</div>
+                {/* InfoWindow for selected attraction */}
+                {selectedAttraction && (
+                  <InfoWindow
+                    position={selectedAttraction.position}
+                    onCloseClick={() => setSelectedAttraction(null)}
+                  >
+                    <div className="p-2 max-w-[250px]">
+                      <h3 className="font-bold text-gray-900 mb-1">{selectedAttraction.name}</h3>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        {selectedAttraction.waitTime !== undefined ? (
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${
+                            selectedAttraction.waitTime > 60 ? 'bg-red-500 text-white' :
+                            selectedAttraction.waitTime > 30 ? 'bg-amber-500 text-white' :
+                            'bg-green-500 text-white'
+                          }`}>
+                            {selectedAttraction.waitTime} min
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded text-xs bg-gray-200 text-gray-600">
+                            Sem dados
+                          </span>
+                        )}
+                        
+                        {selectedAttraction.isOpen !== undefined && (
+                          <span className={`text-xs ${selectedAttraction.isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                            {selectedAttraction.isOpen ? '● Aberto' : '● Fechado'}
+                          </span>
+                        )}
                       </div>
-                    )}
-                    
-                    {selectedAttraction.isOpen === false && (
-                      <div className="bg-red-500 text-white text-center p-1 rounded text-xs mb-2">
-                        ❌ Fechada no momento
+
+                      {selectedAttraction.description && (
+                        <p className="text-xs text-gray-600 mb-2">{selectedAttraction.description}</p>
+                      )}
+
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
+                          className="flex-1 bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600"
+                        >
+                          Como Chegar
+                        </button>
                       </div>
-                    )}
-                    
-                    <div className="flex gap-1 flex-wrap mb-2">
-                      {selectedAttraction.thrillLevel && (
-                        <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs">
-                          Nível {selectedAttraction.thrillLevel}/5
-                        </span>
-                      )}
-                      {selectedAttraction.minHeight && (
-                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">
-                          {selectedAttraction.minHeight}
-                        </span>
-                      )}
                     </div>
-                    
-                    <button
-                      onClick={() => {
-                        calculateRoute(selectedAttraction.position, selectedAttraction.name);
-                        setSelectedAttraction(null);
-                      }}
-                      className="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-1"
-                    >
-                      🚶 Como Chegar
-                    </button>
-                  </div>
-                </InfoWindow>
-              )}
+                  </InfoWindow>
+                )}
 
-              {/* Directions */}
-              {directions && (
-                <DirectionsRenderer
-                  directions={directions}
-                  options={{
-                    polylineOptions: {
-                      strokeColor: '#3B82F6',
-                      strokeWeight: 5,
-                      strokeOpacity: 0.8,
-                    },
-                    suppressMarkers: true,
-                  }}
-                />
+                {/* Directions renderer */}
+                {directions && (
+                  <DirectionsRenderer
+                    directions={directions}
+                    options={{
+                      suppressMarkers: true,
+                      polylineOptions: {
+                        strokeColor: '#3B82F6',
+                        strokeWeight: 5,
+                        strokeOpacity: 0.8,
+                      },
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            </LoadScript>
+          </div>
+
+          {/* Attractions List */}
+          <div className="overflow-auto rounded-xl border bg-card">
+            <div className="p-4 border-b bg-muted/50 sticky top-0">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Star className="w-4 h-4 text-primary" />
+                Atrações ({attractionsWithWaitTimes.length})
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Clique para ver no mapa
+              </p>
+            </div>
+            
+            <div className="divide-y">
+              {isLoadingAttractions ? (
+                <div className="p-8 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : attractionsWithWaitTimes.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhuma atração encontrada</p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={handleSearchAttractions}
+                    className="mt-2"
+                  >
+                    Buscar atrações
+                  </Button>
+                </div>
+              ) : (
+                attractionsWithWaitTimes
+                  .sort((a, b) => {
+                    // Sort by wait time (lower first), then by name
+                    if (a.waitTime !== undefined && b.waitTime !== undefined) {
+                      return a.waitTime - b.waitTime;
+                    }
+                    if (a.waitTime !== undefined) return -1;
+                    if (b.waitTime !== undefined) return 1;
+                    return a.name.localeCompare(b.name);
+                  })
+                  .map((attraction) => (
+                    <div
+                      key={attraction.id}
+                      className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        selectedAttraction?.id === attraction.id ? 'bg-primary/10' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedAttraction(attraction);
+                        handleNavigateToAttraction(attraction.position);
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{attraction.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {attraction.isOpen !== undefined && (
+                              <span className={`text-xs ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                                {attraction.isOpen ? '● Aberto' : '● Fechado'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Badge className={getWaitTimeColor(attraction.waitTime)}>
+                          {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : '—'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
               )}
-            </GoogleMap>
-          </LoadScript>
+            </div>
+          </div>
         </div>
 
-        {/* Attractions List */}
-        {isLoadingAttractions ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          <span className="font-medium">Legenda:</span>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span>&lt; 30 min</span>
           </div>
-        ) : attractionsWithWaitTimes.length === 0 ? (
-          <Card className="p-6 text-center">
-            <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              Nenhuma atração com coordenadas cadastradas para este parque.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Adicione coordenadas GPS nas atrações pelo painel de administração.
-            </p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {attractionsWithWaitTimes.map((attraction) => (
-              <Card
-                key={attraction.id}
-                className={`transition-all hover:shadow-md ${
-                  attraction.isNextInAgenda ? 'ring-2 ring-amber-400' : ''
-                } ${attraction.isOpen === false ? 'opacity-60' : ''}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm truncate flex items-center gap-1">
-                        {attraction.isNextInAgenda && (
-                          <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
-                        )}
-                        {attraction.name}
-                      </h3>
-                      {attraction.isOpen === false && (
-                        <p className="text-xs text-red-500 font-medium">Fechada</p>
-                      )}
-                    </div>
-                    <Badge className={`shrink-0 text-xs ${getWaitTimeColor(attraction.waitTime)}`}>
-                      {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : 'N/A'}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs"
-                      onClick={() => handleNavigateToAttraction(attraction.position)}
-                    >
-                      <MapPin className="w-3 h-3 mr-1" />
-                      Ver
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 text-xs"
-                      onClick={() => handleRouteToAttraction(attraction.position, attraction.name)}
-                      disabled={isCalculatingRoute}
-                    >
-                      <Route className="w-3 h-3 mr-1" />
-                      Rota
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+            <span>30-60 min</span>
           </div>
-        )}
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span>&gt; 60 min</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+            <span>Sem dados</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span>Sua localização</span>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
