@@ -63,6 +63,8 @@ export type Database = {
           icon: string | null
           id: string
           is_published: boolean | null
+          latitude: number | null
+          longitude: number | null
           min_height: string | null
           pass_type: string | null
           sort_order: number | null
@@ -84,6 +86,8 @@ export type Database = {
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           min_height?: string | null
           pass_type?: string | null
           sort_order?: number | null
@@ -105,6 +109,8 @@ export type Database = {
           icon?: string | null
           id?: string
           is_published?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           min_height?: string | null
           pass_type?: string | null
           sort_order?: number | null
