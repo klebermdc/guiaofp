@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Sparkles,
-  Shield
+  Shield,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -23,6 +24,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
   { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
+  { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
   { icon: BookOpen, label: 'Conteúdos Exclusivos', path: '/conteudos' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
