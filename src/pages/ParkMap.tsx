@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import L from 'leaflet';
-import 'leaflet-routing-machine';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -8,28 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
-// Fix default marker icons
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
-// Fix Leaflet default icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
-
-type LatLngTuple = [number, number];
+type LatLng = { lat: number; lng: number };
 
 interface Park {
   id: string;
   name: string;
-  center: LatLngTuple;
+  center: LatLng;
   zoom: number;
 }
 
@@ -44,7 +30,7 @@ interface WaitTimeData {
 interface Attraction {
   id: string;
   name: string;
-  position: LatLngTuple;
+  position: LatLng;
   description: string;
   waitTime?: number;
   isOpen?: boolean;
@@ -56,37 +42,27 @@ interface Attraction {
 
 // Parks data with coordinates (category IDs from database)
 const PARKS: Park[] = [
-  { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', center: [28.4177, -81.5812], zoom: 16 },
-  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: [28.3747, -81.5494], zoom: 16 },
-  { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: [28.3575, -81.5583], zoom: 16 },
-  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: [28.3553, -81.5901], zoom: 15 },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: [28.4753, -81.4682], zoom: 16 },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: [28.4722, -81.4710], zoom: 16 },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: [28.4726, -81.5358], zoom: 16 },
+  { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', center: { lat: 28.4177, lng: -81.5812 }, zoom: 17 },
+  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 17 },
+  { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
+  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3553, lng: -81.5901 }, zoom: 16 },
+  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4753, lng: -81.4682 }, zoom: 17 },
+  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4722, lng: -81.4710 }, zoom: 17 },
+  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4422, lng: -81.4492 }, zoom: 17 },
 ];
 
-// Custom marker icons
-const userIcon = L.divIcon({
-  className: 'user-location-marker',
-  html: `<div style="width: 24px; height: 24px; background: #3B82F6; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+};
 
-const nextAttractionIcon = L.divIcon({
-  className: 'next-attraction-marker',
-  html: `<div style="width: 32px; height: 32px; background: #F59E0B; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"/></svg>
-  </div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-});
-
-interface RouteInfo {
-  distance: number;
-  time: number;
-  destinationName: string;
-}
+const mapOptions: google.maps.MapOptions = {
+  mapTypeId: 'satellite',
+  mapTypeControl: true,
+  streetViewControl: false,
+  fullscreenControl: true,
+  zoomControl: true,
+};
 
 // Helper to normalize attraction names for matching
 const normalizeAttractionName = (name: string): string => {
@@ -104,31 +80,34 @@ const findWaitTime = (attractionName: string, waitTimes: WaitTimeData[]): WaitTi
   
   return waitTimes.find(wt => {
     const normalizedWtName = normalizeAttractionName(wt.name);
-    // Check if names match or one contains the other
     return normalizedName === normalizedWtName || 
            normalizedName.includes(normalizedWtName) || 
            normalizedWtName.includes(normalizedName);
   });
 };
 
-export default function ParkMap() {
-  const mapRef = useRef<L.Map | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<L.LayerGroup | null>(null);
-  const userMarkerRef = useRef<L.Marker | null>(null);
-  const routingControlRef = useRef<any>(null);
+interface RouteInfo {
+  distance: string;
+  duration: string;
+  destinationName: string;
+}
 
+export default function ParkMap() {
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
   const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
   const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
   const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
-  const [userPosition, setUserPosition] = useState<LatLngTuple | null>(null);
+  const [userPosition, setUserPosition] = useState<LatLng | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
 
@@ -175,7 +154,7 @@ export default function ParkMap() {
       const mappedAttractions: Attraction[] = data.map((item) => ({
         id: item.id,
         name: item.title,
-        position: [Number(item.latitude), Number(item.longitude)] as LatLngTuple,
+        position: { lat: Number(item.latitude), lng: Number(item.longitude) },
         description: item.description || '',
         thrillLevel: item.thrill_level || undefined,
         minHeight: item.min_height || undefined,
@@ -197,30 +176,13 @@ export default function ParkMap() {
     };
   });
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
-
-    const map = L.map(mapContainerRef.current).setView(selectedPark.center, selectedPark.zoom);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-
-    mapRef.current = map;
-    markersRef.current = L.layerGroup().addTo(map);
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-      markersRef.current = null;
-    };
-  }, []);
-
   // Fetch data when park changes
   useEffect(() => {
     fetchAttractions(selectedPark.id);
     fetchWaitTimes(selectedPark.id);
+    setDirections(null);
+    setRouteInfo(null);
+    setSelectedAttraction(null);
   }, [selectedPark.id, fetchWaitTimes]);
 
   // Auto-refresh wait times every 5 minutes
@@ -232,150 +194,43 @@ export default function ParkMap() {
     return () => clearInterval(interval);
   }, [selectedPark.id, fetchWaitTimes]);
 
-  // Update map view when park changes
-  useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.setView(selectedPark.center, selectedPark.zoom);
-    clearRoute();
-  }, [selectedPark]);
-
-  // Update markers when attractions change
-  useEffect(() => {
-    if (!markersRef.current || !mapRef.current) return;
-
-    markersRef.current.clearLayers();
-
-    attractionsWithWaitTimes.forEach((attraction) => {
-      const icon = attraction.isNextInAgenda ? nextAttractionIcon : new L.Icon.Default();
-      
-      const waitTimeColor = attraction.waitTime !== undefined 
-        ? attraction.waitTime > 60 ? '#EF4444' 
-          : attraction.waitTime > 30 ? '#F59E0B' 
-          : '#22C55E'
-        : '#6B7280';
-
-      const popupContent = document.createElement('div');
-      popupContent.innerHTML = `
-        <div style="min-width: 200px;">
-          <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
-          ${attraction.description ? `<p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>` : ''}
-          
-          ${attraction.waitTime !== undefined ? `
-            <div style="background: ${waitTimeColor}; color: white; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; text-align: center;">
-              <div style="font-size: 11px; opacity: 0.9;">Tempo de espera</div>
-              <div style="font-size: 20px; font-weight: bold;">${attraction.waitTime} min</div>
-            </div>
-          ` : ''}
-          
-          ${attraction.isOpen === false ? `
-            <div style="background: #DC2626; color: white; padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; text-align: center; font-size: 12px;">
-              ❌ Fechada no momento
-            </div>
-          ` : ''}
-          
-          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;">
-            ${attraction.thrillLevel ? `<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Nível ${attraction.thrillLevel}/5</span>` : ''}
-            ${attraction.minHeight ? `<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${attraction.minHeight}</span>` : ''}
-          </div>
-          ${attraction.passType ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${attraction.passType}</span>` : ''}
-          ${attraction.isNextInAgenda ? `<div style="background: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-size: 12px;">⭐ Próxima na Agenda</div>` : ''}
-          <button id="route-btn-${attraction.id}" style="margin-top: 10px; width: 100%; background: #3B82F6; color: white; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            🚶 Como Chegar
-          </button>
-        </div>
-      `;
-
-      const marker = L.marker(attraction.position, { icon })
-        .bindPopup(popupContent);
-      
-      marker.on('popupopen', () => {
-        const btn = document.getElementById(`route-btn-${attraction.id}`);
-        if (btn) {
-          btn.onclick = () => {
-            calculateRoute(attraction.position, attraction.name);
-            marker.closePopup();
-          };
-        }
-      });
-      
-      markersRef.current?.addLayer(marker);
-    });
-  }, [attractionsWithWaitTimes, userPosition]);
-
-  // Update user marker
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    if (userMarkerRef.current) {
-      mapRef.current.removeLayer(userMarkerRef.current);
-      userMarkerRef.current = null;
-    }
-
-    if (userPosition) {
-      userMarkerRef.current = L.marker(userPosition, { icon: userIcon })
-        .bindPopup('<strong>Você está aqui</strong>')
-        .addTo(mapRef.current);
-    }
-  }, [userPosition]);
-
-  const calculateRoute = (destination: LatLngTuple, destinationName: string) => {
-    if (!mapRef.current) return;
-
+  const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
     if (!userPosition) {
       setLocationError('Ative sua localização primeiro para calcular a rota');
       return;
     }
 
     setIsCalculatingRoute(true);
-    clearRoute();
+    setSelectedAttraction(null);
 
-    const routingControl = (L.Routing as any).control({
-      waypoints: [
-        L.latLng(userPosition[0], userPosition[1]),
-        L.latLng(destination[0], destination[1])
-      ],
-      routeWhileDragging: false,
-      addWaypoints: false,
-      fitSelectedRoutes: true,
-      showAlternatives: false,
-      lineOptions: {
-        styles: [{ color: '#3B82F6', weight: 6, opacity: 0.8 }],
-        extendToWaypoints: true,
-        missingRouteTolerance: 0
+    const directionsService = new google.maps.DirectionsService();
+    
+    directionsService.route(
+      {
+        origin: userPosition,
+        destination: destination,
+        travelMode: google.maps.TravelMode.WALKING,
       },
-      router: (L.Routing as any).osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile: 'foot'
-      }),
-      createMarker: () => null,
-    }).addTo(mapRef.current);
-
-    routingControl.on('routesfound', (e: any) => {
-      const routes = e.routes;
-      if (routes && routes.length > 0) {
-        const route = routes[0];
-        setRouteInfo({
-          distance: route.summary.totalDistance,
-          time: route.summary.totalTime,
-          destinationName
-        });
+      (result, status) => {
+        setIsCalculatingRoute(false);
+        
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          setDirections(result);
+          const leg = result.routes[0].legs[0];
+          setRouteInfo({
+            distance: leg.distance?.text || '',
+            duration: leg.duration?.text || '',
+            destinationName,
+          });
+        } else {
+          setLocationError('Não foi possível calcular a rota. Tente novamente.');
+        }
       }
-      setIsCalculatingRoute(false);
-    });
-
-    routingControl.on('routingerror', () => {
-      setLocationError('Não foi possível calcular a rota. Tente novamente.');
-      setIsCalculatingRoute(false);
-    });
-
-    routingControlRef.current = routingControl;
-  };
+    );
+  }, [userPosition]);
 
   const clearRoute = () => {
-    if (routingControlRef.current && mapRef.current) {
-      mapRef.current.removeControl(routingControlRef.current);
-      routingControlRef.current = null;
-    }
+    setDirections(null);
     setRouteInfo(null);
   };
 
@@ -391,9 +246,12 @@ export default function ParkMap() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const pos: LatLngTuple = [position.coords.latitude, position.coords.longitude];
+        const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
         setUserPosition(pos);
-        mapRef.current?.flyTo(pos, 18, { duration: 1.5 });
+        if (mapRef.current) {
+          mapRef.current.panTo(pos);
+          mapRef.current.setZoom(18);
+        }
         setIsLoadingLocation(false);
       },
       (error) => {
@@ -416,11 +274,14 @@ export default function ParkMap() {
     );
   };
 
-  const handleNavigateToAttraction = (position: LatLngTuple) => {
-    mapRef.current?.flyTo(position, 18, { duration: 1.5 });
+  const handleNavigateToAttraction = (position: LatLng) => {
+    if (mapRef.current) {
+      mapRef.current.panTo(position);
+      mapRef.current.setZoom(19);
+    }
   };
 
-  const handleRouteToAttraction = (position: LatLngTuple, name: string) => {
+  const handleRouteToAttraction = (position: LatLng, name: string) => {
     if (!userPosition) {
       handleGetLocation();
       setTimeout(() => {
@@ -444,21 +305,37 @@ export default function ParkMap() {
     fetchWaitTimes(selectedPark.id);
   };
 
-  const formatDistance = (meters: number) => {
-    if (meters < 1000) {
-      return `${Math.round(meters)}m`;
-    }
-    return `${(meters / 1000).toFixed(1)}km`;
+  const onMapLoad = (map: google.maps.Map) => {
+    mapRef.current = map;
+    setIsMapLoaded(true);
   };
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.round(seconds / 60);
-    if (minutes < 60) {
-      return `${minutes} min`;
+  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol | google.maps.Icon => {
+    const waitTimeColor = attraction.waitTime !== undefined 
+      ? attraction.waitTime > 60 ? '#EF4444' 
+        : attraction.waitTime > 30 ? '#F59E0B' 
+        : '#22C55E'
+      : '#6B7280';
+
+    if (attraction.isNextInAgenda) {
+      return {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: '#F59E0B',
+        fillOpacity: 1,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 3,
+        scale: 14,
+      };
     }
-    const hours = Math.floor(minutes / 60);
-    const remainingMins = minutes % 60;
-    return `${hours}h ${remainingMins}min`;
+
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: waitTimeColor,
+      fillOpacity: 1,
+      strokeColor: '#FFFFFF',
+      strokeWeight: 2,
+      scale: 10,
+    };
   };
 
   const getWaitTimeColor = (waitTime: number | undefined) => {
@@ -565,14 +442,14 @@ export default function ParkMap() {
                   <span className="text-2xl">🚶</span>
                   <div>
                     <p className="text-xs text-muted-foreground">Distância</p>
-                    <p className="font-bold text-lg">{formatDistance(routeInfo.distance)}</p>
+                    <p className="font-bold text-lg">{routeInfo.distance}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">⏱️</span>
                   <div>
                     <p className="text-xs text-muted-foreground">Tempo estimado</p>
-                    <p className="font-bold text-lg">{formatTime(routeInfo.time)}</p>
+                    <p className="font-bold text-lg">{routeInfo.duration}</p>
                   </div>
                 </div>
               </div>
@@ -624,10 +501,117 @@ export default function ParkMap() {
         )}
 
         {/* Map Container */}
-        <div 
-          ref={mapContainerRef}
-          className="h-[calc(100vh-380px)] min-h-[350px] rounded-xl overflow-hidden border shadow-lg z-0"
-        />
+        <div className="h-[calc(100vh-380px)] min-h-[350px] rounded-xl overflow-hidden border shadow-lg">
+          <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={selectedPark.center}
+              zoom={selectedPark.zoom}
+              options={mapOptions}
+              onLoad={onMapLoad}
+            >
+              {/* User Position Marker */}
+              {userPosition && (
+                <Marker
+                  position={userPosition}
+                  icon={{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#3B82F6',
+                    fillOpacity: 1,
+                    strokeColor: '#FFFFFF',
+                    strokeWeight: 3,
+                    scale: 10,
+                  }}
+                  title="Você está aqui"
+                />
+              )}
+
+              {/* Attraction Markers */}
+              {isMapLoaded && attractionsWithWaitTimes.map((attraction) => (
+                <Marker
+                  key={attraction.id}
+                  position={attraction.position}
+                  icon={getMarkerIcon(attraction)}
+                  onClick={() => setSelectedAttraction(attraction)}
+                  title={attraction.name}
+                />
+              ))}
+
+              {/* Info Window for selected attraction */}
+              {selectedAttraction && (
+                <InfoWindow
+                  position={selectedAttraction.position}
+                  onCloseClick={() => setSelectedAttraction(null)}
+                >
+                  <div className="p-2 min-w-[200px]">
+                    <h3 className="font-bold text-base mb-1">{selectedAttraction.name}</h3>
+                    {selectedAttraction.description && (
+                      <p className="text-sm text-gray-600 mb-2">{selectedAttraction.description}</p>
+                    )}
+                    
+                    {selectedAttraction.waitTime !== undefined && (
+                      <div 
+                        className="text-center p-2 rounded mb-2 text-white"
+                        style={{ 
+                          backgroundColor: selectedAttraction.waitTime > 60 ? '#EF4444' 
+                            : selectedAttraction.waitTime > 30 ? '#F59E0B' 
+                            : '#22C55E' 
+                        }}
+                      >
+                        <div className="text-xs opacity-90">Tempo de espera</div>
+                        <div className="text-xl font-bold">{selectedAttraction.waitTime} min</div>
+                      </div>
+                    )}
+                    
+                    {selectedAttraction.isOpen === false && (
+                      <div className="bg-red-500 text-white text-center p-1 rounded text-xs mb-2">
+                        ❌ Fechada no momento
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-1 flex-wrap mb-2">
+                      {selectedAttraction.thrillLevel && (
+                        <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs">
+                          Nível {selectedAttraction.thrillLevel}/5
+                        </span>
+                      )}
+                      {selectedAttraction.minHeight && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">
+                          {selectedAttraction.minHeight}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        calculateRoute(selectedAttraction.position, selectedAttraction.name);
+                        setSelectedAttraction(null);
+                      }}
+                      className="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-1"
+                    >
+                      🚶 Como Chegar
+                    </button>
+                  </div>
+                </InfoWindow>
+              )}
+
+              {/* Directions */}
+              {directions && (
+                <DirectionsRenderer
+                  directions={directions}
+                  options={{
+                    polylineOptions: {
+                      strokeColor: '#3B82F6',
+                      strokeWeight: 5,
+                      strokeOpacity: 0.8,
+                    },
+                    suppressMarkers: true,
+                  }}
+                />
+              )}
+            </GoogleMap>
+          </LoadScript>
+        </div>
 
         {/* Attractions List */}
         {isLoadingAttractions ? (
