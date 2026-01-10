@@ -13,6 +13,7 @@ import Content from "./pages/Content";
 import Plan from "./pages/Plan";
 import PostTrip from "./pages/PostTrip";
 import Admin from "./pages/Admin";
+import ParkMap from "./pages/ParkMap";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/conteudos" element={<Content />} />
+            <Route path="/mapa" element={<ParkMap />} />
             <Route path="/plano" element={<Plan />} />
             <Route path="/pos-viagem" element={<PostTrip />} />
             <Route path="/admin" element={<Admin />} />
