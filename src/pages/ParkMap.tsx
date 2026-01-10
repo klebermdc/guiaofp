@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
@@ -25,92 +26,35 @@ L.Icon.Default.mergeOptions({
 
 type LatLngTuple = [number, number];
 
-// Parks data with coordinates
-const PARKS = [
-  {
-    id: 'magic-kingdom',
-    name: 'Magic Kingdom',
-    center: [28.4177, -81.5812] as LatLngTuple,
-    zoom: 16,
-    color: '#1E40AF',
-  },
-  {
-    id: 'epcot',
-    name: 'EPCOT',
-    center: [28.3747, -81.5494] as LatLngTuple,
-    zoom: 16,
-    color: '#7C3AED',
-  },
-  {
-    id: 'hollywood-studios',
-    name: 'Hollywood Studios',
-    center: [28.3575, -81.5583] as LatLngTuple,
-    zoom: 16,
-    color: '#DC2626',
-  },
-  {
-    id: 'animal-kingdom',
-    name: 'Animal Kingdom',
-    center: [28.3553, -81.5901] as LatLngTuple,
-    zoom: 15,
-    color: '#059669',
-  },
-  {
-    id: 'universal-studios',
-    name: 'Universal Studios',
-    center: [28.4753, -81.4682] as LatLngTuple,
-    zoom: 16,
-    color: '#F59E0B',
-  },
-  {
-    id: 'islands-of-adventure',
-    name: 'Islands of Adventure',
-    center: [28.4722, -81.4710] as LatLngTuple,
-    zoom: 16,
-    color: '#0891B2',
-  },
-  {
-    id: 'epic-universe',
-    name: 'Epic Universe',
-    center: [28.4726, -81.5358] as LatLngTuple,
-    zoom: 16,
-    color: '#8B5CF6',
-  },
-];
+interface Park {
+  id: string;
+  name: string;
+  center: LatLngTuple;
+  zoom: number;
+}
 
-// Sample attractions with coordinates
-const ATTRACTIONS: Record<string, Array<{
+interface Attraction {
   id: string;
   name: string;
   position: LatLngTuple;
   description: string;
   waitTime?: number;
   isNextInAgenda?: boolean;
-}>> = {
-  'magic-kingdom': [
-    { id: '1', name: 'Space Mountain', position: [28.4192, -81.5783], description: 'Montanha-russa no escuro pelo espaço', waitTime: 45 },
-    { id: '2', name: 'Big Thunder Mountain', position: [28.4197, -81.5844], description: 'Trem descontrolado por minas de ouro', waitTime: 35 },
-    { id: '3', name: 'Pirates of the Caribbean', position: [28.4181, -81.5842], description: 'Navegue com os piratas do Caribe', waitTime: 20 },
-    { id: '4', name: 'Haunted Mansion', position: [28.4205, -81.5830], description: 'Tour pela mansão mal-assombrada', waitTime: 25 },
-    { id: '5', name: 'Seven Dwarfs Mine Train', position: [28.4203, -81.5802], description: 'Montanha-russa dos Sete Anões', waitTime: 75, isNextInAgenda: true },
-  ],
-  'universal-studios': [
-    { id: '1', name: 'Hollywood Rip Ride Rockit', position: [28.4748, -81.4677], description: 'Montanha-russa com sua trilha sonora', waitTime: 60 },
-    { id: '2', name: 'Revenge of the Mummy', position: [28.4755, -81.4693], description: 'Montanha-russa indoor no escuro', waitTime: 40, isNextInAgenda: true },
-    { id: '3', name: 'E.T. Adventure', position: [28.4760, -81.4710], description: 'Voe com E.T. para seu planeta', waitTime: 25 },
-    { id: '4', name: 'Men in Black', position: [28.4738, -81.4668], description: 'Atire em alienígenas nessa aventura', waitTime: 30 },
-  ],
-  'islands-of-adventure': [
-    { id: '1', name: 'Hagrid\'s Magical Creatures', position: [28.4725, -81.4735], description: 'Moto-coaster pelo mundo mágico', waitTime: 90 },
-    { id: '2', name: 'VelociCoaster', position: [28.4712, -81.4695], description: 'Montanha-russa de velociraptores', waitTime: 75 },
-    { id: '3', name: 'Incredible Hulk Coaster', position: [28.4718, -81.4680], description: 'Seja lançado como o Hulk', waitTime: 45, isNextInAgenda: true },
-  ],
-  'epic-universe': [
-    { id: '1', name: 'Stardust Racers', position: [28.4730, -81.5355], description: 'Duelo de montanhas-russas', waitTime: 60, isNextInAgenda: true },
-    { id: '2', name: 'Mario Kart: Bowser\'s Challenge', position: [28.4722, -81.5362], description: 'Corrida interativa do Mario Kart', waitTime: 90 },
-    { id: '3', name: 'Harry Potter and the Battle at the Ministry', position: [28.4728, -81.5348], description: 'Batalha épica no Ministério da Magia', waitTime: 75 },
-  ],
-};
+  thrillLevel?: number;
+  minHeight?: string;
+  passType?: string;
+}
+
+// Parks data with coordinates (category IDs from database)
+const PARKS: Park[] = [
+  { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', center: [28.4177, -81.5812], zoom: 16 },
+  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: [28.3747, -81.5494], zoom: 16 },
+  { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: [28.3575, -81.5583], zoom: 16 },
+  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: [28.3553, -81.5901], zoom: 15 },
+  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: [28.4753, -81.4682], zoom: 16 },
+  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: [28.4722, -81.4710], zoom: 16 },
+  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: [28.4726, -81.5358], zoom: 16 },
+];
 
 // Custom marker icons
 const userIcon = L.divIcon({
@@ -140,17 +84,49 @@ export default function ParkMap() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const routingControlRef = useRef<L.Routing.Control | null>(null);
+  const routingControlRef = useRef<any>(null);
 
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
+  const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
   const [userPosition, setUserPosition] = useState<LatLngTuple | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
 
-  const attractions = ATTRACTIONS[selectedPark.id] || [];
   const nextAttraction = attractions.find(a => a.isNextInAgenda);
+
+  // Fetch attractions from database
+  const fetchAttractions = async (parkId: string) => {
+    setIsLoadingAttractions(true);
+    
+    const { data, error } = await supabase
+      .from('content_items')
+      .select('id, title, description, latitude, longitude, thrill_level, min_height, pass_type')
+      .eq('category_id', parkId)
+      .eq('is_published', true)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null);
+
+    if (error) {
+      console.error('Error fetching attractions:', error);
+      setAttractions([]);
+    } else if (data) {
+      const mappedAttractions: Attraction[] = data.map((item) => ({
+        id: item.id,
+        name: item.title,
+        position: [Number(item.latitude), Number(item.longitude)] as LatLngTuple,
+        description: item.description || '',
+        thrillLevel: item.thrill_level || undefined,
+        minHeight: item.min_height || undefined,
+        passType: item.pass_type || undefined,
+      }));
+      setAttractions(mappedAttractions);
+    }
+    
+    setIsLoadingAttractions(false);
+  };
 
   // Initialize map
   useEffect(() => {
@@ -172,6 +148,11 @@ export default function ParkMap() {
     };
   }, []);
 
+  // Fetch attractions when park changes
+  useEffect(() => {
+    fetchAttractions(selectedPark.id);
+  }, [selectedPark.id]);
+
   // Update map view when park changes
   useEffect(() => {
     if (!mapRef.current) return;
@@ -179,7 +160,7 @@ export default function ParkMap() {
     clearRoute();
   }, [selectedPark]);
 
-  // Update markers when attractions or park changes
+  // Update markers when attractions change
   useEffect(() => {
     if (!markersRef.current || !mapRef.current) return;
 
@@ -192,8 +173,12 @@ export default function ParkMap() {
       popupContent.innerHTML = `
         <div style="min-width: 200px;">
           <h3 style="font-weight: bold; margin-bottom: 4px;">${attraction.name}</h3>
-          <p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>
-          ${attraction.waitTime ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Espera: ~${attraction.waitTime} min</span>` : ''}
+          ${attraction.description ? `<p style="color: #666; font-size: 13px; margin-bottom: 8px;">${attraction.description}</p>` : ''}
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;">
+            ${attraction.thrillLevel ? `<span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Nível ${attraction.thrillLevel}/5</span>` : ''}
+            ${attraction.minHeight ? `<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${attraction.minHeight}</span>` : ''}
+          </div>
+          ${attraction.passType ? `<span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${attraction.passType}</span>` : ''}
           ${attraction.isNextInAgenda ? `<div style="background: #F59E0B; color: white; padding: 4px 8px; border-radius: 4px; margin-top: 8px; text-align: center; font-size: 12px;">⭐ Próxima na Agenda</div>` : ''}
           <button id="route-btn-${attraction.id}" style="margin-top: 10px; width: 100%; background: #3B82F6; color: white; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
             🚶 Como Chegar
@@ -216,7 +201,7 @@ export default function ParkMap() {
       
       markersRef.current?.addLayer(marker);
     });
-  }, [attractions, selectedPark, userPosition]);
+  }, [attractions, userPosition]);
 
   // Update user marker
   useEffect(() => {
@@ -332,7 +317,7 @@ export default function ParkMap() {
     );
   };
 
-  const handleNavigateToAttraction = (position: LatLngTuple, name: string) => {
+  const handleNavigateToAttraction = (position: LatLngTuple) => {
     mapRef.current?.flyTo(position, 18, { duration: 1.5 });
   };
 
@@ -481,7 +466,7 @@ export default function ParkMap() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleNavigateToAttraction(nextAttraction.position, nextAttraction.name)}
+                    onClick={() => handleNavigateToAttraction(nextAttraction.position)}
                   >
                     <MapPin className="w-4 h-4 mr-1" />
                     Ver
@@ -512,55 +497,73 @@ export default function ParkMap() {
         />
 
         {/* Attractions List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {attractions.map((attraction) => (
-            <Card
-              key={attraction.id}
-              className={`transition-all hover:shadow-md ${
-                attraction.isNextInAgenda ? 'ring-2 ring-amber-400' : ''
-              }`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate flex items-center gap-1">
-                      {attraction.isNextInAgenda && (
-                        <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+        {isLoadingAttractions ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : attractions.length === 0 ? (
+          <Card className="p-6 text-center">
+            <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
+              Nenhuma atração com coordenadas cadastradas para este parque.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Adicione coordenadas GPS nas atrações pelo painel de administração.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {attractions.map((attraction) => (
+              <Card
+                key={attraction.id}
+                className={`transition-all hover:shadow-md ${
+                  attraction.isNextInAgenda ? 'ring-2 ring-amber-400' : ''
+                }`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm truncate flex items-center gap-1">
+                        {attraction.isNextInAgenda && (
+                          <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+                        )}
+                        {attraction.name}
+                      </h3>
+                      {attraction.description && (
+                        <p className="text-xs text-muted-foreground truncate">{attraction.description}</p>
                       )}
-                      {attraction.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground truncate">{attraction.description}</p>
+                    </div>
+                    {attraction.thrillLevel && (
+                      <Badge variant="outline" className="shrink-0 text-xs">
+                        Nível {attraction.thrillLevel}
+                      </Badge>
+                    )}
                   </div>
-                  {attraction.waitTime && (
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      {attraction.waitTime}min
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs"
-                    onClick={() => handleNavigateToAttraction(attraction.position, attraction.name)}
-                  >
-                    <MapPin className="w-3 h-3 mr-1" />
-                    Ver
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => handleRouteToAttraction(attraction.position, attraction.name)}
-                    disabled={isCalculatingRoute}
-                  >
-                    <Route className="w-3 h-3 mr-1" />
-                    Rota
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs"
+                      onClick={() => handleNavigateToAttraction(attraction.position)}
+                    >
+                      <MapPin className="w-3 h-3 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => handleRouteToAttraction(attraction.position, attraction.name)}
+                      disabled={isCalculatingRoute}
+                    >
+                      <Route className="w-3 h-3 mr-1" />
+                      Rota
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

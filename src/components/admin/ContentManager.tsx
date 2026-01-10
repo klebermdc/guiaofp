@@ -64,6 +64,8 @@ interface ContentItem {
   min_height: string | null;
   thrill_level: number | null;
   pass_type: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface Category {
@@ -122,6 +124,8 @@ export function ContentManager() {
     min_height: '',
     thrill_level: 0,
     pass_type: '',
+    latitude: '',
+    longitude: '',
   });
 
   // Check if selected category is a park
@@ -212,6 +216,8 @@ export function ContentManager() {
       min_height: formData.min_height || null,
       thrill_level: formData.thrill_level > 0 ? formData.thrill_level : null,
       pass_type: formData.pass_type || null,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
     };
 
     if (editingContent) {
@@ -278,6 +284,8 @@ export function ContentManager() {
       min_height: content.min_height || '',
       thrill_level: content.thrill_level || 0,
       pass_type: content.pass_type || '',
+      latitude: content.latitude?.toString() || '',
+      longitude: content.longitude?.toString() || '',
     });
     setIsDialogOpen(true);
   };
@@ -311,6 +319,8 @@ export function ContentManager() {
       min_height: '',
       thrill_level: 0,
       pass_type: '',
+      latitude: '',
+      longitude: '',
     });
     setEditingContent(null);
   };
@@ -597,6 +607,39 @@ export function ContentManager() {
                       <SelectItem value="5">5 - Extremo</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <Label className="flex items-center gap-2">
+                    📍 Coordenadas GPS (para o mapa)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="latitude" className="text-xs text-muted-foreground">Latitude</Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="any"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
+                        placeholder="Ex: 28.4177"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="longitude" className="text-xs text-muted-foreground">Longitude</Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="any"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
+                        placeholder="Ex: -81.5812"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Dica: Busque no Google Maps, clique com botão direito na atração e copie as coordenadas.
+                  </p>
                 </div>
               </div>
             )}
