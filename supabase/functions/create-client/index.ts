@@ -6,11 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface ParkDate {
+interface ParkData {
   date: string;
   park: string;
-  time_start?: string;
-  time_end?: string;
+  time_start: string;
+  time_end: string;
   notes?: string;
 }
 
@@ -21,10 +21,10 @@ interface CreateClientRequest {
   cpf: string;
   telefone: string;
   contract_id: string;
-  parks?: ParkDate[];
-  start_date?: string;
-  end_date?: string;
-  guide_name?: string;
+  nome_guia: string;
+  start_date: string;
+  end_date: string;
+  parks: ParkData[];
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -33,22 +33,18 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { 
-      email, 
-      password, 
-      nome_completo, 
-      cpf, 
-      telefone, 
-      contract_id,
-      parks = [],
-      start_date,
-      end_date,
-      guide_name
-    }: CreateClientRequest = await req.json();
+    const data: CreateClientRequest = await req.json();
+    
+    console.log("Received client data:", {
+      email: data.email,
+      nome_completo: data.nome_completo,
+      nome_guia: data.nome_guia,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      parks_count: data.parks?.length || 0,
+    });
 
-    console.log("Recebendo credenciais:", { email, nome_completo, contract_id });
-
-    // Criar cliente Supabase com service role (para criar usuários)
+    // Criar cliente Supabase com service role
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -56,62 +52,77 @@ serve(async (req: Request): Promise<Response> => {
 
     // Criar usuário no Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
+      email: data.email,
+      password: data.password,
       email_confirm: true,
-      user_metadata: { nome_completo, cpf, telefone, contract_id }
+      user_metadata: {
+        nome_completo: data.nome_completo,
+        cpf: data.cpf,
+        telefone: data.telefone,
+      }
     });
 
     if (authError) {
-      console.error("Erro ao criar usuário:", authError);
+      console.error("Auth error:", authError);
       throw authError;
     }
 
     const userId = authData.user?.id;
-    console.log("Usuário criado:", userId);
+    console.log("User created:", userId);
 
-    // Criar contrato vinculado ao usuário
+    // Salvar contrato com dados do roteiro
     if (userId) {
       const { error: contractError } = await supabase
         .from("contracts")
         .insert({
           user_id: userId,
-          external_contract_id: contract_id,
-          parks: parks,
-          start_date: start_date || null,
-          end_date: end_date || null,
-          status: "active",
-          guide_name: guide_name || null
+          external_contract_id: data.contract_id,
+          guide_name: data.nome_guia,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          parks: data.parks,
+          status: "active"
         });
 
       if (contractError) {
-        console.error("Erro ao criar contrato:", contractError);
-        // Não falha a criação do usuário se o contrato falhar
+        console.error("Contract error:", contractError);
       } else {
-        console.log("Contrato criado para usuário:", userId);
+        console.log("Contract created for user:", userId);
       }
 
       // Atualizar profile com dados adicionais
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          responsible_name: nome_completo,
-          whatsapp: telefone
+          responsible_name: data.nome_completo,
+          whatsapp: data.telefone
         })
         .eq("user_id", userId);
 
       if (profileError) {
-        console.error("Erro ao atualizar profile:", profileError);
+        console.error("Profile error:", profileError);
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: userId }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Client created successfully",
+        user_id: userId,
+        data: {
+          email: data.email,
+          nome_completo: data.nome_completo,
+          nome_guia: data.nome_guia,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          parks: data.parks,
+        }
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
-    console.error("Erro:", error);
+    console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
