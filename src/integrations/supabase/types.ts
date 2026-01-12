@@ -135,6 +135,7 @@ export type Database = {
           created_at: string | null
           end_date: string | null
           external_contract_id: string | null
+          guide_name: string | null
           id: string
           parks: Json
           start_date: string | null
@@ -146,6 +147,7 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           external_contract_id?: string | null
+          guide_name?: string | null
           id?: string
           parks?: Json
           start_date?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           created_at?: string | null
           end_date?: string | null
           external_contract_id?: string | null
+          guide_name?: string | null
           id?: string
           parks?: Json
           start_date?: string | null

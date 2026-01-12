@@ -24,6 +24,7 @@ interface CreateClientRequest {
   parks?: ParkDate[];
   start_date?: string;
   end_date?: string;
+  guide_name?: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -41,7 +42,8 @@ serve(async (req: Request): Promise<Response> => {
       contract_id,
       parks = [],
       start_date,
-      end_date
+      end_date,
+      guide_name
     }: CreateClientRequest = await req.json();
 
     console.log("Recebendo credenciais:", { email, nome_completo, contract_id });
@@ -78,7 +80,8 @@ serve(async (req: Request): Promise<Response> => {
           parks: parks,
           start_date: start_date || null,
           end_date: end_date || null,
-          status: "active"
+          status: "active",
+          guide_name: guide_name || null
         });
 
       if (contractError) {
