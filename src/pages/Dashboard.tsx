@@ -12,6 +12,7 @@ import {
   Plane
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGuideContact } from '@/hooks/useGuideContact';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 
 const Dashboard = () => {
   const { user, travelProfile } = useAuth();
+  const { whatsappUrl, guideName } = useGuideContact();
   
   const getStatusIcon = () => {
     if (travelProfile.isLocked) return <Lock className="w-5 h-5" />;
@@ -89,7 +91,7 @@ const Dashboard = () => {
           </Link>
 
           <a 
-            href="https://wa.me/5500000000000" 
+            href={whatsappUrl}
             target="_blank" 
             rel="noopener noreferrer"
             className="block"
@@ -100,7 +102,7 @@ const Dashboard = () => {
                   <MessageCircle size={24} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Falar com meu Guia</h3>
+                  <h3 className="font-semibold text-foreground">Falar com {guideName}</h3>
                   <p className="text-sm text-muted-foreground">WhatsApp direto</p>
                 </div>
               </CardContent>
@@ -222,7 +224,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <a 
-                href="https://wa.me/5500000000000" 
+                href={whatsappUrl}
                 target="_blank" 
                 rel="noopener noreferrer"
               >
