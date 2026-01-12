@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const GUIDE_PHONES: Record<string, string> = {
   'rafael': '5511966144493',
-  'kleber': '5511951944192',
+  'kleber': '551151944192',
 };
 
 export const useGuideContact = () => {
