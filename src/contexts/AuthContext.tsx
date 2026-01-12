@@ -23,7 +23,8 @@ interface TravelProfile {
   arrivalDate: string;
   departureDate: string;
   parks: string[];
-  parkDates: Array<{ park: string; date: string }>;
+  parkDates: Array<{ park: string; date: string; time_start?: string; time_end?: string; notes?: string }>;
+  guideName: string;
   
   // Section 4 - Accommodation
   hotel: string;
@@ -85,6 +86,7 @@ const defaultTravelProfile: TravelProfile = {
   departureDate: '',
   parks: [],
   parkDates: [],
+  guideName: '',
   hotel: '',
   hotelType: '',
   hasTransport: false,
@@ -124,6 +126,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   departureDate: dbProfile.departure_date || '',
   parks: dbProfile.parks || [],
   parkDates: dbProfile.park_dates || [],
+  guideName: dbProfile.guide_name || '',
   hotel: dbProfile.hotel || '',
   hotelType: dbProfile.hotel_type || '',
   hasTransport: dbProfile.has_transport || false,
@@ -161,6 +164,7 @@ const frontendToDb = (profile: Partial<TravelProfile>) => {
   if (profile.departureDate !== undefined) dbProfile.departure_date = profile.departureDate || null;
   if (profile.parks !== undefined) dbProfile.parks = profile.parks;
   if (profile.parkDates !== undefined) dbProfile.park_dates = profile.parkDates;
+  if (profile.guideName !== undefined) dbProfile.guide_name = profile.guideName;
   if (profile.hotel !== undefined) dbProfile.hotel = profile.hotel;
   if (profile.hotelType !== undefined) dbProfile.hotel_type = profile.hotelType;
   if (profile.hasTransport !== undefined) dbProfile.has_transport = profile.hasTransport;

@@ -2,57 +2,14 @@ import { Calendar, MapPin, Clock, Info, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
-
-interface ParkDate {
-  date: string;
-  park: string;
-  time_start?: string;
-  time_end?: string;
-  notes?: string;
-}
-
-interface Contract {
-  id: string;
-  user_id: string;
-  external_contract_id: string | null;
-  parks: ParkDate[];
-  start_date: string | null;
-  end_date: string | null;
-  status: string;
-}
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Agenda = () => {
-  const { user } = useAuth();
+  const { travelProfile, isLoading } = useAuth();
 
-  const { data: contract, isLoading } = useQuery({
-    queryKey: ['contract', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('contracts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) return null;
-      
-      
-      const parks = Array.isArray(data.parks) ? data.parks as unknown as ParkDate[] : [];
-      
-      return {
-        ...data,
-        parks
-      } as Contract;
-    },
-    enabled: !!user?.id,
-  });
-
-  const agendaItems = contract?.parks || [];
+  // Usar parkDates do perfil de viagem
+  const agendaItems = travelProfile.parkDates || [];
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -88,7 +45,7 @@ const Agenda = () => {
                 Sua agenda será atualizada conforme o guiamento
               </p>
               <p className="text-sm text-muted-foreground">
-                As informações abaixo são uma prévia do seu roteiro. Detalhes específicos de horários e atrações serão compartilhados pelo seu guia via WhatsApp no dia de cada parque.
+                As informações abaixo são baseadas no seu perfil de viagem. Para adicionar ou editar parques e datas, acesse seu perfil.
               </p>
             </div>
           </CardContent>
@@ -141,7 +98,7 @@ const Agenda = () => {
                     {item.notes && (
                       <div className="p-4 bg-muted/50 rounded-lg">
                         <p className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Observações do guia:</span>
+                          <span className="font-medium text-foreground">Observações:</span>
                           <br />
                           {item.notes}
                         </p>
@@ -161,9 +118,14 @@ const Agenda = () => {
             <h3 className="font-display text-xl font-bold text-foreground mb-2">
               Agenda em preparação
             </h3>
-            <p className="text-muted-foreground">
-              Seu roteiro personalizado será disponibilizado em breve, após a análise do seu perfil de viagem.
+            <p className="text-muted-foreground mb-6">
+              Adicione os parques e datas no seu perfil de viagem para ver sua agenda aqui.
             </p>
+            <Link to="/perfil">
+              <Button variant="gold">
+                Preencher Perfil de Viagem
+              </Button>
+            </Link>
           </Card>
         )}
       </div>

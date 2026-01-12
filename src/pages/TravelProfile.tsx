@@ -247,6 +247,26 @@ const TravelProfile = () => {
                             />
                           </div>
                         </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Seu guia</Label>
+                          <RadioGroup
+                            value={travelProfile.guideName}
+                            onValueChange={(value) => handleFieldChange({ guideName: value })}
+                          >
+                            <div className="flex gap-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Rafael" id="guide-rafael" />
+                                <Label htmlFor="guide-rafael">Rafael</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Kleber" id="guide-kleber" />
+                                <Label htmlFor="guide-kleber">Kleber</Label>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </div>
+
                         <div className="space-y-2">
                           <Label>Quais parques pretende visitar?</Label>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -269,6 +289,35 @@ const TravelProfile = () => {
                             ))}
                           </div>
                         </div>
+
+                        {/* Park Dates Section */}
+                        {travelProfile.parks.length > 0 && (
+                          <div className="space-y-4 pt-4 border-t">
+                            <Label>Defina a data de cada parque</Label>
+                            <div className="space-y-3">
+                              {travelProfile.parks.map((park) => {
+                                const parkDate = travelProfile.parkDates.find(pd => pd.park === park);
+                                return (
+                                  <div key={park} className="flex flex-col md:flex-row md:items-center gap-3 p-3 bg-muted rounded-lg">
+                                    <span className="font-medium min-w-[150px]">{park}</span>
+                                    <Input
+                                      type="date"
+                                      className="md:w-40"
+                                      value={parkDate?.date || ''}
+                                      onChange={(e) => {
+                                        const newParkDates = travelProfile.parkDates.filter(pd => pd.park !== park);
+                                        if (e.target.value) {
+                                          newParkDates.push({ park, date: e.target.value });
+                                        }
+                                        handleFieldChange({ parkDates: newParkDates });
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
 

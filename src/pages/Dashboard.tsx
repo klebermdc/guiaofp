@@ -20,7 +20,7 @@ import { Progress } from '@/components/ui/progress';
 
 const Dashboard = () => {
   const { user, travelProfile } = useAuth();
-  const { whatsappUrl, guideName } = useGuideContact();
+  const { whatsappUrl, guideName, hasGuide } = useGuideContact();
   
   const getStatusIcon = () => {
     if (travelProfile.isLocked) return <Lock className="w-5 h-5" />;
@@ -90,24 +90,40 @@ const Dashboard = () => {
             </Card>
           </Link>
 
-          <a 
-            href={whatsappUrl}
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Card variant="interactive" className="h-full">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-12 h-12 bg-[hsl(142_70%_45%)] rounded-xl flex items-center justify-center text-white">
-                  <MessageCircle size={24} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Falar com {guideName}</h3>
-                  <p className="text-sm text-muted-foreground">WhatsApp direto</p>
-                </div>
-              </CardContent>
-            </Card>
-          </a>
+          {hasGuide ? (
+            <a 
+              href={whatsappUrl}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Card variant="interactive" className="h-full">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-[hsl(142_70%_45%)] rounded-xl flex items-center justify-center text-white">
+                    <MessageCircle size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Falar com {guideName}</h3>
+                    <p className="text-sm text-muted-foreground">WhatsApp direto</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </a>
+          ) : (
+            <Link to="/perfil" className="block">
+              <Card variant="interactive" className="h-full">
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
+                    <MessageCircle size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Falar com meu Guia</h3>
+                    <p className="text-sm text-muted-foreground">Selecione seu guia no perfil</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
         </div>
 
         {/* Status Cards */}
@@ -212,30 +228,32 @@ const Dashboard = () => {
         </div>
 
         {/* WhatsApp CTA */}
-        <Card className="overflow-hidden border-0 gradient-primary text-primary-foreground">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
-                <h3 className="font-display text-2xl font-bold mb-2">
-                  Precisa de ajuda?
-                </h3>
-                <p className="text-primary-foreground/80">
-                  Seu guia está disponível para tirar todas as suas dúvidas em tempo real.
-                </p>
+        {hasGuide && (
+          <Card className="overflow-hidden border-0 gradient-primary text-primary-foreground">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <h3 className="font-display text-2xl font-bold mb-2">
+                    Precisa de ajuda?
+                  </h3>
+                  <p className="text-primary-foreground/80">
+                    {guideName} está disponível para tirar todas as suas dúvidas em tempo real.
+                  </p>
+                </div>
+                <a 
+                  href={whatsappUrl}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="whatsapp" size="xl">
+                    <MessageCircle size={24} />
+                    Falar no WhatsApp
+                  </Button>
+                </a>
               </div>
-              <a 
-                href={whatsappUrl}
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <Button variant="whatsapp" size="xl">
-                  <MessageCircle size={24} />
-                  Falar no WhatsApp
-                </Button>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );
