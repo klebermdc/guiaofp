@@ -130,6 +130,42 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          external_contract_id: string | null
+          id: string
+          parks: Json
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          external_contract_id?: string | null
+          id?: string
+          parks?: Json
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          external_contract_id?: string | null
+          id?: string
+          parks?: Json
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           arrival_date: string | null

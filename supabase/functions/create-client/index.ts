@@ -6,13 +6,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface ParkDate {
+  date: string;
+  park: string;
+  time_start?: string;
+  time_end?: string;
+  notes?: string;
+}
+
+interface CreateClientRequest {
+  email: string;
+  password: string;
+  nome_completo: string;
+  cpf: string;
+  telefone: string;
+  contract_id: string;
+  parks?: ParkDate[];
+  start_date?: string;
+  end_date?: string;
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, password, nome_completo, cpf, telefone, contract_id } = await req.json();
+    const { 
+      email, 
+      password, 
+      nome_completo, 
+      cpf, 
+      telefone, 
+      contract_id,
+      parks = [],
+      start_date,
+      end_date
+    }: CreateClientRequest = await req.json();
 
     console.log("Recebendo credenciais:", { email, nome_completo, contract_id });
 
@@ -26,7 +56,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Já confirma o email
+      email_confirm: true,
       user_metadata: { nome_completo, cpf, telefone, contract_id }
     });
 
@@ -35,10 +65,45 @@ serve(async (req: Request): Promise<Response> => {
       throw authError;
     }
 
-    console.log("Usuário criado:", authData.user?.id);
+    const userId = authData.user?.id;
+    console.log("Usuário criado:", userId);
+
+    // Criar contrato vinculado ao usuário
+    if (userId) {
+      const { error: contractError } = await supabase
+        .from("contracts")
+        .insert({
+          user_id: userId,
+          external_contract_id: contract_id,
+          parks: parks,
+          start_date: start_date || null,
+          end_date: end_date || null,
+          status: "active"
+        });
+
+      if (contractError) {
+        console.error("Erro ao criar contrato:", contractError);
+        // Não falha a criação do usuário se o contrato falhar
+      } else {
+        console.log("Contrato criado para usuário:", userId);
+      }
+
+      // Atualizar profile com dados adicionais
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          responsible_name: nome_completo,
+          whatsapp: telefone
+        })
+        .eq("user_id", userId);
+
+      if (profileError) {
+        console.error("Erro ao atualizar profile:", profileError);
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, user_id: authData.user?.id }),
+      JSON.stringify({ success: true, user_id: userId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
