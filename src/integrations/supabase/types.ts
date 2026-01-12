@@ -183,6 +183,7 @@ export type Database = {
           food_allergies: string | null
           group_size: number | null
           group_style: string | null
+          guide_name: string | null
           has_celebration: boolean | null
           has_my_disney_experience: boolean | null
           has_transport: boolean | null
@@ -220,6 +221,7 @@ export type Database = {
           food_allergies?: string | null
           group_size?: number | null
           group_style?: string | null
+          guide_name?: string | null
           has_celebration?: boolean | null
           has_my_disney_experience?: boolean | null
           has_transport?: boolean | null
@@ -257,6 +259,7 @@ export type Database = {
           food_allergies?: string | null
           group_size?: number | null
           group_style?: string | null
+          guide_name?: string | null
           has_celebration?: boolean | null
           has_my_disney_experience?: boolean | null
           has_transport?: boolean | null
