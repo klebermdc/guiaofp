@@ -217,15 +217,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadProfile = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
+    // Fetch profile data
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
     
-    if (data && !error) {
-      setTravelProfile(dbToFrontend(data));
+    // Fetch contract data (created by edge function)
+    const { data: contractData, error: contractError } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    let profile = defaultTravelProfile;
+    
+    if (profileData && !profileError) {
+      profile = dbToFrontend(profileData);
     }
+    
+    // Merge contract data if available and profile is missing this data
+    if (contractData && !contractError) {
+      // Only use contract data if profile doesn't have it
+      if (!profile.guideName && contractData.guide_name) {
+        profile.guideName = contractData.guide_name;
+      }
+      if ((!profile.parkDates || profile.parkDates.length === 0) && contractData.parks && Array.isArray(contractData.parks)) {
+        profile.parkDates = contractData.parks as any[];
+      }
+      if (!profile.arrivalDate && contractData.start_date) {
+        profile.arrivalDate = contractData.start_date;
+      }
+      if (!profile.departureDate && contractData.end_date) {
+        profile.departureDate = contractData.end_date;
+      }
+    }
+    
+    setTravelProfile(profile);
   };
 
   useEffect(() => {
