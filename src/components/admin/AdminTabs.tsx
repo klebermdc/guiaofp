@@ -1,13 +1,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
+import { PasswordGenerator } from './PasswordGenerator';
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="clients" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+      <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
         <TabsTrigger value="clients" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Clientes</span>
@@ -19,6 +20,10 @@ export function AdminTabs() {
         <TabsTrigger value="content" className="flex items-center gap-2">
           <FileVideo className="h-4 w-4" />
           <span className="hidden sm:inline">Conteúdos</span>
+        </TabsTrigger>
+        <TabsTrigger value="password" className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4" />
+          <span className="hidden sm:inline">Senhas</span>
         </TabsTrigger>
       </TabsList>
 
@@ -32,6 +37,10 @@ export function AdminTabs() {
 
       <TabsContent value="content">
         <ContentManager />
+      </TabsContent>
+
+      <TabsContent value="password">
+        <PasswordGenerator />
       </TabsContent>
     </Tabs>
   );
