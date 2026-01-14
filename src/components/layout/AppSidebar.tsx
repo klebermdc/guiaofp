@@ -13,7 +13,8 @@ import {
   X,
   Sparkles,
   Shield,
-  MapPin
+  MapPin,
+  Ticket
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
+  { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
   { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },

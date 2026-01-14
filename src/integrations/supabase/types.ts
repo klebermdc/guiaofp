@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      attraction_preferences: {
+        Row: {
+          attraction_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          park_name: string
+          priority: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attraction_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          park_name: string
+          priority?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attraction_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          park_name?: string
+          priority?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_categories: {
         Row: {
           color: string | null
