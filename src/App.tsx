@@ -15,6 +15,8 @@ import PostTrip from "./pages/PostTrip";
 import Admin from "./pages/Admin";
 import ParkMap from "./pages/ParkMap";
 import TravelGuide from "./pages/TravelGuide";
+import Attractions from "./pages/Attractions";
+import ClientDetails from "./pages/ClientDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,7 +40,9 @@ const App = () => (
             <Route path="/guia" element={<TravelGuide />} />
             <Route path="/plano" element={<Plan />} />
             <Route path="/pos-viagem" element={<PostTrip />} />
+            <Route path="/atracoes" element={<Attractions />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/cliente/:id" element={<ClientDetails />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

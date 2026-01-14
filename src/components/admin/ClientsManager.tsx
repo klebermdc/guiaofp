@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,11 +41,10 @@ interface ClientProfile {
 }
 
 export function ClientsManager() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -81,8 +81,7 @@ export function ClientsManager() {
   };
 
   const handleViewClient = (client: ClientProfile) => {
-    setSelectedClient(client);
-    setIsDetailOpen(true);
+    navigate(`/admin/cliente/${client.user_id}`);
   };
 
   const stats = {
@@ -197,110 +196,9 @@ export function ClientsManager() {
                 ))}
               </TableBody>
             </Table>
-          )}
+        )}
         </CardContent>
       </Card>
-
-      {/* Client Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Cliente</DialogTitle>
-          </DialogHeader>
-          {selectedClient && (
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground">Nome do Responsável</h3>
-                  <p>{selectedClient.responsible_name || 'Não informado'}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground">Email</h3>
-                  <p>{selectedClient.email || 'Não informado'}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-1">
-                    <Phone className="h-3 w-3" /> WhatsApp
-                  </h3>
-                  <p>{selectedClient.whatsapp || 'Não informado'}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-muted-foreground">Tamanho do Grupo</h3>
-                  <p>{selectedClient.group_size || 1} pessoa(s)</p>
-                </div>
-              </div>
-
-              {/* Trip Info */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Dados da Viagem
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm text-muted-foreground">Data de Chegada</h4>
-                    <p>{formatDate(selectedClient.arrival_date)}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm text-muted-foreground">Data de Partida</h4>
-                    <p>{formatDate(selectedClient.departure_date)}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm text-muted-foreground flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> Hotel
-                    </h4>
-                    <p>{selectedClient.hotel || 'Não informado'}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm text-muted-foreground">Parques</h4>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedClient.parks?.length ? (
-                        selectedClient.parks.map((park) => (
-                          <Badge key={park} variant="outline" className="text-xs">
-                            {park}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground">Não selecionados</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Travelers */}
-              {selectedClient.travelers && selectedClient.travelers.length > 0 && (
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4" /> Viajantes
-                  </h3>
-                  <div className="space-y-2">
-                    {selectedClient.travelers.map((traveler: any, index: number) => (
-                      <div key={index} className="flex items-center gap-4 p-2 bg-muted/50 rounded">
-                        <span className="font-medium">{traveler.name}</span>
-                        <Badge variant="secondary">{traveler.age} anos</Badge>
-                        {traveler.height && <span className="text-sm text-muted-foreground">{traveler.height}</span>}
-                        {traveler.firstTimeDisney && (
-                          <Badge variant="outline" className="text-xs">Primeira vez</Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Progress */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2">Progresso do Perfil</h3>
-                <div className="flex items-center gap-4">
-                  <Progress value={selectedClient.completion_percentage || 0} className="flex-1" />
-                  <span className="font-semibold">{selectedClient.completion_percentage || 0}%</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
