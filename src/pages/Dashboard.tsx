@@ -17,6 +17,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { TripCountdown } from '@/components/dashboard/TripCountdown';
 
 const Dashboard = () => {
   const { user, travelProfile } = useAuth();
@@ -60,7 +61,15 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Trip Countdown */}
+        {travelProfile.arrivalDate && (
+          <TripCountdown 
+            arrivalDate={travelProfile.arrivalDate}
+            departureDate={travelProfile.departureDate}
+            groupSize={travelProfile.groupSize}
+            parks={travelProfile.parks}
+          />
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link to="/perfil" className="block">
             <Card variant="interactive" className="h-full">
