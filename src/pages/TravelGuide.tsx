@@ -42,6 +42,7 @@ const TravelGuide = () => {
               <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">✈️ Aeroporto</Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">🛒 Compras</Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">🎢 Parques</Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">🍽️ Restaurantes</Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">🎒 Mochila</Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-primary/10">📏 Medidas</Badge>
             </div>
@@ -910,6 +911,286 @@ const TravelGuide = () => {
 
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                   <p className="text-sm"><strong>⚠️ Atenção:</strong> Consultas de rotina e medicamentos habituais (anti-hipertensivos, anticoncepcionais, etc.) geralmente NÃO são cobertos, exceto em emergências.</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* RESTAURANTES */}
+          <AccordionItem value="restaurantes" className="border rounded-xl bg-card shadow-sm">
+            <AccordionTrigger className="px-6 py-4 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                  <Utensils className="w-5 h-5 text-amber-500" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">🍽️ Restaurantes nos Parques</h3>
+                  <p className="text-sm text-muted-foreground">Recomendações e dicas de reserva</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+              <div className="space-y-6">
+                {/* Dica de Reserva */}
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-2">📅 Dica Importante sobre Reservas</p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Hóspedes Disney:</strong> Podem reservar com até 60 dias de antecedência<br />
+                    <strong>Demais visitantes:</strong> Podem reservar com até 30 dias de antecedência<br />
+                    <strong>App:</strong> Faça suas reservas pelo My Disney Experience
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* Magic Kingdom */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    🏰 Magic Kingdom
+                  </h4>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Card className="border-pink-500/20 bg-pink-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-pink-500 text-white">Premium</Badge>
+                          <Badge variant="outline">Reserva Obrigatória</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">Cinderella's Royal Table</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Dentro do Castelo principal do parque! Refeição vira sonho para as princesinhas, com participação das princesas. Muitas fotos e autógrafos.
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">Princesas</Badge>
+                          <Badge variant="secondary" className="text-xs">Fotos</Badge>
+                          <Badge variant="secondary" className="text-xs">Autógrafos</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-amber-500/20 bg-amber-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-amber-500 text-white">Premium</Badge>
+                          <Badge variant="outline">Reserva Obrigatória</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">Be Our Guest</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Dentro do Castelo da Fera (A Bela e a Fera). Ambiente de palácio cheio de detalhes refinados. Pratos à la carte e bebidas alcoólicas. Participação da Fera.
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">A Fera</Badge>
+                          <Badge variant="secondary" className="text-xs">À la carte</Badge>
+                          <Badge variant="secondary" className="text-xs">Bebidas</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">Fast Food</Badge>
+                        <CardTitle className="text-base mt-2">Cosmic Ray's Starlight</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Restaurante fast food bem grande, para quem não quer perder tempo. Hambúrgueres e frangos fritos com batata são os mais pedidos.
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">Balcão</Badge>
+                        <CardTitle className="text-base mt-2">Columbia Harbour House</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Peixe frito, camarão, cestas de frango, pães de lagosta, sopas, mac'n'cheese. Dica: a quiche de legumes é sensacional!
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">Sobremesas</Badge>
+                        <CardTitle className="text-base mt-2">Ice Cream Parlor</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Piá do Mickey é uma opção divertida para guardar de lembrança, além de deliciosos Sundae's com muita calda.
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">Sobremesas</Badge>
+                        <CardTitle className="text-base mt-2">Sunshine Tree Terrace</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Sorvetes variados, inclusive o famoso Dole Whip - imperdível!
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* EPCOT */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    🌐 EPCOT
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    💡 <strong>Dica:</strong> Experimente algo de cada pavilhão! Funnel Cake nos EUA, Crepe na França, gelatos na Itália, pipoca de caramelo na Alemanha. Para adultos: tequila no México e chopp da Alemanha.
+                  </p>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Card className="border-blue-500/20 bg-blue-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-500 text-white">Premium</Badge>
+                          <Badge variant="outline">Reserva Recomendada</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">Space 220 Restaurant</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Restaurante temático espacial! Almoço com 2 pratos ou jantar com 3 pratos (preço fixo). Cozinha americana moderna com vista simulada do espaço.
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">Temático</Badge>
+                          <Badge variant="secondary" className="text-xs">Drinks</Badge>
+                          <Badge variant="secondary" className="text-xs">Vista Espacial</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-green-500/20 bg-green-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-500 text-white">México</Badge>
+                          <Badge variant="outline">Reserva Recomendada</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">San Angel Inn</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Restaurante mexicano inspirado em fazenda do século XVII na base de ruínas maias. Ambiente romântico. Margaritas e tequilas premium disponíveis.
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">Mexicano</Badge>
+                          <Badge variant="secondary" className="text-xs">Romântico</Badge>
+                          <Badge variant="secondary" className="text-xs">Tequila</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-indigo-500/20 bg-indigo-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-indigo-500 text-white">França</Badge>
+                          <Badge variant="outline">Reserva Recomendada</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">Chefs de France</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Cozinha francesa inovadora com menu sazonal. Filé mignon, sopa de cebola clássica, pato assado. Crème brûlée e tarte au chocolat imperdíveis!
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">Francês</Badge>
+                          <Badge variant="secondary" className="text-xs">Vinhos</Badge>
+                          <Badge variant="secondary" className="text-xs">Elegante</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-cyan-500/20 bg-cyan-500/5">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-cyan-500 text-white">The Seas</Badge>
+                          <Badge variant="outline">Reserva Recomendada</Badge>
+                        </div>
+                        <CardTitle className="text-base mt-2">Coral Reef</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Jantar íntimo com vista para recife de coral vivo! Mais de 2.000 criaturas marinhas e 60 espécies. Especialidade: frutos do mar. Sobremesas incríveis.
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="secondary" className="text-xs">Aquário</Badge>
+                          <Badge variant="secondary" className="text-xs">Frutos do Mar</Badge>
+                          <Badge variant="secondary" className="text-xs">Vista</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">França - Sobremesas</Badge>
+                        <CardTitle className="text-base mt-2">L'Artisan des Glaces</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Sorveteria artesanal francesa com sabores únicos e deliciosos. Perfeito para um lanche refrescante!
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <Badge variant="outline" className="w-fit">EUA - Sobremesas</Badge>
+                        <CardTitle className="text-base mt-2">Funnel Cake</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Clássico americano! Massa frita coberta com açúcar de confeiteiro, frutas ou sorvete. Imperdível no pavilhão americano.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Dicas Gerais de Alimentação */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold">💡 Dicas Gerais de Alimentação nos Parques</h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="font-medium text-sm mb-1">🍿 Baldes de Pipoca</p>
+                      <p className="text-xs text-muted-foreground">$14 a $24 + refil por apenas $2,25. Vale a pena comprar logo no início!</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="font-medium text-sm mb-1">🍦 Sorvete do Mickey</p>
+                      <p className="text-xs text-muted-foreground">Delicioso, mas dica: compre no Walmart que é bem mais em conta!</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="font-medium text-sm mb-1">🍗 Turkey Leg</p>
+                      <p className="text-xs text-muted-foreground">Coxa de peru gigante! Clássico dos parques Disney. Encontre em vários pontos.</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="font-medium text-sm mb-1">🍍 Dole Whip</p>
+                      <p className="text-xs text-muted-foreground">Sorvete de abacaxi famosíssimo! Encontre no Sunshine Tree Terrace (MK) e Epcot.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Hóspedes Disney */}
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-2">🏨 Dica para Hóspedes Disney</p>
+                  <p className="text-sm text-muted-foreground">
+                    Você pode comprar em qualquer loja do parque e mandar entregar diretamente no quarto do seu hotel! Super prático para não carregar sacolas o dia todo.
+                  </p>
                 </div>
               </div>
             </AccordionContent>
