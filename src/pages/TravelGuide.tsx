@@ -920,7 +920,7 @@ const TravelGuide = () => {
             </Accordion>
           </div>
 
-          {/* RESTAURANTES DISNEY */}
+          {/* RESTAURANTES DISNEY - EXPANDIDO */}
           <div data-section="restaurantes-disney" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="restaurantes-disney" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
@@ -931,138 +931,133 @@ const TravelGuide = () => {
                     </div>
                     <div className="text-left">
                       <h3 className="font-display font-bold text-xl">Restaurantes Disney</h3>
-                      <p className="text-sm text-muted-foreground">Os melhores restaurantes dos parques Disney</p>
+                      <p className="text-sm text-muted-foreground">Guia completo com dicas, preços e reservas</p>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-6">
                   <Tabs defaultValue="magic-kingdom" className="w-full">
                     <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="magic-kingdom" className="rounded-lg text-xs px-3">Magic Kingdom</TabsTrigger>
-                      <TabsTrigger value="epcot" className="rounded-lg text-xs px-3">EPCOT</TabsTrigger>
-                      <TabsTrigger value="hollywood" className="rounded-lg text-xs px-3">Hollywood Studios</TabsTrigger>
-                      <TabsTrigger value="animal" className="rounded-lg text-xs px-3">Animal Kingdom</TabsTrigger>
+                      <TabsTrigger value="magic-kingdom" className="rounded-lg text-xs px-3">🏰 Magic Kingdom</TabsTrigger>
+                      <TabsTrigger value="epcot" className="rounded-lg text-xs px-3">🌍 EPCOT</TabsTrigger>
+                      <TabsTrigger value="hollywood" className="rounded-lg text-xs px-3">🎬 Hollywood Studios</TabsTrigger>
+                      <TabsTrigger value="animal" className="rounded-lg text-xs px-3">🦁 Animal Kingdom</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="magic-kingdom" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4">
+                        <p className="text-sm">💡 <strong>Reserve com 60 dias de antecedência</strong> para restaurantes populares!</p>
+                      </div>
                       {[
-                        { name: "Be Our Guest", desc: "Jantar no castelo da Bela e a Fera", badges: ["Premium", "Reserva 60 dias"], icon: Crown },
-                        { name: "Cinderella's Royal Table", desc: "Café com princesas no castelo", badges: ["Character Dining", "$$$$"], icon: Star },
-                        { name: "Pecos Bill", desc: "Tex-Mex casual, bom preço", badges: ["Fast Food", "Família"], icon: Pizza },
+                        { name: "Be Our Guest", tipo: "Table Service", preco: "$$$$", desc: "Jantar romântico no castelo da Bela e a Fera. Menu francês sofisticado com filet mignon e ratatouille.", badges: ["Mais Disputado", "Romântico"], rating: 5, dica: "Peça a Grey Stuff - é divine!" },
+                        { name: "Cinderella's Royal Table", tipo: "Character Dining", preco: "$$$$", desc: "Café com princesas dentro do Castelo da Cinderela! Experiência única e inesquecível.", badges: ["Com Princesas", "No Castelo"], rating: 5, dica: "Crianças ganham varinha ou espada" },
+                        { name: "Liberty Tree Tavern", tipo: "Family Style", preco: "$$$", desc: "Thanksgiving o ano todo! Peru, purê, stuffing e torta de maçã. All-you-can-eat.", badges: ["All-You-Can-Eat", "Família"], rating: 4, dica: "Porções generosas!" },
+                        { name: "Skipper Canteen", tipo: "Table Service", preco: "$$$", desc: "Temática Jungle Cruise com culinária global. Garçons fazem piadas!", badges: ["Divertido", "Temático"], rating: 4, dica: "Kungaloosh Pork Ribs!" },
+                        { name: "Columbia Harbour House", tipo: "Quick Service", preco: "$", desc: "Fish & chips no Liberty Square. Um dos melhores quick services!", badges: ["Frutos do Mar", "Econômico"], rating: 4, dica: "2º andar mais tranquilo" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-amber-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-amber-500/10 text-sm"><span className="text-amber-700 dark:text-amber-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
 
                     <TabsContent value="epcot" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 mb-4">
+                        <p className="text-sm">🌍 <strong>World Showcase:</strong> 11 países com culinária autêntica!</p>
+                      </div>
                       {[
-                        { name: "Le Cellier", desc: "Steakhouse canadense premiado", badges: ["Premium", "Reserva 60 dias"], icon: Flame },
-                        { name: "Teppan Edo", desc: "Hibachi japonês com show", badges: ["Experiência", "Família"], icon: Utensils },
-                        { name: "Via Napoli", desc: "Pizzaria italiana autêntica", badges: ["Casual", "$$"], icon: Pizza },
-                        { name: "Akershus Royal", desc: "Buffet norueguês com princesas", badges: ["Character Dining"], icon: Star },
+                        { name: "Le Cellier Steakhouse", pais: "🇨🇦", tipo: "Signature", preco: "$$$$", desc: "O melhor steakhouse da Disney! Carnes premium e o famoso Cheddar Cheese Soup.", badges: ["Premiado", "Romântico"], rating: 5, dica: "Cheddar Cheese Soup é imperdível!" },
+                        { name: "Space 220", pais: "🚀", tipo: "Table Service", preco: "$$$$", desc: "Restaurante no ESPAÇO! Elevador simula subida com vista da Terra.", badges: ["Experiência Única", "Novo"], rating: 5, dica: "Reserve com muita antecedência!" },
+                        { name: "Via Napoli", pais: "🇮🇹", tipo: "Table Service", preco: "$$$", desc: "Pizzaria napolitana com fornos a lenha. Pizzas enormes!", badges: ["Autêntico", "Família"], rating: 5, dica: "Pizza Mezzo Metro serve 4!" },
+                        { name: "Teppan Edo", pais: "🇯🇵", tipo: "Table Service", preco: "$$$", desc: "Hibachi japonês com show de chefs! Perfeito para grupos.", badges: ["Com Show", "Interativo"], rating: 5, dica: "Sente na ponta para melhor visão" },
+                        { name: "Akershus", pais: "🇳🇴", tipo: "Character Dining", preco: "$$$$", desc: "Buffet norueguês com princesas Disney!", badges: ["Com Princesas", "Buffet"], rating: 5, dica: "Menos cheio que Cinderella's" },
+                        { name: "Les Halles", pais: "🇫🇷", tipo: "Quick Service", preco: "$", desc: "Padaria francesa! Croissants, quiches e macarons.", badges: ["Café", "Doces"], rating: 5, dica: "Croissants acabam cedo!" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-blue-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="text-xl">{rest.pais}</span>
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-blue-500/10 text-sm"><span className="text-blue-700 dark:text-blue-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
 
                     <TabsContent value="hollywood" className="space-y-4">
                       {[
-                        { name: "50's Prime Time Cafe", desc: "Comida caseira dos anos 50", badges: ["Temático", "Divertido"], icon: Coffee },
-                        { name: "Sci-Fi Dine-In Theater", desc: "Jantar em carros vintage", badges: ["Único", "Star Wars"], icon: Star },
-                        { name: "Oga's Cantina", desc: "Bar temático de Star Wars", badges: ["Star Wars", "Drinks"], icon: Beer },
+                        { name: "Oga's Cantina", area: "Galaxy's Edge", tipo: "Lounge", preco: "$$$", desc: "Bar de Mos Eisley! Drinks exclusivos e DJ Rex. Experiência Star Wars total!", badges: ["Star Wars", "Imperdível"], rating: 5, dica: "Limite de 45min - aproveite!", color: "from-indigo-500 to-purple-500" },
+                        { name: "50's Prime Time Cafe", area: "Echo Lake", tipo: "Table Service", preco: "$$", desc: "Cozinha dos anos 50! Garçons brigam se não comer vegetais.", badges: ["Interativo", "Divertido"], rating: 5, dica: "Finja que não comeu os vegetais!", color: "from-red-500 to-rose-500" },
+                        { name: "Sci-Fi Dine-In", area: "Commissary", tipo: "Table Service", preco: "$$$", desc: "Jante em carros vintage assistindo filmes B! Único na Disney.", badges: ["Único", "Temático"], rating: 4, dica: "Peça para sentar no carro!", color: "from-purple-500 to-pink-500" },
+                        { name: "Woody's Lunch Box", area: "Toy Story Land", tipo: "Quick Service", preco: "$", desc: "Você é do tamanho de brinquedo! Grilled cheese e Lunch Box Tarts.", badges: ["Toy Story", "Família"], rating: 4, dica: "Tarts são pop-tarts gourmet!", color: "from-yellow-500 to-amber-500" },
+                        { name: "Docking Bay 7", area: "Galaxy's Edge", tipo: "Quick Service", preco: "$$", desc: "Comidas intergalácticas! Endorian Tip Yip é frango delicioso.", badges: ["Star Wars", "Inovador"], rating: 4, dica: "Felucian Kefta top!", color: "from-indigo-500 to-blue-500" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-red-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-red-500/10 text-sm"><span className="text-red-700 dark:text-red-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
 
                     <TabsContent value="animal" className="space-y-4">
                       {[
-                        { name: "Tusker House", desc: "Buffet africano com personagens", badges: ["Character Dining", "Buffet"], icon: Users },
-                        { name: "Yak & Yeti", desc: "Culinária asiática variada", badges: ["Casual", "Família"], icon: Fish },
-                        { name: "Satu'li Canteen", desc: "Bowls saudáveis em Pandora", badges: ["Quick Service", "Saudável"], icon: Salad },
+                        { name: "Satu'li Canteen", area: "Pandora", tipo: "Quick Service", preco: "$$", desc: "Melhor Quick Service da Disney! Bowls customizáveis com proteínas e molhos únicos.", badges: ["Melhor QS", "Saudável"], rating: 5, dica: "Beef com Chimichurri é top!", color: "from-cyan-500 to-blue-500" },
+                        { name: "Tusker House", area: "Africa", tipo: "Character Dining", preco: "$$$$", desc: "Buffet africano com Mickey e amigos em trajes de safári!", badges: ["Com Personagens", "Buffet"], rating: 5, dica: "Café da manhã menos cheio", color: "from-amber-500 to-orange-500" },
+                        { name: "Tiffins", area: "Discovery Island", tipo: "Signature", preco: "$$$$", desc: "O mais sofisticado do AK! Menu global inspirado em viagens.", badges: ["Premium", "Elegante"], rating: 5, dica: "Bread Service imperdível!", color: "from-teal-500 to-cyan-500" },
+                        { name: "Yak & Yeti", area: "Asia", tipo: "Table Service", preco: "$$$", desc: "Pan-asiático em mansão do Himalaia. Sushi a tailandês!", badges: ["Asiático", "Variado"], rating: 4, dica: "Ahi Tuna Nachos surpreende!", color: "from-red-500 to-orange-500" },
+                        { name: "Flame Tree BBQ", area: "Discovery Island", tipo: "Quick Service", preco: "$$", desc: "BBQ defumado com vista pro lago! Ribs e pulled pork.", badges: ["BBQ", "Vista"], rating: 4, dica: "Deck tem vista pro Everest!", color: "from-orange-500 to-red-500" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-green-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-green-500/10 text-sm"><span className="text-green-700 dark:text-green-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
                   </Tabs>
 
-                  {/* Dica de Reserva */}
-                  <div className="mt-6 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-                    <h6 className="font-semibold mb-2 text-amber-700 flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      Dica de Reservas
-                    </h6>
-                    <p className="text-sm text-muted-foreground">
-                      Restaurantes premium abrem reservas com <strong>60 dias de antecedência</strong> às 6h (horário de Orlando). Use o My Disney Experience para reservar!
-                    </p>
-                  </div>
-
-                  {/* Snacks Clássicos */}
+                  {/* Snacks Disney */}
                   <div className="mt-6">
-                    <h6 className="font-semibold mb-4">🍦 Snacks Clássicos Disney</h6>
+                    <h6 className="font-bold mb-4">🍿 Snacks Imperdíveis Disney</h6>
                     <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
                       {[
-                        { name: 'Dole Whip', emoji: '🍍', desc: 'Sorvete de abacaxi' },
-                        { name: 'Turkey Leg', emoji: '🍗', desc: 'Coxa de peru' },
-                        { name: 'Churros', emoji: '🥖', desc: 'Tradicional Disney' },
-                        { name: 'Mickey Pretzel', emoji: '🥨', desc: 'Pretzel do Mickey' },
+                        { name: 'Dole Whip', emoji: '🍍', desc: 'Sorvete de abacaxi icônico!', preco: '~$6' },
+                        { name: 'Turkey Leg', emoji: '🍗', desc: 'Coxa de peru gigante', preco: '~$15' },
+                        { name: 'Mickey Bar', emoji: '🍦', desc: 'Picolé de chocolate', preco: '~$6' },
+                        { name: 'Churros', emoji: '🥖', desc: 'Clássico com canela', preco: '~$7' },
                       ].map((snack) => (
-                        <div key={snack.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 text-center hover:scale-105 transition-transform">
+                        <div key={snack.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-amber-500/30 text-center hover:scale-105 transition-transform">
                           <span className="text-3xl block mb-2">{snack.emoji}</span>
-                          <p className="font-medium text-sm">{snack.name}</p>
+                          <p className="font-bold text-sm">{snack.name}</p>
                           <p className="text-xs text-muted-foreground">{snack.desc}</p>
+                          <Badge variant="secondary" className="mt-2 text-xs">{snack.preco}</Badge>
                         </div>
                       ))}
                     </div>
