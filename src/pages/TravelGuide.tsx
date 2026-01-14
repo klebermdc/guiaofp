@@ -494,7 +494,7 @@ const TravelGuide = () => {
             </Accordion>
           </div>
 
-          {/* COMPRAS */}
+          {/* COMPRAS - SEÇÃO EXPANDIDA */}
           <div data-section="compras" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="compras" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
@@ -504,62 +504,417 @@ const TravelGuide = () => {
                       <ShoppingBag className="w-7 h-7 text-white" />
                     </div>
                     <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Guia de Compras</h3>
-                      <p className="text-sm text-muted-foreground">Outlets, malls, supermercados e dicas</p>
+                      <h3 className="font-display font-bold text-xl">Guia Completo de Compras</h3>
+                      <p className="text-sm text-muted-foreground">Outlets, malls, supermercados, eletrônicos e dicas de economia</p>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-6">
-                  <div className="space-y-6">
-                    {/* Outlets */}
-                    <div>
-                      <h5 className="font-semibold text-lg mb-4">🏪 Premium Outlets</h5>
+                  <Tabs defaultValue="outlets" className="w-full">
+                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="outlets" className="rounded-lg text-xs px-3">🏪 Outlets</TabsTrigger>
+                      <TabsTrigger value="malls" className="rounded-lg text-xs px-3">🏬 Malls</TabsTrigger>
+                      <TabsTrigger value="eletronicos" className="rounded-lg text-xs px-3">📱 Eletrônicos</TabsTrigger>
+                      <TabsTrigger value="supermercados" className="rounded-lg text-xs px-3">🛒 Supermercados</TabsTrigger>
+                      <TabsTrigger value="dicas" className="rounded-lg text-xs px-3">💡 Dicas</TabsTrigger>
+                    </TabsList>
+
+                    {/* OUTLETS */}
+                    <TabsContent value="outlets" className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div className="p-5 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white">
-                          <h6 className="font-bold text-lg mb-2">International Drive</h6>
-                          <p className="text-white/80 text-sm mb-3">Maior variedade de lojas premium</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Nike</Badge>
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Coach</Badge>
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Michael Kors</Badge>
+                        {/* Premium Outlet International */}
+                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-600 via-pink-500 to-rose-500 text-white shadow-2xl">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                          <div className="p-6 relative">
+                            <div className="flex items-center justify-between mb-4">
+                              <Badge className="bg-white/20 text-white border-0">⭐ Mais Popular</Badge>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                              </div>
+                            </div>
+                            <h6 className="font-bold text-xl mb-2">Orlando International Premium Outlets</h6>
+                            <p className="text-white/80 text-sm mb-4">O maior e mais completo outlet de Orlando com +180 lojas</p>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="w-4 h-4" />
+                                <span>4951 International Dr</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="w-4 h-4" />
+                                <span>10h - 21h (Dom-Qui) | 10h - 22h (Sex-Sáb)</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              {['Nike', 'Coach', 'Michael Kors', 'Kate Spade', 'Tommy', 'Polo Ralph Lauren', 'Swarovski'].map(loja => (
+                                <Badge key={loja} className="bg-white/20 text-white border-0 text-xs">{loja}</Badge>
+                              ))}
+                            </div>
+                            <div className="mt-4 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
+                              <p className="text-sm font-medium">💡 Dica: Baixe o app do outlet para cupons exclusivos!</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 text-white">
-                          <h6 className="font-bold text-lg mb-2">Vineland Ave</h6>
-                          <p className="text-white/80 text-sm mb-3">Próximo aos parques Disney</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Kate Spade</Badge>
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Tommy</Badge>
-                            <Badge className="bg-white/20 text-white border-0 text-xs">Calvin Klein</Badge>
+
+                        {/* Premium Outlet Vineland */}
+                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-purple-500 to-violet-500 text-white shadow-2xl">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                          <div className="p-6 relative">
+                            <div className="flex items-center justify-between mb-4">
+                              <Badge className="bg-white/20 text-white border-0">🏰 Perto da Disney</Badge>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4].map(i => <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+                                <Star className="w-3 h-3 text-white/40" />
+                              </div>
+                            </div>
+                            <h6 className="font-bold text-xl mb-2">Orlando Vineland Premium Outlets</h6>
+                            <p className="text-white/80 text-sm mb-4">Localização estratégica próximo aos parques Disney</p>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="w-4 h-4" />
+                                <span>8200 Vineland Ave</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="w-4 h-4" />
+                                <span>10h - 21h (Dom-Qui) | 10h - 22h (Sex-Sáb)</span>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              {['Calvin Klein', 'Banana Republic', 'Gap', 'Levi\'s', 'Armani', 'Guess', 'Lacoste'].map(loja => (
+                                <Badge key={loja} className="bg-white/20 text-white border-0 text-xs">{loja}</Badge>
+                              ))}
+                            </div>
+                            <div className="mt-4 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
+                              <p className="text-sm font-medium">💡 Menos cheio que o International Drive!</p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Lojas por Categoria */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-                        <h6 className="font-semibold mb-2">👕 Roupas</h6>
-                        <p className="text-sm text-muted-foreground">Ross, TJ Maxx, Old Navy, Gap, H&M</p>
+                      {/* Lake Buena Vista Factory Stores */}
+                      <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/30">
+                        <div className="flex items-start gap-4">
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                            <Tag className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h6 className="font-bold text-lg">Lake Buena Vista Factory Stores</h6>
+                              <Badge className="bg-emerald-500/20 text-emerald-700 border-0">Preços Baixos</Badge>
+                            </div>
+                            <p className="text-muted-foreground text-sm mb-3">Outlet menor mas com preços ainda melhores! Ideal para compras rápidas.</p>
+                            <div className="flex flex-wrap gap-2">
+                              {['Old Navy', 'Carter\'s', 'OshKosh', 'Converse', 'Nike Factory'].map(loja => (
+                                <Badge key={loja} variant="secondary" className="text-xs">{loja}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-                        <h6 className="font-semibold mb-2">📱 Eletrônicos</h6>
-                        <p className="text-sm text-muted-foreground">Best Buy, Apple Store, Target</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-                        <h6 className="font-semibold mb-2">🛒 Supermercados</h6>
-                        <p className="text-sm text-muted-foreground">Walmart, Target, Publix</p>
-                      </div>
-                    </div>
+                    </TabsContent>
 
-                    {/* Cota */}
-                    <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-                      <h6 className="font-semibold mb-2 text-amber-700">💰 Cota de Compras</h6>
-                      <p className="text-sm text-muted-foreground">
-                        A cota de isenção para entrar no Brasil é de <strong>US$ 1.000</strong> por pessoa para compras em lojas + <strong>US$ 1.000</strong> no Duty Free.
-                      </p>
-                    </div>
-                  </div>
+                    {/* MALLS */}
+                    <TabsContent value="malls" className="space-y-6">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {/* Florida Mall */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-blue-500/50 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                              <Store className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 fill-yellow-500 text-yellow-500" />)}
+                            </div>
+                          </div>
+                          <h6 className="font-bold text-lg mb-2">The Florida Mall</h6>
+                          <p className="text-muted-foreground text-sm mb-4">O maior shopping de Orlando! +250 lojas incluindo Apple Store, M&M's World e lojas de departamento.</p>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="w-4 h-4" />
+                              <span>8001 S Orange Blossom Trail</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {['Apple', 'Macy\'s', 'Dillard\'s', 'Zara', 'H&M', 'Sephora'].map(loja => (
+                              <Badge key={loja} variant="secondary" className="text-xs">{loja}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Mall at Millenia */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-amber-500/30 hover:border-amber-500/50 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                              <Crown className="w-6 h-6 text-white" />
+                            </div>
+                            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">Luxo</Badge>
+                          </div>
+                          <h6 className="font-bold text-lg mb-2">Mall at Millenia</h6>
+                          <p className="text-muted-foreground text-sm mb-4">Shopping de luxo com as melhores marcas premium. Arquitetura impressionante!</p>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="w-4 h-4" />
+                              <span>4200 Conroy Rd</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {['Louis Vuitton', 'Gucci', 'Chanel', 'Tiffany', 'Burberry', 'Neiman Marcus'].map(loja => (
+                              <Badge key={loja} variant="secondary" className="text-xs">{loja}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Disney Springs */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-purple-500/30 hover:border-purple-500/50 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                              <Sparkles className="w-6 h-6 text-white" />
+                            </div>
+                            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">Disney</Badge>
+                          </div>
+                          <h6 className="font-bold text-lg mb-2">Disney Springs</h6>
+                          <p className="text-muted-foreground text-sm mb-4">Complexo de compras, restaurantes e entretenimento da Disney. Entrada gratuita!</p>
+                          <div className="flex flex-wrap gap-2">
+                            {['World of Disney', 'Lego Store', 'Coca-Cola Store', 'Uniqlo', 'Sephora'].map(loja => (
+                              <Badge key={loja} variant="secondary" className="text-xs">{loja}</Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Universal CityWalk */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-indigo-500/30 hover:border-indigo-500/50 transition-colors">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+                              <Globe className="w-6 h-6 text-white" />
+                            </div>
+                            <Badge className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white border-0">Universal</Badge>
+                          </div>
+                          <h6 className="font-bold text-lg mb-2">Universal CityWalk</h6>
+                          <p className="text-muted-foreground text-sm mb-4">Área de entretenimento com lojas temáticas exclusivas e restaurantes.</p>
+                          <div className="flex flex-wrap gap-2">
+                            {['Universal Store', 'Hard Rock Cafe', 'Voodoo Doughnut', 'Toothsome'].map(loja => (
+                              <Badge key={loja} variant="secondary" className="text-xs">{loja}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* ELETRÔNICOS */}
+                    <TabsContent value="eletronicos" className="space-y-6">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {/* Best Buy */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-xl">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-yellow-400 flex items-center justify-center">
+                              <Tag className="w-6 h-6 text-blue-700" />
+                            </div>
+                            <div>
+                              <h6 className="font-bold text-lg">Best Buy</h6>
+                              <p className="text-white/70 text-sm">Maior variedade de eletrônicos</p>
+                            </div>
+                          </div>
+                          <ul className="space-y-2 text-sm text-white/90">
+                            <li className="flex items-center gap-2">✓ TVs, laptops, tablets, câmeras</li>
+                            <li className="flex items-center gap-2">✓ Videogames e acessórios</li>
+                            <li className="flex items-center gap-2">✓ Eletrodomésticos</li>
+                            <li className="flex items-center gap-2">✓ Preços competitivos</li>
+                          </ul>
+                          <div className="mt-4 p-3 rounded-xl bg-white/10">
+                            <p className="text-sm">💡 Compare preços com Amazon antes!</p>
+                          </div>
+                        </div>
+
+                        {/* Apple Store */}
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-xl">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+                              <span className="text-2xl">🍎</span>
+                            </div>
+                            <div>
+                              <h6 className="font-bold text-lg">Apple Store</h6>
+                              <p className="text-white/70 text-sm">Produtos Apple com garantia</p>
+                            </div>
+                          </div>
+                          <ul className="space-y-2 text-sm text-white/90">
+                            <li className="flex items-center gap-2">✓ iPhone, iPad, Mac, Watch</li>
+                            <li className="flex items-center gap-2">✓ AirPods e acessórios</li>
+                            <li className="flex items-center gap-2">✓ Gravação gratuita</li>
+                            <li className="flex items-center gap-2">✓ Garantia internacional</li>
+                          </ul>
+                          <div className="mt-4 p-3 rounded-xl bg-white/10">
+                            <p className="text-sm">📍 Florida Mall e Mall at Millenia</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Outras opções */}
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {[
+                          { name: 'Target', desc: 'Eletrônicos + utilidades', icon: '🎯', color: 'from-red-500 to-red-600' },
+                          { name: 'Walmart', desc: 'Preços mais baixos', icon: '🛒', color: 'from-blue-500 to-blue-600' },
+                          { name: 'Amazon Locker', desc: 'Retire compras online', icon: '📦', color: 'from-amber-500 to-orange-500' },
+                        ].map(loja => (
+                          <div key={loja.name} className={`p-4 rounded-xl bg-gradient-to-br ${loja.color} text-white`}>
+                            <span className="text-2xl mb-2 block">{loja.icon}</span>
+                            <p className="font-bold">{loja.name}</p>
+                            <p className="text-white/80 text-sm">{loja.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Dica de preços */}
+                      <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-2 border-amber-500/30">
+                        <h6 className="font-bold mb-3 flex items-center gap-2 text-amber-700">
+                          <DollarSign className="w-5 h-5" />
+                          Comparação de Preços
+                        </h6>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="p-3 rounded-xl bg-white/50 dark:bg-black/20">
+                            <p className="font-medium text-sm">iPhone 16 Pro 256GB</p>
+                            <p className="text-muted-foreground text-xs">EUA: ~$1,099 | Brasil: ~R$10,500</p>
+                            <p className="text-emerald-600 text-xs font-medium">Economia: ~30%</p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-white/50 dark:bg-black/20">
+                            <p className="font-medium text-sm">AirPods Pro 2</p>
+                            <p className="text-muted-foreground text-xs">EUA: ~$249 | Brasil: ~R$2,200</p>
+                            <p className="text-emerald-600 text-xs font-medium">Economia: ~35%</p>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* SUPERMERCADOS */}
+                    <TabsContent value="supermercados" className="space-y-6">
+                      <div className="grid gap-4 md:grid-cols-3">
+                        {[
+                          { name: 'Walmart', color: 'from-blue-600 to-blue-700', icon: '🛒', rating: 5, desc: 'O mais completo! Tudo que você precisa', items: ['Snacks para parques', 'Remédios baratos', 'Roupas básicas', 'Eletrônicos', 'Farmácia 24h'] },
+                          { name: 'Target', color: 'from-red-500 to-red-600', icon: '🎯', rating: 4, desc: 'Qualidade superior, ambiente agradável', items: ['Produtos exclusivos', 'Roupas trendy', 'Decoração', 'Snacks gourmet', 'Café Starbucks'] },
+                          { name: 'Publix', color: 'from-green-500 to-green-600', icon: '🥗', rating: 4, desc: 'Supermercado local de qualidade', items: ['Produtos frescos', 'Padaria incrível', 'Deli com sanduíches', 'Produtos locais', 'Ambiente premium'] },
+                        ].map(super_ => (
+                          <div key={super_.name} className={`p-5 rounded-2xl bg-gradient-to-br ${super_.color} text-white shadow-xl`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-3xl">{super_.icon}</span>
+                              <div className="flex gap-0.5">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`w-3 h-3 ${i < super_.rating ? 'fill-yellow-400 text-yellow-400' : 'text-white/30'}`} />
+                                ))}
+                              </div>
+                            </div>
+                            <h6 className="font-bold text-lg mb-1">{super_.name}</h6>
+                            <p className="text-white/80 text-sm mb-3">{super_.desc}</p>
+                            <ul className="space-y-1">
+                              {super_.items.map(item => (
+                                <li key={item} className="text-sm text-white/90 flex items-center gap-2">
+                                  <Check className="w-3 h-3" />{item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Lista de compras recomendada */}
+                      <div className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50">
+                        <h6 className="font-bold mb-4 flex items-center gap-2">
+                          <ShoppingBag className="w-5 h-5 text-pink-500" />
+                          Lista de Compras Essenciais
+                        </h6>
+                        <div className="grid gap-3 md:grid-cols-4">
+                          {[
+                            { cat: '🍿 Snacks', items: 'Goldfish, Cheez-It, Oreo, M&Ms' },
+                            { cat: '💊 Farmácia', items: 'Tylenol, Advil, Band-Aid, Vitaminas' },
+                            { cat: '🧴 Cuidados', items: 'Protetor solar, Repelente, Loções' },
+                            { cat: '🥤 Bebidas', items: 'Água, Gatorade, Sucos' },
+                          ].map(cat => (
+                            <div key={cat.cat} className="p-3 rounded-xl bg-background/50">
+                              <p className="font-medium text-sm mb-1">{cat.cat}</p>
+                              <p className="text-xs text-muted-foreground">{cat.items}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    {/* DICAS */}
+                    <TabsContent value="dicas" className="space-y-6">
+                      {/* Cota de Isenção */}
+                      <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-xl">
+                        <div className="flex items-start gap-4">
+                          <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <DollarSign className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <h5 className="font-bold text-xl mb-2">Cota de Isenção para o Brasil</h5>
+                            <div className="grid gap-3 md:grid-cols-2 mt-4">
+                              <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+                                <p className="font-bold text-2xl">US$ 1.000</p>
+                                <p className="text-white/80 text-sm">Compras em lojas (por pessoa)</p>
+                              </div>
+                              <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+                                <p className="font-bold text-2xl">US$ 1.000</p>
+                                <p className="text-white/80 text-sm">Duty Free (adicional)</p>
+                              </div>
+                            </div>
+                            <p className="text-white/90 text-sm mt-4">⚠️ Excedeu a cota? Taxa de 50% sobre o valor excedente!</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Lojas de Desconto */}
+                      <div>
+                        <h6 className="font-bold mb-4 flex items-center gap-2">
+                          <Tag className="w-5 h-5 text-emerald-500" />
+                          Lojas de Desconto Imperdíveis
+                        </h6>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {[
+                            { name: 'Ross Dress for Less', desc: 'Roupas de marca com até 60% off', dica: 'Vá de manhã para melhores opções', color: 'from-blue-500 to-blue-600' },
+                            { name: 'TJ Maxx', desc: 'Marcas premium com desconto', dica: 'Ótimo para bolsas e acessórios', color: 'from-red-500 to-red-600' },
+                            { name: 'Marshalls', desc: 'Similar ao TJ Maxx, mesma empresa', dica: 'Excelente para sapatos', color: 'from-purple-500 to-purple-600' },
+                            { name: 'Burlington', desc: 'Casacos e roupas de inverno', dica: 'Preços imbatíveis em casacos', color: 'from-green-500 to-green-600' },
+                          ].map(loja => (
+                            <div key={loja.name} className={`p-4 rounded-xl bg-gradient-to-br ${loja.color} text-white`}>
+                              <h6 className="font-bold mb-1">{loja.name}</h6>
+                              <p className="text-white/80 text-sm mb-2">{loja.desc}</p>
+                              <p className="text-white/90 text-xs flex items-center gap-1">
+                                <Info className="w-3 h-3" /> {loja.dica}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Dicas gerais */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/30">
+                          <h6 className="font-bold mb-3 text-emerald-700 flex items-center gap-2">
+                            <Check className="w-5 h-5" />
+                            Faça Isso
+                          </h6>
+                          <ul className="space-y-2 text-sm">
+                            <li>✓ Baixe apps de cupons (Honey, RetailMeNot)</li>
+                            <li>✓ Compare preços antes de comprar</li>
+                            <li>✓ Guarde todas as notas fiscais</li>
+                            <li>✓ Compre no início da viagem</li>
+                            <li>✓ Aproveite o Tax-Free Weekend (agosto)</li>
+                          </ul>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-rose-500/10 border-2 border-red-500/30">
+                          <h6 className="font-bold mb-3 text-red-700 flex items-center gap-2">
+                            <X className="w-5 h-5" />
+                            Evite Isso
+                          </h6>
+                          <ul className="space-y-2 text-sm">
+                            <li>✗ Não compre eletrônicos sem pesquisar</li>
+                            <li>✗ Não esqueça do imposto (6-7.5%)</li>
+                            <li>✗ Não ultrapasse a cota sem saber</li>
+                            <li>✗ Não deixe tudo para o último dia</li>
+                            <li>✗ Não compre falsificações</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
