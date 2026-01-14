@@ -28,6 +28,7 @@ import {
 
 interface Attraction {
   name: string;
+  description: string;
   type: 'ride' | 'show' | 'character' | 'experience';
   thrillLevel?: number;
   mustDo?: boolean;
@@ -48,23 +49,23 @@ const parks: Park[] = [
     icon: Castle,
     color: 'from-blue-500 to-purple-500',
     attractions: [
-      { name: 'Space Mountain', type: 'ride', thrillLevel: 3 },
-      { name: 'Big Thunder Mountain Railroad', type: 'ride', thrillLevel: 2 },
-      { name: 'Splash Mountain', type: 'ride', thrillLevel: 2 },
-      { name: 'Pirates of the Caribbean', type: 'ride', thrillLevel: 1 },
-      { name: 'Haunted Mansion', type: 'ride', thrillLevel: 1 },
-      { name: 'Seven Dwarfs Mine Train', type: 'ride', thrillLevel: 2, mustDo: true },
-      { name: 'Peter Pan\'s Flight', type: 'ride', thrillLevel: 1 },
-      { name: 'Jungle Cruise', type: 'ride', thrillLevel: 1 },
-      { name: 'TRON Lightcycle Run', type: 'ride', thrillLevel: 4, mustDo: true },
-      { name: 'Buzz Lightyear\'s Space Ranger Spin', type: 'ride', thrillLevel: 1 },
-      { name: 'The Many Adventures of Winnie the Pooh', type: 'ride', thrillLevel: 1 },
-      { name: 'It\'s a Small World', type: 'ride', thrillLevel: 1 },
-      { name: 'Mickey\'s PhilharMagic', type: 'show', thrillLevel: 1 },
-      { name: 'Festival of Fantasy Parade', type: 'show' },
-      { name: 'Happily Ever After (Fireworks)', type: 'show', mustDo: true },
-      { name: 'Meet Mickey Mouse', type: 'character' },
-      { name: 'Meet Princesses at Princess Fairytale Hall', type: 'character' },
+      { name: 'Space Mountain', description: 'Montanha-russa no escuro pelo espaço', type: 'ride', thrillLevel: 3 },
+      { name: 'Big Thunder Mountain Railroad', description: 'Montanha-russa em trem pela mina do velho oeste', type: 'ride', thrillLevel: 2 },
+      { name: 'Splash Mountain', description: 'Passeio aquático com queda de 15 metros', type: 'ride', thrillLevel: 2 },
+      { name: 'Pirates of the Caribbean', description: 'Navegue com Jack Sparrow em cenários incríveis', type: 'ride', thrillLevel: 1 },
+      { name: 'Haunted Mansion', description: 'Tour assombrado com 999 fantasmas', type: 'ride', thrillLevel: 1 },
+      { name: 'Seven Dwarfs Mine Train', description: 'Montanha-russa familiar com os sete anões', type: 'ride', thrillLevel: 2, mustDo: true },
+      { name: 'Peter Pan\'s Flight', description: 'Voe sobre Londres até a Terra do Nunca', type: 'ride', thrillLevel: 1 },
+      { name: 'Jungle Cruise', description: 'Expedição pela selva com piadas do capitão', type: 'ride', thrillLevel: 1 },
+      { name: 'TRON Lightcycle Run', description: 'Montanha-russa de alta velocidade estilo moto', type: 'ride', thrillLevel: 4, mustDo: true },
+      { name: 'Buzz Lightyear\'s Space Ranger Spin', description: 'Atire em alvos para salvar a galáxia', type: 'ride', thrillLevel: 1 },
+      { name: 'The Many Adventures of Winnie the Pooh', description: 'Passeio encantador pelo Bosque dos Cem Acres', type: 'ride', thrillLevel: 1 },
+      { name: 'It\'s a Small World', description: 'Passeio de barco com bonecos do mundo todo', type: 'ride', thrillLevel: 1 },
+      { name: 'Mickey\'s PhilharMagic', description: 'Show 4D com Donald e músicas clássicas Disney', type: 'show', thrillLevel: 1 },
+      { name: 'Festival of Fantasy Parade', description: 'Desfile mágico com carros alegóricos e personagens', type: 'show' },
+      { name: 'Happily Ever After (Fireworks)', description: 'Show de fogos no Castelo da Cinderela', type: 'show', mustDo: true },
+      { name: 'Meet Mickey Mouse', description: 'Encontro com o Mickey no Town Square Theater', type: 'character' },
+      { name: 'Meet Princesses at Princess Fairytale Hall', description: 'Encontro com princesas no castelo', type: 'character' },
     ]
   },
   {
@@ -73,18 +74,18 @@ const parks: Park[] = [
     icon: Globe,
     color: 'from-teal-500 to-cyan-500',
     attractions: [
-      { name: 'Guardians of the Galaxy: Cosmic Rewind', type: 'ride', thrillLevel: 4, mustDo: true },
-      { name: 'Test Track', type: 'ride', thrillLevel: 3 },
-      { name: 'Frozen Ever After', type: 'ride', thrillLevel: 1, mustDo: true },
-      { name: 'Remy\'s Ratatouille Adventure', type: 'ride', thrillLevel: 1, mustDo: true },
-      { name: 'Soarin\' Around the World', type: 'ride', thrillLevel: 1, mustDo: true },
-      { name: 'Spaceship Earth', type: 'ride', thrillLevel: 1 },
-      { name: 'Journey Into Imagination', type: 'ride', thrillLevel: 1 },
-      { name: 'Living with the Land', type: 'ride', thrillLevel: 1 },
-      { name: 'The Seas with Nemo & Friends', type: 'ride', thrillLevel: 1 },
-      { name: 'Mission: SPACE', type: 'ride', thrillLevel: 4 },
-      { name: 'EPCOT Forever (Fireworks)', type: 'show', mustDo: true },
-      { name: 'World Showcase Countries', type: 'experience' },
+      { name: 'Guardians of the Galaxy: Cosmic Rewind', description: 'Montanha-russa indoor com música dos anos 80', type: 'ride', thrillLevel: 4, mustDo: true },
+      { name: 'Test Track', description: 'Projete seu carro e teste em alta velocidade', type: 'ride', thrillLevel: 3 },
+      { name: 'Frozen Ever After', description: 'Passeio de barco pelo reino de Arendelle', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Remy\'s Ratatouille Adventure', description: 'Aventura 4D do tamanho de um rato pela cozinha', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Soarin\' Around the World', description: 'Voe sobre paisagens icônicas do mundo', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Spaceship Earth', description: 'Viaje pela história da comunicação humana', type: 'ride', thrillLevel: 1 },
+      { name: 'Journey Into Imagination', description: 'Explore a imaginação com Figment', type: 'ride', thrillLevel: 1 },
+      { name: 'Living with the Land', description: 'Passeio pelas estufas e agricultura futurista', type: 'ride', thrillLevel: 1 },
+      { name: 'The Seas with Nemo & Friends', description: 'Encontre Nemo em aquário gigante', type: 'ride', thrillLevel: 1 },
+      { name: 'Mission: SPACE', description: 'Simulador de lançamento espacial intenso', type: 'ride', thrillLevel: 4 },
+      { name: 'Luminous (Fireworks)', description: 'Show noturno espetacular na lagoa', type: 'show', mustDo: true },
+      { name: 'World Showcase Countries', description: 'Explore 11 pavilhões de países diferentes', type: 'experience' },
     ]
   },
   {
@@ -93,19 +94,19 @@ const parks: Park[] = [
     icon: Film,
     color: 'from-red-500 to-pink-500',
     attractions: [
-      { name: 'Star Wars: Rise of the Resistance', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Millennium Falcon: Smugglers Run', type: 'ride', thrillLevel: 2, mustDo: true },
-      { name: 'Tower of Terror', type: 'ride', thrillLevel: 4 },
-      { name: 'Rock \'n\' Roller Coaster', type: 'ride', thrillLevel: 4 },
-      { name: 'Slinky Dog Dash', type: 'ride', thrillLevel: 2, mustDo: true },
-      { name: 'Mickey & Minnie\'s Runaway Railway', type: 'ride', thrillLevel: 1, mustDo: true },
-      { name: 'Toy Story Mania!', type: 'ride', thrillLevel: 1 },
-      { name: 'Alien Swirling Saucers', type: 'ride', thrillLevel: 1 },
-      { name: 'Star Tours', type: 'ride', thrillLevel: 2 },
-      { name: 'Fantasmic!', type: 'show', mustDo: true },
-      { name: 'Indiana Jones Epic Stunt Spectacular', type: 'show' },
-      { name: 'Meet Kylo Ren', type: 'character' },
-      { name: 'Meet Disney Junior Characters', type: 'character' },
+      { name: 'Star Wars: Rise of the Resistance', description: 'Missão épica contra a Primeira Ordem', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Millennium Falcon: Smugglers Run', description: 'Pilote a Millennium Falcon em missão', type: 'ride', thrillLevel: 2, mustDo: true },
+      { name: 'Tower of Terror', description: 'Elevador mal-assombrado com quedas livres', type: 'ride', thrillLevel: 4 },
+      { name: 'Rock \'n\' Roller Coaster', description: 'Montanha-russa do Aerosmith com looping', type: 'ride', thrillLevel: 4 },
+      { name: 'Slinky Dog Dash', description: 'Montanha-russa familiar do Toy Story', type: 'ride', thrillLevel: 2, mustDo: true },
+      { name: 'Mickey & Minnie\'s Runaway Railway', description: 'Aventura maluca em desenho animado', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Toy Story Mania!', description: 'Jogo interativo 4D com personagens Toy Story', type: 'ride', thrillLevel: 1 },
+      { name: 'Alien Swirling Saucers', description: 'Gire em discos voadores com os aliens', type: 'ride', thrillLevel: 1 },
+      { name: 'Star Tours', description: 'Simulador de voo pelo universo Star Wars', type: 'ride', thrillLevel: 2 },
+      { name: 'Fantasmic!', description: 'Show noturno épico com fogos e água', type: 'show', mustDo: true },
+      { name: 'Indiana Jones Epic Stunt Spectacular', description: 'Show ao vivo de cenas de ação', type: 'show' },
+      { name: 'Meet Kylo Ren', description: 'Encontro com o vilão da nova trilogia', type: 'character' },
+      { name: 'Meet Disney Junior Characters', description: 'Personagens para os pequenos', type: 'character' },
     ]
   },
   {
@@ -114,17 +115,17 @@ const parks: Park[] = [
     icon: TreePine,
     color: 'from-green-500 to-emerald-500',
     attractions: [
-      { name: 'Avatar Flight of Passage', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Na\'vi River Journey', type: 'ride', thrillLevel: 1 },
-      { name: 'Expedition Everest', type: 'ride', thrillLevel: 4, mustDo: true },
-      { name: 'Kilimanjaro Safaris', type: 'ride', thrillLevel: 1, mustDo: true },
-      { name: 'Kali River Rapids', type: 'ride', thrillLevel: 2 },
-      { name: 'Dinosaur', type: 'ride', thrillLevel: 3 },
-      { name: 'TriceraTop Spin', type: 'ride', thrillLevel: 1 },
-      { name: 'Festival of the Lion King', type: 'show', mustDo: true },
-      { name: 'Finding Nemo: The Big Blue... and Beyond!', type: 'show' },
-      { name: 'Tree of Life Awakenings', type: 'show' },
-      { name: 'Gorilla Falls Exploration Trail', type: 'experience' },
+      { name: 'Avatar Flight of Passage', description: 'Voe em um banshee por Pandora - sensacional!', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Na\'vi River Journey', description: 'Passeio de barco pela floresta bioluminescente', type: 'ride', thrillLevel: 1 },
+      { name: 'Expedition Everest', description: 'Montanha-russa enfrentando o Yeti', type: 'ride', thrillLevel: 4, mustDo: true },
+      { name: 'Kilimanjaro Safaris', description: 'Safari real com animais africanos', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Kali River Rapids', description: 'Rafting por corredeiras - você vai se molhar!', type: 'ride', thrillLevel: 2 },
+      { name: 'Dinosaur', description: 'Viagem no tempo para salvar um dinossauro', type: 'ride', thrillLevel: 3 },
+      { name: 'TriceraTop Spin', description: 'Atração giratória para crianças', type: 'ride', thrillLevel: 1 },
+      { name: 'Festival of the Lion King', description: 'Musical do Rei Leão emocionante', type: 'show', mustDo: true },
+      { name: 'Finding Nemo: The Big Blue... and Beyond!', description: 'Musical com marionetes de Nemo', type: 'show' },
+      { name: 'Tree of Life Awakenings', description: 'Projeções mágicas na Árvore da Vida', type: 'show' },
+      { name: 'Gorilla Falls Exploration Trail', description: 'Trilha para ver gorilas e animais', type: 'experience' },
     ]
   },
   {
@@ -133,17 +134,17 @@ const parks: Park[] = [
     icon: Rocket,
     color: 'from-yellow-500 to-orange-500',
     attractions: [
-      { name: 'Harry Potter and the Escape from Gringotts', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Hagrid\'s Magical Creatures Motorbike Adventure', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Revenge of the Mummy', type: 'ride', thrillLevel: 4 },
-      { name: 'Hollywood Rip Ride Rockit', type: 'ride', thrillLevel: 5 },
-      { name: 'Transformers: The Ride 3D', type: 'ride', thrillLevel: 3 },
-      { name: 'Men in Black: Alien Attack', type: 'ride', thrillLevel: 2 },
-      { name: 'E.T. Adventure', type: 'ride', thrillLevel: 1 },
-      { name: 'Race Through New York Starring Jimmy Fallon', type: 'ride', thrillLevel: 2 },
-      { name: 'Fast & Furious: Supercharged', type: 'ride', thrillLevel: 2 },
-      { name: 'Diagon Alley', type: 'experience', mustDo: true },
-      { name: 'Hogwarts Express', type: 'ride', thrillLevel: 1, mustDo: true },
+      { name: 'Harry Potter and the Escape from Gringotts', description: 'Fuja do banco dos bruxos em montanha-russa 3D', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Hagrid\'s Magical Creatures Motorbike Adventure', description: 'Montanha-russa de moto pela Floresta Proibida', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Revenge of the Mummy', description: 'Montanha-russa indoor no escuro com múmias', type: 'ride', thrillLevel: 4 },
+      { name: 'Hollywood Rip Ride Rockit', description: 'Montanha-russa vertical - escolha sua música', type: 'ride', thrillLevel: 5 },
+      { name: 'Transformers: The Ride 3D', description: 'Batalha épica com Autobots em 3D', type: 'ride', thrillLevel: 3 },
+      { name: 'Men in Black: Alien Attack', description: 'Atire em aliens pela cidade de NY', type: 'ride', thrillLevel: 2 },
+      { name: 'E.T. Adventure', description: 'Voe de bicicleta com E.T. para seu planeta', type: 'ride', thrillLevel: 1 },
+      { name: 'Race Through New York Starring Jimmy Fallon', description: 'Simulador de corrida por Nova York', type: 'ride', thrillLevel: 2 },
+      { name: 'Fast & Furious: Supercharged', description: 'Perseguição de carros em alta velocidade', type: 'ride', thrillLevel: 2 },
+      { name: 'Diagon Alley', description: 'Explore a rua dos bruxos com lojas mágicas', type: 'experience', mustDo: true },
+      { name: 'Hogwarts Express', description: 'Trem entre os dois parques Universal', type: 'ride', thrillLevel: 1, mustDo: true },
     ]
   },
   {
@@ -152,17 +153,17 @@ const parks: Park[] = [
     icon: Waves,
     color: 'from-indigo-500 to-violet-500',
     attractions: [
-      { name: 'Hagrid\'s Magical Creatures Motorbike Adventure', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Harry Potter and the Forbidden Journey', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'VelociCoaster', type: 'ride', thrillLevel: 5, mustDo: true },
-      { name: 'The Incredible Hulk Coaster', type: 'ride', thrillLevel: 5 },
-      { name: 'The Amazing Adventures of Spider-Man', type: 'ride', thrillLevel: 3 },
-      { name: 'Jurassic World VelociCoaster', type: 'ride', thrillLevel: 5 },
-      { name: 'Jurassic Park River Adventure', type: 'ride', thrillLevel: 3 },
-      { name: 'Skull Island: Reign of Kong', type: 'ride', thrillLevel: 2 },
-      { name: 'Doctor Doom\'s Fearfall', type: 'ride', thrillLevel: 4 },
-      { name: 'Popeye & Bluto\'s Bilge-Rat Barges', type: 'ride', thrillLevel: 2 },
-      { name: 'Hogsmeade Village', type: 'experience', mustDo: true },
+      { name: 'Hagrid\'s Magical Creatures Motorbike Adventure', description: 'Montanha-russa de moto pela Floresta Proibida', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Harry Potter and the Forbidden Journey', description: 'Voe por Hogwarts em aventura 3D', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'VelociCoaster', description: 'Montanha-russa mais intensa da Flórida', type: 'ride', thrillLevel: 5, mustDo: true },
+      { name: 'The Incredible Hulk Coaster', description: 'Montanha-russa com lançamento de 0-60km em 2s', type: 'ride', thrillLevel: 5 },
+      { name: 'The Amazing Adventures of Spider-Man', description: 'Aventura 3D clássica com Homem-Aranha', type: 'ride', thrillLevel: 3 },
+      { name: 'Jurassic World VelociCoaster', description: 'Montanha-russa radical com dinossauros', type: 'ride', thrillLevel: 5 },
+      { name: 'Jurassic Park River Adventure', description: 'Passeio aquático com queda de 26 metros', type: 'ride', thrillLevel: 3 },
+      { name: 'Skull Island: Reign of Kong', description: 'Expedição 3D enfrentando o King Kong', type: 'ride', thrillLevel: 2 },
+      { name: 'Doctor Doom\'s Fearfall', description: 'Torre de queda livre radical', type: 'ride', thrillLevel: 4 },
+      { name: 'Popeye & Bluto\'s Bilge-Rat Barges', description: 'Rafting divertido - prepare para molhar!', type: 'ride', thrillLevel: 2 },
+      { name: 'Hogsmeade Village', description: 'Vila mágica com cerveja amanteigada', type: 'experience', mustDo: true },
     ]
   },
   {
@@ -171,14 +172,14 @@ const parks: Park[] = [
     icon: Sparkles,
     color: 'from-purple-500 to-pink-500',
     attractions: [
-      { name: 'Starfall Racers', type: 'ride', thrillLevel: 4, mustDo: true },
-      { name: 'Harry Potter and the Battle at the Ministry', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'Mario Kart: Bowser\'s Challenge', type: 'ride', thrillLevel: 2, mustDo: true },
-      { name: 'Donkey Kong Mine Cart Madness', type: 'ride', thrillLevel: 3, mustDo: true },
-      { name: 'How to Train Your Dragon - Hiccup\'s Wing Gliders', type: 'ride', thrillLevel: 2 },
-      { name: 'Monsters Unleashed', type: 'ride', thrillLevel: 3 },
-      { name: 'Super Nintendo World', type: 'experience', mustDo: true },
-      { name: 'The Wizarding World of Harry Potter - Ministry of Magic', type: 'experience', mustDo: true },
+      { name: 'Starfall Racers', description: 'Montanha-russa dupla de corrida', type: 'ride', thrillLevel: 4, mustDo: true },
+      { name: 'Harry Potter and the Battle at the Ministry', description: 'Aventura no Ministério da Magia', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'Mario Kart: Bowser\'s Challenge', description: 'Corrida com Mario em realidade aumentada', type: 'ride', thrillLevel: 2, mustDo: true },
+      { name: 'Donkey Kong Mine Cart Madness', description: 'Montanha-russa do carrinho de mina', type: 'ride', thrillLevel: 3, mustDo: true },
+      { name: 'How to Train Your Dragon - Hiccup\'s Wing Gliders', description: 'Voe com dragões sobre a vila', type: 'ride', thrillLevel: 2 },
+      { name: 'Monsters Unleashed', description: 'Aventura com monstros clássicos Universal', type: 'ride', thrillLevel: 3 },
+      { name: 'Super Nintendo World', description: 'Área imersiva do mundo dos games', type: 'experience', mustDo: true },
+      { name: 'The Wizarding World of Harry Potter - Ministry of Magic', description: 'Nova área temática do Ministério da Magia', type: 'experience', mustDo: true },
     ]
   },
 ];
@@ -407,7 +408,7 @@ export default function Attractions() {
                   parks.flatMap(p => p.attractions.filter(att => att.mustDo && att.name === a.attractionName)).length > 0
                 ).length}
               </div>
-              <div className="text-xs text-muted-foreground">Must-Do's</div>
+              <div className="text-xs text-muted-foreground">Imperdíveis</div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5">
@@ -480,11 +481,14 @@ export default function Attractions() {
                                 {attraction.mustDo && (
                                   <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs">
                                     <Star className="w-3 h-3 mr-1" />
-                                    Must-Do
+                                    Imperdível
                                   </Badge>
                                 )}
                               </div>
-                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {attraction.description}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 mt-2">
                                 <Badge variant="outline" className="text-xs">
                                   <TypeIcon className="w-3 h-3 mr-1" />
                                   {getTypeLabel(attraction.type)}
