@@ -103,63 +103,73 @@ const TravelGuide = () => {
     <AppLayout>
       <div className="space-y-8 pb-12">
         {/* Modern Hero Header */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-accent p-8 md:p-12">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-accent p-5 sm:p-8 md:p-12">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
           <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-float">
-                <Book className="w-8 h-8 text-white" />
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-float flex-shrink-0">
+                <Book className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-white">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-display font-bold text-white leading-tight">
                   Guia Completo de Viagem
                 </h1>
-                <p className="text-white/80 text-lg">Tudo para sua aventura em Orlando ✨</p>
+                <p className="text-white/80 text-sm sm:text-lg">Tudo para sua aventura em Orlando ✨</p>
               </div>
             </div>
             
             {/* Progress Circle */}
-            <div className="flex items-center gap-6 mt-6">
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 -rotate-90">
-                  <circle cx="40" cy="40" r="36" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="none" />
+            <div className="flex items-center gap-4 sm:gap-6 mt-4 sm:mt-6">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                <svg className="w-16 h-16 sm:w-20 sm:h-20 -rotate-90">
+                  <circle cx="32" cy="32" r="28" className="sm:hidden" stroke="rgba(255,255,255,0.2)" strokeWidth="6" fill="none" />
+                  <circle 
+                    cx="32" cy="32" r="28" 
+                    className="sm:hidden"
+                    stroke="white" 
+                    strokeWidth="6" 
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${totalProgress() * 1.76} 176`}
+                  />
+                  <circle cx="40" cy="40" r="36" className="hidden sm:block" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="none" />
                   <circle 
                     cx="40" cy="40" r="36" 
+                    className="hidden sm:block transition-all duration-700 ease-out"
                     stroke="white" 
                     strokeWidth="8" 
                     fill="none"
                     strokeLinecap="round"
                     strokeDasharray={`${totalProgress() * 2.26} 226`}
-                    className="transition-all duration-700 ease-out"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-white">{totalProgress()}%</span>
+                  <span className="text-base sm:text-xl font-bold text-white">{totalProgress()}%</span>
                 </div>
               </div>
-              <div className="text-white/90">
-                <p className="font-medium">Sua Preparação</p>
-                <p className="text-sm text-white/70">Continue marcando os itens do checklist</p>
+              <div className="text-white/90 min-w-0">
+                <p className="font-medium text-sm sm:text-base">Sua Preparação</p>
+                <p className="text-xs sm:text-sm text-white/70">Continue marcando os itens</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick Navigation - Modern Pills */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Compass className="w-4 h-4" />
             <span className="text-sm font-medium">Navegação Rápida</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:flex md:flex-wrap gap-2">
             {navSections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className={`group flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r ${section.color} text-white text-sm font-medium shadow-lg shadow-${section.color.split('-')[1]}-500/20 hover:scale-105 hover:shadow-xl transition-all duration-300`}
+                className={`group flex items-center justify-center md:justify-start gap-1.5 md:gap-2 px-2 md:px-4 py-2 md:py-2.5 rounded-xl md:rounded-full bg-gradient-to-r ${section.color} text-white text-xs md:text-sm font-medium shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300`}
               >
-                <section.icon className="w-4 h-4" />
-                <span>{section.label}</span>
+                <section.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{section.label}</span>
               </button>
             ))}
           </div>
@@ -199,23 +209,23 @@ const TravelGuide = () => {
           <div data-section="checklist" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="checklist" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                      <CheckCircle2 className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                      <CheckCircle2 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Checklist Interativo</h3>
-                      <p className="text-sm text-muted-foreground">Marque os itens conforme for preparando</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Checklist Interativo</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Marque os itens conforme for preparando</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="documents" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-xl p-1 mb-6">
-                      <TabsTrigger value="documents" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">📄 Documentos</TabsTrigger>
-                      <TabsTrigger value="luggage" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">🧳 Mala</TabsTrigger>
-                      <TabsTrigger value="apps" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md">📱 Apps</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-xl p-1 mb-6 h-auto">
+                      <TabsTrigger value="documents" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">📄 <span className="hidden xs:inline">Documentos</span><span className="xs:hidden">Docs</span></TabsTrigger>
+                      <TabsTrigger value="luggage" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">🧳 Mala</TabsTrigger>
+                      <TabsTrigger value="apps" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">📱 Apps</TabsTrigger>
                     </TabsList>
                     
                     {(['documents', 'luggage', 'apps'] as const).map((category) => (
@@ -267,18 +277,18 @@ const TravelGuide = () => {
           <div data-section="locomocao" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="locomocao" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                      <Car className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
+                      <Car className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Como se Locomover</h3>
-                      <p className="text-sm text-muted-foreground">Aluguel de carro, Uber, táxi e dicas</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Como se Locomover</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Aluguel de carro, Uber, táxi e dicas</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Cards Modernos para Locadoras */}
                     <div>
@@ -364,18 +374,18 @@ const TravelGuide = () => {
           <div data-section="aeroporto" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="aeroporto" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
-                      <Plane className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
+                      <Plane className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Aeroporto e Imigração</h3>
-                      <p className="text-sm text-muted-foreground">Check-in, imigração, duty free e dicas</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Aeroporto e Imigração</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Check-in, imigração, duty free</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Aeroportos */}
                     <div className="grid gap-4 md:grid-cols-2">
@@ -443,18 +453,18 @@ const TravelGuide = () => {
           <div data-section="mochila" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="mochila" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
-                      <Backpack className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30 flex-shrink-0">
+                      <Backpack className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">O que Levar para o Parque</h3>
-                      <p className="text-sm text-muted-foreground">Snacks, itens essenciais e documentos</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Mochila do Parque</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Snacks, itens essenciais</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Snacks Grid */}
                     <div>
@@ -499,25 +509,25 @@ const TravelGuide = () => {
           <div data-section="compras" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="compras" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                      <ShoppingBag className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30 flex-shrink-0">
+                      <ShoppingBag className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Guia Completo de Compras</h3>
-                      <p className="text-sm text-muted-foreground">Outlets, malls, supermercados, eletrônicos e dicas de economia</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Guia de Compras</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Outlets, malls, eletrônicos e dicas</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="outlets" className="w-full">
-                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="outlets" className="rounded-lg text-xs px-3">🏪 Outlets</TabsTrigger>
-                      <TabsTrigger value="malls" className="rounded-lg text-xs px-3">🏬 Malls</TabsTrigger>
-                      <TabsTrigger value="eletronicos" className="rounded-lg text-xs px-3">📱 Eletrônicos</TabsTrigger>
-                      <TabsTrigger value="supermercados" className="rounded-lg text-xs px-3">🛒 Supermercados</TabsTrigger>
-                      <TabsTrigger value="dicas" className="rounded-lg text-xs px-3">💡 Dicas</TabsTrigger>
+                    <TabsList className="grid grid-cols-3 sm:grid-cols-5 bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="outlets" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🏪 Outlets</TabsTrigger>
+                      <TabsTrigger value="malls" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🏬 Malls</TabsTrigger>
+                      <TabsTrigger value="eletronicos" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">📱 Tech</TabsTrigger>
+                      <TabsTrigger value="supermercados" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🛒 Super</TabsTrigger>
+                      <TabsTrigger value="dicas" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">💡 Dicas</TabsTrigger>
                     </TabsList>
 
                     {/* OUTLETS */}
@@ -925,24 +935,24 @@ const TravelGuide = () => {
           <div data-section="restaurantes-disney" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="restaurantes-disney" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                      <Crown className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                      <Crown className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Restaurantes Disney</h3>
-                      <p className="text-sm text-muted-foreground">Guia completo com dicas, preços e reservas</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Restaurantes Disney</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Dicas, preços e reservas</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="magic-kingdom" className="w-full">
-                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="magic-kingdom" className="rounded-lg text-xs px-3">🏰 Magic Kingdom</TabsTrigger>
-                      <TabsTrigger value="epcot" className="rounded-lg text-xs px-3">🌍 EPCOT</TabsTrigger>
-                      <TabsTrigger value="hollywood" className="rounded-lg text-xs px-3">🎬 Hollywood Studios</TabsTrigger>
-                      <TabsTrigger value="animal" className="rounded-lg text-xs px-3">🦁 Animal Kingdom</TabsTrigger>
+                    <TabsList className="grid grid-cols-2 sm:flex sm:flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="magic-kingdom" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🏰 Magic Kingdom</TabsTrigger>
+                      <TabsTrigger value="epcot" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🌍 EPCOT</TabsTrigger>
+                      <TabsTrigger value="hollywood" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🎬 Hollywood</TabsTrigger>
+                      <TabsTrigger value="animal" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🦁 Animal Kingdom</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="magic-kingdom" className="space-y-4">
@@ -956,16 +966,18 @@ const TravelGuide = () => {
                         { name: "Skipper Canteen", tipo: "Table Service", preco: "$$$", desc: "Temática Jungle Cruise com culinária global. Garçons fazem piadas!", badges: ["Divertido", "Temático"], rating: 4, dica: "Kungaloosh Pork Ribs!" },
                         { name: "Columbia Harbour House", tipo: "Quick Service", preco: "$", desc: "Fish & chips no Liberty Square. Um dos melhores quick services!", badges: ["Frutos do Mar", "Econômico"], rating: 4, dica: "2º andar mais tranquilo" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-amber-500/30 transition-all">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <h6 className="font-bold text-lg">{rest.name}</h6>
-                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0">{rest.tipo}</Badge>
-                            <Badge variant="outline">{rest.preco}</Badge>
-                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                        <div key={rest.name} className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-amber-500/30 transition-all">
+                          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-2 mb-2">
+                            <h6 className="font-bold text-base sm:text-lg">{rest.name}</h6>
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0 text-[10px] sm:text-xs">{rest.tipo}</Badge>
+                              <Badge variant="outline" className="text-[10px] sm:text-xs">{rest.preco}</Badge>
+                              <div className="flex gap-0.5 sm:ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                            </div>
                           </div>
-                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
-                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
-                          <div className="p-3 rounded-lg bg-amber-500/10 text-sm"><span className="text-amber-700 dark:text-amber-400">💡 {rest.dica}</span></div>
+                          <p className="text-muted-foreground text-xs sm:text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-[10px] sm:text-xs">{b}</Badge>)}</div>
+                          <div className="p-2 sm:p-3 rounded-lg bg-amber-500/10 text-xs sm:text-sm"><span className="text-amber-700 dark:text-amber-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
@@ -1072,24 +1084,24 @@ const TravelGuide = () => {
           <div data-section="restaurantes-universal" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="restaurantes-universal" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                      <Globe className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                      <Globe className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Restaurantes Universal</h3>
-                      <p className="text-sm text-muted-foreground">Gastronomia nos parques Universal</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Restaurantes Universal</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Gastronomia nos parques</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="universal-studios" className="w-full">
-                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="universal-studios" className="rounded-lg text-xs px-3">🎬 Universal Studios</TabsTrigger>
-                      <TabsTrigger value="islands" className="rounded-lg text-xs px-3">🏝️ Islands of Adventure</TabsTrigger>
-                      <TabsTrigger value="epic" className="rounded-lg text-xs px-3">🌟 Epic Universe</TabsTrigger>
-                      <TabsTrigger value="citywalk" className="rounded-lg text-xs px-3">🎉 CityWalk</TabsTrigger>
+                    <TabsList className="grid grid-cols-2 sm:flex sm:flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="universal-studios" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🎬 Universal</TabsTrigger>
+                      <TabsTrigger value="islands" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🏝️ Islands</TabsTrigger>
+                      <TabsTrigger value="epic" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🌟 Epic</TabsTrigger>
+                      <TabsTrigger value="citywalk" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🎉 CityWalk</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="universal-studios" className="space-y-4">
@@ -1231,26 +1243,26 @@ const TravelGuide = () => {
           <div data-section="restaurantes-orlando" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="restaurantes-orlando" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-500/30">
-                      <Utensils className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-500/30 flex-shrink-0">
+                      <Utensils className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Restaurantes Orlando</h3>
-                      <p className="text-sm text-muted-foreground">Opções fora dos parques para todos os gostos</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Restaurantes Orlando</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Opções fora dos parques</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="steakhouses" className="w-full">
-                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="steakhouses" className="rounded-lg text-xs px-3">🥩 Steakhouses</TabsTrigger>
-                      <TabsTrigger value="brasileiros" className="rounded-lg text-xs px-3">🇧🇷 Brasileiros</TabsTrigger>
-                      <TabsTrigger value="frutos-mar" className="rounded-lg text-xs px-3">🦞 Frutos do Mar</TabsTrigger>
-                      <TabsTrigger value="idrive" className="rounded-lg text-xs px-3">🎡 I-Drive</TabsTrigger>
-                      <TabsTrigger value="disney-springs" className="rounded-lg text-xs px-3">🏰 Disney Springs</TabsTrigger>
-                      <TabsTrigger value="cafes" className="rounded-lg text-xs px-3">☕ Cafés & Brunch</TabsTrigger>
+                    <TabsList className="grid grid-cols-3 sm:flex sm:flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="steakhouses" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🥩 Steaks</TabsTrigger>
+                      <TabsTrigger value="brasileiros" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🇧🇷 BR</TabsTrigger>
+                      <TabsTrigger value="frutos-mar" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🦞 Seafood</TabsTrigger>
+                      <TabsTrigger value="idrive" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🎡 I-Drive</TabsTrigger>
+                      <TabsTrigger value="disney-springs" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">🏰 Disney</TabsTrigger>
+                      <TabsTrigger value="cafes" className="rounded-lg text-[10px] sm:text-xs px-2 sm:px-3 py-2">☕ Café</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="steakhouses" className="space-y-4">
@@ -1463,18 +1475,18 @@ const TravelGuide = () => {
           <div data-section="parques-disney" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="parques-disney" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                      <Star className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/30 flex-shrink-0">
+                      <Star className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Dicas dos Parques Disney</h3>
-                      <p className="text-sm text-muted-foreground">Lightning Lane, Genie+, estratégias</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas Disney</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Lightning Lane, Genie+, estratégias</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Lightning Lane */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
