@@ -25,8 +25,9 @@ const menuItems = [
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
   { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
+  { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
   { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
-  { icon: BookOpen, label: 'Conteúdos Exclusivos', path: '/conteudos' },
+  { icon: Sparkles, label: 'Conteúdos Exclusivos', path: '/conteudos' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
 ];
