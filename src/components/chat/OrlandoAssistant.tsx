@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles } from "lucide-react";
+import { X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import joyAvatar from "@/assets/joy-avatar.png";
 
 type Message = {
   role: "user" | "assistant";
@@ -150,18 +151,20 @@ export function OrlandoAssistant() {
 
   return (
     <>
-      {/* Floating Button */}
-      <Button
+      {/* Floating Avatar Button */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg transition-all duration-300",
-          "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700",
+          "fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white hover:scale-110 hover:shadow-xl",
           isOpen && "scale-0 opacity-0"
         )}
-        size="icon"
       >
-        <MessageCircle className="h-6 w-6 text-white" />
-      </Button>
+        <img 
+          src={joyAvatar} 
+          alt="JOY - Assistente de Orlando" 
+          className="h-full w-full object-cover"
+        />
+      </button>
 
       {/* Chat Window */}
       <div
