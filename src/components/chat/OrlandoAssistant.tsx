@@ -176,8 +176,8 @@ export function OrlandoAssistant() {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <div>
-              <h3 className="font-semibold">Assistente Orlando</h3>
-              <p className="text-xs text-white/80">Especialista em parques</p>
+              <h3 className="font-semibold">JOY</h3>
+              <p className="text-xs text-white/80">Sua assistente de Orlando</p>
             </div>
           </div>
           <Button
@@ -195,7 +195,7 @@ export function OrlandoAssistant() {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
               <Sparkles className="h-12 w-12 mb-4 text-purple-500" />
-              <p className="font-medium">Olá! Sou seu assistente de Orlando 🎢</p>
+              <p className="font-medium">Olá! Sou a JOY, sua assistente de Orlando 🎢</p>
               <p className="text-sm mt-2">
                 Pergunte sobre parques, atrações, restaurantes, hospedagem ou qualquer dúvida sobre sua viagem!
               </p>
