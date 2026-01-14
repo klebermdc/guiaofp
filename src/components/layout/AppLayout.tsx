@@ -18,7 +18,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     <div className="min-h-screen bg-background">
       <AppSidebar />
       <main className="lg:ml-72 min-h-screen">
-        <div className="p-4 pt-16 lg:pt-4 lg:p-8">
+        <div className="p-4 pt-4 lg:p-8">
           {children}
         </div>
       </main>

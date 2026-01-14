@@ -49,9 +49,13 @@ export const AppSidebar = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden bg-primary text-primary-foreground p-2 rounded-lg shadow-card"
+        className={cn(
+          "fixed top-3 left-3 lg:hidden bg-primary text-primary-foreground p-2.5 rounded-xl shadow-lg transition-all duration-300",
+          isOpen ? "z-[60]" : "z-30"
+        )}
+        aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
       {/* Overlay */}
