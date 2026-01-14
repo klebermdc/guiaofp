@@ -204,9 +204,26 @@ export function OrlandoAssistant() {
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
               <Sparkles className="h-12 w-12 mb-4 text-purple-500" />
               <p className="font-medium">Olá! Sou a JOY, sua assistente de Orlando 🎢</p>
-              <p className="text-sm mt-2">
-                Pergunte sobre parques, atrações, restaurantes, hospedagem ou qualquer dúvida sobre sua viagem!
+              <p className="text-sm mt-2 mb-4">
+                Pergunte sobre parques, atrações, restaurantes ou qualquer dúvida sobre sua viagem!
               </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[
+                  "🎢 Melhores atrações para crianças",
+                  "🍕 Onde comer nos parques?",
+                  "⏰ Melhor horário para ir?",
+                  "🎟️ Como funciona o Lightning Lane?",
+                  "🏨 Dicas de hospedagem"
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setInput(suggestion)}
+                    className="px-3 py-1.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
