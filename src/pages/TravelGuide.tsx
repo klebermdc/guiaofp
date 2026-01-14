@@ -66,6 +66,7 @@ const navSections = [
   { id: 'compras', label: 'Compras', icon: ShoppingBag, color: 'from-pink-500 to-rose-500' },
   { id: 'restaurantes-disney', label: 'Disney', icon: Crown, color: 'from-amber-500 to-orange-500' },
   { id: 'restaurantes-universal', label: 'Universal', icon: Globe, color: 'from-indigo-500 to-blue-500' },
+  { id: 'restaurantes-orlando', label: 'Orlando', icon: Utensils, color: 'from-rose-500 to-pink-500' },
   { id: 'parques-disney', label: 'Dicas Disney', icon: Star, color: 'from-yellow-500 to-amber-500' },
   { id: 'parques-universal', label: 'Dicas Universal', icon: Sparkles, color: 'from-purple-500 to-pink-500' },
   { id: 'medidas', label: 'Medidas', icon: Ruler, color: 'from-slate-500 to-gray-500' },
@@ -1067,7 +1068,7 @@ const TravelGuide = () => {
             </Accordion>
           </div>
 
-          {/* RESTAURANTES UNIVERSAL */}
+          {/* RESTAURANTES UNIVERSAL - EXPANDIDO */}
           <div data-section="restaurantes-universal" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="restaurantes-universal" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
@@ -1085,53 +1086,62 @@ const TravelGuide = () => {
                 <AccordionContent className="px-6 pb-6">
                   <Tabs defaultValue="universal-studios" className="w-full">
                     <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
-                      <TabsTrigger value="universal-studios" className="rounded-lg text-xs px-3">Universal Studios</TabsTrigger>
-                      <TabsTrigger value="islands" className="rounded-lg text-xs px-3">Islands of Adventure</TabsTrigger>
-                      <TabsTrigger value="epic" className="rounded-lg text-xs px-3">Epic Universe</TabsTrigger>
+                      <TabsTrigger value="universal-studios" className="rounded-lg text-xs px-3">🎬 Universal Studios</TabsTrigger>
+                      <TabsTrigger value="islands" className="rounded-lg text-xs px-3">🏝️ Islands of Adventure</TabsTrigger>
+                      <TabsTrigger value="epic" className="rounded-lg text-xs px-3">🌟 Epic Universe</TabsTrigger>
+                      <TabsTrigger value="citywalk" className="rounded-lg text-xs px-3">🎉 CityWalk</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="universal-studios" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 mb-4">
+                        <p className="text-sm">🎬 <strong>Dica:</strong> Não precisa reserva! Filas são rápidas na maioria dos restaurantes.</p>
+                      </div>
                       {[
-                        { name: "Leaky Cauldron", desc: "Pub britânico no Beco Diagonal", badges: ["Harry Potter", "Temático"], icon: Beer },
-                        { name: "Finnegan's Bar", desc: "Pub irlandês com música ao vivo", badges: ["Bar", "Entretenimento"], icon: Beer },
-                        { name: "Lombard's Seafood", desc: "Frutos do mar em São Francisco", badges: ["Premium", "Vista"], icon: Fish },
+                        { name: "Leaky Cauldron", area: "Diagon Alley", tipo: "Quick Service", preco: "$$", desc: "O autêntico pub do Beco Diagonal! Fish & chips, meat pie, cottage pie e a imperdível Butterbeer.", badges: ["Harry Potter", "Imperdível"], rating: 5, dica: "Fisherman's Pie é surpreendente!" },
+                        { name: "Lombard's Seafood Grille", area: "San Francisco", tipo: "Table Service", preco: "$$$", desc: "O melhor restaurante Table Service do parque! Frutos do mar frescos com vista para a baía.", badges: ["Premium", "Frutos do Mar"], rating: 5, dica: "Reserve para o almoço" },
+                        { name: "Finnegan's Bar & Grill", area: "New York", tipo: "Table Service", preco: "$$", desc: "Pub irlandês autêntico com música ao vivo! Irish nachos e fish & chips deliciosos.", badges: ["Música ao Vivo", "Bar"], rating: 4, dica: "Happy hour das 15h às 18h" },
+                        { name: "Springfield Fast Food Blvd", area: "Springfield", tipo: "Quick Service", preco: "$", desc: "Todas as comidas dos Simpsons! Krusty Burger, Flaming Moe's, Moe's Tavern.", badges: ["Os Simpsons", "Família"], rating: 4, dica: "Krusty Burger é grande!" },
+                        { name: "Louie's Italian", area: "New York", tipo: "Quick Service", preco: "$", desc: "Pizzas e massas italianas. Bom e barato para almoço rápido.", badges: ["Italiano", "Econômico"], rating: 4, dica: "Calzone recheado!" },
+                        { name: "Richter's Burger Co.", area: "San Francisco", tipo: "Quick Service", preco: "$", desc: "Hambúrgueres gourmet com molhos especiais. Batatas bem servidas!", badges: ["Burger", "Casual"], rating: 4, dica: "Shake de chocolate top!" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-indigo-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-indigo-500/10 text-sm"><span className="text-indigo-700 dark:text-indigo-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
 
                     <TabsContent value="islands" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 mb-4">
+                        <p className="text-sm">🏝️ <strong>Mythos é considerado o melhor restaurante de parque temático do mundo!</strong></p>
+                      </div>
                       {[
-                        { name: "Three Broomsticks", desc: "Pub em Hogsmeade", badges: ["Harry Potter", "Família"], icon: Beer },
-                        { name: "Mythos Restaurant", desc: "Premiado como melhor do parque", badges: ["Premium", "Mediterrâneo"], icon: Star },
-                        { name: "Confisco Grille", desc: "Culinária internacional variada", badges: ["Casual", "Variedade"], icon: Utensils },
+                        { name: "Three Broomsticks", area: "Hogsmeade", tipo: "Quick Service", preco: "$$", desc: "Taverna de Hogsmeade! Frango defumado, fish & chips e ribs. O ambiente é mágico!", badges: ["Harry Potter", "Imperdível"], rating: 5, dica: "Great Feast serve 4!" },
+                        { name: "Mythos Restaurant", area: "Lost Continent", tipo: "Table Service", preco: "$$$", desc: "PREMIADO como melhor restaurante de parque! Culinária mediterrânea dentro de uma caverna incrível.", badges: ["Premiado", "Top 1"], rating: 5, dica: "Reserve pelo app!" },
+                        { name: "Thunder Falls Terrace", area: "Jurassic Park", tipo: "Quick Service", preco: "$$", desc: "BBQ com vista para a queda d'água da atração! Rotisserie chicken e ribs defumadas.", badges: ["Vista", "BBQ"], rating: 5, dica: "Sente na varanda!" },
+                        { name: "Confisco Grille", area: "Port of Entry", tipo: "Table Service", preco: "$$", desc: "Internacional com menu variado. Bom para grupos indecisos!", badges: ["Variado", "Família"], rating: 4, dica: "Pad Thai surpreende!" },
+                        { name: "Doc Sugrue's", area: "Lost Continent", tipo: "Quick Service", preco: "$", desc: "Kebabs e pratos do Oriente Médio. Diferente e delicioso!", badges: ["Diferente", "Rápido"], rating: 4, dica: "Chicken Shawarma!" },
+                        { name: "Circus McGurkus", area: "Seuss Landing", tipo: "Quick Service", preco: "$", desc: "Perfeito para crianças! Pizza, frango e ambiente colorido do Dr. Seuss.", badges: ["Kids", "Dr. Seuss"], rating: 4, dica: "Green Eggs and Ham!" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-purple-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-purple-500/10 text-sm"><span className="text-purple-700 dark:text-purple-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
@@ -1139,26 +1149,55 @@ const TravelGuide = () => {
                     <TabsContent value="epic" className="space-y-4">
                       <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-white mb-4">
                         <h6 className="font-bold text-lg mb-2">🎉 Epic Universe - NOVO 2025!</h6>
-                        <p className="text-white/80 text-sm">O mais novo parque da Universal com áreas temáticas inéditas!</p>
+                        <p className="text-white/80 text-sm">O maior parque da Universal com 5 mundos temáticos únicos!</p>
                       </div>
                       {[
-                        { name: "Super Nintendo World", desc: "Restaurante temático do Mario", badges: ["Nintendo", "Novo"], icon: Star },
-                        { name: "How to Train Your Dragon", desc: "Área de Como Treinar seu Dragão", badges: ["DreamWorks", "Família"], icon: Flame },
-                        { name: "Dark Universe", desc: "Monstros clássicos da Universal", badges: ["Terror", "Temático"], icon: Sparkles },
+                        { name: "Toadstool Cafe", area: "Super Nintendo World", tipo: "Table Service", preco: "$$$", desc: "O restaurante do Toad! Decoração incrível com cogumelos e mundo do Mario. Menu com pratos temáticos.", badges: ["Nintendo", "Único"], rating: 5, dica: "Reserve com antecedência!" },
+                        { name: "1-UP Factory", area: "Super Nintendo World", tipo: "Quick Service", preco: "$$", desc: "Lanches rápidos do mundo Nintendo. Power-Up drinks e Mario snacks!", badges: ["Nintendo", "Drinks"], rating: 5, dica: "Super Star Lemonade!" },
+                        { name: "The Great Hall", area: "Ministry of Magic", tipo: "Table Service", preco: "$$$$", desc: "O Grande Salão de Hogwarts! Experiência imersiva com projeções mágicas no teto.", badges: ["Harry Potter", "Premium"], rating: 5, dica: "Vista pro teto encantado!" },
+                        { name: "Dragon's Feast", area: "How to Train Your Dragon", tipo: "Quick Service", preco: "$$", desc: "Culinária viking de Berk! Carnes assadas, ensopados e bebidas temáticas.", badges: ["DreamWorks", "Temático"], rating: 4, dica: "Viking Feast para dois!" },
+                        { name: "Monsters' Cafe", area: "Dark Universe", tipo: "Quick Service", preco: "$$", desc: "Ambiente gótico com monstros clássicos! Menu criativo e decoração assustadora.", badges: ["Terror", "Diferente"], rating: 4, dica: "Frankenstein's Feast!" },
                       ].map((rest) => (
-                        <div key={rest.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                            <rest.icon className="w-6 h-6 text-white" />
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-pink-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
-                          <div className="flex-1">
-                            <h6 className="font-semibold">{rest.name}</h6>
-                            <p className="text-sm text-muted-foreground mb-2">{rest.desc}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {rest.badges.map((badge) => (
-                                <Badge key={badge} variant="secondary" className="text-xs">{badge}</Badge>
-                              ))}
-                            </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-pink-500/10 text-sm"><span className="text-pink-700 dark:text-pink-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="citywalk" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 mb-4">
+                        <p className="text-sm">🎉 <strong>CityWalk:</strong> Entrada gratuita! Ótimo para jantar após os parques.</p>
+                      </div>
+                      {[
+                        { name: "The Toothsome Chocolate Emporium", area: "CityWalk", tipo: "Table Service", preco: "$$$", desc: "Steakhouse steampunk com milkshakes gigantes e sobremesas incríveis! Decoração impressionante.", badges: ["Steampunk", "Sobremesas"], rating: 5, dica: "Milkshakes são enormes!" },
+                        { name: "Antojitos Authentic Mexican", area: "CityWalk", tipo: "Table Service", preco: "$$", desc: "Culinária mexicana autêntica! Tacos, guacamole na hora e margaritas premium.", badges: ["Mexicano", "Drinks"], rating: 5, dica: "Guac preparado na mesa!" },
+                        { name: "Vivo Italian Kitchen", area: "CityWalk", tipo: "Table Service", preco: "$$$", desc: "Italiano contemporâneo com massas frescas feitas na hora! Wine bar elegante.", badges: ["Italiano", "Premium"], rating: 5, dica: "Veja a pasta sendo feita!" },
+                        { name: "NBC Sports Grill", area: "CityWalk", tipo: "Table Service", preco: "$$", desc: "Esportes em 100+ TVs! Comida americana, cervejas artesanais e ambiente animado.", badges: ["Esportes", "Bar"], rating: 4, dica: "Ótimo para assistir jogos!" },
+                        { name: "Bob Marley - A Tribute", area: "CityWalk", tipo: "Table Service", preco: "$$", desc: "Culinária jamaicana com reggae ao vivo! Jerk chicken e drinks caribenhos.", badges: ["Jamaicano", "Ao Vivo"], rating: 4, dica: "Música ao vivo à noite!" },
+                        { name: "Bubba Gump Shrimp Co.", area: "CityWalk", tipo: "Table Service", preco: "$$", desc: "Temático do filme Forrest Gump! Camarão de todas as formas possíveis.", badges: ["Temático", "Frutos do Mar"], rating: 4, dica: "Run Forrest Run!" },
+                        { name: "Cowfish Sushi Burger Bar", area: "CityWalk", tipo: "Table Service", preco: "$$$", desc: "Fusão única: sushi + burgers! Criaram os 'Burgushi' - hambúrgueres com elementos de sushi.", badges: ["Fusão", "Único"], rating: 5, dica: "Tente um Burgushi!" },
+                        { name: "Hard Rock Cafe", area: "CityWalk", tipo: "Table Service", preco: "$$", desc: "O maior Hard Rock do mundo! Memorabilia de rock e culinária americana clássica.", badges: ["Rock", "Clássico"], rating: 4, dica: "Loja com camisetas!" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-orange-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
                           </div>
+                          <p className="text-xs text-muted-foreground mb-2">📍 {rest.area}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-orange-500/10 text-sm"><span className="text-orange-700 dark:text-orange-400">💡 {rest.dica}</span></div>
                         </div>
                       ))}
                     </TabsContent>
@@ -1166,20 +1205,253 @@ const TravelGuide = () => {
 
                   {/* Snacks Universal */}
                   <div className="mt-6">
-                    <h6 className="font-semibold mb-4">🍺 Bebidas e Snacks Imperdíveis</h6>
+                    <h6 className="font-bold mb-4">🍺 Snacks & Bebidas Imperdíveis</h6>
                     <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
                       {[
-                        { name: 'Butterbeer', emoji: '🍺', desc: 'Cerveja amanteigada' },
-                        { name: 'Lard Lad Donuts', emoji: '🍩', desc: 'Donuts gigantes' },
-                        { name: 'Flaming Moe\'s', emoji: '🥤', desc: 'Bebida dos Simpsons' },
-                        { name: 'Frozen Butterbeer', emoji: '🧊', desc: 'Versão gelada' },
+                        { name: 'Butterbeer', emoji: '🍺', desc: 'Cerveja amanteigada icônica!', preco: '~$9' },
+                        { name: 'Frozen Butterbeer', emoji: '🧊', desc: 'Versão gelada cremosa', preco: '~$10' },
+                        { name: 'Lard Lad Donuts', emoji: '🍩', desc: 'Donuts gigantes decorados', preco: '~$8' },
+                        { name: "Flaming Moe's", emoji: '🥤', desc: 'Bebida borbulhante!', preco: '~$12' },
                       ].map((snack) => (
-                        <div key={snack.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50 text-center hover:scale-105 transition-transform">
+                        <div key={snack.name} className="p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-indigo-500/30 text-center hover:scale-105 transition-transform">
                           <span className="text-3xl block mb-2">{snack.emoji}</span>
-                          <p className="font-medium text-sm">{snack.name}</p>
+                          <p className="font-bold text-sm">{snack.name}</p>
                           <p className="text-xs text-muted-foreground">{snack.desc}</p>
+                          <Badge variant="secondary" className="mt-2 text-xs">{snack.preco}</Badge>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* RESTAURANTES ORLANDO - FORA DOS PARQUES */}
+          <div data-section="restaurantes-orlando" className="group">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="restaurantes-orlando" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
+                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                      <Utensils className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-display font-bold text-xl">Restaurantes Orlando</h3>
+                      <p className="text-sm text-muted-foreground">Opções fora dos parques para todos os gostos</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <Tabs defaultValue="steakhouses" className="w-full">
+                    <TabsList className="flex flex-wrap justify-start bg-muted/50 rounded-xl p-1 mb-6 h-auto gap-1">
+                      <TabsTrigger value="steakhouses" className="rounded-lg text-xs px-3">🥩 Steakhouses</TabsTrigger>
+                      <TabsTrigger value="brasileiros" className="rounded-lg text-xs px-3">🇧🇷 Brasileiros</TabsTrigger>
+                      <TabsTrigger value="frutos-mar" className="rounded-lg text-xs px-3">🦞 Frutos do Mar</TabsTrigger>
+                      <TabsTrigger value="idrive" className="rounded-lg text-xs px-3">🎡 I-Drive</TabsTrigger>
+                      <TabsTrigger value="disney-springs" className="rounded-lg text-xs px-3">🏰 Disney Springs</TabsTrigger>
+                      <TabsTrigger value="cafes" className="rounded-lg text-xs px-3">☕ Cafés & Brunch</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="steakhouses" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 mb-4">
+                        <p className="text-sm">🥩 <strong>Dica:</strong> Reserve sempre! Steakhouses populares lotam, especialmente fins de semana.</p>
+                      </div>
+                      {[
+                        { name: "Texas de Brazil", endereco: "5259 International Dr", tipo: "Rodízio", preco: "$$$$", desc: "Rodízio brasileiro premium! Picanha, cordeiro, linguiça tudo cortado na mesa. Buffet de saladas incrível.", badges: ["Rodízio", "Premium", "Favorito BR"], rating: 5, dica: "Pegue leve no buffet!", horario: "Dom-Qui 17h-21h30, Sex-Sáb 17h-22h" },
+                        { name: "Ruth's Chris Steak House", endereco: "7501 W Sand Lake Rd", tipo: "Fine Dining", preco: "$$$$$", desc: "Carnes USDA Prime em prato aquecido a 260°C! Referência em qualidade.", badges: ["Premium", "USDA Prime"], rating: 5, dica: "Filet é sensacional!", horario: "16h-22h" },
+                        { name: "STK Orlando", endereco: "1580 E Buena Vista Dr", tipo: "Steakhouse Modern", preco: "$$$$", desc: "Steakhouse trendy em Disney Springs! DJ à noite, ambiente moderno e carnes incríveis.", badges: ["Trendy", "Disney Springs"], rating: 5, dica: "Lil BRGs como entrada!", horario: "11h30-23h" },
+                        { name: "The Capital Grille", endereco: "9101 International Dr", tipo: "Fine Dining", preco: "$$$$$", desc: "Elegante com dry-aged steaks e wine selection impressionante. Ótimo para ocasiões especiais.", badges: ["Elegante", "Dry-Aged"], rating: 5, dica: "Dry-Aged 22 oz Bone-In!", horario: "11h30-22h" },
+                        { name: "Outback Steakhouse", endereco: "Várias locações", tipo: "Casual Dining", preco: "$$", desc: "Custo-benefício excelente! Bloomin' Onion icônica e porções generosas.", badges: ["Custo-Benefício", "Casual"], rating: 4, dica: "Bloomin' Onion de entrada!", horario: "11h-22h" },
+                        { name: "LongHorn Steakhouse", endereco: "Várias locações", tipo: "Casual Dining", preco: "$$", desc: "Excelente qualidade por bom preço. Outlaw Ribeye é enorme!", badges: ["Qualidade", "Porções Grandes"], rating: 4, dica: "Outlaw Ribeye = 18 oz!", horario: "11h-22h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-rose-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-rose-500/10 text-sm"><span className="text-rose-700 dark:text-rose-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="brasileiros" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 mb-4">
+                        <p className="text-sm">🇧🇷 <strong>Matando a saudade:</strong> Orlando tem excelentes opções de comida brasileira!</p>
+                      </div>
+                      {[
+                        { name: "Fogo de Chão", endereco: "8282 International Dr", tipo: "Rodízio", preco: "$$$$", desc: "O melhor rodízio brasileiro de Orlando! Carnes nobres, buffet de saladas premium e atendimento impecável.", badges: ["Rodízio Premium", "Imperdível"], rating: 5, dica: "Picanha é a estrela!", horario: "11h30-22h" },
+                        { name: "Texas de Brazil", endereco: "5259 International Dr", tipo: "Rodízio", preco: "$$$$", desc: "Outro rodízio excelente! Ótima variedade de carnes e buffet completo.", badges: ["Rodízio", "Tradicional"], rating: 5, dica: "Cordeiro é incrível!", horario: "17h-21h30" },
+                        { name: "Café Mineiro", endereco: "5403 S Kirkman Rd", tipo: "Self-Service", preco: "$$", desc: "Comida caseira brasileira! Buffet por quilo com feijoada, estrogonofe e muito mais.", badges: ["Caseiro", "Econômico"], rating: 5, dica: "Feijoada aos sábados!", horario: "11h-21h" },
+                        { name: "Giraffas", endereco: "5269 International Dr", tipo: "Fast Food", preco: "$", desc: "Fast food brasileiro! Pratos executivos, hambúrgueres e grelhados rapidinhos.", badges: ["Rápido", "Econômico"], rating: 4, dica: "Combo com picanha!", horario: "11h-22h" },
+                        { name: "Brasa Steakhouse", endereco: "5551 S Kirkman Rd", tipo: "Rodízio", preco: "$$$", desc: "Rodízio com bom custo-benefício! Carnes de qualidade e ambiente acolhedor.", badges: ["Custo-Benefício", "Família"], rating: 4, dica: "Cupim sensacional!", horario: "16h-22h" },
+                        { name: "Padaria Brasileira", endereco: "5460 International Dr", tipo: "Café/Padaria", preco: "$", desc: "Pão de queijo, coxinha, brigadeiro... tudo que você sente falta!", badges: ["Doces BR", "Salgados"], rating: 5, dica: "Coxinha cremosa!", horario: "7h-20h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-green-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-green-500/10 text-sm"><span className="text-green-700 dark:text-green-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="frutos-mar" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 mb-4">
+                        <p className="text-sm">🦞 <strong>Dica:</strong> Florida = frutos do mar frescos! Aproveite a proximidade do mar.</p>
+                      </div>
+                      {[
+                        { name: "Red Lobster", endereco: "Várias locações", tipo: "Casual Dining", preco: "$$", desc: "Rede famosa de frutos do mar! Cheddar Bay Biscuits são viciantes. Ótimo custo-benefício.", badges: ["Clássico", "Família"], rating: 4, dica: "Ultimate Feast!", horario: "11h-22h" },
+                        { name: "Bonefish Grill", endereco: "7830 W Sand Lake Rd", tipo: "Upscale Casual", preco: "$$$", desc: "Peixes grelhados com molhos especiais! Bang Bang Shrimp é imperdível.", badges: ["Premium", "Bang Bang"], rating: 5, dica: "Bang Bang Shrimp!", horario: "16h-22h" },
+                        { name: "Eddie V's", endereco: "7488 W Sand Lake Rd", tipo: "Fine Dining", preco: "$$$$$", desc: "Experiência premium! Lagosta, caranguejo e ambiente sofisticado com jazz ao vivo.", badges: ["Sofisticado", "Jazz"], rating: 5, dica: "Jazz à noite!", horario: "16h-22h" },
+                        { name: "The Boathouse", endereco: "Disney Springs", tipo: "Table Service", preco: "$$$$", desc: "Restaurante icônico em Disney Springs! Frutos do mar, steaks e passeios de barco vintage.", badges: ["Disney Springs", "Vista"], rating: 5, dica: "Passeio de amphicar!", horario: "11h-23h" },
+                        { name: "Joe's Crab Shack", endereco: "8409 International Dr", tipo: "Casual", preco: "$$", desc: "Ambiente descontraído com baldes de caranguejo! Diversão garantida.", badges: ["Divertido", "Casual"], rating: 4, dica: "Steam Pot para dois!", horario: "11h-22h" },
+                        { name: "Boston Lobster Feast", endereco: "8731 International Dr", tipo: "Buffet", preco: "$$$", desc: "Buffet all-you-can-eat de lagosta! Sim, lagosta à vontade.", badges: ["Buffet", "Lagosta"], rating: 4, dica: "Chegue com fome!", horario: "16h-22h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-cyan-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-cyan-500/10 text-sm"><span className="text-cyan-700 dark:text-cyan-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="idrive" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 mb-4">
+                        <p className="text-sm">🎡 <strong>I-Drive (International Drive):</strong> A avenida turística mais famosa de Orlando!</p>
+                      </div>
+                      {[
+                        { name: "The Cheesecake Factory", endereco: "The Mall at Millenia", tipo: "American", preco: "$$$", desc: "Cardápio gigante com +250 itens! Porções enormes e 30+ sabores de cheesecake.", badges: ["Porções Grandes", "Cheesecake"], rating: 5, dica: "Divida os pratos!", horario: "11h-23h" },
+                        { name: "Olive Garden", endereco: "Várias locações", tipo: "Italian", preco: "$$", desc: "Italiano casual com breadsticks infinitos! Tour of Italy é completo.", badges: ["Italiano", "Família"], rating: 4, dica: "Breadsticks à vontade!", horario: "11h-22h" },
+                        { name: "TGI Friday's", endereco: "8126 International Dr", tipo: "American Bar", preco: "$$", desc: "Culinária americana com drinks! Jack Daniel's Ribs são famosas.", badges: ["Bar", "Ribs"], rating: 4, dica: "Happy Hour!", horario: "11h-24h" },
+                        { name: "Bahama Breeze", endereco: "8849 International Dr", tipo: "Caribbean", preco: "$$", desc: "Culinária caribenha tropical! Drinks exóticos e clima de ilha.", badges: ["Tropical", "Drinks"], rating: 4, dica: "Painkiller cocktail!", horario: "11h-23h" },
+                        { name: "Yard House", endereco: "8367 International Dr", tipo: "American Gastropub", preco: "$$", desc: "130+ cervejas artesanais on tap! Menu variado e ambiente moderno.", badges: ["Cervejas", "Gastropub"], rating: 5, dica: "Half-size portions!", horario: "11h-24h" },
+                        { name: "Miller's Ale House", endereco: "5573 S Kirkman Rd", tipo: "Sports Bar", preco: "$$", desc: "Bar esportivo com zingers famosos! Ótimo para assistir jogos.", badges: ["Esportes", "Wings"], rating: 4, dica: "Zingers picantes!", horario: "11h-24h" },
+                        { name: "Hash House A Go Go", endereco: "5350 International Dr", tipo: "American", preco: "$$", desc: "Porções ABSURDAMENTE grandes! Twisted Farm Food com pratos gigantes.", badges: ["Porções Épicas", "Brunch"], rating: 5, dica: "Divida SEMPRE!", horario: "8h-22h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-purple-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-purple-500/10 text-sm"><span className="text-purple-700 dark:text-purple-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="disney-springs" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4">
+                        <p className="text-sm">🏰 <strong>Disney Springs:</strong> Entrada e estacionamento GRÁTIS! Ótimo para jantar após os parques.</p>
+                      </div>
+                      {[
+                        { name: "Morimoto Asia", endereco: "Disney Springs", tipo: "Pan-Asian", preco: "$$$$", desc: "Do Iron Chef Masaharu Morimoto! Culinária asiática sofisticada em ambiente deslumbrante.", badges: ["Celebrity Chef", "Premium"], rating: 5, dica: "Peking Duck!", horario: "11h30-22h" },
+                        { name: "The Boathouse", endereco: "Disney Springs", tipo: "Seafood/Steak", preco: "$$$$", desc: "Vista para o lago com barcos vintage Amphicars! Passeio de barco incluso.", badges: ["Vista", "Experiência"], rating: 5, dica: "Amphicar ride!", horario: "11h-23h" },
+                        { name: "Wine Bar George", endereco: "Disney Springs", tipo: "Wine Bar", preco: "$$$", desc: "Master Sommelier George Miliotes! 140+ vinhos e menu mediterrâneo.", badges: ["Vinhos", "Elegante"], rating: 5, dica: "Wine flights!", horario: "11h-24h" },
+                        { name: "Frontera Cocina", endereco: "Disney Springs", tipo: "Mexican", preco: "$$$", desc: "Do chef Rick Bayless! Mexicano autêntico premiado.", badges: ["Celebrity Chef", "Autêntico"], rating: 5, dica: "Tacos de carnitas!", horario: "11h-22h" },
+                        { name: "Jaleo", endereco: "Disney Springs", tipo: "Spanish", preco: "$$$$", desc: "Tapas espanholas do José Andrés! Paella e jamón ibérico autênticos.", badges: ["Tapas", "Spanish"], rating: 5, dica: "Paella para dois!", horario: "11h30-22h" },
+                        { name: "Raglan Road", endereco: "Disney Springs", tipo: "Irish Pub", preco: "$$", desc: "Pub irlandês autêntico com música e dança ao vivo! Fish & chips perfeito.", badges: ["Ao Vivo", "Autêntico"], rating: 5, dica: "Irish dancers!", horario: "11h-24h" },
+                        { name: "Chicken Guy!", endereco: "Disney Springs", tipo: "Quick Service", preco: "$", desc: "Do Guy Fieri! Frango empanado com 22 molhos diferentes.", badges: ["Guy Fieri", "Casual"], rating: 4, dica: "Prove todos os molhos!", horario: "10h30-23h" },
+                        { name: "Blaze Pizza", endereco: "Disney Springs", tipo: "Quick Service", preco: "$", desc: "Pizza artesanal build-your-own! Pronta em 3 minutos.", badges: ["Rápido", "Customizável"], rating: 4, dica: "Keto crosta!", horario: "11h-23h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-amber-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-amber-500/10 text-sm"><span className="text-amber-700 dark:text-amber-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="cafes" className="space-y-4">
+                      <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 mb-4">
+                        <p className="text-sm">☕ <strong>Cafés & Brunch:</strong> Ótimas opções para começar o dia ou uma pausa!</p>
+                      </div>
+                      {[
+                        { name: "First Watch", endereco: "Várias locações", tipo: "Breakfast/Brunch", preco: "$$", desc: "Especializado em café da manhã! Panquecas, omeletes e bowls saudáveis.", badges: ["Brunch", "Saudável"], rating: 5, dica: "Million Dollar Bacon!", horario: "7h-14h30" },
+                        { name: "IHOP", endereco: "Várias locações", tipo: "Breakfast", preco: "$", desc: "International House of Pancakes! Panquecas 24h e omeletes.", badges: ["24h", "Panquecas"], rating: 4, dica: "Endless pancakes!", horario: "24h" },
+                        { name: "Denny's", endereco: "Várias locações", tipo: "Diner", preco: "$", desc: "Diner americano clássico! Café da manhã servido 24h.", badges: ["24h", "Econômico"], rating: 4, dica: "Grand Slam!", horario: "24h" },
+                        { name: "Keke's Breakfast Cafe", endereco: "Várias locações", tipo: "Breakfast", preco: "$$", desc: "Local favorite! Waffles, French toast e pratos criativos.", badges: ["Local", "Waffles"], rating: 5, dica: "Fruity Pebble waffle!", horario: "7h-14h30" },
+                        { name: "The Polite Pig", endereco: "Disney Springs", tipo: "BBQ Brunch", preco: "$$", desc: "BBQ moderno com brunch aos fins de semana! Bourbon drinks e carnes defumadas.", badges: ["BBQ", "Bourbon"], rating: 5, dica: "Bourbon cocktails!", horario: "11h-22h" },
+                        { name: "Starbucks Reserve", endereco: "Disney Springs", tipo: "Coffee", preco: "$$", desc: "Starbucks premium com cafés raros e métodos especiais de preparo.", badges: ["Premium", "Reserve"], rating: 4, dica: "Nitro Cold Brew!", horario: "7h-23h" },
+                      ].map((rest) => (
+                        <div key={rest.name} className="p-5 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border-2 border-border/50 hover:border-orange-500/30 transition-all">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h6 className="font-bold text-lg">{rest.name}</h6>
+                            <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-0">{rest.tipo}</Badge>
+                            <Badge variant="outline">{rest.preco}</Badge>
+                            <div className="flex gap-0.5 ml-auto">{[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < rest.rating ? 'fill-yellow-500 text-yellow-500' : 'text-muted/30'}`} />)}</div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">📍 {rest.endereco}</p>
+                          <p className="text-xs text-muted-foreground mb-2">🕐 {rest.horario}</p>
+                          <p className="text-muted-foreground text-sm mb-3">{rest.desc}</p>
+                          <div className="flex flex-wrap gap-2 mb-3">{rest.badges.map((b) => <Badge key={b} variant="secondary" className="text-xs">{b}</Badge>)}</div>
+                          <div className="p-3 rounded-lg bg-orange-500/10 text-sm"><span className="text-orange-700 dark:text-orange-400">💡 {rest.dica}</span></div>
+                        </div>
+                      ))}
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Dicas Gerais Restaurantes */}
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/30">
+                      <h6 className="font-bold mb-3 text-emerald-700 flex items-center gap-2">
+                        <Check className="w-5 h-5" />
+                        Dicas de Ouro
+                      </h6>
+                      <ul className="space-y-2 text-sm">
+                        <li>✓ Reserve pelo OpenTable ou Yelp</li>
+                        <li>✓ Gorjeta: 18-20% é padrão</li>
+                        <li>✓ Porções são GRANDES - considere dividir</li>
+                        <li>✓ Happy Hour = drinks e appetizers baratos</li>
+                        <li>✓ Kids Eat Free em vários restaurantes</li>
+                      </ul>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/30">
+                      <h6 className="font-bold mb-3 text-blue-700 flex items-center gap-2">
+                        <Info className="w-5 h-5" />
+                        Preços Médios
+                      </h6>
+                      <ul className="space-y-2 text-sm">
+                        <li>$ = até $15 por pessoa</li>
+                        <li>$$ = $15-30 por pessoa</li>
+                        <li>$$$ = $30-50 por pessoa</li>
+                        <li>$$$$ = $50-80 por pessoa</li>
+                        <li>$$$$$ = acima de $80 por pessoa</li>
+                      </ul>
                     </div>
                   </div>
                 </AccordionContent>
