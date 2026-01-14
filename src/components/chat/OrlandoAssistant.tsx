@@ -156,6 +156,7 @@ export function OrlandoAssistant() {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white hover:scale-110 hover:shadow-xl",
+          !isOpen && "animate-pulse",
           isOpen && "scale-0 opacity-0"
         )}
       >
@@ -164,6 +165,10 @@ export function OrlandoAssistant() {
           alt="JOY - Assistente de Orlando" 
           className="h-full w-full object-cover"
         />
+        {/* Pulse ring effect */}
+        {!isOpen && (
+          <span className="absolute inset-0 rounded-full animate-ping bg-pink-400/40" />
+        )}
       </button>
 
       {/* Chat Window */}
