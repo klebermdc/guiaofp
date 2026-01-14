@@ -1,1 +1,4 @@
 project_id = "qjfhyqjgqutkabxaeopi"
+
+[functions.orlando-assistant]
+verify_jwt = false

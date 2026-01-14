@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppSidebar } from './AppSidebar';
+import { OrlandoAssistant } from '@/components/chat/OrlandoAssistant';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           {children}
         </div>
       </main>
+      <OrlandoAssistant />
     </div>
   );
 };
