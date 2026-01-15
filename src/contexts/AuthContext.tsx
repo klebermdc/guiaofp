@@ -58,6 +58,9 @@ interface TravelProfile {
   expectations: string;
   concerns: string;
   
+  // Checklist
+  checklistItems: Record<string, boolean>;
+  
   // Meta
   completionPercentage: number;
   isLocked: boolean;
@@ -107,6 +110,7 @@ const defaultTravelProfile: TravelProfile = {
   specialRequests: '',
   expectations: '',
   concerns: '',
+  checklistItems: {},
   completionPercentage: 0,
   isLocked: false,
 };
@@ -147,6 +151,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   specialRequests: dbProfile.special_requests || '',
   expectations: dbProfile.expectations || '',
   concerns: dbProfile.concerns || '',
+  checklistItems: dbProfile.checklist_items || {},
   completionPercentage: dbProfile.completion_percentage || 0,
   isLocked: dbProfile.is_locked || false,
 });
@@ -185,6 +190,7 @@ const frontendToDb = (profile: Partial<TravelProfile>) => {
   if (profile.specialRequests !== undefined) dbProfile.special_requests = profile.specialRequests;
   if (profile.expectations !== undefined) dbProfile.expectations = profile.expectations;
   if (profile.concerns !== undefined) dbProfile.concerns = profile.concerns;
+  if (profile.checklistItems !== undefined) dbProfile.checklist_items = profile.checklistItems;
   if (profile.completionPercentage !== undefined) dbProfile.completion_percentage = profile.completionPercentage;
   if (profile.isLocked !== undefined) dbProfile.is_locked = profile.isLocked;
   

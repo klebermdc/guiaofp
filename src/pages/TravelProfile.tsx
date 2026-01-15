@@ -213,16 +213,110 @@ const TravelProfile = () => {
                           <Input
                             type="number"
                             min="1"
+                            max="20"
                             placeholder="Número de viajantes"
                             value={travelProfile.groupSize || ''}
-                            onChange={(e) => handleFieldChange({ groupSize: parseInt(e.target.value) || 0 })}
+                            onChange={(e) => {
+                              const newSize = parseInt(e.target.value) || 1;
+                              // Adjust travelers array based on new size
+                              const currentTravelers = [...travelProfile.travelers];
+                              while (currentTravelers.length < newSize) {
+                                currentTravelers.push({ name: '', age: 0, height: '', firstTimeDisney: true });
+                              }
+                              while (currentTravelers.length > newSize) {
+                                currentTravelers.pop();
+                              }
+                              handleFieldChange({ groupSize: newSize, travelers: currentTravelers });
+                            }}
                           />
                         </div>
-                        <div className="p-4 bg-muted rounded-lg">
-                          <p className="text-sm text-muted-foreground">
-                            Após informar o número de pessoas, você poderá adicionar os dados de cada viajante: nome, idade, altura e se é a primeira vez na Disney.
-                          </p>
-                        </div>
+                        
+                        {/* Dynamic Traveler Fields */}
+                        {travelProfile.groupSize > 0 && (
+                          <div className="space-y-4 pt-4 border-t">
+                            <Label className="text-base font-semibold">Dados dos Viajantes</Label>
+                            {Array.from({ length: travelProfile.groupSize }).map((_, index) => {
+                              const traveler = travelProfile.travelers[index] || { name: '', age: 0, height: '', firstTimeDisney: true };
+                              return (
+                                <Card key={index} variant="default" className="p-4">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                      <Users className="w-4 h-4" />
+                                      Viajante {index + 1}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div className="space-y-1">
+                                        <Label className="text-sm">Nome</Label>
+                                        <Input
+                                          placeholder="Nome completo"
+                                          value={traveler.name}
+                                          onChange={(e) => {
+                                            const newTravelers = [...travelProfile.travelers];
+                                            if (!newTravelers[index]) {
+                                              newTravelers[index] = { name: '', age: 0, height: '', firstTimeDisney: true };
+                                            }
+                                            newTravelers[index] = { ...newTravelers[index], name: e.target.value };
+                                            handleFieldChange({ travelers: newTravelers });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-sm">Idade</Label>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          max="120"
+                                          placeholder="Idade"
+                                          value={traveler.age || ''}
+                                          onChange={(e) => {
+                                            const newTravelers = [...travelProfile.travelers];
+                                            if (!newTravelers[index]) {
+                                              newTravelers[index] = { name: '', age: 0, height: '', firstTimeDisney: true };
+                                            }
+                                            newTravelers[index] = { ...newTravelers[index], age: parseInt(e.target.value) || 0 };
+                                            handleFieldChange({ travelers: newTravelers });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-sm">Altura (cm)</Label>
+                                        <Input
+                                          placeholder="Ex: 165"
+                                          value={traveler.height}
+                                          onChange={(e) => {
+                                            const newTravelers = [...travelProfile.travelers];
+                                            if (!newTravelers[index]) {
+                                              newTravelers[index] = { name: '', age: 0, height: '', firstTimeDisney: true };
+                                            }
+                                            newTravelers[index] = { ...newTravelers[index], height: e.target.value };
+                                            handleFieldChange({ travelers: newTravelers });
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="flex items-center space-x-2 pt-6">
+                                        <Checkbox
+                                          id={`first-time-${index}`}
+                                          checked={traveler.firstTimeDisney}
+                                          onCheckedChange={(checked) => {
+                                            const newTravelers = [...travelProfile.travelers];
+                                            if (!newTravelers[index]) {
+                                              newTravelers[index] = { name: '', age: 0, height: '', firstTimeDisney: true };
+                                            }
+                                            newTravelers[index] = { ...newTravelers[index], firstTimeDisney: !!checked };
+                                            handleFieldChange({ travelers: newTravelers });
+                                          }}
+                                        />
+                                        <Label htmlFor={`first-time-${index}`} className="text-sm cursor-pointer">
+                                          Primeira vez na Disney
+                                        </Label>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        )}
                       </>
                     )}
 

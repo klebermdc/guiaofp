@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Book, Car, Plane, ShoppingBag, MapPin, Utensils, Backpack, FileText, CreditCard, Ruler, Store, Pill, Tag, Crown, Sparkles, AlertTriangle, Info, CheckCircle2, ChevronDown, Star, Clock, DollarSign, Heart, Users, Camera, Zap, Shield, Globe, Coffee, IceCream, Beer, Pizza, Flame, Fish, Salad, Cake, Ticket, Map, Phone, Wifi, Baby, Accessibility, Sun, Umbrella, Thermometer, Calendar, Check, X, ChevronRight, ExternalLink, Navigation, Compass } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Book, Car, Plane, ShoppingBag, MapPin, Utensils, Backpack, FileText, CreditCard, Ruler, Store, Pill, Tag, Crown, Sparkles, AlertTriangle, Info, CheckCircle2, ChevronDown, Star, Clock, DollarSign, Heart, Users, Camera, Zap, Shield, Globe, Coffee, IceCream, Beer, Pizza, Flame, Fish, Salad, Cake, Ticket, Map, Phone, Wifi, Baby, Accessibility, Sun, Umbrella, Thermometer, Calendar, Check, X, ChevronRight, ExternalLink, Navigation, Compass, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -9,6 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 // Clothing size tables
 const clothingSizes = {
@@ -74,10 +76,23 @@ const navSections = [
 ];
 
 const TravelGuide = () => {
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const { travelProfile, updateTravelProfile, isLoading } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const toggleItem = (id: string) => {
-    setCheckedItems(prev => ({ ...prev, [id]: !prev[id] }));
+  // Use checklist items from the profile (persisted in database)
+  const checkedItems = travelProfile.checklistItems || {};
+
+  const toggleItem = async (id: string) => {
+    const newCheckedItems = { ...checkedItems, [id]: !checkedItems[id] };
+    setIsSaving(true);
+    try {
+      await updateTravelProfile({ checklistItems: newCheckedItems });
+    } catch (error) {
+      console.error('Error saving checklist:', error);
+      toast.error('Erro ao salvar checklist');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getProgress = (category: keyof typeof checklistItems) => {
@@ -98,6 +113,16 @@ const TravelGuide = () => {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
