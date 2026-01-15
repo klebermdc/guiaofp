@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +19,6 @@ import {
   Star,
   Heart,
   Clock,
-  Save,
   Loader2,
   TreePine,
   Waves
@@ -244,25 +242,34 @@ export default function Attractions() {
     );
   };
 
-  const toggleAttraction = (parkName: string, attractionName: string) => {
+  const toggleAttraction = async (parkName: string, attractionName: string) => {
+    let newSelected: SelectedAttraction[];
+    
     if (isSelected(parkName, attractionName)) {
-      setSelectedAttractions(prev => 
-        prev.filter(a => !(a.parkName === parkName && a.attractionName === attractionName))
-      );
+      newSelected = selectedAttractions.filter(a => !(a.parkName === parkName && a.attractionName === attractionName));
     } else {
-      setSelectedAttractions(prev => [
-        ...prev,
+      newSelected = [
+        ...selectedAttractions,
         { parkName, attractionName, priority: 1, notes: '' }
-      ]);
+      ];
     }
+    
+    setSelectedAttractions(newSelected);
+    
+    // Auto-save to database
+    await saveToDatabase(newSelected);
   };
 
-  const updateNote = (parkName: string, attractionName: string, note: string) => {
+  const updateNote = async (parkName: string, attractionName: string, note: string) => {
     const key = `${parkName}-${attractionName}`;
-    setNotes(prev => ({ ...prev, [key]: note }));
+    const newNotes = { ...notes, [key]: note };
+    setNotes(newNotes);
+    
+    // Debounced save - will save after user stops typing
+    await saveToDatabase(selectedAttractions, newNotes);
   };
 
-  const savePreferences = async () => {
+  const saveToDatabase = async (attractions: SelectedAttraction[], currentNotes?: Record<string, string>) => {
     if (!user) return;
     
     setSaving(true);
@@ -274,23 +281,22 @@ export default function Attractions() {
         .eq('user_id', user.id);
 
       // Insert new preferences
-      if (selectedAttractions.length > 0) {
+      if (attractions.length > 0) {
+        const notesToUse = currentNotes || notes;
         const { error } = await supabase
           .from('attraction_preferences')
           .insert(
-            selectedAttractions.map(a => ({
+            attractions.map(a => ({
               user_id: user.id,
               park_name: a.parkName,
               attraction_name: a.attractionName,
               priority: a.priority,
-              notes: notes[`${a.parkName}-${a.attractionName}`] || null
+              notes: notesToUse[`${a.parkName}-${a.attractionName}`] || null
             }))
           );
 
         if (error) throw error;
       }
-
-      toast.success('Preferências salvas com sucesso!');
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast.error('Erro ao salvar preferências');
@@ -371,18 +377,12 @@ export default function Attractions() {
               Selecione as atrações que você gostaria de fazer em cada parque
             </p>
           </div>
-          <Button 
-            onClick={savePreferences} 
-            disabled={saving}
-            className="gradient-primary"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Salvar Seleção
-          </Button>
+          {saving && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Salvando...
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
@@ -519,21 +519,14 @@ export default function Attractions() {
           ))}
         </Tabs>
 
-        {/* Floating Save Button (Mobile) */}
-        <div className="fixed bottom-4 right-4 sm:hidden z-40">
-          <Button 
-            onClick={savePreferences} 
-            disabled={saving}
-            size="lg"
-            className="gradient-primary shadow-lg rounded-full h-14 w-14 p-0"
-          >
-            {saving ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              <Save className="w-6 h-6" />
-            )}
-          </Button>
-        </div>
+        {/* Floating Save Indicator (Mobile) */}
+        {saving && (
+          <div className="fixed bottom-4 right-4 sm:hidden z-40">
+            <div className="gradient-primary shadow-lg rounded-full h-14 w-14 p-0 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-white" />
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

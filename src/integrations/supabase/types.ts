@@ -207,6 +207,7 @@ export type Database = {
           arrival_date: string | null
           authorize_guide_access: boolean | null
           celebration_type: string | null
+          checklist_items: Json | null
           completion_percentage: number | null
           concerns: string | null
           created_at: string | null
@@ -245,6 +246,7 @@ export type Database = {
           arrival_date?: string | null
           authorize_guide_access?: boolean | null
           celebration_type?: string | null
+          checklist_items?: Json | null
           completion_percentage?: number | null
           concerns?: string | null
           created_at?: string | null
@@ -283,6 +285,7 @@ export type Database = {
           arrival_date?: string | null
           authorize_guide_access?: boolean | null
           celebration_type?: string | null
+          checklist_items?: Json | null
           completion_percentage?: number | null
           concerns?: string | null
           created_at?: string | null
