@@ -8,12 +8,14 @@ const GUIDE_WHATSAPP: Record<string, string> = {
 export const useGuideContact = () => {
   const { travelProfile } = useAuth();
 
-  const guideName = travelProfile.guideName?.toLowerCase() || '';
-  const whatsappUrl = GUIDE_WHATSAPP[guideName] || '';
+  // Normalize guide name to lowercase and trim for matching
+  const rawGuideName = travelProfile.guideName || '';
+  const normalizedName = rawGuideName.toLowerCase().trim();
+  const whatsappUrl = GUIDE_WHATSAPP[normalizedName] || '';
   const hasGuide = !!whatsappUrl;
 
   return {
-    guideName: travelProfile.guideName || '',
+    guideName: rawGuideName,
     whatsappUrl,
     hasGuide,
   };
