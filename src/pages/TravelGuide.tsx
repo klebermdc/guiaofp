@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { SavingIndicator } from '@/components/ui/saving-indicator';
 
 // Clothing size tables
 const clothingSizes = {
@@ -126,6 +127,7 @@ const TravelGuide = () => {
 
   return (
     <AppLayout>
+      <SavingIndicator isSaving={isSaving} />
       <div className="space-y-8 pb-12">
         {/* Modern Hero Header */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-accent p-5 sm:p-8 md:p-12">

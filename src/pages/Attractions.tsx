@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { 
   Castle, 
   Sparkles, 
@@ -366,6 +367,7 @@ export default function Attractions() {
 
   return (
     <AppLayout>
+      <SavingIndicator isSaving={saving} />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -377,12 +379,6 @@ export default function Attractions() {
               Selecione as atrações que você gostaria de fazer em cada parque
             </p>
           </div>
-          {saving && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Salvando...
-            </div>
-          )}
         </div>
 
         {/* Summary Cards */}
