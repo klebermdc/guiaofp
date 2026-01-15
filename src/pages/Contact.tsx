@@ -2,8 +2,11 @@ import { MessageCircle, Clock, Headphones, Shield } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useGuideContact } from '@/hooks/useGuideContact';
 
 const Contact = () => {
+  const { whatsappUrl, guideName, hasGuide } = useGuideContact();
+  
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
@@ -31,16 +34,22 @@ const Contact = () => {
               Nosso time está pronto para ajudar você em qualquer momento. 
               Dúvidas, ajustes no roteiro, ou qualquer imprevisto - estamos aqui!
             </p>
-            <a 
-              href="https://wa.me/5500000000000" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              <Button variant="whatsapp" size="xl" className="w-full md:w-auto">
-                <MessageCircle size={24} />
-                Iniciar conversa no WhatsApp
-              </Button>
-            </a>
+            {hasGuide ? (
+              <a 
+                href={whatsappUrl}
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Button variant="whatsapp" size="xl" className="w-full md:w-auto">
+                  <MessageCircle size={24} />
+                  Falar com {guideName} no WhatsApp
+                </Button>
+              </a>
+            ) : (
+              <p className="text-muted-foreground">
+                Selecione seu guia no perfil para ativar o WhatsApp direto.
+              </p>
+            )}
           </CardContent>
         </Card>
 
