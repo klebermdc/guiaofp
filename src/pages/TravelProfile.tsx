@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { SavingIndicator } from '@/components/ui/saving-indicator';
 
 interface Section {
   id: string;
@@ -55,7 +56,12 @@ const TravelProfile = () => {
   };
 
   const handleFieldChange = async (data: Parameters<typeof updateTravelProfile>[0]) => {
-    await updateTravelProfile(data);
+    setIsSaving(true);
+    try {
+      await updateTravelProfile(data);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -103,6 +109,7 @@ const TravelProfile = () => {
 
   return (
     <AppLayout>
+      <SavingIndicator isSaving={isSaving} />
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="relative overflow-hidden rounded-2xl gradient-magic p-8 text-accent-foreground">
