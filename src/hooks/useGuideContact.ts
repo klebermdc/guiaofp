@@ -1,21 +1,19 @@
 import { useAuth } from '@/contexts/AuthContext';
 
-const GUIDE_PHONES: Record<string, string> = {
-  'rafael': '5511966144493',
-  'kleber': '5511951944192',
+const GUIDE_WHATSAPP: Record<string, string> = {
+  'rafael': 'https://wa.me/5511966144493',
+  'kleber': 'https://wa.me/message/SKJOMENE3AQKD1',
 };
 
 export const useGuideContact = () => {
   const { travelProfile } = useAuth();
 
   const guideName = travelProfile.guideName?.toLowerCase() || '';
-  const guidePhone = GUIDE_PHONES[guideName] || '';
-  const whatsappUrl = guidePhone ? `https://wa.me/${guidePhone}` : '';
-  const hasGuide = !!guidePhone;
+  const whatsappUrl = GUIDE_WHATSAPP[guideName] || '';
+  const hasGuide = !!whatsappUrl;
 
   return {
     guideName: travelProfile.guideName || '',
-    guidePhone,
     whatsappUrl,
     hasGuide,
   };
