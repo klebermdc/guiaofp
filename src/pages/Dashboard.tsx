@@ -3,7 +3,6 @@ import {
   User, 
   Calendar, 
   MessageCircle, 
-  Sparkles, 
   Clock, 
   CheckCircle2, 
   Lock,
@@ -18,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
+import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
   const { user, travelProfile } = useAuth();
@@ -43,13 +43,30 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6 relative">
+        {/* Watermark Logo */}
+        <div className="fixed bottom-8 right-8 opacity-10 pointer-events-none z-0 hidden lg:block">
+          <img 
+            src={logo} 
+            alt="" 
+            className="w-48 h-auto"
+          />
+        </div>
+
         {/* Welcome Header */}
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-8 text-primary-foreground">
           <div className="absolute top-0 right-0 w-64 h-64 gradient-magic opacity-20 rounded-full blur-3xl" />
+          
+          {/* Logo in header */}
+          <img 
+            src={logo} 
+            alt="Orlando Fast Pass Planejador" 
+            className="absolute top-4 right-4 h-16 w-auto opacity-90 hidden sm:block"
+          />
+          
           <div className="relative">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-secondary" />
+              <img src={logo} alt="" className="w-6 h-6 object-contain" />
               <span className="text-secondary text-sm font-medium">Área Exclusiva</span>
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
