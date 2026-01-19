@@ -7,7 +7,6 @@ import {
   RefreshCw, 
   CalendarPlus, 
   XCircle, 
-  Timer,
   ChevronLeft,
   ChevronRight,
   Smartphone
@@ -33,10 +32,6 @@ import modify3Review from "@/assets/tutorials/multipass/modify3-review.png";
 import tipboard1 from "@/assets/tutorials/multipass/tipboard1.png";
 import tipboard2 from "@/assets/tutorials/multipass/tipboard2.png";
 import cancel1 from "@/assets/tutorials/multipass/cancel1.png";
-import virtualQueue1 from "@/assets/tutorials/multipass/virtual-queue1.png";
-import virtualQueue2 from "@/assets/tutorials/multipass/virtual-queue2.png";
-import virtualQueue3 from "@/assets/tutorials/multipass/virtual-queue3.png";
-import virtualQueue4 from "@/assets/tutorials/multipass/virtual-queue4.png";
 
 interface TutorialStep {
   image: string;
@@ -184,37 +179,6 @@ const tutorials: Tutorial[] = [
         tip: "Se você quiser cancelar para todos, recomendo alterar para outra atração ao invés de cancelar. Use a função de cancelar apenas quando parte do grupo não quiser/puder ir na atração."
       }
     ]
-  },
-  {
-    id: "fila-virtual",
-    title: "Fila Virtual",
-    icon: <Timer className="h-4 w-4" />,
-    description: "Como entrar na fila virtual de atrações especiais",
-    steps: [
-      {
-        image: virtualQueue1,
-        title: "Acesse Virtual Queue",
-        description: "No menu, clique em 'Virtual Queue' e depois em 'Join a Virtual Queue'."
-      },
-      {
-        image: virtualQueue2,
-        title: "Prepare-se para o Horário",
-        description: "A fila virtual abre em dois momentos: 7h e 13h (horário de Orlando). Para entrar às 13h, você precisa já estar dentro do parque.",
-        tip: "Fique de olho no relógio vendo os segundos! Comece a clicar em 'Refresh' alguns segundos antes das 7h em ponto, sem parar."
-      },
-      {
-        image: virtualQueue3,
-        title: "Join Virtual Queue",
-        description: "Às 7h em ponto, após clicar no 'Refresh', vai habilitar o botão 'Join Virtual Queue'. Aperte nele para entrar em um grupo.",
-        tip: "A rapidez para clicar determina seu grupo. Quanto mais rápido, melhor o grupo. Geralmente em 5 segundos não há mais grupos disponíveis!"
-      },
-      {
-        image: virtualQueue4,
-        title: "Acompanhe seu Grupo",
-        description: "Nessa tela você sabe qual seu grupo. Dentro de 'Virtual Queue', você encontra qual grupo estão chamando no momento. Quando chegar sua vez, você receberá uma notificação do app.",
-        tip: "Você tem 1 hora após ser chamado para ir até a atração e escanear seu ingresso."
-      }
-    ]
   }
 ];
 
@@ -349,7 +313,7 @@ export const TutorialSection = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="comprar">
-            <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full h-auto gap-1">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto gap-1">
               {tutorials.map((tutorial) => (
                 <TabsTrigger 
                   key={tutorial.id} 
