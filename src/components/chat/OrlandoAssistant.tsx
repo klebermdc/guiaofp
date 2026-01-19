@@ -155,7 +155,7 @@ export function OrlandoAssistant() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white hover:scale-110 hover:shadow-xl",
+          "fixed bottom-24 lg:bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white hover:scale-110 hover:shadow-xl",
           !isOpen && "animate-pulse",
           isOpen && "scale-0 opacity-0"
         )}
@@ -174,10 +174,10 @@ export function OrlandoAssistant() {
       {/* Chat Window */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] rounded-2xl bg-background border shadow-2xl transition-all duration-300 overflow-hidden",
+          "fixed bottom-24 lg:bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] rounded-2xl bg-background border shadow-2xl transition-all duration-300 overflow-hidden",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
         )}
-        style={{ height: "min(600px, calc(100vh - 6rem))" }}
+        style={{ height: "min(600px, calc(100vh - 8rem))" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
