@@ -64,6 +64,9 @@ interface TravelProfile {
   // Meta
   completionPercentage: number;
   isLocked: boolean;
+  
+  // Access Control
+  isAccessEnabled: boolean;
 }
 
 interface AuthContextType {
@@ -71,6 +74,7 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAccessEnabled: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -113,6 +117,7 @@ const defaultTravelProfile: TravelProfile = {
   checklistItems: {},
   completionPercentage: 0,
   isLocked: false,
+  isAccessEnabled: false,
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -154,6 +159,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   checklistItems: dbProfile.checklist_items || {},
   completionPercentage: dbProfile.completion_percentage || 0,
   isLocked: dbProfile.is_locked || false,
+  isAccessEnabled: dbProfile.is_access_enabled || false,
 });
 
 // Helper to convert frontend profile to DB format
@@ -365,6 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       isAuthenticated: !!user,
       isLoading,
+      isAccessEnabled: travelProfile.isAccessEnabled,
       login,
       signup,
       logout,
