@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket } from 'lucide-react';
+import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket, Heart, Check } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -114,6 +116,7 @@ const PARKS = [
 const Content = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,10 +124,18 @@ const Content = () => {
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cameFromAttractions, setCameFromAttractions] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<{ park_name: string; attraction_name: string }[]>([]);
+  const [savingPreference, setSavingPreference] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadUserPreferences();
+    }
+  }, [user]);
 
   // Auto-open video from URL parameter
   useEffect(() => {
@@ -140,6 +151,73 @@ const Content = () => {
       }
     }
   }, [searchParams, contents, isLoading]);
+
+  const loadUserPreferences = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('attraction_preferences')
+      .select('park_name, attraction_name')
+      .eq('user_id', user.id);
+    
+    if (data) {
+      setUserPreferences(data);
+    }
+  };
+
+  const isAttractionInPreferences = (attractionName: string | null) => {
+    if (!attractionName) return false;
+    return userPreferences.some(p => p.attraction_name === attractionName);
+  };
+
+  const getParkNameForAttraction = (content: ContentItem) => {
+    // Try to find the park from the category
+    const category = categories.find(c => c.id === content.category_id);
+    if (category) {
+      return category.name;
+    }
+    return 'Desconhecido';
+  };
+
+  const toggleAttractionPreference = async (content: ContentItem) => {
+    if (!user || !content.attraction_name) return;
+    
+    setSavingPreference(true);
+    const parkName = getParkNameForAttraction(content);
+    const attractionName = content.attraction_name;
+    
+    try {
+      if (isAttractionInPreferences(attractionName)) {
+        // Remove from preferences
+        await supabase
+          .from('attraction_preferences')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('attraction_name', attractionName);
+        
+        setUserPreferences(prev => prev.filter(p => p.attraction_name !== attractionName));
+        toast.success('Atração removida das desejadas');
+      } else {
+        // Add to preferences
+        await supabase
+          .from('attraction_preferences')
+          .insert({
+            user_id: user.id,
+            park_name: parkName,
+            attraction_name: attractionName,
+            priority: 1
+          });
+        
+        setUserPreferences(prev => [...prev, { park_name: parkName, attraction_name: attractionName }]);
+        toast.success('Atração adicionada às desejadas');
+      }
+    } catch (error) {
+      console.error('Error toggling preference:', error);
+      toast.error('Erro ao atualizar preferência');
+    } finally {
+      setSavingPreference(false);
+    }
+  };
 
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
@@ -490,8 +568,28 @@ const Content = () => {
                   Este conteúdo ainda não possui um vídeo associado.
                 </p>
               )}
-              {cameFromAttractions && (
-                <div className="pt-4 border-t">
+              {/* Action buttons */}
+              <div className="pt-4 border-t space-y-2">
+                {selectedContent.attraction_name && user && (
+                  <Button
+                    variant={isAttractionInPreferences(selectedContent.attraction_name) ? "default" : "outline"}
+                    onClick={() => toggleAttractionPreference(selectedContent)}
+                    disabled={savingPreference}
+                    className="w-full"
+                  >
+                    {savingPreference ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : isAttractionInPreferences(selectedContent.attraction_name) ? (
+                      <Check className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Heart className="w-4 h-4 mr-2" />
+                    )}
+                    {isAttractionInPreferences(selectedContent.attraction_name) 
+                      ? 'Atração nas desejadas' 
+                      : 'Adicionar às desejadas'}
+                  </Button>
+                )}
+                {cameFromAttractions && (
                   <Button
                     variant="outline"
                     onClick={handleBackToAttractions}
@@ -500,8 +598,8 @@ const Content = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Voltar para Atrações
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
