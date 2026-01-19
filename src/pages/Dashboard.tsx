@@ -57,16 +57,9 @@ const Dashboard = () => {
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-8 text-primary-foreground">
           <div className="absolute top-0 right-0 w-64 h-64 gradient-magic opacity-20 rounded-full blur-3xl" />
           
-          {/* Logo in header - white version for dark background */}
-          <img 
-            src={logo} 
-            alt="Orlando Fast Pass Planejador" 
-            className="absolute top-4 right-4 h-16 w-auto opacity-90 hidden sm:block brightness-0 invert"
-          />
-          
           <div className="relative">
             <div className="flex items-center gap-2 mb-2">
-              <img src={logo} alt="" className="w-6 h-6 object-contain brightness-0 invert" />
+              <span className="text-2xl">✨</span>
               <span className="text-secondary text-sm font-medium">Área Exclusiva</span>
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">
