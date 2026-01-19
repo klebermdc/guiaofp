@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -113,12 +113,14 @@ const PARKS = [
 
 const Content = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPark, setSelectedPark] = useState<typeof PARKS[0] | null>(null);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [cameFromAttractions, setCameFromAttractions] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -132,11 +134,23 @@ const Content = () => {
       if (content) {
         setSelectedContent(content);
         setIsDialogOpen(true);
+        setCameFromAttractions(true);
         // Clear the URL parameter after opening
         setSearchParams({}, { replace: true });
       }
     }
   }, [searchParams, contents, isLoading]);
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open && cameFromAttractions) {
+      // Show back button state persists after modal closes
+    }
+  };
+
+  const handleBackToAttractions = () => {
+    navigate('/atracoes');
+  };
 
   const fetchData = async () => {
     const [contentsRes, categoriesRes] = await Promise.all([
@@ -374,7 +388,7 @@ const Content = () => {
       </div>
 
       {/* Video Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>{selectedContent?.title}</DialogTitle>
@@ -475,6 +489,18 @@ const Content = () => {
                 <p className="text-center text-muted-foreground py-8">
                   Este conteúdo ainda não possui um vídeo associado.
                 </p>
+              )}
+              {cameFromAttractions && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={handleBackToAttractions}
+                    className="w-full"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar para Atrações
+                  </Button>
+                </div>
               )}
             </div>
           )}
