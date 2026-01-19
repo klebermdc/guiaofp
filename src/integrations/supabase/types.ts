@@ -224,6 +224,7 @@ export type Database = {
           hotel: string | null
           hotel_type: string | null
           id: string
+          is_access_enabled: boolean | null
           is_locked: boolean | null
           last_visit: string | null
           my_disney_email: string | null
@@ -263,6 +264,7 @@ export type Database = {
           hotel?: string | null
           hotel_type?: string | null
           id?: string
+          is_access_enabled?: boolean | null
           is_locked?: boolean | null
           last_visit?: string | null
           my_disney_email?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           hotel?: string | null
           hotel_type?: string | null
           id?: string
+          is_access_enabled?: boolean | null
           is_locked?: boolean | null
           last_visit?: string | null
           my_disney_email?: string | null

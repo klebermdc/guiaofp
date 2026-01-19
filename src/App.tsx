@@ -17,6 +17,7 @@ import ParkMap from "./pages/ParkMap";
 import TravelGuide from "./pages/TravelGuide";
 import Attractions from "./pages/Attractions";
 import ClientDetails from "./pages/ClientDetails";
+import AccessBlocked from "./pages/AccessBlocked";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/perfil" element={<TravelProfile />} />
             <Route path="/agenda" element={<Agenda />} />

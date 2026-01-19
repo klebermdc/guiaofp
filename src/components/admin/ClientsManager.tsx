@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -14,15 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Users, Search, Eye, Calendar, MapPin, Phone, Loader2 } from 'lucide-react';
+import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface ClientProfile {
   id: string;
@@ -38,6 +34,7 @@ interface ClientProfile {
   hotel: string | null;
   completion_percentage: number | null;
   created_at: string | null;
+  is_access_enabled: boolean | null;
 }
 
 export function ClientsManager() {
@@ -45,6 +42,7 @@ export function ClientsManager() {
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [togglingAccess, setTogglingAccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -60,6 +58,30 @@ export function ClientsManager() {
       setClients(data as ClientProfile[]);
     }
     setIsLoading(false);
+  };
+
+  const toggleAccess = async (client: ClientProfile) => {
+    setTogglingAccess(client.user_id);
+    const newValue = !client.is_access_enabled;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_access_enabled: newValue })
+      .eq('user_id', client.user_id);
+
+    if (error) {
+      toast.error('Erro ao atualizar acesso');
+    } else {
+      setClients(prev => 
+        prev.map(c => 
+          c.user_id === client.user_id 
+            ? { ...c, is_access_enabled: newValue } 
+            : c
+        )
+      );
+      toast.success(newValue ? 'Acesso liberado!' : 'Acesso bloqueado!');
+    }
+    setTogglingAccess(null);
   };
 
   const filteredClients = clients.filter((client) => {
@@ -87,6 +109,7 @@ export function ClientsManager() {
   const stats = {
     total: clients.length,
     complete: clients.filter((c) => (c.completion_percentage || 0) >= 80).length,
+    accessEnabled: clients.filter((c) => c.is_access_enabled).length,
     thisMonth: clients.filter((c) => {
       if (!c.arrival_date) return false;
       const arrival = new Date(c.arrival_date);
@@ -98,7 +121,7 @@ export function ClientsManager() {
   return (
     <>
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
@@ -106,6 +129,16 @@ export function ClientsManager() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Acesso Liberado</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.accessEnabled}</div>
           </CardContent>
         </Card>
 
@@ -157,6 +190,7 @@ export function ClientsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Acesso</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
@@ -169,6 +203,20 @@ export function ClientsManager() {
               <TableBody>
                 {filteredClients.map((client) => (
                   <TableRow key={client.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={client.is_access_enabled || false}
+                          onCheckedChange={() => toggleAccess(client)}
+                          disabled={togglingAccess === client.user_id}
+                        />
+                        {client.is_access_enabled ? (
+                          <ShieldCheck className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <ShieldX className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {client.responsible_name || 'Não informado'}
                     </TableCell>
