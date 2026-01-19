@@ -232,6 +232,18 @@ export default function Attractions() {
     loadContentItems();
   }, [user]);
 
+  // Recarrega quando o usuário volta para a aba/janela (sincroniza com alterações feitas em /conteudos)
+  useEffect(() => {
+    if (!user) return;
+
+    const onFocus = () => {
+      loadPreferences();
+    };
+
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [user]);
+
   const loadContentItems = async () => {
     const { data } = await supabase
       .from('content_items')
@@ -251,6 +263,17 @@ export default function Attractions() {
       .replace(/[\u0300-\u036f]/g, '') // remove acentos
       .replace(/[^a-z0-9]/g, '') // remove caracteres especiais
       .trim();
+  };
+
+  const canonicalizeParkName = (parkName: string) => {
+    const map: Record<string, string> = {
+      'Epcot': 'EPCOT',
+      'EPCOT': 'EPCOT',
+      'Island of Adventure': 'Islands of Adventure',
+      'Islands of Adventure': 'Islands of Adventure',
+    };
+
+    return map[parkName] || parkName;
   };
 
   const getContentId = (attractionName: string) => {
@@ -279,18 +302,24 @@ export default function Attractions() {
       if (error) throw error;
 
       if (data) {
-        const selected = data.map(item => ({
-          parkName: item.park_name,
-          attractionName: item.attraction_name,
-          priority: item.priority || 1,
-          notes: item.notes || ''
-        }));
+        const selected = data.map(item => {
+          const parkName = canonicalizeParkName(item.park_name);
+          const attractionName = item.attraction_name;
+
+          return {
+            parkName,
+            attractionName,
+            priority: item.priority || 1,
+            notes: item.notes || ''
+          };
+        });
         setSelectedAttractions(selected);
         
         const notesMap: Record<string, string> = {};
         data.forEach(item => {
           if (item.notes) {
-            notesMap[`${item.park_name}-${item.attraction_name}`] = item.notes;
+            const parkName = canonicalizeParkName(item.park_name);
+            notesMap[`${parkName}-${item.attraction_name}`] = item.notes;
           }
         });
         setNotes(notesMap);
