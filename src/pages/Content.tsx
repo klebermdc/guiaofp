@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -111,6 +112,7 @@ const PARKS = [
 ];
 
 const Content = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,6 +123,20 @@ const Content = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Auto-open video from URL parameter
+  useEffect(() => {
+    const videoId = searchParams.get('video');
+    if (videoId && contents.length > 0 && !isLoading) {
+      const content = contents.find(c => c.id === videoId);
+      if (content) {
+        setSelectedContent(content);
+        setIsDialogOpen(true);
+        // Clear the URL parameter after opening
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, contents, isLoading]);
 
   const fetchData = async () => {
     const [contentsRes, categoriesRes] = await Promise.all([
