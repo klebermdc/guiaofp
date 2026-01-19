@@ -626,7 +626,7 @@ export default function Attractions() {
                                 {getThrillBadge(attraction.thrillLevel)}
                                 {getContentId(attraction.name) && (
                                   <Link
-                                    to={`/conteudo?video=${getContentId(attraction.name)}`}
+                                    to={`/conteudos?video=${getContentId(attraction.name)}`}
                                     onClick={(e) => e.stopPropagation()}
                                     className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                                   >
