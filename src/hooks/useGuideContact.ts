@@ -5,6 +5,8 @@ const GUIDE_WHATSAPP: Record<string, string> = {
   'kleber': 'https://wa.me/message/SKJOMENE3AQKD1',
 };
 
+export type PlanTier = 'basic' | 'premium';
+
 export const useGuideContact = () => {
   const { travelProfile } = useAuth();
 
@@ -12,11 +14,17 @@ export const useGuideContact = () => {
   const rawGuideName = travelProfile.guideName || '';
   const normalizedName = rawGuideName.toLowerCase().trim();
   const whatsappUrl = GUIDE_WHATSAPP[normalizedName] || '';
-  const hasGuide = !!whatsappUrl;
+  
+  // User has guide if they have a valid guide name with a matching WhatsApp
+  const hasGuide = !!whatsappUrl && !!normalizedName;
+  
+  // Plan tier based on guide status
+  const planTier: PlanTier = hasGuide ? 'premium' : 'basic';
 
   return {
     guideName: rawGuideName,
     whatsappUrl,
     hasGuide,
+    planTier,
   };
 };

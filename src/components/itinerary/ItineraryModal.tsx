@@ -32,20 +32,20 @@ export function ItineraryModal({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            {result?.hasGuide ? 'Seu Roteiro Otimizado' : 'Dicas para sua Visita'}
+            {result?.hasGuide ? 'Roteiro Inteligente Otimizado' : 'Planejador Inteligente - Dicas'}
           </DialogTitle>
           {result && (
-            <DialogDescription className="flex items-center gap-2">
+            <DialogDescription className="flex items-center gap-2 flex-wrap">
               <MapPin className="w-4 h-4" />
               {result.parkName}
               {result.hasGuide ? (
                 <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white ml-2">
                   <Crown className="w-3 h-3 mr-1" />
-                  Plano Premium
+                  Com Guia
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="ml-2">
-                  Plano Básico
+                  Sem Guia
                 </Badge>
               )}
             </DialogDescription>
@@ -86,7 +86,7 @@ export function ItineraryModal({
                           Quer um roteiro completo e otimizado?
                         </h3>
                         <p className="text-muted-foreground text-sm mb-4">
-                          Com o <strong>Guiamento Premium</strong>, você recebe:
+                          Com o <strong>Roteiro Inteligente com Guia</strong>, você recebe:
                         </p>
                         <ul className="text-sm space-y-2 mb-4">
                           <li className="flex items-center gap-2">
