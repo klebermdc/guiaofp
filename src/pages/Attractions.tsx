@@ -26,8 +26,10 @@ import {
   Loader2,
   TreePine,
   Waves,
-  Route
+  Route,
+  Play
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface Attraction {
   name: string;
@@ -202,12 +204,33 @@ export default function Attractions() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('magic-kingdom');
   const [itineraryModalOpen, setItineraryModalOpen] = useState(false);
+  const [contentItems, setContentItems] = useState<{ title: string; attraction_name: string | null }[]>([]);
   
   const { generateItinerary, isGenerating, result, error, hasGuide, clearResult } = useGenerateItinerary();
 
   useEffect(() => {
     loadPreferences();
+    loadContentItems();
   }, [user]);
+
+  const loadContentItems = async () => {
+    const { data } = await supabase
+      .from('content_items')
+      .select('title, attraction_name')
+      .eq('is_published', true);
+    
+    if (data) {
+      setContentItems(data);
+    }
+  };
+
+  const hasContentVideo = (attractionName: string) => {
+    return contentItems.some(
+      item => 
+        item.title?.toLowerCase() === attractionName.toLowerCase() ||
+        item.attraction_name?.toLowerCase() === attractionName.toLowerCase()
+    );
+  };
 
   const loadPreferences = async () => {
     if (!user) return;
@@ -566,6 +589,16 @@ export default function Attractions() {
                                   {getTypeLabel(attraction.type)}
                                 </Badge>
                                 {getThrillBadge(attraction.thrillLevel)}
+                                {hasContentVideo(attraction.name) && (
+                                  <Link
+                                    to="/conteudo"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                                  >
+                                    <Play className="w-3 h-3" />
+                                    Ver vídeo
+                                  </Link>
+                                )}
                               </div>
                               
                               {selected && (
