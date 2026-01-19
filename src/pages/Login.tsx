@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Mail, Lock, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import logo from '@/assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -119,13 +120,11 @@ const Login = () => {
       <div className="w-full max-w-md relative animate-fadeIn">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 gradient-gold rounded-2xl shadow-gold mb-4 animate-float">
-            <Sparkles className="w-8 h-8 text-secondary-foreground" />
-          </div>
-          <h1 className="font-display text-3xl font-bold text-primary mb-2">
-            Orlando Fast Pass
-          </h1>
-          <p className="text-muted-foreground">Guiamento Remoto</p>
+          <img 
+            src={logo} 
+            alt="Orlando Fast Pass Planejador" 
+            className="w-64 h-auto mx-auto animate-float"
+          />
         </div>
 
         <Card variant="premium" className="overflow-hidden">

@@ -83,7 +83,7 @@ export const AppSidebar = () => {
               <img 
                 src={logo} 
                 alt="Orlando Fast Pass Planejador" 
-                className="w-40 h-auto object-contain"
+                className="w-48 h-auto object-contain"
               />
             </div>
           </div>
