@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
+import { ItineraryModal } from '@/components/itinerary/ItineraryModal';
+import { useGenerateItinerary } from '@/hooks/useGenerateItinerary';
 import { 
   Castle, 
   Sparkles, 
@@ -22,7 +25,8 @@ import {
   Clock,
   Loader2,
   TreePine,
-  Waves
+  Waves,
+  Route
 } from 'lucide-react';
 
 interface Attraction {
@@ -191,11 +195,15 @@ interface SelectedAttraction {
 }
 
 export default function Attractions() {
-  const { user } = useAuth();
+  const { user, travelProfile } = useAuth();
   const [selectedAttractions, setSelectedAttractions] = useState<SelectedAttraction[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('magic-kingdom');
+  const [itineraryModalOpen, setItineraryModalOpen] = useState(false);
+  
+  const { generateItinerary, isGenerating, result, error, hasGuide, clearResult } = useGenerateItinerary();
 
   useEffect(() => {
     loadPreferences();
@@ -355,6 +363,38 @@ export default function Attractions() {
     return selectedAttractions.filter(a => a.parkName === park.name).length;
   };
 
+  const handleGenerateItinerary = async () => {
+    const activePark = parks.find(p => p.id === activeTab);
+    if (!activePark) return;
+
+    const parkAttractions = selectedAttractions.filter(a => a.parkName === activePark.name);
+    
+    if (parkAttractions.length === 0) {
+      toast.error('Selecione pelo menos uma atração deste parque');
+      return;
+    }
+
+    // Encontrar data do parque no perfil, se existir
+    const parkDates = travelProfile?.parkDates as Array<{ park: string; date?: string }> | undefined;
+    const parkDateEntry = parkDates?.find(pd => pd.park === activePark.name);
+    
+    setItineraryModalOpen(true);
+    await generateItinerary(
+      parkAttractions.map(a => ({
+        parkName: a.parkName,
+        attractionName: a.attractionName,
+        notes: notes[`${a.parkName}-${a.attractionName}`],
+      })),
+      activePark.name,
+      parkDateEntry?.date,
+      travelProfile?.groupSize
+    );
+  };
+
+  const handleContactGuide = () => {
+    window.open('https://wa.me/5511966144493?text=Olá! Tenho interesse no Guiamento Premium para minha viagem a Orlando.', '_blank');
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -417,8 +457,44 @@ export default function Attractions() {
           </Card>
         </div>
 
+        {/* Generate Itinerary Button */}
+        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+          <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/20 rounded-full">
+                <Route className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Gerar Roteiro</h3>
+                <p className="text-sm text-muted-foreground">
+                  {hasGuide 
+                    ? 'Crie um roteiro otimizado para o parque selecionado' 
+                    : 'Receba dicas gerais para sua visita'}
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleGenerateItinerary}
+              disabled={isGenerating || selectedAttractions.length === 0}
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Gerar Roteiro
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Parks Tabs */}
-        <Tabs defaultValue="magic-kingdom" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-2 rounded-xl">
             {parks.map(park => (
               <TabsTrigger 
@@ -524,6 +600,19 @@ export default function Attractions() {
           </div>
         )}
       </div>
+
+      {/* Itinerary Modal */}
+      <ItineraryModal
+        open={itineraryModalOpen}
+        onOpenChange={(open) => {
+          setItineraryModalOpen(open);
+          if (!open) clearResult();
+        }}
+        isGenerating={isGenerating}
+        result={result}
+        error={error}
+        onContactGuide={handleContactGuide}
+      />
     </AppLayout>
   );
 }
