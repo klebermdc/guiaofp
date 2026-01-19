@@ -20,6 +20,11 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
+// Import images
+import heroCastle from '@/assets/landing/hero-castle.jpg';
+import familyPark from '@/assets/landing/family-park.jpg';
+import featureCoaster from '@/assets/landing/feature-coaster.jpg';
+
 const Landing = () => {
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -53,75 +58,82 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* Hero Section - Full Screen */}
-      <section className="min-h-screen flex flex-col justify-center relative overflow-hidden px-4">
-        {/* Animated Background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-accent/30 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-secondary/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      {/* Hero Section - Full Screen with Image */}
+      <section className="min-h-screen relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroCastle} 
+            alt="Magical castle with fireworks" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
         </div>
 
-        <div className="max-w-4xl mx-auto text-center relative pt-20">
-          <Badge className="mb-6 bg-accent/10 text-accent border-accent/20 px-4 py-2 text-sm">
-            ✨ Planejador Inteligente de Parques
-          </Badge>
+        <div className="relative min-h-screen flex flex-col justify-end pb-16 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6 bg-white/20 backdrop-blur-sm text-white border-white/30 px-4 py-2 text-sm">
+              ✨ Planejador Inteligente de Parques
+            </Badge>
 
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold text-foreground leading-tight mb-6">
-            Menos filas.
-            <br />
-            <span className="bg-gradient-to-r from-accent via-primary to-secondary bg-clip-text text-transparent">
-              Mais magia.
-            </span>
-          </h1>
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-lg">
+              Menos filas.
+              <br />
+              <span className="text-secondary">
+                Mais magia.
+              </span>
+            </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
-          </p>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto mb-10 drop-shadow">
+              Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
+            </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link to="/login">
-              <Button size="lg" className="gradient-primary text-primary-foreground rounded-2xl px-8 h-14 text-lg shadow-glow group">
-                Criar meu roteiro
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+              <Link to="/login">
+                <Button size="lg" className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group">
+                  Criar meu roteiro
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="rounded-2xl px-8 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+                onClick={() => scrollToSection('como-funciona')}
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Como funciona
               </Button>
-            </Link>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="rounded-2xl px-8 h-14 text-lg"
-              onClick={() => scrollToSection('como-funciona')}
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Como funciona
-            </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 sm:gap-16 text-center">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4">
+                <p className="text-3xl font-bold text-white">500+</p>
+                <p className="text-sm text-white/70">Famílias</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4">
+                <p className="text-3xl font-bold text-white">7</p>
+                <p className="text-sm text-white/70">Parques</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 flex items-center gap-2">
+                <div>
+                  <p className="text-3xl font-bold text-white">5.0</p>
+                  <p className="text-sm text-white/70">Avaliação</p>
+                </div>
+                <Star className="w-6 h-6 fill-secondary text-secondary" />
+              </div>
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="flex items-center justify-center gap-8 sm:gap-16 text-center">
-            <div>
-              <p className="text-3xl font-bold text-foreground">500+</p>
-              <p className="text-sm text-muted-foreground">Famílias</p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div>
-              <p className="text-3xl font-bold text-foreground">7</p>
-              <p className="text-sm text-muted-foreground">Parques</p>
-            </div>
-            <div className="w-px h-10 bg-border" />
-            <div className="flex items-center gap-1">
-              <p className="text-3xl font-bold text-foreground">5.0</p>
-              <Star className="w-5 h-5 fill-secondary text-secondary" />
-            </div>
-          </div>
+          {/* Scroll Indicator */}
+          <button 
+            onClick={() => scrollToSection('como-funciona')}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/70 animate-bounce"
+          >
+            <ChevronDown className="w-8 h-8" />
+          </button>
         </div>
-
-        {/* Scroll Indicator */}
-        <button 
-          onClick={() => scrollToSection('como-funciona')}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-muted-foreground animate-bounce"
-        >
-          <ChevronDown className="w-8 h-8" />
-        </button>
       </section>
 
       {/* How It Works - Bento Grid */}
@@ -136,13 +148,13 @@ const Landing = () => {
 
           {/* Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Step 1 - Large */}
-            <Card className="md:col-span-2 bg-gradient-to-br from-accent/10 to-transparent border-accent/20 overflow-hidden group hover:shadow-glow transition-shadow">
-              <CardContent className="p-8 flex flex-col h-full min-h-[280px]">
-                <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center mb-6">
-                  <Users className="w-6 h-6 text-accent" />
-                </div>
-                <div className="mt-auto">
+            {/* Step 1 - Large with Image */}
+            <Card className="md:col-span-2 overflow-hidden group hover:shadow-glow transition-shadow">
+              <div className="grid md:grid-cols-2 h-full">
+                <CardContent className="p-8 flex flex-col justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center mb-6">
+                    <Users className="w-6 h-6 text-accent" />
+                  </div>
                   <p className="text-accent text-sm font-medium mb-2">Passo 1</p>
                   <h3 className="font-display text-2xl font-bold text-foreground mb-2">
                     Monte seu perfil
@@ -150,8 +162,16 @@ const Landing = () => {
                   <p className="text-muted-foreground">
                     Datas, tamanho do grupo, preferências e estilo de viagem. Tudo em minutos.
                   </p>
+                </CardContent>
+                <div className="relative h-48 md:h-auto">
+                  <img 
+                    src={familyPark} 
+                    alt="Família no parque" 
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-transparent to-card md:bg-gradient-to-r" />
                 </div>
-              </CardContent>
+              </div>
             </Card>
 
             {/* Step 2 */}
@@ -172,9 +192,14 @@ const Landing = () => {
               </CardContent>
             </Card>
 
-            {/* Step 3 */}
-            <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/20 overflow-hidden hover:shadow-soft transition-shadow">
-              <CardContent className="p-8 flex flex-col h-full min-h-[280px]">
+            {/* Step 3 with Illustration */}
+            <Card className="overflow-hidden hover:shadow-soft transition-shadow relative">
+              <img 
+                src={featureCoaster} 
+                alt="Montanha-russa" 
+                className="absolute inset-0 w-full h-full object-cover opacity-20"
+              />
+              <CardContent className="p-8 flex flex-col h-full min-h-[280px] relative">
                 <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
                   <Route className="w-6 h-6 text-primary" />
                 </div>
@@ -350,7 +375,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Social Proof */}
+      {/* Social Proof with Image */}
       <section className="py-24 px-4 bg-muted/30">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center gap-1 mb-6">
