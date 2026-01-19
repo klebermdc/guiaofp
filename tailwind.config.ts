@@ -92,12 +92,28 @@ export default {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "sparkle": {
+          "0%": { opacity: "0", transform: "scale(0) translateY(0)" },
+          "50%": { opacity: "1", transform: "scale(1) translateY(-20px)" },
+          "100%": { opacity: "0", transform: "scale(0) translateY(-40px)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out forwards",
         "slide-in-right": "slide-in-right 0.4s ease-out forwards",
+        "float": "float 3s ease-in-out infinite",
+        "sparkle": "sparkle 2s ease-in-out infinite",
+        "spin-slow": "spin-slow 8s linear infinite",
       },
       boxShadow: {
         soft: "var(--shadow-soft)",
