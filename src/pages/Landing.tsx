@@ -57,11 +57,11 @@ const Landing = () => {
       {/* Floating Header */}
       <header className="fixed top-4 left-4 right-4 z-50">
         <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl px-6 py-3 flex items-center justify-between shadow-soft">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <img 
               src={logo} 
               alt="Orlando Fast Pass Planejador" 
-              className="h-10 w-auto object-contain"
+              className="h-14 sm:h-16 w-auto object-contain"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -490,11 +490,11 @@ const Landing = () => {
       {/* Minimal Footer */}
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <img 
               src={logo} 
               alt="Orlando Fast Pass Planejador" 
-              className="h-8 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
