@@ -95,7 +95,7 @@ const PARKS = [
   },
   {
     id: 'islands-of-adventure',
-    name: 'Islands of Adventure',
+    name: 'Island of Adventure', // Match database category name
     image: islandsOfAdventureImg,
     color: 'from-orange-500 to-red-600',
   },
