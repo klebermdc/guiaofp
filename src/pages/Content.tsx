@@ -165,8 +165,11 @@ const Content = () => {
     }
   };
 
-  const isAttractionInPreferences = (attractionName: string | null) => {
-    if (!attractionName) return false;
+  const getAttractionName = (content: ContentItem) => {
+    return content.attraction_name || content.title;
+  };
+
+  const isAttractionInPreferences = (attractionName: string) => {
     return userPreferences.some(p => p.attraction_name === attractionName);
   };
 
@@ -180,11 +183,11 @@ const Content = () => {
   };
 
   const toggleAttractionPreference = async (content: ContentItem) => {
-    if (!user || !content.attraction_name) return;
+    if (!user) return;
     
     setSavingPreference(true);
     const parkName = getParkNameForAttraction(content);
-    const attractionName = content.attraction_name;
+    const attractionName = getAttractionName(content);
     
     try {
       if (isAttractionInPreferences(attractionName)) {
@@ -570,21 +573,21 @@ const Content = () => {
               )}
               {/* Action buttons */}
               <div className="pt-4 border-t space-y-2">
-                {selectedContent.attraction_name && user && (
+                {user && (
                   <Button
-                    variant={isAttractionInPreferences(selectedContent.attraction_name) ? "default" : "outline"}
+                    variant={isAttractionInPreferences(getAttractionName(selectedContent)) ? "default" : "outline"}
                     onClick={() => toggleAttractionPreference(selectedContent)}
                     disabled={savingPreference}
                     className="w-full"
                   >
                     {savingPreference ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : isAttractionInPreferences(selectedContent.attraction_name) ? (
+                    ) : isAttractionInPreferences(getAttractionName(selectedContent)) ? (
                       <Check className="w-4 h-4 mr-2" />
                     ) : (
                       <Heart className="w-4 h-4 mr-2" />
                     )}
-                    {isAttractionInPreferences(selectedContent.attraction_name) 
+                    {isAttractionInPreferences(getAttractionName(selectedContent)) 
                       ? 'Atração nas desejadas' 
                       : 'Adicionar às desejadas'}
                   </Button>
