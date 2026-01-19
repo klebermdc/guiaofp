@@ -295,7 +295,7 @@ const Landing = () => {
       </section>
 
       {/* Plans Section with Animations */}
-      <section className="py-24 px-4 bg-muted/30">
+      <section className="py-24 px-4 bg-card/50">
         <div className="max-w-5xl mx-auto">
           <AnimatedCard className="text-center mb-16">
             <p className="text-accent font-medium mb-2">Escolha seu caminho</p>
@@ -336,13 +336,19 @@ const Landing = () => {
                     ))}
                   </ul>
 
-                  <p className="text-sm text-muted-foreground italic mb-6">
-                    "Você planeja. O sistema organiza."
-                  </p>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="text-3xl font-bold text-foreground">R$49</span>
+                      <span className="text-lg text-muted-foreground">,90</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground italic">
+                      "Você planeja. O sistema organiza."
+                    </p>
+                  </div>
 
                   <Link to="/login" className="block">
                     <Button variant="outline" className="w-full h-12 rounded-xl hover:scale-[1.02] transition-transform">
-                      Começar grátis
+                      Começar agora
                     </Button>
                   </Link>
                 </CardContent>
@@ -440,7 +446,7 @@ const Landing = () => {
       </section>
 
       {/* Social Proof */}
-      <section className="py-24 px-4 bg-muted/30">
+      <section className="py-24 px-4 bg-card/50">
         <AnimatedCard className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center gap-1 mb-6">
             {[...Array(5)].map((_, i) => (
