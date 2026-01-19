@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, Crown, MessageCircle, Lock, MapPin, Clock } from 'lucide-react';
@@ -29,8 +28,8 @@ export function ItineraryModal({
 }: ItineraryModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             {result?.hasGuide ? 'Seu Roteiro Otimizado' : 'Dicas para sua Visita'}
@@ -53,7 +52,7 @@ export function ItineraryModal({
           )}
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
           {isGenerating && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -119,7 +118,7 @@ export function ItineraryModal({
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
