@@ -173,11 +173,22 @@ const Content = () => {
     return userPreferences.some(p => p.attraction_name === attractionName);
   };
 
+  // Map category names to park names used in Attractions page
+  const categoryToParkMap: Record<string, string> = {
+    'Magic Kingdom': 'Magic Kingdom',
+    'EPCOT': 'EPCOT',
+    'Hollywood Studios': 'Hollywood Studios',
+    'Animal Kingdom': 'Animal Kingdom',
+    'Universal Studios': 'Universal Studios',
+    'Islands of Adventure': 'Islands of Adventure',
+    'Epic Universe': 'Epic Universe',
+  };
+
   const getParkNameForAttraction = (content: ContentItem) => {
-    // Try to find the park from the category
     const category = categories.find(c => c.id === content.category_id);
     if (category) {
-      return category.name;
+      // Return mapped park name or category name as fallback
+      return categoryToParkMap[category.name] || category.name;
     }
     return 'Desconhecido';
   };
