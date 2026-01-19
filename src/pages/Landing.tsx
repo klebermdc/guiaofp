@@ -4,7 +4,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useParallax, useElementInView } from '@/hooks/useParallax';
 import {
-  Sparkles,
   Crown,
   MapPin,
   CheckCircle2,
@@ -25,6 +24,7 @@ import {
 import heroCastle from '@/assets/landing/hero-castle.jpg';
 import familyPark from '@/assets/landing/family-park.jpg';
 import featureCoaster from '@/assets/landing/feature-coaster.jpg';
+import logo from '@/assets/logo.png';
 
 const AnimatedCard = ({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) => {
   const { ref, isInView } = useElementInView(0.1);
@@ -58,12 +58,11 @@ const Landing = () => {
       <header className="fixed top-4 left-4 right-4 z-50">
         <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl px-6 py-3 flex items-center justify-between shadow-soft">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display text-lg font-bold text-foreground hidden sm:block">
-              Orlando Fast Pass
-            </span>
+            <img 
+              src={logo} 
+              alt="Orlando Fast Pass Planejador" 
+              className="h-10 w-auto object-contain"
+            />
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login">
@@ -492,12 +491,11 @@ const Landing = () => {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-foreground">
-              Orlando Fast Pass
-            </span>
+            <img 
+              src={logo} 
+              alt="Orlando Fast Pass Planejador" 
+              className="h-8 w-auto object-contain"
+            />
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <a 

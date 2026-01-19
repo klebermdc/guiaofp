@@ -11,15 +11,16 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles,
   Shield,
   MapPin,
-  Ticket
+  Ticket,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.png';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
@@ -77,17 +78,13 @@ export const AppSidebar = () => {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 gradient-gold rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-secondary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-display text-lg font-bold text-sidebar-primary">
-                  Orlando Fast Pass
-                </h1>
-                <p className="text-xs text-sidebar-foreground/70">Guiamento Remoto</p>
-              </div>
+          <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center justify-center">
+              <img 
+                src={logo} 
+                alt="Orlando Fast Pass Planejador" 
+                className="w-40 h-auto object-contain"
+              />
             </div>
           </div>
 
