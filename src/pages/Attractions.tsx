@@ -223,7 +223,7 @@ export default function Attractions() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('magic-kingdom');
   const [itineraryModalOpen, setItineraryModalOpen] = useState(false);
-  const [contentItems, setContentItems] = useState<{ title: string; attraction_name: string | null }[]>([]);
+  const [contentItems, setContentItems] = useState<{ id: string; title: string; attraction_name: string | null }[]>([]);
   
   const { generateItinerary, isGenerating, result, error, hasGuide, clearResult } = useGenerateItinerary();
 
@@ -235,7 +235,7 @@ export default function Attractions() {
   const loadContentItems = async () => {
     const { data } = await supabase
       .from('content_items')
-      .select('title, attraction_name')
+      .select('id, title, attraction_name')
       .eq('is_published', true);
     
     if (data) {
@@ -253,13 +253,18 @@ export default function Attractions() {
       .trim();
   };
 
-  const hasContentVideo = (attractionName: string) => {
+  const getContentId = (attractionName: string) => {
     const normalizedAttractionName = normalizeString(attractionName);
-    return contentItems.some(
+    const content = contentItems.find(
       item => 
         normalizeString(item.title || '') === normalizedAttractionName ||
         normalizeString(item.attraction_name || '') === normalizedAttractionName
     );
+    return content?.id || null;
+  };
+
+  const hasContentVideo = (attractionName: string) => {
+    return getContentId(attractionName) !== null;
   };
 
   const loadPreferences = async () => {
@@ -619,9 +624,9 @@ export default function Attractions() {
                                   {getTypeLabel(attraction.type)}
                                 </Badge>
                                 {getThrillBadge(attraction.thrillLevel)}
-                                {hasContentVideo(attraction.name) && (
+                                {getContentId(attraction.name) && (
                                   <Link
-                                    to="/conteudo"
+                                    to={`/conteudo?video=${getContentId(attraction.name)}`}
                                     onClick={(e) => e.stopPropagation()}
                                     className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                                   >
