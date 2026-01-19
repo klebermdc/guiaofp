@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { AppSidebar } from './AppSidebar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { OrlandoAssistant } from '@/components/chat/OrlandoAssistant';
 
 interface AppLayoutProps {
@@ -34,7 +35,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-      <main className="lg:ml-72 min-h-screen">
+      <MobileBottomNav />
+      <main className="lg:ml-72 min-h-screen pb-20 lg:pb-0">
         <div className="p-4 pt-4 lg:p-8">
           {children}
         </div>

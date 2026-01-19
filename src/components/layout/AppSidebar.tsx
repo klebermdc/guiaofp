@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -9,8 +8,6 @@ import {
   CreditCard, 
   Star,
   LogOut,
-  Menu,
-  X,
   Shield,
   MapPin,
   Ticket,
@@ -42,7 +39,6 @@ const guideMenuItems = [
 ];
 
 export const AppSidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
   const { isGuide } = useUserRole();
@@ -51,33 +47,8 @@ export const AppSidebar = () => {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "fixed top-3 left-3 lg:hidden bg-primary text-primary-foreground p-2.5 rounded-xl shadow-lg transition-all duration-300",
-          isOpen ? "z-[60]" : "z-30"
-        )}
-        aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-      >
-        {isOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
-
-      {/* Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-foreground/50 z-40 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50 transition-transform duration-300 lg:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
+      {/* Desktop Sidebar Only */}
+      <aside className="hidden lg:block fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 border-b border-sidebar-border">
@@ -111,7 +82,6 @@ export const AppSidebar = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  onClick={() => setIsOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
                     isActive
