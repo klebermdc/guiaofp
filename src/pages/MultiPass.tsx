@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { TutorialSection } from "@/components/multipass/TutorialSection";
 import { 
   Zap, 
   Clock, 
@@ -682,6 +683,9 @@ const MultiPass = () => {
             </CardContent>
           </Card>
         </section>
+
+        {/* Tutoriais no App */}
+        <TutorialSection />
 
         {/* Mandamentos */}
         <section className="space-y-4">
