@@ -244,6 +244,32 @@ export default function Attractions() {
     return () => window.removeEventListener('focus', onFocus);
   }, [user]);
 
+  // Realtime subscription for instant sync across pages
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('attraction_preferences_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attraction_preferences',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Reload preferences when any change happens
+          loadPreferences();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const loadContentItems = async () => {
     const { data } = await supabase
       .from('content_items')
