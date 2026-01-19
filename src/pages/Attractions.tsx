@@ -224,11 +224,22 @@ export default function Attractions() {
     }
   };
 
+  // Normaliza string para comparação (remove caracteres especiais, espaços extras, etc.)
+  const normalizeString = (str: string) => {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/[^a-z0-9]/g, '') // remove caracteres especiais
+      .trim();
+  };
+
   const hasContentVideo = (attractionName: string) => {
+    const normalizedAttractionName = normalizeString(attractionName);
     return contentItems.some(
       item => 
-        item.title?.toLowerCase() === attractionName.toLowerCase() ||
-        item.attraction_name?.toLowerCase() === attractionName.toLowerCase()
+        normalizeString(item.title || '') === normalizedAttractionName ||
+        normalizeString(item.attraction_name || '') === normalizedAttractionName
     );
   };
 
