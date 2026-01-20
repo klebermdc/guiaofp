@@ -9,7 +9,8 @@ import {
   Star,
   LogOut,
   Shield,
-  X
+  X,
+  Headphones
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -24,6 +25,7 @@ import logo from '@/assets/logo.png';
 
 const moreMenuItems = [
   { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
+  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
   { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },

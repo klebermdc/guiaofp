@@ -12,7 +12,8 @@ import {
   MapPin,
   Ticket,
   Sparkles,
-  Zap
+  Zap,
+  Headphones
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
   { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
   { icon: Zap, label: 'Multi Pass', path: '/multipass' },
+  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
   { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
