@@ -23,6 +23,7 @@ import ClientDetails from "./pages/ClientDetails";
 import AccessBlocked from "./pages/AccessBlocked";
 import NotFound from "./pages/NotFound";
 import MultiPass from "./pages/MultiPass";
+import RemoteGuidance from "./pages/RemoteGuidance";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => {
               <Route path="/pos-viagem" element={<PostTrip />} />
               <Route path="/atracoes" element={<Attractions />} />
               <Route path="/multipass" element={<MultiPass />} />
+              <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/cliente/:id" element={<ClientDetails />} />
               <Route path="*" element={<NotFound />} />
