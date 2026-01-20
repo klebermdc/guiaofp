@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/layout/AppLayout";
+import { SavingsCalculator } from "@/components/guidance/SavingsCalculator";
 import { 
   Headphones, 
   Smartphone, 
@@ -335,6 +336,9 @@ const RemoteGuidance = () => {
             ))}
           </div>
         </div>
+
+        {/* Savings Calculator */}
+        <SavingsCalculator />
 
         {/* How it Works */}
         <Card>
