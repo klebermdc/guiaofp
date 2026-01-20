@@ -2,37 +2,31 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { SavingsCalculator } from "@/components/guidance/SavingsCalculator";
 import { 
   Headphones, 
-  Smartphone, 
   Clock, 
   CheckCircle2, 
   XCircle, 
   MessageCircle, 
-  Zap, 
   Shield, 
   Users, 
   MapPin, 
   AlertTriangle,
   HelpCircle,
-  Star,
-  ThumbsUp,
-  ArrowRight,
   Phone,
   Wifi,
   Battery,
-  CloudRain,
   Sun,
   Timer,
   Heart,
   Target,
   TrendingUp,
   Sparkles,
-  ChevronDown
+  Zap,
+  Star
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
 import { useGuideContact } from "@/hooks/useGuideContact";
 
 const RemoteGuidance = () => {
@@ -231,24 +225,6 @@ const RemoteGuidance = () => {
     }
   ];
 
-  const testimonials = [
-    {
-      text: "Sem o guiamento, teríamos ficado 2 horas na fila do Tron. Com as orientações, fizemos em 20 minutos!",
-      author: "Família Silva",
-      park: "Magic Kingdom"
-    },
-    {
-      text: "A reorganização por causa da chuva foi perfeita. Acabamos fazendo mais atrações do que esperávamos.",
-      author: "Carlos e Ana",
-      park: "Hollywood Studios"
-    },
-    {
-      text: "Ter alguém monitorando em tempo real tirou todo o estresse. Aproveitamos muito mais!",
-      author: "Família Oliveira",
-      park: "Universal Studios"
-    }
-  ];
-
   return (
     <AppLayout>
       <div className="space-y-8 pb-8">
@@ -261,28 +237,17 @@ const RemoteGuidance = () => {
           <div className="relative z-10 max-w-3xl">
             <Badge className="mb-4 bg-white/20 text-white border-white/30 hover:bg-white/30">
               <Headphones className="w-3 h-3 mr-1" />
-              Acompanhamento em Tempo Real
+              Seu Guia de Referência
             </Badge>
             
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-              Guiamento Remoto
+              Como Funciona o Guiamento Remoto
             </h1>
             
-            <p className="text-lg md:text-xl text-white/90 mb-6 leading-relaxed">
-              Tenha um especialista te orientando durante todo o dia no parque. 
-              Decisões estratégicas em tempo real para você aproveitar mais e esperar menos.
+            <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+              Tudo o que você precisa saber para aproveitar ao máximo seu dia no parque 
+              com o acompanhamento estratégico do seu guia.
             </p>
-
-            <div className="flex flex-wrap gap-4">
-              <Button 
-                size="lg" 
-                className="bg-white text-purple-600 hover:bg-white/90 font-semibold"
-                onClick={openWhatsApp}
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Falar com {guideName || 'o Guia'}
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -311,11 +276,11 @@ const RemoteGuidance = () => {
           </CardContent>
         </Card>
 
-        {/* Benefits Grid */}
+        {/* What You Get - Educational */}
         <div>
           <h2 className="text-2xl font-bold text-center mb-6 flex items-center justify-center gap-2">
-            <ThumbsUp className="w-6 h-6 text-green-500" />
-            Por que contratar?
+            <Sparkles className="w-6 h-6 text-primary" />
+            O que você terá durante o guiamento
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -479,33 +444,6 @@ const RemoteGuidance = () => {
           </CardContent>
         </Card>
 
-        {/* Testimonials */}
-        <div>
-          <h2 className="text-2xl font-bold text-center mb-6 flex items-center justify-center gap-2">
-            <Star className="w-6 h-6 text-yellow-500" />
-            O que nossos clientes dizem
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-gradient-to-br from-muted/50 to-muted/30">
-                <CardContent className="p-5">
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm italic mb-4">"{testimonial.text}"</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{testimonial.author}</span>
-                    <Badge variant="secondary" className="text-xs">{testimonial.park}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
         {/* FAQ Sections */}
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-center flex items-center justify-center gap-2">
@@ -588,21 +526,22 @@ const RemoteGuidance = () => {
           </Card>
         </div>
 
-        {/* CTA */}
-        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">
+        {/* Contact Guide Section */}
+        <Card className="bg-gradient-to-r from-green-500/10 via-emerald-500/5 to-green-500/10 border-green-500/20">
           <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3">Pronto para aproveitar mais seu parque?</h2>
+            <MessageCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+            <h2 className="text-2xl font-bold mb-3">Alguma dúvida?</h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Entre em contato com seu guia para tirar dúvidas ou contratar o serviço de guiamento remoto.
+              Se tiver qualquer pergunta sobre o funcionamento do guiamento ou precisar de suporte, 
+              fale diretamente com seu guia.
             </p>
             <Button 
               size="lg" 
-              className="font-semibold"
+              className="font-semibold bg-green-600 hover:bg-green-700"
               onClick={openWhatsApp}
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               Falar com {guideName || 'o Guia'}
-              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </CardContent>
         </Card>

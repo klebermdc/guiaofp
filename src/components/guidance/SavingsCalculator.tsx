@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Clock, TrendingDown, Sparkles, Users, Timer, Zap } from "lucide-react";
+import { Clock, TrendingDown, Sparkles, Users, Timer, Zap, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ParkType = "disney" | "universal" | "other";
