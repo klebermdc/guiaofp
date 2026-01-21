@@ -22,20 +22,25 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
 
-const menuItems = [
+// Items available for all plans
+const baseMenuItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
   { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
   { icon: CheckCircle2, label: 'Checklists', path: '/checklists' },
   { icon: Zap, label: 'Multi Pass', path: '/multipass' },
-  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
-  { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
-  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
   { icon: Sparkles, label: 'Conteúdos Exclusivos', path: '/conteudos' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
+];
+
+// Items only for premium plan (with guide)
+const premiumMenuItems = [
+  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
+  { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
+  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
 ];
 
 const guideMenuItems = [
@@ -45,8 +50,13 @@ const guideMenuItems = [
 
 export const AppSidebar = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
+
+  // Build menu items based on plan tier
+  const menuItems = planTier === 'premium' || isGuide
+    ? [...baseMenuItems.slice(0, 6), ...premiumMenuItems, ...baseMenuItems.slice(6)]
+    : baseMenuItems;
 
   const allMenuItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 

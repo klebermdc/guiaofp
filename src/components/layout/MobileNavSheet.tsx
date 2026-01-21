@@ -11,7 +11,8 @@ import {
   Shield,
   X,
   Headphones,
-  CheckCircle2
+  CheckCircle2,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -24,16 +25,22 @@ import {
 } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
 
-const moreMenuItems = [
+// Items available for all plans
+const baseMenuItems = [
   { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
   { icon: CheckCircle2, label: 'Checklists', path: '/checklists' },
-  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
   { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
   { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
-  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
   { icon: Sparkles, label: 'Conteúdos Exclusivos', path: '/conteudos' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
+];
+
+// Items only for premium plan (with guide)
+const premiumMenuItems = [
+  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
+  { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
+  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
 ];
 
 const guideMenuItems = [
@@ -47,10 +54,15 @@ interface MobileNavSheetProps {
 }
 
 export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
-  const { user, logout } = useAuth();
+  const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
 
-  const allItems = isGuide ? [...moreMenuItems, ...guideMenuItems] : moreMenuItems;
+  // Build menu items based on plan tier
+  const menuItems = planTier === 'premium' || isGuide
+    ? [...baseMenuItems.slice(0, 2), ...premiumMenuItems, ...baseMenuItems.slice(2)]
+    : baseMenuItems;
+
+  const allItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

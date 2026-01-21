@@ -67,6 +67,7 @@ interface TravelProfile {
   
   // Access Control
   isAccessEnabled: boolean;
+  planTier: 'basic' | 'premium';
 }
 
 interface AuthContextType {
@@ -75,6 +76,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAccessEnabled: boolean;
+  planTier: 'basic' | 'premium';
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -118,6 +120,7 @@ const defaultTravelProfile: TravelProfile = {
   completionPercentage: 0,
   isLocked: false,
   isAccessEnabled: false,
+  planTier: 'basic',
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -160,6 +163,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   completionPercentage: dbProfile.completion_percentage || 0,
   isLocked: dbProfile.is_locked || false,
   isAccessEnabled: dbProfile.is_access_enabled || false,
+  planTier: dbProfile.plan_tier || 'basic',
 });
 
 // Helper to convert frontend profile to DB format
@@ -372,6 +376,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!user,
       isLoading,
       isAccessEnabled: travelProfile.isAccessEnabled,
+      planTier: travelProfile.planTier,
       login,
       signup,
       logout,
