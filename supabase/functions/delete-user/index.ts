@@ -16,6 +16,42 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate caller (must be guide/admin)
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Missing Authorization token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+
+    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Invalid user token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const callerId = userData.user.id;
+    const { data: isAllowed, error: roleError } = await supabaseUser.rpc("is_guide_or_admin", {
+      _user_id: callerId,
+    });
+
+    if (roleError || !isAllowed) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { user_id }: DeleteUserRequest = await req.json();
     
     if (!user_id) {
@@ -24,7 +60,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log("Deleting user:", user_id);
 
-    // Create Supabase client with service role
+    // Create Supabase client with service role (for admin deletes)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!

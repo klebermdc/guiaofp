@@ -311,23 +311,24 @@ export function ClientsManager() {
               {searchTerm ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado ainda.'}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Acesso</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Data de Chegada</TableHead>
-                  <TableHead>Grupo</TableHead>
-                  <TableHead>Progresso</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClients.map((client) => (
-                  <TableRow key={client.id}>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[1100px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Acesso</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead>Data de Chegada</TableHead>
+                    <TableHead>Grupo</TableHead>
+                    <TableHead>Progresso</TableHead>
+                    <TableHead className="sticky right-0 bg-card min-w-[180px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client) => (
+                    <TableRow key={client.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Switch
@@ -360,7 +361,7 @@ export function ClientsManager() {
                           </SelectItem>
                           <SelectItem value="premium">
                             <div className="flex items-center gap-2">
-                              <Crown className="h-4 w-4 text-yellow-500" />
+                              <Crown className="h-4 w-4 text-muted-foreground" />
                               <span>Guia Premium</span>
                             </div>
                           </SelectItem>
@@ -384,7 +385,7 @@ export function ClientsManager() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="sticky right-0 bg-card min-w-[180px]">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => handleViewClient(client)}>
                           <Eye className="h-4 w-4 mr-1" />
@@ -397,7 +398,7 @@ export function ClientsManager() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                 title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -417,7 +418,7 @@ export function ClientsManager() {
                                 <AlertDialogAction
                                   onClick={() => handleDeleteContract(client)}
                                   disabled={deletingClient === client.user_id}
-                                  className="bg-amber-600 text-white hover:bg-amber-700"
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir Contrato'}
                                 </AlertDialogAction>
@@ -470,8 +471,9 @@ export function ClientsManager() {
                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
         )}
         </CardContent>
       </Card>
