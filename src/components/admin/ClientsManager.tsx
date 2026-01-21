@@ -46,6 +46,7 @@ interface ClientProfile {
   completion_percentage: number | null;
   created_at: string | null;
   is_access_enabled: boolean | null;
+  has_contract?: boolean;
 }
 
 export function ClientsManager() {
@@ -61,14 +62,31 @@ export function ClientsManager() {
   }, []);
 
   const fetchClients = async () => {
-    const { data, error } = await supabase
+    // Fetch profiles
+    const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setClients(data as ClientProfile[]);
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      setIsLoading(false);
+      return;
     }
+
+    // Fetch contracts to check which clients have one
+    const { data: contractsData } = await supabase
+      .from('contracts')
+      .select('user_id');
+
+    const contractUserIds = new Set(contractsData?.map(c => c.user_id) || []);
+
+    const clientsWithContractInfo = (profilesData || []).map(profile => ({
+      ...profile,
+      has_contract: contractUserIds.has(profile.user_id)
+    })) as ClientProfile[];
+
+    setClients(clientsWithContractInfo);
     setIsLoading(false);
   };
 
@@ -294,38 +312,40 @@ export function ClientsManager() {
                           Ver
                         </Button>
                         
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir contrato</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o contrato de <strong>{client.responsible_name || 'cliente'}</strong>?
-                                <br /><br />
-                                Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteContract(client)}
-                                disabled={deletingClient === client.user_id}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        {client.has_contract && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
                               >
-                                {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Excluir contrato</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o contrato de <strong>{client.responsible_name || 'cliente'}</strong>?
+                                  <br /><br />
+                                  Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteContract(client)}
+                                  disabled={deletingClient === client.user_id}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
