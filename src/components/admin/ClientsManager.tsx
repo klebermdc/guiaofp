@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2, Crown, Sparkles } from 'lucide-react';
+import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2, Crown, Sparkles, UserX } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -210,6 +210,26 @@ export function ClientsManager() {
     }
   };
 
+  const handleDeleteUser = async (client: ClientProfile) => {
+    setDeletingClient(client.user_id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: client.user_id }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Cadastro de ${client.responsible_name || 'cliente'} excluído com sucesso`);
+      setClients(prev => prev.filter(c => c.user_id !== client.user_id));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Erro ao excluir cadastro');
+    } finally {
+      setDeletingClient(null);
+    }
+  };
+
   const stats = {
     total: clients.length,
     complete: clients.filter((c) => (c.completion_percentage || 0) >= 80).length,
@@ -377,7 +397,7 @@ export function ClientsManager() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
                                 title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -397,14 +417,55 @@ export function ClientsManager() {
                                 <AlertDialogAction
                                   onClick={() => handleDeleteContract(client)}
                                   disabled={deletingClient === client.user_id}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  className="bg-amber-600 text-white hover:bg-amber-700"
                                 >
-                                  {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir'}
+                                  {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir Contrato'}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
                         )}
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title={`Excluir cadastro de ${client.responsible_name || 'cliente'}`}
+                            >
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir cadastro completo</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                <span className="text-destructive font-semibold">ATENÇÃO: Esta ação é irreversível!</span>
+                                <br /><br />
+                                Você está prestes a excluir <strong>PERMANENTEMENTE</strong> o cadastro de <strong>{client.responsible_name || 'cliente'}</strong>.
+                                <br /><br />
+                                Isso irá remover:
+                                <ul className="list-disc list-inside mt-2 space-y-1">
+                                  <li>Conta de acesso</li>
+                                  <li>Perfil de viagem</li>
+                                  <li>Atrações selecionadas</li>
+                                  <li>Contratos (se houver)</li>
+                                </ul>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteUser(client)}
+                                disabled={deletingClient === client.user_id}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir Tudo'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
