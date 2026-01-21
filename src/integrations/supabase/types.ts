@@ -232,6 +232,7 @@ export type Database = {
           park_dates: Json | null
           parks: string[] | null
           physical_restrictions: string | null
+          plan_tier: string
           preferred_language: string | null
           priority: string[] | null
           responsible_name: string | null
@@ -272,6 +273,7 @@ export type Database = {
           park_dates?: Json | null
           parks?: string[] | null
           physical_restrictions?: string | null
+          plan_tier?: string
           preferred_language?: string | null
           priority?: string[] | null
           responsible_name?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           park_dates?: Json | null
           parks?: string[] | null
           physical_restrictions?: string | null
+          plan_tier?: string
           preferred_language?: string | null
           priority?: string[] | null
           responsible_name?: string | null

@@ -8,6 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2 } from 'lucide-react';
+import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2, Crown, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -46,6 +53,7 @@ interface ClientProfile {
   completion_percentage: number | null;
   created_at: string | null;
   is_access_enabled: boolean | null;
+  plan_tier: string;
   has_contract?: boolean;
 }
 
@@ -56,6 +64,7 @@ export function ClientsManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [togglingAccess, setTogglingAccess] = useState<string | null>(null);
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
+  const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -132,6 +141,30 @@ export function ClientsManager() {
       }
     }
     setTogglingAccess(null);
+  };
+
+  const updatePlanTier = async (client: ClientProfile, newTier: string) => {
+    setUpdatingPlan(client.user_id);
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ plan_tier: newTier })
+      .eq('user_id', client.user_id);
+
+    if (error) {
+      toast.error('Erro ao atualizar plano');
+    } else {
+      setClients(prev => 
+        prev.map(c => 
+          c.user_id === client.user_id 
+            ? { ...c, plan_tier: newTier } 
+            : c
+        )
+      );
+      const planName = newTier === 'premium' ? 'Guia Premium' : 'Básico';
+      toast.success(`Plano atualizado para ${planName}`);
+    }
+    setUpdatingPlan(null);
   };
 
   const filteredClients = clients.filter((client) => {
@@ -262,6 +295,7 @@ export function ClientsManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Acesso</TableHead>
+                  <TableHead>Plano</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
@@ -287,6 +321,31 @@ export function ClientsManager() {
                           <ShieldX className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={client.plan_tier || 'basic'}
+                        onValueChange={(value) => updatePlanTier(client, value)}
+                        disabled={updatingPlan === client.user_id}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="basic">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="h-4 w-4 text-muted-foreground" />
+                              <span>Básico</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="premium">
+                            <div className="flex items-center gap-2">
+                              <Crown className="h-4 w-4 text-yellow-500" />
+                              <span>Guia Premium</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell className="font-medium">
                       {client.responsible_name || 'Não informado'}
