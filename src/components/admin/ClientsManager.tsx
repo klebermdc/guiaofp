@@ -15,7 +15,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -43,6 +54,7 @@ export function ClientsManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [togglingAccess, setTogglingAccess] = useState<string | null>(null);
+  const [deletingClient, setDeletingClient] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -124,6 +136,27 @@ export function ClientsManager() {
 
   const handleViewClient = (client: ClientProfile) => {
     navigate(`/admin/cliente/${client.user_id}`);
+  };
+
+  const handleDeleteContract = async (client: ClientProfile) => {
+    setDeletingClient(client.user_id);
+    
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .delete()
+        .eq('user_id', client.user_id);
+      
+      if (error) throw error;
+      
+      toast.success(`Contrato de ${client.responsible_name || 'cliente'} excluído com sucesso`);
+      fetchClients();
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      toast.error('Erro ao excluir contrato');
+    } finally {
+      setDeletingClient(null);
+    }
   };
 
   const stats = {
@@ -255,10 +288,45 @@ export function ClientsManager() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => handleViewClient(client)}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewClient(client)}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir contrato</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o contrato de <strong>{client.responsible_name || 'cliente'}</strong>?
+                                <br /><br />
+                                Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteContract(client)}
+                                disabled={deletingClient === client.user_id}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {deletingClient === client.user_id ? 'Excluindo...' : 'Excluir'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
