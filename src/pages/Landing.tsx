@@ -503,7 +503,7 @@ const Landing = () => {
               className="h-12 w-auto object-contain"
             />
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a 
               href="https://wa.me/5511966144493" 
               target="_blank" 
@@ -511,7 +511,16 @@ const Landing = () => {
               className="hover:text-foreground transition-colors flex items-center gap-1"
             >
               <MessageCircle className="w-4 h-4" />
-              Contato
+              Suporte
+            </a>
+            <a 
+              href="https://wa.me/message/2US6I4NWQWLDD1" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Comercial
             </a>
             <span>© 2025</span>
           </div>
