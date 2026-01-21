@@ -92,6 +92,26 @@ const Contact = () => {
           </Card>
         </div>
 
+        {/* Commercial Contact */}
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-foreground mb-4">Contato Comercial</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Para informações comerciais, parcerias ou dúvidas gerais:
+            </p>
+            <a 
+              href="https://wa.me/551152863518"
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="w-full gap-2">
+                <MessageCircle size={18} />
+                +55 11 5286-3518
+              </Button>
+            </a>
+          </CardContent>
+        </Card>
+
         {/* Hours */}
         <Card>
           <CardContent className="p-6">
