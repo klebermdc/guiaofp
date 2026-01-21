@@ -473,7 +473,11 @@ export default function Attractions() {
   const countByPark = (parkId: string) => {
     const park = parks.find(p => p.id === parkId);
     if (!park) return 0;
-    return selectedAttractions.filter(a => a.parkName === park.name).length;
+    // Only count attractions that still exist in the current attractions list
+    return selectedAttractions.filter(a => 
+      a.parkName === park.name && 
+      park.attractions.some(attr => attr.name === a.attractionName)
+    ).length;
   };
 
   const handleGenerateItinerary = async () => {
