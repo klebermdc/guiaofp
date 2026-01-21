@@ -80,6 +80,26 @@ export function ClientsManager() {
         )
       );
       toast.success(newValue ? 'Acesso liberado!' : 'Acesso bloqueado!');
+
+      // Send email notification when access is enabled
+      if (newValue && client.email) {
+        try {
+          const response = await supabase.functions.invoke('notify-access-enabled', {
+            body: {
+              email: client.email,
+              nome_completo: client.responsible_name || 'Cliente',
+            },
+          });
+          
+          if (response.error) {
+            console.error('Failed to send notification:', response.error);
+          } else {
+            toast.success('Email de notificação enviado!');
+          }
+        } catch (notifyError) {
+          console.error('Error sending access notification:', notifyError);
+        }
+      }
     }
     setTogglingAccess(null);
   };
