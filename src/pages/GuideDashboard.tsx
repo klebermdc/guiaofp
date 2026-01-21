@@ -207,26 +207,39 @@ const GuideDashboard = () => {
         {/* Stats */}
         <GuideStatsCards stats={stats} />
 
-        {/* View Mode Toggle */}
-        <div className="flex justify-end gap-2">
-          <Button
-            variant={viewMode === 'cards' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('cards')}
-            className="gap-2"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            Cards
-          </Button>
-          <Button
-            variant={viewMode === 'calendar' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('calendar')}
-            className="gap-2"
-          >
-            <CalendarDays className="w-4 h-4" />
-            Calendário
-          </Button>
+        {/* View Mode Toggle + Guide Filter */}
+        <div className="flex flex-col sm:flex-row justify-between gap-3">
+          <Select value={filterGuide} onValueChange={setFilterGuide}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Guia" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Guias</SelectItem>
+              <SelectItem value="rafael">Rafael</SelectItem>
+              <SelectItem value="kleber">Kleber</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+              className="gap-2"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Cards
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="gap-2"
+            >
+              <CalendarDays className="w-4 h-4" />
+              Calendário
+            </Button>
+          </div>
         </div>
 
         {/* Calendar View */}
@@ -270,16 +283,6 @@ const GuideDashboard = () => {
                     </SelectContent>
                   </Select>
 
-                  <Select value={filterGuide} onValueChange={setFilterGuide}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Guia" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os Guias</SelectItem>
-                      <SelectItem value="rafael">Rafael</SelectItem>
-                      <SelectItem value="kleber">Kleber</SelectItem>
-                    </SelectContent>
-                  </Select>
 
                   <Button variant="outline" size="icon" onClick={fetchData} disabled={isLoading}>
                     <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
