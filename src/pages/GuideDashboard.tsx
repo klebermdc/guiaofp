@@ -35,6 +35,7 @@ interface ClientProfile {
   hotel: string | null;
   completion_percentage: number | null;
   is_access_enabled: boolean | null;
+  guide_name: string | null;
 }
 
 interface AttractionCount {
@@ -49,6 +50,7 @@ const GuideDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterGuide, setFilterGuide] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('trip-date');
 
   useEffect(() => {
@@ -94,6 +96,12 @@ const GuideDashboard = () => {
         client.whatsapp?.includes(searchTerm);
 
       if (!matchesSearch) return false;
+
+      // Guide filter
+      if (filterGuide !== 'all') {
+        const clientGuide = (client.guide_name || '').toLowerCase().trim();
+        if (clientGuide !== filterGuide.toLowerCase()) return false;
+      }
 
       switch (filterStatus) {
         case 'access-enabled':
@@ -224,6 +232,17 @@ const GuideDashboard = () => {
                     <SelectItem value="complete">Perfil completo</SelectItem>
                     <SelectItem value="incomplete">Perfil incompleto</SelectItem>
                     <SelectItem value="upcoming">Viagem próxima</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterGuide} onValueChange={setFilterGuide}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Guia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Guias</SelectItem>
+                    <SelectItem value="rafael">Rafael</SelectItem>
+                    <SelectItem value="kleber">Kleber</SelectItem>
                   </SelectContent>
                 </Select>
 
