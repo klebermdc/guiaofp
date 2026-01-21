@@ -18,35 +18,45 @@ serve(async (req: Request): Promise<Response> => {
   try {
     // Validate caller (must be guide/admin)
     const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) {
+    if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Missing Authorization token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Create client with the user's token to verify identity
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
-    if (userError || !userData?.user) {
+    // Get user from token
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(JSON.stringify({ error: "Invalid user token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerId = userData.user.id;
+    const callerId = user.id;
+    console.log("Caller ID:", callerId);
+
+    // Check if caller is guide/admin
     const { data: isAllowed, error: roleError } = await supabaseUser.rpc("is_guide_or_admin", {
       _user_id: callerId,
     });
 
+    if (roleError) {
+      console.error("Role check error:", roleError);
+    }
+
     if (roleError || !isAllowed) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+      return new Response(JSON.stringify({ error: "Forbidden - not guide or admin" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -84,6 +94,16 @@ serve(async (req: Request): Promise<Response> => {
     
     if (contractError) {
       console.error("Error deleting contracts:", contractError);
+    }
+
+    // Delete user roles
+    const { error: rolesError } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", user_id);
+    
+    if (rolesError) {
+      console.error("Error deleting user roles:", rolesError);
     }
 
     // Delete profile
