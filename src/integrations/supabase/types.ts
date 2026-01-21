@@ -202,6 +202,42 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_page_access: {
+        Row: {
+          basic_visible: boolean | null
+          created_at: string | null
+          id: string
+          page_icon: string | null
+          page_key: string
+          page_name: string
+          premium_visible: boolean | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          basic_visible?: boolean | null
+          created_at?: string | null
+          id?: string
+          page_icon?: string | null
+          page_key: string
+          page_name: string
+          premium_visible?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          basic_visible?: boolean | null
+          created_at?: string | null
+          id?: string
+          page_icon?: string | null
+          page_key?: string
+          page_name?: string
+          premium_visible?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           arrival_date: string | null

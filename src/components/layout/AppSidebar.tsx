@@ -14,34 +14,56 @@ import {
   Sparkles,
   Zap,
   Headphones,
-  CheckCircle2
+  CheckCircle2,
+  Map,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
 
-// Items available for all plans
-const baseMenuItems = [
-  { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
-  { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
-  { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
-  { icon: CheckCircle2, label: 'Checklists', path: '/checklists' },
-  { icon: Zap, label: 'Multi Pass', path: '/multipass' },
-  { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
-  { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
-  { icon: Sparkles, label: 'Conteúdos Exclusivos', path: '/conteudos' },
-  { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
-  { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
+// Icon mapping for dynamic menu
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  User,
+  Star,
+  Calendar,
+  Map,
+  MapPin,
+  Zap,
+  BookOpen,
+  CheckSquare: CheckCircle2,
+  FileText,
+  MessageCircle,
+  Ticket,
+  Sparkles,
+  CreditCard,
+  Headphones,
+};
+
+// Static menu items (not controlled by plan_page_access)
+const staticMenuItems = [
+  { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
+  { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
 
-// Items only for premium plan (with guide)
-const premiumMenuItems = [
-  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
-  { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
-  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
-];
+// Page key to path and label mapping
+const pageConfig: Record<string, { path: string; label: string; defaultIcon: React.ElementType }> = {
+  dashboard: { path: '/dashboard', label: 'Início', defaultIcon: LayoutDashboard },
+  perfil: { path: '/perfil', label: 'Perfil da Viagem', defaultIcon: User },
+  atracoes: { path: '/atracoes', label: 'Atrações Desejadas', defaultIcon: Ticket },
+  agenda: { path: '/agenda', label: 'Agenda do Guiamento', defaultIcon: Calendar },
+  roteiro: { path: '/guiamento-remoto', label: 'Guiamento Remoto', defaultIcon: Headphones },
+  mapa: { path: '/mapa', label: 'Mapa do Parque', defaultIcon: MapPin },
+  multipass: { path: '/multipass', label: 'Multi Pass', defaultIcon: Zap },
+  guia: { path: '/guia', label: 'Guia de Viagem', defaultIcon: BookOpen },
+  checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
+  conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
+  contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
+};
 
 const guideMenuItems = [
   { icon: Headphones, label: 'Meus Clientes', path: '/guia-dashboard' },
@@ -52,12 +74,30 @@ export const AppSidebar = () => {
   const location = useLocation();
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
+  const { pageAccess, isLoading } = usePlanPageAccess();
 
-  // Build menu items based on plan tier
-  const menuItems = planTier === 'premium' || isGuide
-    ? [...baseMenuItems.slice(0, 6), ...premiumMenuItems, ...baseMenuItems.slice(6)]
-    : baseMenuItems;
+  // Build dynamic menu based on plan_page_access table
+  const dynamicMenuItems = pageAccess
+    .filter((page) => {
+      // Guides see everything
+      if (isGuide) return true;
+      // Check visibility based on plan
+      if (planTier === 'premium') return page.premium_visible;
+      return page.basic_visible;
+    })
+    .map((page) => {
+      const config = pageConfig[page.page_key];
+      const IconComponent = iconMap[page.page_icon] || config?.defaultIcon || FileText;
+      return {
+        icon: IconComponent,
+        label: config?.label || page.page_name,
+        path: config?.path || `/${page.page_key}`,
+        pageKey: page.page_key,
+      };
+    });
 
+  // Combine dynamic items with static items
+  const menuItems = [...dynamicMenuItems, ...staticMenuItems];
   const allMenuItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 
   return (
@@ -91,24 +131,30 @@ export const AppSidebar = () => {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {allMenuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-gold"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.label}</span>
-                </NavLink>
-              );
-            })}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-sidebar-foreground/30 border-t-sidebar-foreground" />
+              </div>
+            ) : (
+              allMenuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-gold"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon size={20} />
+                    <span className="font-medium">{item.label}</span>
+                  </NavLink>
+                );
+              })
+            )}
           </nav>
 
           {/* Logout */}
