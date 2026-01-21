@@ -32,18 +32,19 @@ serve(async (req: Request): Promise<Response> => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Get user from token
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    // Verify token using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
     
-    if (userError || !user) {
-      console.error("Auth error:", userError);
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
       return new Response(JSON.stringify({ error: "Invalid user token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerId = user.id;
+    const callerId = claimsData.claims.sub as string;
     console.log("Caller ID:", callerId);
 
     // Check if caller is guide/admin
