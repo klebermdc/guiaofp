@@ -100,7 +100,7 @@ const Contact = () => {
               Para informações comerciais, parcerias ou dúvidas gerais:
             </p>
             <a 
-              href="https://wa.me/551152863518"
+              href="https://wa.me/message/2US6I4NWQWLDD1"
               target="_blank" 
               rel="noopener noreferrer"
             >
