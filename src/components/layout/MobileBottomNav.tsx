@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { MobileNavSheet } from './MobileNavSheet';
 
+// These are the main nav items for clients - guides will be redirected from /dashboard
 const mainNavItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
   { icon: User, label: 'Perfil', path: '/perfil' },

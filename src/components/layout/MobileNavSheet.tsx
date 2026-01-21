@@ -37,7 +37,8 @@ const moreMenuItems = [
 ];
 
 const guideMenuItems = [
-  { icon: Shield, label: 'Painel do Guia', path: '/admin' },
+  { icon: Headphones, label: 'Meus Clientes', path: '/guia-dashboard' },
+  { icon: Shield, label: 'Configurações', path: '/admin' },
 ];
 
 interface MobileNavSheetProps {
