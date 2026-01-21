@@ -7,7 +7,9 @@ import {
   FileText,
   Users,
   Headphones,
-  RefreshCw
+  RefreshCw,
+  CalendarDays,
+  LayoutGrid
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GuideStatsCards } from '@/components/guide/GuideStatsCards';
 import { ClientPortfolioCard } from '@/components/guide/ClientPortfolioCard';
+import { GuideCalendar } from '@/components/guide/GuideCalendar';
 import logo from '@/assets/logo.png';
 
 interface ClientProfile {
@@ -36,6 +39,7 @@ interface ClientProfile {
   completion_percentage: number | null;
   is_access_enabled: boolean | null;
   guide_name: string | null;
+  park_dates: any;
 }
 
 interface AttractionCount {
@@ -52,6 +56,7 @@ const GuideDashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGuide, setFilterGuide] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('trip-date');
+  const [viewMode, setViewMode] = useState<'cards' | 'calendar'>('cards');
 
   useEffect(() => {
     fetchData();
@@ -86,8 +91,20 @@ const GuideDashboard = () => {
     setIsLoading(false);
   };
 
+  // Get today's date for filtering completed trips
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Filter out clients whose trips have ended (departure_date < today)
+  const activeClients = clients.filter((client) => {
+    if (!client.departure_date) return true; // Keep clients without departure date
+    const departure = new Date(client.departure_date);
+    departure.setHours(23, 59, 59, 999);
+    return departure >= today;
+  });
+
   // Filter and sort clients
-  const filteredClients = clients
+  const filteredClients = activeClients
     .filter((client) => {
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch = 
@@ -115,49 +132,39 @@ const GuideDashboard = () => {
         case 'upcoming':
           if (!client.arrival_date) return false;
           const arrival = new Date(client.arrival_date);
-          const today = new Date();
-          const diffDays = Math.ceil((arrival.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          const todayCheck = new Date();
+          const diffDays = Math.ceil((arrival.getTime() - todayCheck.getTime()) / (1000 * 60 * 60 * 24));
           return diffDays > 0 && diffDays <= 30;
         default:
           return true;
       }
     })
     .sort((a, b) => {
-      switch (sortBy) {
-        case 'trip-date':
-          if (!a.arrival_date) return 1;
-          if (!b.arrival_date) return -1;
-          return new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime();
-        case 'name':
-          return (a.responsible_name || '').localeCompare(b.responsible_name || '');
-        case 'completion':
-          return (b.completion_percentage || 0) - (a.completion_percentage || 0);
-        case 'recent':
-          return 0; // Already sorted by created_at from DB if needed
-        default:
-          return 0;
-      }
+      // Always sort by arrival date chronologically first
+      if (!a.arrival_date) return 1;
+      if (!b.arrival_date) return -1;
+      return new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime();
     });
 
-  // Calculate stats
+  // Calculate stats (use activeClients instead of all clients)
   const stats = {
-    total: clients.length,
-    accessEnabled: clients.filter(c => c.is_access_enabled).length,
-    complete: clients.filter(c => (c.completion_percentage || 0) >= 80).length,
-    tripsThisMonth: clients.filter(c => {
+    total: activeClients.length,
+    accessEnabled: activeClients.filter(c => c.is_access_enabled).length,
+    complete: activeClients.filter(c => (c.completion_percentage || 0) >= 80).length,
+    tripsThisMonth: activeClients.filter(c => {
       if (!c.arrival_date) return false;
       const arrival = new Date(c.arrival_date);
       const now = new Date();
       return arrival.getMonth() === now.getMonth() && arrival.getFullYear() === now.getFullYear();
     }).length,
-    upcomingTrips: clients.filter(c => {
+    upcomingTrips: activeClients.filter(c => {
       if (!c.arrival_date) return false;
       const arrival = new Date(c.arrival_date);
-      const today = new Date();
-      const diffDays = Math.ceil((arrival.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const todayCheck = new Date();
+      const diffDays = Math.ceil((arrival.getTime() - todayCheck.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays > 0 && diffDays <= 7;
     }).length,
-    incompleteProfiles: clients.filter(c => (c.completion_percentage || 0) < 50 && c.is_access_enabled).length,
+    incompleteProfiles: activeClients.filter(c => (c.completion_percentage || 0) < 50 && c.is_access_enabled).length,
   };
 
   return (
@@ -200,99 +207,117 @@ const GuideDashboard = () => {
         {/* Stats */}
         <GuideStatsCards stats={stats} />
 
-        {/* Main Content */}
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                Prontuário de Clientes
-              </CardTitle>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar cliente..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 w-full sm:w-64"
-                  />
-                </div>
+        {/* View Mode Toggle */}
+        <div className="flex justify-end gap-2">
+          <Button
+            variant={viewMode === 'cards' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('cards')}
+            className="gap-2"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            Cards
+          </Button>
+          <Button
+            variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('calendar')}
+            className="gap-2"
+          >
+            <CalendarDays className="w-4 h-4" />
+            Calendário
+          </Button>
+        </div>
+
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <GuideCalendar clients={activeClients} filterGuide={filterGuide} />
+        )}
+
+        {/* Cards View */}
+        {viewMode === 'cards' && (
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Prontuário de Clientes
+                </CardTitle>
                 
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <Filter className="w-4 h-4 mr-2" />
-                    <SelectValue placeholder="Filtrar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="access-enabled">Com acesso</SelectItem>
-                    <SelectItem value="access-blocked">Sem acesso</SelectItem>
-                    <SelectItem value="complete">Perfil completo</SelectItem>
-                    <SelectItem value="incomplete">Perfil incompleto</SelectItem>
-                    <SelectItem value="upcoming">Viagem próxima</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar cliente..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 w-full sm:w-64"
+                    />
+                  </div>
+                  
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Filtrar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="access-enabled">Com acesso</SelectItem>
+                      <SelectItem value="access-blocked">Sem acesso</SelectItem>
+                      <SelectItem value="complete">Perfil completo</SelectItem>
+                      <SelectItem value="incomplete">Perfil incompleto</SelectItem>
+                      <SelectItem value="upcoming">Viagem próxima</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Select value={filterGuide} onValueChange={setFilterGuide}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Guia" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Guias</SelectItem>
-                    <SelectItem value="rafael">Rafael</SelectItem>
-                    <SelectItem value="kleber">Kleber</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Select value={filterGuide} onValueChange={setFilterGuide}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Guia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Guias</SelectItem>
+                      <SelectItem value="rafael">Rafael</SelectItem>
+                      <SelectItem value="kleber">Kleber</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Ordenar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="trip-date">Data da viagem</SelectItem>
-                    <SelectItem value="name">Nome</SelectItem>
-                    <SelectItem value="completion">% Completo</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button variant="outline" size="icon" onClick={fetchData} disabled={isLoading}>
-                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                </Button>
+                  <Button variant="outline" size="icon" onClick={fetchData} disabled={isLoading}>
+                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : filteredClients.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Nenhum cliente encontrado</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredClients.map((client) => (
-                  <ClientPortfolioCard 
-                    key={client.user_id} 
-                    client={client}
-                    attractionCount={attractionCounts[client.user_id] || 0}
-                  />
-                ))}
-              </div>
-            )}
+            </CardHeader>
             
-            {filteredClients.length > 0 && (
-              <p className="text-sm text-muted-foreground text-center mt-6">
-                Mostrando {filteredClients.length} de {clients.length} clientes
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : filteredClients.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredClients.map((client) => (
+                    <ClientPortfolioCard 
+                      key={client.user_id} 
+                      client={client}
+                      attractionCount={attractionCounts[client.user_id] || 0}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {filteredClients.length > 0 && (
+                <p className="text-sm text-muted-foreground text-center mt-6">
+                  Mostrando {filteredClients.length} de {activeClients.length} clientes ativos
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );
