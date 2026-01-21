@@ -13,7 +13,8 @@ import {
   Ticket,
   Sparkles,
   Zap,
-  Headphones
+  Headphones,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
   { icon: User, label: 'Perfil da Viagem', path: '/perfil' },
   { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
+  { icon: CheckCircle2, label: 'Checklists', path: '/checklists' },
   { icon: Zap, label: 'Multi Pass', path: '/multipass' },
   { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
   { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
