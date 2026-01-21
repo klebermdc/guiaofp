@@ -9,6 +9,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import GuideDashboard from "./pages/GuideDashboard";
 import TravelProfile from "./pages/TravelProfile";
 import Agenda from "./pages/Agenda";
 import Contact from "./pages/Contact";
@@ -61,6 +62,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/guia-dashboard" element={<GuideDashboard />} />
               <Route path="/perfil" element={<TravelProfile />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/contato" element={<Contact />} />

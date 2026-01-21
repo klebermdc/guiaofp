@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { 
   User, 
   Calendar, 
@@ -11,6 +11,7 @@ import {
   Plane
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useGuideContact } from '@/hooks/useGuideContact';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,8 +22,13 @@ import logo from '@/assets/logo.png';
 
 const Dashboard = () => {
   const { user, travelProfile } = useAuth();
+  const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const { whatsappUrl, guideName, hasGuide } = useGuideContact();
   
+  // Redirect guides to their dedicated dashboard
+  if (!isRoleLoading && isGuide) {
+    return <Navigate to="/guia-dashboard" replace />;
+  }
   const getStatusIcon = () => {
     if (travelProfile.isLocked) return <Lock className="w-5 h-5" />;
     if (travelProfile.completionPercentage >= 100) return <CheckCircle2 className="w-5 h-5" />;
