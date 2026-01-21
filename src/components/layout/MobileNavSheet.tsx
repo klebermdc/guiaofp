@@ -12,10 +12,16 @@ import {
   X,
   Headphones,
   CheckCircle2,
-  Calendar
+  Calendar,
+  LayoutDashboard,
+  User,
+  Zap,
+  Map,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -25,22 +31,44 @@ import {
 } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
 
-// Items available for all plans
-const baseMenuItems = [
-  { icon: Ticket, label: 'Atrações Desejadas', path: '/atracoes' },
-  { icon: CheckCircle2, label: 'Checklists', path: '/checklists' },
-  { icon: MapPin, label: 'Mapa do Parque', path: '/mapa' },
-  { icon: BookOpen, label: 'Guia de Viagem', path: '/guia' },
-  { icon: Sparkles, label: 'Conteúdos Exclusivos', path: '/conteudos' },
-  { icon: CreditCard, label: 'Meu Plano', path: '/plano' },
-  { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem' },
-];
+// Icon mapping for dynamic menu
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  User,
+  Star,
+  Calendar,
+  Map,
+  MapPin,
+  Zap,
+  BookOpen,
+  CheckSquare: CheckCircle2,
+  FileText,
+  MessageCircle,
+  Ticket,
+  Sparkles,
+  CreditCard,
+  Headphones,
+};
 
-// Items only for premium plan (with guide)
-const premiumMenuItems = [
-  { icon: Headphones, label: 'Guiamento Remoto', path: '/guiamento-remoto' },
-  { icon: Calendar, label: 'Agenda do Guiamento', path: '/agenda' },
-  { icon: MessageCircle, label: 'Falar com Guia', path: '/contato' },
+// Page key to path and label mapping
+const pageConfig: Record<string, { path: string; label: string; defaultIcon: React.ElementType }> = {
+  dashboard: { path: '/dashboard', label: 'Início', defaultIcon: LayoutDashboard },
+  perfil: { path: '/perfil', label: 'Perfil da Viagem', defaultIcon: User },
+  atracoes: { path: '/atracoes', label: 'Atrações Desejadas', defaultIcon: Ticket },
+  agenda: { path: '/agenda', label: 'Agenda do Guiamento', defaultIcon: Calendar },
+  roteiro: { path: '/guiamento-remoto', label: 'Guiamento Remoto', defaultIcon: Headphones },
+  mapa: { path: '/mapa', label: 'Mapa do Parque', defaultIcon: MapPin },
+  multipass: { path: '/multipass', label: 'Multi Pass', defaultIcon: Zap },
+  guia: { path: '/guia', label: 'Guia de Viagem', defaultIcon: BookOpen },
+  checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
+  conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
+  contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
+};
+
+// Static menu items (not controlled by plan_page_access)
+const staticMenuItems = [
+  { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
+  { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
 
 const guideMenuItems = [
@@ -56,12 +84,33 @@ interface MobileNavSheetProps {
 export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
+  const { pageAccess, isLoading } = usePlanPageAccess();
 
-  // Build menu items based on plan tier
-  const menuItems = planTier === 'premium' || isGuide
-    ? [...baseMenuItems.slice(0, 2), ...premiumMenuItems, ...baseMenuItems.slice(2)]
-    : baseMenuItems;
+  // Build dynamic menu based on plan_page_access table (excluding bottom nav items)
+  const bottomNavKeys = ['dashboard', 'perfil', 'multipass', 'agenda'];
+  const dynamicMenuItems = pageAccess
+    .filter((page) => {
+      // Skip items already in bottom nav
+      if (bottomNavKeys.includes(page.page_key)) return false;
+      // Guides see everything
+      if (isGuide) return true;
+      // Check visibility based on plan
+      if (planTier === 'premium') return page.premium_visible;
+      return page.basic_visible;
+    })
+    .map((page) => {
+      const config = pageConfig[page.page_key];
+      const IconComponent = iconMap[page.page_icon] || config?.defaultIcon || FileText;
+      return {
+        icon: IconComponent,
+        label: config?.label || page.page_name,
+        path: config?.path || `/${page.page_key}`,
+        pageKey: page.page_key,
+      };
+    });
 
+  // Combine dynamic items with static items
+  const menuItems = [...dynamicMenuItems, ...staticMenuItems];
   const allItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 
   return (
@@ -101,24 +150,30 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            {allItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => onOpenChange(false)}
-                className={({ isActive }) => cn(
-                  "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200",
-                  isActive
-                    ? "bg-sidebar-primary/20 border-sidebar-primary/40 text-sidebar-primary"
-                    : "bg-sidebar-accent/50 border-sidebar-border hover:bg-sidebar-accent text-sidebar-foreground"
-                )}
-              >
-                <item.icon size={24} />
-                <span className="text-sm font-medium text-center leading-tight">{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-sidebar-foreground/30 border-t-sidebar-foreground" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {allItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => onOpenChange(false)}
+                  className={({ isActive }) => cn(
+                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200",
+                    isActive
+                      ? "bg-sidebar-primary/20 border-sidebar-primary/40 text-sidebar-primary"
+                      : "bg-sidebar-accent/50 border-sidebar-border hover:bg-sidebar-accent text-sidebar-foreground"
+                  )}
+                >
+                  <item.icon size={24} />
+                  <span className="text-sm font-medium text-center leading-tight">{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* Logout Button */}
