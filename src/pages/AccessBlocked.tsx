@@ -2,15 +2,22 @@ import { Lock, MessageCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function AccessBlocked() {
   const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
   const whatsappNumber = '5511999999999'; // Número de suporte
   const whatsappMessage = encodeURIComponent(
     `Olá! Acabei de me cadastrar na plataforma Orlando Fast Pass e gostaria de saber mais sobre os planos de guiamento.\n\nEmail: ${user?.email}`
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -37,7 +44,7 @@ export default function AccessBlocked() {
               </Button>
             </a>
             
-            <Button variant="outline" onClick={logout} className="w-full">
+            <Button variant="outline" onClick={handleLogout} className="w-full">
               <LogOut className="w-4 h-4 mr-2" />
               Sair
             </Button>
