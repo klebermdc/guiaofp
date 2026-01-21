@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -9,13 +10,27 @@ import {
   Clock,
   Star,
   MessageCircle,
-  Headphones
+  Headphones,
+  Trash2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ClientProfile {
   id: string;
@@ -37,10 +52,34 @@ interface ClientProfile {
 interface ClientPortfolioCardProps {
   client: ClientProfile;
   attractionCount?: number;
+  onDeleted?: () => void;
 }
 
-export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortfolioCardProps) {
+export function ClientPortfolioCard({ client, attractionCount = 0, onDeleted }: ClientPortfolioCardProps) {
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteContract = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .delete()
+        .eq('user_id', client.user_id);
+      
+      if (error) throw error;
+      
+      toast.success(`Contrato de ${client.responsible_name || 'cliente'} excluído com sucesso`);
+      onDeleted?.();
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      toast.error('Erro ao excluir contrato');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
@@ -220,6 +259,40 @@ export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortf
                   <MessageCircle className="w-4 h-4" />
                 </Button>
               )}
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                    onClick={(e) => e.stopPropagation()}
+                    title={`Excluir contrato de ${client.responsible_name || 'cliente'}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir contrato</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir o contrato de <strong>{client.responsible_name || 'cliente'}</strong>?
+                      <br /><br />
+                      Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteContract}
+                      disabled={isDeleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? 'Excluindo...' : 'Excluir'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>
