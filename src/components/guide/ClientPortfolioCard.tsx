@@ -2,20 +2,18 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
-  User, 
-  Phone, 
   Calendar, 
   MapPin, 
   Users, 
   ChevronRight,
-  CheckCircle2,
-  AlertCircle,
   Clock,
-  Star
+  Star,
+  MessageCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface ClientProfile {
@@ -60,8 +58,46 @@ export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortf
     return diffDays;
   };
 
+  const formatWhatsAppNumber = (phone: string | null) => {
+    if (!phone) return null;
+    // Remove all non-numeric characters
+    const cleaned = phone.replace(/\D/g, '');
+    // Add country code if not present (assuming Brazil)
+    if (cleaned.length === 11) {
+      return `55${cleaned}`;
+    }
+    return cleaned;
+  };
+
+  const getWhatsAppUrl = () => {
+    const formattedNumber = formatWhatsAppNumber(client.whatsapp);
+    if (!formattedNumber) return null;
+    
+    const firstName = client.responsible_name?.split(' ')[0] || 'Cliente';
+    const daysUntil = getDaysUntilTrip();
+    
+    let message = `Olá ${firstName}! 👋\n\n`;
+    
+    if (daysUntil !== null && daysUntil > 0 && daysUntil <= 30) {
+      message += `Faltam apenas *${daysUntil} dias* para sua viagem! 🎢✨\n\n`;
+    }
+    
+    message += `Estou entrando em contato para acompanhar os preparativos da sua viagem a Orlando.\n\nComo posso ajudar?`;
+    
+    return `https://wa.me/${formattedNumber}?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getWhatsAppUrl();
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
   const daysUntilTrip = getDaysUntilTrip();
   const completionPct = client.completion_percentage || 0;
+  const hasWhatsApp = !!client.whatsapp;
   
   const getStatusBadge = () => {
     if (!client.is_access_enabled) {
@@ -145,7 +181,7 @@ export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortf
 
           {/* Footer */}
           <div className="flex items-center justify-between pt-2 border-t border-border">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {getStatusBadge()}
               {attractionCount > 0 && (
                 <Badge variant="outline" className="text-accent border-accent">
@@ -155,12 +191,26 @@ export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortf
               )}
             </div>
             
-            {daysUntilTrip !== null && daysUntilTrip > 0 && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {daysUntilTrip}d
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {daysUntilTrip !== null && daysUntilTrip > 0 && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {daysUntilTrip}d
+                </span>
+              )}
+              
+              {hasWhatsApp && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white"
+                  onClick={handleWhatsAppClick}
+                  title={`Enviar mensagem para ${client.responsible_name || 'cliente'}`}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
