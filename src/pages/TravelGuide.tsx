@@ -5,13 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { SavingIndicator } from '@/components/ui/saving-indicator';
 
 // Clothing size tables
 const clothingSizes = {
@@ -27,42 +23,8 @@ const shoeSizes = {
   kids: { brasil: ['24-25', '26', '27', '29', '30', '31', '32'], usa: ['9', '10', '11', '12', '13', '13.5', '1'] }
 };
 
-// Checklist items
-const checklistItems = {
-  documents: [
-    { id: 'passport', label: 'Passaporte válido', required: true },
-    { id: 'visa', label: 'Visto americano válido', required: true },
-    { id: 'tickets', label: 'Ingressos dos parques', required: true },
-    { id: 'hotel', label: 'Comprovante de hotel', required: true },
-    { id: 'insurance', label: 'Seguro viagem', required: true },
-    { id: 'car', label: 'Reserva de carro (se aplicável)', required: false },
-    { id: 'cnh', label: 'CNH válida', required: false },
-    { id: 'credit_card', label: 'Cartão de crédito internacional', required: true },
-  ],
-  luggage: [
-    { id: 'sunscreen', label: 'Protetor solar', required: true },
-    { id: 'hat', label: 'Boné ou chapéu', required: false },
-    { id: 'sunglasses', label: 'Óculos de sol', required: false },
-    { id: 'rain_coat', label: 'Capa de chuva', required: true },
-    { id: 'portable_charger', label: 'Carregador portátil', required: true },
-    { id: 'comfortable_shoes', label: 'Sapatos confortáveis', required: true },
-    { id: 'jacket', label: 'Casaco leve', required: true },
-    { id: 'medicine', label: 'Remédios básicos', required: false },
-    { id: 'band_aids', label: 'Band-aids', required: false },
-    { id: 'pen', label: 'Caneta para autógrafos', required: false },
-  ],
-  apps: [
-    { id: 'mde', label: 'My Disney Experience instalado', required: true },
-    { id: 'universal', label: 'Universal Orlando Resort app', required: true },
-    { id: 'uber', label: 'Uber instalado', required: false },
-    { id: 'google_maps', label: 'Google Maps offline', required: true },
-    { id: 'translator', label: 'App de tradução', required: false },
-  ],
-};
-
 // Navigation sections
 const navSections = [
-  { id: 'checklist', label: 'Checklist', icon: CheckCircle2, color: 'from-emerald-500 to-teal-500' },
   { id: 'locomocao', label: 'Locomoção', icon: Car, color: 'from-blue-500 to-cyan-500' },
   { id: 'aeroporto', label: 'Aeroporto', icon: Plane, color: 'from-violet-500 to-purple-500' },
   { id: 'mochila', label: 'Mochila', icon: Backpack, color: 'from-green-500 to-emerald-500' },
@@ -77,36 +39,7 @@ const navSections = [
 ];
 
 const TravelGuide = () => {
-  const { travelProfile, updateTravelProfile, isLoading } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Use checklist items from the profile (persisted in database)
-  const checkedItems = travelProfile.checklistItems || {};
-
-  const toggleItem = async (id: string) => {
-    const newCheckedItems = { ...checkedItems, [id]: !checkedItems[id] };
-    setIsSaving(true);
-    try {
-      await updateTravelProfile({ checklistItems: newCheckedItems });
-    } catch (error) {
-      console.error('Error saving checklist:', error);
-      toast.error('Erro ao salvar checklist');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const getProgress = (category: keyof typeof checklistItems) => {
-    const items = checklistItems[category];
-    const checked = items.filter(item => checkedItems[item.id]).length;
-    return (checked / items.length) * 100;
-  };
-
-  const totalProgress = () => {
-    const allItems = [...checklistItems.documents, ...checklistItems.luggage, ...checklistItems.apps];
-    const checked = allItems.filter(item => checkedItems[item.id]).length;
-    return Math.round((checked / allItems.length) * 100);
-  };
+  const { isLoading } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.querySelector(`[data-section="${sectionId}"]`);
@@ -127,7 +60,6 @@ const TravelGuide = () => {
 
   return (
     <AppLayout>
-      <SavingIndicator isSaving={isSaving} />
       <div className="space-y-8 pb-12">
         {/* Modern Hero Header */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-accent p-5 sm:p-8 md:p-12">
@@ -142,41 +74,6 @@ const TravelGuide = () => {
                   Guia Completo de Viagem
                 </h1>
                 <p className="text-white/80 text-sm sm:text-lg">Tudo para sua aventura em Orlando ✨</p>
-              </div>
-            </div>
-            
-            {/* Progress Circle */}
-            <div className="flex items-center gap-4 sm:gap-6 mt-4 sm:mt-6">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
-                <svg className="w-16 h-16 sm:w-20 sm:h-20 -rotate-90">
-                  <circle cx="32" cy="32" r="28" className="sm:hidden" stroke="rgba(255,255,255,0.2)" strokeWidth="6" fill="none" />
-                  <circle 
-                    cx="32" cy="32" r="28" 
-                    className="sm:hidden"
-                    stroke="white" 
-                    strokeWidth="6" 
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${totalProgress() * 1.76} 176`}
-                  />
-                  <circle cx="40" cy="40" r="36" className="hidden sm:block" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="none" />
-                  <circle 
-                    cx="40" cy="40" r="36" 
-                    className="hidden sm:block transition-all duration-700 ease-out"
-                    stroke="white" 
-                    strokeWidth="8" 
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${totalProgress() * 2.26} 226`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-base sm:text-xl font-bold text-white">{totalProgress()}%</span>
-                </div>
-              </div>
-              <div className="text-white/90 min-w-0">
-                <p className="font-medium text-sm sm:text-base">Sua Preparação</p>
-                <p className="text-xs sm:text-sm text-white/70">Continue marcando os itens</p>
               </div>
             </div>
           </div>
@@ -202,103 +99,26 @@ const TravelGuide = () => {
           </div>
         </div>
 
-        {/* Progress Cards - Glassmorphism */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            { key: 'documents' as const, label: 'Documentos', icon: FileText, color: 'from-blue-500 to-indigo-500' },
-            { key: 'luggage' as const, label: 'Mala', icon: Backpack, color: 'from-green-500 to-emerald-500' },
-            { key: 'apps' as const, label: 'Apps', icon: Phone, color: 'from-purple-500 to-pink-500' },
-          ].map((item) => (
-            <Card key={item.key} className="relative overflow-hidden border-0 bg-gradient-to-br from-card to-muted/30 backdrop-blur-sm shadow-xl">
-              <div className={`absolute inset-0 bg-gradient-to-r ${item.color} opacity-5`} />
-              <CardContent className="relative p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.color} flex items-center justify-center shadow-lg`}>
-                    <item.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-2xl font-bold">{Math.round(getProgress(item.key))}%</span>
-                </div>
-                <p className="font-medium text-lg mb-2">{item.label}</p>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full bg-gradient-to-r ${item.color} transition-all duration-500 rounded-full`}
-                    style={{ width: `${getProgress(item.key)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         {/* Main Content - Modern Accordion */}
         <div className="space-y-4">
-          {/* CHECKLIST INTERATIVO */}
+          {/* LINK PARA CHECKLISTS */}
           <div data-section="checklist" className="group">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="checklist" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
-                      <CheckCircle2 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <h3 className="font-display font-bold text-base sm:text-xl">Checklist Interativo</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Marque os itens conforme for preparando</p>
-                    </div>
+            <a href="/checklists" className="block">
+              <Card className="border-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
+                <CardContent className="p-4 sm:p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 sm:px-6 pb-6">
-                  <Tabs defaultValue="documents" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-muted/50 rounded-xl p-1 mb-6 h-auto">
-                      <TabsTrigger value="documents" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">📄 <span className="hidden xs:inline">Documentos</span><span className="xs:hidden">Docs</span></TabsTrigger>
-                      <TabsTrigger value="luggage" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">🧳 Mala</TabsTrigger>
-                      <TabsTrigger value="apps" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md text-xs sm:text-sm px-2 py-2">📱 Apps</TabsTrigger>
-                    </TabsList>
-                    
-                    {(['documents', 'luggage', 'apps'] as const).map((category) => (
-                      <TabsContent key={category} value={category} className="mt-0 space-y-2">
-                        {checklistItems[category].map((item, index) => (
-                          <div 
-                            key={item.id} 
-                            className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer hover:scale-[1.01] ${
-                              checkedItems[item.id] 
-                                ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300 dark:from-emerald-900/20 dark:to-teal-900/20' 
-                                : 'bg-muted/20 border-transparent hover:border-muted-foreground/20'
-                            }`}
-                            style={{ animationDelay: `${index * 50}ms` }}
-                            onClick={() => toggleItem(item.id)}
-                          >
-                            <Checkbox 
-                              id={item.id} 
-                              checked={checkedItems[item.id] || false}
-                              onCheckedChange={() => toggleItem(item.id)}
-                              className="w-6 h-6 rounded-lg border-2"
-                            />
-                            <label 
-                              htmlFor={item.id} 
-                              className={`flex-1 font-medium cursor-pointer transition-all ${checkedItems[item.id] ? 'line-through text-muted-foreground' : ''}`}
-                            >
-                              {item.label}
-                            </label>
-                            {item.required && (
-                              <Badge className="bg-gradient-to-r from-red-500 to-rose-500 text-white border-0 shadow-sm">
-                                Obrigatório
-                              </Badge>
-                            )}
-                            {checkedItems[item.id] && (
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
-                                <Check className="w-5 h-5 text-white" />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-bold text-lg sm:text-xl text-white">Checklists de Viagem</h3>
+                    <p className="text-sm text-white/80">Acesse todos os checklists em uma página dedicada</p>
+                  </div>
+                  <ChevronRight className="w-6 h-6 text-white/80 flex-shrink-0" />
+                </CardContent>
+              </Card>
+            </a>
           </div>
+
 
           {/* LOCOMOÇÃO */}
           <div data-section="locomocao" className="group">

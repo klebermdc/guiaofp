@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SavingsCalculator } from "@/components/guidance/SavingsCalculator";
+import { ParkDayChecklist } from "@/components/guidance/ParkDayChecklist";
 import { 
   Headphones, 
   Clock, 
@@ -304,6 +305,9 @@ const RemoteGuidance = () => {
 
         {/* Savings Calculator */}
         <SavingsCalculator />
+
+        {/* Park Day Checklist */}
+        <ParkDayChecklist />
 
         {/* How it Works */}
         <Card>
