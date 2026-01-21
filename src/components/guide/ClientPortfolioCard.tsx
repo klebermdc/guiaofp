@@ -8,7 +8,8 @@ import {
   ChevronRight,
   Clock,
   Star,
-  MessageCircle
+  MessageCircle,
+  Headphones
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ interface ClientProfile {
   hotel: string | null;
   completion_percentage: number | null;
   is_access_enabled: boolean | null;
+  guide_name: string | null;
 }
 
 interface ClientPortfolioCardProps {
@@ -136,6 +138,14 @@ export function ClientPortfolioCard({ client, attractionCount = 0 }: ClientPortf
                 <p className="text-sm text-muted-foreground truncate">
                   {client.email}
                 </p>
+                {client.guide_name && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Headphones className="w-3 h-3 text-primary" />
+                    <span className="text-xs text-primary font-medium">
+                      {client.guide_name}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
