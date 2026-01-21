@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   format, 
   startOfMonth, 
@@ -37,6 +38,7 @@ interface DayEvent {
   clientName: string;
   parkName: string;
   guide_name: string | null;
+  user_id: string;
 }
 
 interface GuideCalendarProps {
@@ -68,6 +70,7 @@ function getParkColor(parkName: string): string {
 
 export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const navigate = useNavigate();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -97,7 +100,8 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
                 events.push({
                   clientName: client.responsible_name?.split(' ')[0] || 'Cliente',
                   parkName: pd.park || 'Parque',
-                  guide_name: client.guide_name
+                  guide_name: client.guide_name,
+                  user_id: client.user_id
                 });
               }
             } catch {}
@@ -116,7 +120,8 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
             events.push({
               clientName: client.responsible_name?.split(' ')[0] || 'Cliente',
               parkName: parks[0] || 'Viagem',
-              guide_name: client.guide_name
+              guide_name: client.guide_name,
+              user_id: client.user_id
             });
           }
         } catch {}
@@ -193,10 +198,11 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
                       <div
                         key={eventIdx}
                         className={cn(
-                          "text-[10px] md:text-xs p-1 rounded text-white truncate",
+                          "text-[10px] md:text-xs p-1 rounded text-white truncate cursor-pointer hover:opacity-80 transition-opacity",
                           getParkColor(event.parkName)
                         )}
-                        title={`${event.clientName} - ${event.parkName}`}
+                        title={`${event.clientName} - ${event.parkName} (clique para abrir)`}
+                        onClick={() => navigate(`/admin/cliente/${event.user_id}`)}
                       >
                         <div className="font-medium truncate">{event.clientName}</div>
                         <div className="truncate opacity-80">{event.parkName}</div>
