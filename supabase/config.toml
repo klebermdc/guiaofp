@@ -2,3 +2,6 @@ project_id = "qjfhyqjgqutkabxaeopi"
 
 [functions.orlando-assistant]
 verify_jwt = false
+
+[functions.notify-new-user]
+verify_jwt = false

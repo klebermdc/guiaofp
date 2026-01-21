@@ -35,14 +35,18 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const data: CreateClientRequest = await req.json();
     
-    console.log("Received client data:", {
+    const clientInfo = {
       email: data.email,
       nome_completo: data.nome_completo,
       nome_guia: data.nome_guia,
       start_date: data.start_date,
       end_date: data.end_date,
       parks_count: data.parks?.length || 0,
-    });
+      telefone: data.telefone,
+      contract_id: data.contract_id,
+    };
+    
+    console.log("Received client data:", clientInfo);
 
     // Criar cliente Supabase com service role
     const supabase = createClient(
@@ -101,6 +105,39 @@ serve(async (req: Request): Promise<Response> => {
 
       if (profileError) {
         console.error("Profile error:", profileError);
+      }
+
+      // Send email notification
+      try {
+        const notifyResponse = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-new-user`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+            },
+            body: JSON.stringify({
+              email: data.email,
+              nome_completo: data.nome_completo,
+              telefone: data.telefone,
+              contract_id: data.contract_id,
+              nome_guia: data.nome_guia,
+              start_date: data.start_date,
+              end_date: data.end_date,
+              parks_count: data.parks?.length || 0,
+              user_id: userId,
+            }),
+          }
+        );
+        
+        if (!notifyResponse.ok) {
+          console.error("Failed to send notification:", await notifyResponse.text());
+        } else {
+          console.log("Notification email sent successfully");
+        }
+      } catch (notifyError) {
+        console.error("Error sending notification:", notifyError);
       }
     }
 
