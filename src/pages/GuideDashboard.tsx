@@ -308,6 +308,7 @@ const GuideDashboard = () => {
                       key={client.user_id} 
                       client={client}
                       attractionCount={attractionCounts[client.user_id] || 0}
+                      onDeleted={fetchData}
                     />
                   ))}
                 </div>
