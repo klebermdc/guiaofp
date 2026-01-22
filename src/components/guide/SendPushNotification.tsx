@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Bell, Send, Loader2, CheckCircle, Users, Sparkles } from 'lucide-react';
+import { Bell, Send, Loader2, CheckCircle, Users, Sparkles, Mail, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -68,6 +69,8 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [sendPush, setSendPush] = useState(true);
+  const [sendEmail, setSendEmail] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [lastSent, setLastSent] = useState<string | null>(null);
 
@@ -86,38 +89,87 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
       return;
     }
 
+    if (!sendPush && !sendEmail) {
+      toast.error('Selecione pelo menos um canal de envio');
+      return;
+    }
+
     setIsLoading(true);
+    const results: string[] = [];
+
     try {
-      const payload = {
-        user_ids: selectedUserId ? [selectedUserId] : undefined,
-        payload: {
-          title: title.trim(),
-          body: body.trim(),
-          tag: 'manual-notification',
-          data: {
-            url: '/',
-            timestamp: new Date().toISOString()
+      // Send Push Notification
+      if (sendPush) {
+        const pushPayload = {
+          user_ids: selectedUserId && selectedUserId !== 'all' ? [selectedUserId] : undefined,
+          payload: {
+            title: title.trim(),
+            body: body.trim(),
+            tag: 'manual-notification',
+            data: {
+              url: '/',
+              timestamp: new Date().toISOString()
+            }
+          }
+        };
+
+        const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+          body: pushPayload
+        });
+
+        if (pushError) {
+          console.error('Push error:', pushError);
+          results.push('❌ Push falhou');
+        } else {
+          const pushResult = pushData as { sent: number; failed: number; expired: number };
+          if (pushResult.sent > 0) {
+            results.push(`✅ Push: ${pushResult.sent} dispositivo(s)`);
+          } else {
+            results.push('⚠️ Push: nenhum dispositivo');
           }
         }
-      };
+      }
 
-      const { data, error } = await supabase.functions.invoke('send-push-notification', {
-        body: payload
-      });
+      // Send Email
+      if (sendEmail) {
+        const targetClients = selectedUserId && selectedUserId !== 'all'
+          ? clients.filter(c => c.user_id === selectedUserId)
+          : clients.filter(c => c.email);
 
-      if (error) throw error;
+        const emails = targetClients
+          .map(c => c.email)
+          .filter((email): email is string => !!email);
 
-      const result = data as { sent: number; failed: number; expired: number };
-      
-      if (result.sent > 0) {
-        toast.success(`Notificação enviada para ${result.sent} dispositivo(s)!`);
+        if (emails.length > 0) {
+          const { error: emailError } = await supabase.functions.invoke('send-manual-notification', {
+            body: {
+              emails,
+              subject: title.trim(),
+              message: body.trim()
+            }
+          });
+
+          if (emailError) {
+            console.error('Email error:', emailError);
+            results.push('❌ Email falhou');
+          } else {
+            results.push(`✅ Email: ${emails.length} destinatário(s)`);
+          }
+        } else {
+          results.push('⚠️ Email: nenhum destinatário');
+        }
+      }
+
+      // Show results
+      const successCount = results.filter(r => r.startsWith('✅')).length;
+      if (successCount > 0) {
+        toast.success(results.join(' | '));
         setLastSent(new Date().toLocaleTimeString('pt-BR'));
         setTitle('');
         setBody('');
-      } else if (result.expired > 0) {
-        toast.warning('Algumas inscrições expiraram e foram removidas');
+        setSelectedTemplate('');
       } else {
-        toast.info('Nenhum dispositivo encontrado para receber a notificação');
+        toast.warning(results.join(' | '));
       }
     } catch (error: any) {
       console.error('Error sending notification:', error);
@@ -127,7 +179,7 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
     }
   };
 
-  // Filter clients that might have push subscriptions
+  // Filter clients that have names
   const availableClients = clients.filter(c => c.responsible_name);
 
   return (
@@ -135,7 +187,7 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Bell className="w-5 h-5 text-primary" />
-          Enviar Notificação Push
+          Enviar Notificação
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -162,6 +214,28 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
         </div>
 
         <div>
+          <label className="text-sm font-medium mb-2 block">Canal de Envio</label>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox 
+                checked={sendPush} 
+                onCheckedChange={(checked) => setSendPush(checked === true)}
+              />
+              <Smartphone className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Push</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox 
+                checked={sendEmail} 
+                onCheckedChange={(checked) => setSendEmail(checked === true)}
+              />
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm">Email</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
           <label className="text-sm font-medium mb-1.5 block flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             Template
@@ -181,14 +255,14 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Título</label>
+          <label className="text-sm font-medium mb-1.5 block">Título / Assunto</label>
           <Input
             placeholder="Ex: Lembrete importante!"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            maxLength={50}
+            maxLength={100}
           />
-          <p className="text-xs text-muted-foreground mt-1">{title.length}/50</p>
+          <p className="text-xs text-muted-foreground mt-1">{title.length}/100</p>
         </div>
 
         <div>
@@ -197,15 +271,15 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
             placeholder="Ex: Não esqueça de comprar seu MultiPass hoje!"
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            maxLength={200}
-            rows={3}
+            maxLength={500}
+            rows={4}
           />
-          <p className="text-xs text-muted-foreground mt-1">{body.length}/200</p>
+          <p className="text-xs text-muted-foreground mt-1">{body.length}/500</p>
         </div>
 
         <Button 
           onClick={handleSend} 
-          disabled={isLoading || !title.trim() || !body.trim()}
+          disabled={isLoading || !title.trim() || !body.trim() || (!sendPush && !sendEmail)}
           className="w-full gap-2"
         >
           {isLoading ? (
@@ -216,7 +290,7 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
           ) : (
             <>
               <Send className="w-4 h-4" />
-              Enviar Notificação
+              Enviar {sendPush && sendEmail ? 'Push + Email' : sendPush ? 'Push' : 'Email'}
             </>
           )}
         </Button>
