@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { AppSidebar } from './AppSidebar';
@@ -10,9 +11,33 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
+// Page transition variants
+const pageVariants = {
+  initial: { 
+    opacity: 0,
+    y: 8
+  },
+  animate: { 
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94]
+    }
+  },
+  exit: { 
+    opacity: 0,
+    y: -8,
+    transition: {
+      duration: 0.2
+    }
+  }
+};
+
 export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isAuthenticated, isAccessEnabled, isLoading } = useAuth();
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
+  const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -22,7 +47,11 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   if (isLoading || isRoleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <motion.div 
+          className="rounded-full h-8 w-8 border-b-2 border-primary"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
       </div>
     );
   }
@@ -37,9 +66,18 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       <AppSidebar />
       <MobileBottomNav />
       <main className="lg:ml-72 min-h-screen pb-20 lg:pb-0">
-        <div className="p-4 pt-4 lg:p-8">
-          {children}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={location.pathname}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="p-4 pt-4 lg:p-8"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
       <OrlandoAssistant />
     </div>
