@@ -9,7 +9,8 @@ import {
   Headphones,
   RefreshCw,
   CalendarDays,
-  LayoutGrid
+  LayoutGrid,
+  Bell
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GuideStatsCards } from '@/components/guide/GuideStatsCards';
 import { ClientPortfolioCard } from '@/components/guide/ClientPortfolioCard';
 import { GuideCalendar } from '@/components/guide/GuideCalendar';
+import { SendPushNotification } from '@/components/guide/SendPushNotification';
 import { useGuideMultipassStatus } from '@/hooks/useGuideMultipassStatus';
 import logo from '@/assets/logo.png';
 
@@ -56,7 +58,7 @@ const GuideDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGuide, setFilterGuide] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'cards' | 'calendar'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'calendar' | 'notifications'>('cards');
   const { statuses: multipassStatuses, getStatusForUser } = useGuideMultipassStatus();
 
   useEffect(() => {
@@ -221,7 +223,7 @@ const GuideDashboard = () => {
             </SelectContent>
           </Select>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant={viewMode === 'cards' ? 'default' : 'outline'}
               size="sm"
@@ -240,8 +242,24 @@ const GuideDashboard = () => {
               <CalendarDays className="w-4 h-4" />
               Calendário
             </Button>
+            <Button
+              variant={viewMode === 'notifications' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('notifications')}
+              className="gap-2"
+            >
+              <Bell className="w-4 h-4" />
+              Notificações
+            </Button>
           </div>
         </div>
+
+        {/* Notifications View */}
+        {viewMode === 'notifications' && (
+          <div className="max-w-md">
+            <SendPushNotification clients={clients} />
+          </div>
+        )}
 
         {/* Calendar View */}
         {viewMode === 'calendar' && (
