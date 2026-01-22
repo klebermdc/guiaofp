@@ -88,7 +88,7 @@ interface NotificationResult {
   email: string;
   guide_name: string;
   first_disney_date: string;
-  notification_type: 'day_d' | 'reminder' | 'urgent';
+  notification_type: 'day_d' | 'reminder' | 'pre_park' | 'urgent';
   is_disney_hotel: boolean;
 }
 
@@ -120,7 +120,7 @@ function formatDate(dateStr: string): string {
 function getEmailTemplate(
   name: string,
   firstParkDate: string,
-  notificationType: 'day_d' | 'reminder' | 'urgent',
+  notificationType: 'day_d' | 'reminder' | 'pre_park' | 'urgent',
   isDisneyHotel: boolean
 ): { subject: string; html: string } {
   const formattedDate = formatDate(firstParkDate);
@@ -227,6 +227,51 @@ function getEmailTemplate(
       `
     };
   }
+
+  if (notificationType === 'pre_park') {
+    return {
+      subject: `📅 Amanhã é seu dia de parque! Garanta o MultiPass`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>${baseStyles}</head>
+        <body>
+          <div class="container">
+            <div class="header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              <div class="emoji">📅</div>
+              <h1>Amanhã é seu parque Disney!</h1>
+            </div>
+            <div class="content">
+              <p>Olá, <strong>${name}</strong>!</p>
+              
+              <div class="highlight" style="background: #fef3c7; border-left-color: #f59e0b;">
+                <strong>📅 Amanhã é seu dia de parque!</strong>
+                <p>Data: <strong>${formattedDate}</strong></p>
+              </div>
+              
+              <p>Este é o momento ideal para garantir seu <strong>MultiPass</strong> e reservar os horários das atrações mais disputadas!</p>
+              
+              <h3>🎯 Atrações que costumam esgotar rápido:</h3>
+              <ul>
+                <li>🏰 Seven Dwarfs Mine Train</li>
+                <li>🚀 Guardians of the Galaxy</li>
+                <li>🦁 Avatar Flight of Passage</li>
+                <li>⭐ Rise of the Resistance</li>
+              </ul>
+              
+              <p><strong>Não deixe para a última hora!</strong> Compre agora e confirme no app.</p>
+              
+              <a href="https://guiaofp.lovable.app/dashboard" class="cta-button" style="background: #f59e0b;">Confirmar compra</a>
+            </div>
+            <div class="footer">
+              <p>OFP Planejador - Sua viagem perfeita para Orlando</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+  }
   
   // urgent
   return {
@@ -294,8 +339,9 @@ function getGuideEmailTemplate(
 
   const clientsHtml = pendingClients.map(client => {
     const badgeClass = client.notification_type === 'urgent' ? 'badge-urgent' : 
-                       client.notification_type === 'reminder' ? 'badge-reminder' : 'badge-new';
+                       client.notification_type === 'reminder' || client.notification_type === 'pre_park' ? 'badge-reminder' : 'badge-new';
     const badgeText = client.notification_type === 'urgent' ? '🚨 URGENTE' : 
+                      client.notification_type === 'pre_park' ? '📅 AMANHÃ' :
                       client.notification_type === 'reminder' ? '⏰ LEMBRETE' : '✉️ NOTIFICADO';
     const cardClass = client.notification_type;
     
@@ -414,13 +460,19 @@ const handler = async (req: Request): Promise<Response> => {
       // Calculate days until park
       const daysUntilPark = Math.ceil((firstParkDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-      let notificationType: 'day_d' | 'reminder' | 'urgent' | null = null;
+      let notificationType: 'day_d' | 'reminder' | 'pre_park' | 'urgent' | null = null;
 
       // Determine notification type based on timing
-      if (daysUntilPark === 1) {
-        // Day before park - URGENT
+      // Priority: urgent (day of) > pre_park (1 day before) > reminder (D+1) > day_d (initial)
+      if (daysUntilPark === 0) {
+        // Day of park - URGENT (last chance)
         if (existingStatus?.last_notification_sent !== 'urgent') {
           notificationType = 'urgent';
+        }
+      } else if (daysUntilPark === 1) {
+        // 1 day before park - PRE_PARK alert
+        if (existingStatus?.last_notification_sent !== 'pre_park' && existingStatus?.last_notification_sent !== 'urgent') {
+          notificationType = 'pre_park';
         }
       } else if (daysUntilPark === daysBeforeNotification - 1) {
         // Day after initial notification - REMINDER
