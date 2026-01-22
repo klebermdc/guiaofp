@@ -202,6 +202,48 @@ export type Database = {
         }
         Relationships: []
       }
+      multipass_status: {
+        Row: {
+          confirmed_by: string | null
+          created_at: string
+          first_disney_park_date: string | null
+          id: string
+          is_purchased: boolean
+          last_notification_at: string | null
+          last_notification_sent: string | null
+          notification_start_date: string | null
+          purchased_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          created_at?: string
+          first_disney_park_date?: string | null
+          id?: string
+          is_purchased?: boolean
+          last_notification_at?: string | null
+          last_notification_sent?: string | null
+          notification_start_date?: string | null
+          purchased_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          created_at?: string
+          first_disney_park_date?: string | null
+          id?: string
+          is_purchased?: boolean
+          last_notification_at?: string | null
+          last_notification_sent?: string | null
+          notification_start_date?: string | null
+          purchased_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_page_access: {
         Row: {
           basic_visible: boolean | null

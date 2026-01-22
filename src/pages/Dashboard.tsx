@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
+import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import logo from '@/assets/logo.png';
 
 // Animation variants
@@ -146,6 +147,11 @@ const Dashboard = () => {
             />
           </motion.div>
         )}
+
+        {/* MultiPass Status Card (for premium clients) */}
+        <motion.div variants={itemVariants}>
+          <MultipassStatusCard />
+        </motion.div>
         
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-3 gap-4"
