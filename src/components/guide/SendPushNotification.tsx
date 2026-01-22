@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, Send, Loader2, CheckCircle, Users } from 'lucide-react';
+import { Bell, Send, Loader2, CheckCircle, Users, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,12 +18,67 @@ interface SendPushNotificationProps {
   clients: Client[];
 }
 
+const MESSAGE_TEMPLATES = [
+  {
+    id: 'multipass-reminder',
+    name: '🎫 Lembrete MultiPass',
+    title: 'Hora de comprar seu MultiPass!',
+    body: 'Não esqueça de acessar o app My Disney Experience e adquirir seu Lightning Lane MultiPass para aproveitar ao máximo seu dia de parque!'
+  },
+  {
+    id: 'park-day',
+    name: '🏰 Dia de Parque',
+    title: 'Hoje é dia de magia!',
+    body: 'Prepare-se para um dia incrível! Lembre-se de chegar cedo, usar protetor solar e manter o celular carregado. Divirta-se!'
+  },
+  {
+    id: 'profile-reminder',
+    name: '📝 Complete seu Perfil',
+    title: 'Complete seu perfil de viagem',
+    body: 'Percebemos que seu perfil ainda está incompleto. Preencha todas as informações para que possamos preparar o roteiro perfeito!'
+  },
+  {
+    id: 'checkin-reminder',
+    name: '✈️ Check-in Viagem',
+    title: 'Lembrete de Check-in',
+    body: 'Sua viagem está chegando! Não esqueça de fazer o check-in online da sua companhia aérea com 24h de antecedência.'
+  },
+  {
+    id: 'park-tips',
+    name: '💡 Dica do Dia',
+    title: 'Dica especial para você!',
+    body: 'Chegue ao parque 30 minutos antes da abertura oficial. Isso permite que você entre na área de entrada e esteja pronto para correr para as atrações!'
+  },
+  {
+    id: 'weather-alert',
+    name: '🌧️ Alerta Clima',
+    title: 'Atenção ao clima de hoje',
+    body: 'Previsão de chuva para hoje! Leve uma capa de chuva ou poncho - são mais práticos que guarda-chuva nos parques.'
+  },
+  {
+    id: 'custom',
+    name: '✏️ Mensagem Personalizada',
+    title: '',
+    body: ''
+  }
+];
+
 export function SendPushNotification({ clients }: SendPushNotificationProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastSent, setLastSent] = useState<string | null>(null);
+
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const template = MESSAGE_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      setTitle(template.title);
+      setBody(template.body);
+    }
+  };
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim()) {
@@ -100,6 +155,25 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
               {availableClients.map((client) => (
                 <SelectItem key={client.user_id} value={client.user_id}>
                   {client.responsible_name || client.email || 'Cliente sem nome'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-1.5 block flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            Template
+          </label>
+          <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Escolher template..." />
+            </SelectTrigger>
+            <SelectContent>
+              {MESSAGE_TEMPLATES.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
                 </SelectItem>
               ))}
             </SelectContent>
