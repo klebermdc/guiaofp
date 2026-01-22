@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
+import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import logo from '@/assets/logo.png';
 
 // Animation variants
@@ -439,6 +440,9 @@ const Dashboard = () => {
             </Card>
           </motion.div>
         )}
+
+        {/* Push Notification Prompt */}
+        <PushNotificationPrompt />
       </motion.div>
     </AppLayout>
   );

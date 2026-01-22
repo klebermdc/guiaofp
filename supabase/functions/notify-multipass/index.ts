@@ -26,7 +26,32 @@ async function sendEmail(to: string[], subject: string, html: string) {
   return response.json();
 }
 
-
+async function sendPushNotifications(supabaseUrl: string, supabaseKey: string, userIds: string[], payload: { title: string; body: string; tag?: string; data?: Record<string, any> }) {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        user_ids: userIds,
+        payload,
+      }),
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Push notifications sent:', result);
+      return result;
+    } else {
+      console.error('Push notification failed:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error sending push notifications:', error);
+  }
+  return null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -508,8 +533,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send client notifications
+    // Send client notifications (email + push)
     const emailResults = [];
+    const pushUserIds: string[] = [];
+    const pushPayloads: Map<string, { title: string; body: string; tag: string; data: Record<string, any> }> = new Map();
+    
     for (const notification of notificationsToSend) {
       const template = getEmailTemplate(
         notification.name,
@@ -529,6 +557,26 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: notification.user_id, 
           success: true, 
           type: notification.notification_type 
+        });
+        
+        // Prepare push notification
+        pushUserIds.push(notification.user_id);
+        const pushTitle = notification.notification_type === 'urgent' 
+          ? '🚨 URGENTE: MultiPass Disney!'
+          : notification.notification_type === 'pre_park'
+          ? '📅 Amanhã é seu parque!'
+          : '🎢 Hora do MultiPass!';
+        const pushBody = notification.notification_type === 'urgent'
+          ? 'Amanhã é seu parque Disney! Compre seu MultiPass AGORA!'
+          : notification.notification_type === 'pre_park'
+          ? 'Garanta seu MultiPass para o dia de amanhã!'
+          : 'Já pode comprar seu Lightning Lane Multi Pass!';
+        
+        pushPayloads.set(notification.user_id, {
+          title: pushTitle,
+          body: pushBody,
+          tag: `multipass-${notification.notification_type}`,
+          data: { url: '/dashboard' }
         });
 
         // Update or create multipass status
@@ -556,6 +604,15 @@ const handler = async (req: Request): Promise<Response> => {
           error: emailError?.message || 'Unknown error'
         });
       }
+    }
+    
+    // Send push notifications to all notified users
+    if (pushUserIds.length > 0) {
+      // Group users by notification type and send batch push
+      for (const [userId, payload] of pushPayloads.entries()) {
+        await sendPushNotifications(supabaseUrl, supabaseServiceKey, [userId], payload);
+      }
+      console.log(`Push notifications sent to ${pushUserIds.length} users`);
     }
 
     // Send guide summary emails
