@@ -27,10 +27,9 @@ export function PushNotificationPrompt() {
       return;
     }
 
-    // Show prompt after 5 seconds if not subscribed and permission is default
+    // Show prompt immediately if not subscribed and permission is default
     if (isSupported && permission === 'default' && !isSubscribed) {
-      const timer = setTimeout(() => setShowPrompt(true), 5000);
-      return () => clearTimeout(timer);
+      setShowPrompt(true);
     }
   }, [isSupported, permission, isSubscribed]);
 
