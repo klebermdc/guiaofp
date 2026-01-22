@@ -21,7 +21,7 @@ async function sendEmail(to: string[], subject: string, html: string) {
       "Authorization": `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "Orlando FastPass <contato@ofpplanejador.com>",
+      from: "Orlando FastPass <onboarding@resend.dev>",
       to,
       subject,
       html,
