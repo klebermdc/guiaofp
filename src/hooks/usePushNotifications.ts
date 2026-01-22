@@ -3,9 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 // VAPID Public Key - this is safe to expose in frontend code
-// Generate your keys at: https://web-push-codelab.glitch.me/
-// TODO: Replace with your actual VAPID public key from the secret you configured
-const VAPID_PUBLIC_KEY = '';
+const VAPID_PUBLIC_KEY = 'BJIUE1m9cBgR4e0izczJCU1KRfusk7R2fqo5uTT7Isu84R6yZAcMcBMRblfc7iXDB9gmHFa4EqNI9HHBoSWXCp8';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
