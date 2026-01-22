@@ -17,11 +17,11 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GuideStatsCards } from '@/components/guide/GuideStatsCards';
 import { ClientPortfolioCard } from '@/components/guide/ClientPortfolioCard';
 import { GuideCalendar } from '@/components/guide/GuideCalendar';
+import { useGuideMultipassStatus } from '@/hooks/useGuideMultipassStatus';
 import logo from '@/assets/logo.png';
 
 interface ClientProfile {
@@ -36,6 +36,7 @@ interface ClientProfile {
   departure_date: string | null;
   parks: string[] | null;
   hotel: string | null;
+  hotel_type: string | null;
   completion_percentage: number | null;
   is_access_enabled: boolean | null;
   guide_name: string | null;
@@ -55,8 +56,8 @@ const GuideDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGuide, setFilterGuide] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('trip-date');
   const [viewMode, setViewMode] = useState<'cards' | 'calendar'>('cards');
+  const { statuses: multipassStatuses, getStatusForUser } = useGuideMultipassStatus();
 
   useEffect(() => {
     fetchData();
@@ -309,6 +310,7 @@ const GuideDashboard = () => {
                       client={client}
                       attractionCount={attractionCounts[client.user_id] || 0}
                       onDeleted={fetchData}
+                      multipassStatus={getStatusForUser(client.user_id)}
                     />
                   ))}
                 </div>

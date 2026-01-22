@@ -31,6 +31,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { MultipassBadge, isDisneyHotel } from '@/components/multipass/MultipassBadge';
+
+interface MultipassStatus {
+  id: string;
+  user_id: string;
+  is_purchased: boolean;
+  purchased_at: string | null;
+  confirmed_by: string | null;
+  first_disney_park_date: string | null;
+}
 
 interface ClientProfile {
   id: string;
@@ -44,20 +54,51 @@ interface ClientProfile {
   departure_date: string | null;
   parks: string[] | null;
   hotel: string | null;
+  hotel_type?: string | null;
   completion_percentage: number | null;
   is_access_enabled: boolean | null;
   guide_name: string | null;
+  park_dates?: any;
 }
 
 interface ClientPortfolioCardProps {
   client: ClientProfile;
   attractionCount?: number;
   onDeleted?: () => void;
+  multipassStatus?: MultipassStatus | null;
 }
 
-export function ClientPortfolioCard({ client, attractionCount = 0, onDeleted }: ClientPortfolioCardProps) {
+export function ClientPortfolioCard({ client, attractionCount = 0, onDeleted, multipassStatus }: ClientPortfolioCardProps) {
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Calculate first Disney park date from park_dates
+  const getFirstDisneyDate = (): string | null => {
+    if (!client.park_dates) return null;
+    
+    const DISNEY_PARKS = ['Magic Kingdom', 'Epcot', 'Animal Kingdom', 'Hollywood Studios'];
+    const parkDates = client.park_dates;
+    
+    let firstDate: string | null = null;
+    
+    Object.entries(parkDates).forEach(([date, parks]) => {
+      if (Array.isArray(parks)) {
+        const hasDisney = parks.some((park: string) => 
+          DISNEY_PARKS.some(dp => park.includes(dp))
+        );
+        if (hasDisney) {
+          if (!firstDate || date < firstDate) {
+            firstDate = date;
+          }
+        }
+      }
+    });
+    
+    return firstDate;
+  };
+
+  const firstDisneyDate = multipassStatus?.first_disney_park_date || getFirstDisneyDate();
+  const clientIsDisneyHotel = isDisneyHotel(client.hotel || '', client.hotel_type || '');
 
   const handleDeleteContract = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -232,6 +273,13 @@ export function ClientPortfolioCard({ client, attractionCount = 0, onDeleted }: 
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <div className="flex items-center gap-2 flex-wrap">
               {getStatusBadge()}
+              <MultipassBadge
+                isPurchased={multipassStatus?.is_purchased || false}
+                firstDisneyDate={firstDisneyDate}
+                isDisneyHotel={clientIsDisneyHotel}
+                purchasedAt={multipassStatus?.purchased_at}
+                confirmedBy={multipassStatus?.confirmed_by}
+              />
               {attractionCount > 0 && (
                 <Badge variant="outline" className="text-accent border-accent">
                   <Star className="w-3 h-3 mr-1" />
