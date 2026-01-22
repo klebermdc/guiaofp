@@ -14,26 +14,39 @@ interface ManualNotificationRequest {
 }
 
 async function sendEmail(to: string[], subject: string, html: string) {
+  const payload = {
+    from: "Orlando FastPass <contato@ofpplanejador.com>",
+    to,
+    subject,
+    html,
+  };
+  
+  console.log("=== RESEND REQUEST ===");
+  console.log("Sending to:", to);
+  console.log("Subject:", subject);
+  console.log("API Key exists:", !!RESEND_API_KEY);
+  console.log("API Key prefix:", RESEND_API_KEY?.substring(0, 10) + "...");
+  
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${RESEND_API_KEY}`,
     },
-    body: JSON.stringify({
-      from: "Orlando FastPass <contato@ofpplanejador.com>",
-      to,
-      subject,
-      html,
-    }),
+    body: JSON.stringify(payload),
   });
   
+  const responseText = await response.text();
+  console.log("=== RESEND RESPONSE ===");
+  console.log("Status:", response.status);
+  console.log("Status Text:", response.statusText);
+  console.log("Response Body:", responseText);
+  
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
+    throw new Error(`Failed to send email: ${responseText}`);
   }
   
-  return response.json();
+  return JSON.parse(responseText);
 }
 
 const handler = async (req: Request): Promise<Response> => {
