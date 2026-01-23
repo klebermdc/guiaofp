@@ -411,12 +411,11 @@ const handler = async (req: Request): Promise<Response> => {
           { plan: transaction.plan_key }
         );
 
-        // 6. Schedule onboarding email for 2 hours later
-        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+        // 6. Send onboarding email (sent immediately - Resend scheduling requires paid plan)
         await sendEmail("welcome-onboarding", {
           email: transaction.email,
           name: transaction.customer_name,
-        }, TWO_HOURS_MS);
+        });
 
         // 7. Send admin notification email with order details
         await sendAdminOrderNotification(transaction);
