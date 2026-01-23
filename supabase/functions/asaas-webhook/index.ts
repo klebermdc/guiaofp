@@ -120,9 +120,39 @@ const handler = async (req: Request): Promise<Response> => {
       throw updateError;
     }
 
-    // If payment is confirmed, enable user access and send welcome email
+    // If payment is confirmed, enable user access and send emails
     if (newStatus === "confirmed" && transaction.status !== "confirmed") {
       console.log("Payment confirmed! Enabling user access...");
+
+      // Send purchase confirmation email immediately
+      try {
+        const planNames: Record<string, string> = {
+          basic: "Plano Básico",
+          premium: "Plano Premium",
+        };
+        
+        const confirmationResponse = await fetch(`${supabaseUrl}/functions/v1/notify-purchase-confirmation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            email: transaction.email,
+            customerName: transaction.customer_name,
+            productName: planNames[transaction.plan_key] || transaction.plan_key,
+          }),
+        });
+
+        if (confirmationResponse.ok) {
+          console.log("Purchase confirmation email sent to:", transaction.email);
+        } else {
+          const errorText = await confirmationResponse.text();
+          console.error("Error sending purchase confirmation:", errorText);
+        }
+      } catch (confirmError) {
+        console.error("Error sending purchase confirmation:", confirmError);
+      }
 
       // Find user by email - list users and filter
       const { data: usersData } = await supabase.auth.admin.listUsers();
@@ -151,7 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("user_id", authUser.id)
           .single();
 
-        // Send welcome email
+        // Send welcome/access enabled email
         try {
           const emailResponse = await fetch(`${supabaseUrl}/functions/v1/notify-access-enabled`, {
             method: "POST",
