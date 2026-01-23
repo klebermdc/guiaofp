@@ -280,6 +280,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_pricing: {
+        Row: {
+          created_at: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          plan_key: string
+          plan_name: string
+          price_cents: number
+          sort_order: number | null
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          plan_key: string
+          plan_name: string
+          price_cents?: number
+          sort_order?: number | null
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          plan_key?: string
+          plan_name?: string
+          price_cents?: number
+          sort_order?: number | null
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           arrival_date: string | null
