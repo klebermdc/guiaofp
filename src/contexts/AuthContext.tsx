@@ -40,8 +40,7 @@ interface TravelProfile {
   
   // Section 6 - Disney App Access
   hasMyDisneyExperience: boolean;
-  myDisneyEmail: string;
-  myDisneyPassword: string;
+  // Note: Disney email/password fields removed for security - passwords should never be stored
   authorizeGuideAccess: boolean;
   
   // Section 7 - Special Needs
@@ -105,8 +104,6 @@ const defaultTravelProfile: TravelProfile = {
   groupStyle: 'moderado',
   priority: [],
   hasMyDisneyExperience: false,
-  myDisneyEmail: '',
-  myDisneyPassword: '',
   authorizeGuideAccess: false,
   physicalRestrictions: '',
   foodAllergies: '',
@@ -148,8 +145,6 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   groupStyle: dbProfile.group_style || 'moderado',
   priority: dbProfile.priority || [],
   hasMyDisneyExperience: dbProfile.has_my_disney_experience || false,
-  myDisneyEmail: dbProfile.my_disney_email || '',
-  myDisneyPassword: dbProfile.my_disney_password || '',
   authorizeGuideAccess: dbProfile.authorize_guide_access || false,
   physicalRestrictions: dbProfile.physical_restrictions || '',
   foodAllergies: dbProfile.food_allergies || '',
@@ -189,8 +184,6 @@ const frontendToDb = (profile: Partial<TravelProfile>) => {
   if (profile.groupStyle !== undefined) dbProfile.group_style = profile.groupStyle;
   if (profile.priority !== undefined) dbProfile.priority = profile.priority;
   if (profile.hasMyDisneyExperience !== undefined) dbProfile.has_my_disney_experience = profile.hasMyDisneyExperience;
-  if (profile.myDisneyEmail !== undefined) dbProfile.my_disney_email = profile.myDisneyEmail;
-  if (profile.myDisneyPassword !== undefined) dbProfile.my_disney_password = profile.myDisneyPassword;
   if (profile.authorizeGuideAccess !== undefined) dbProfile.authorize_guide_access = profile.authorizeGuideAccess;
   if (profile.physicalRestrictions !== undefined) dbProfile.physical_restrictions = profile.physicalRestrictions;
   if (profile.foodAllergies !== undefined) dbProfile.food_allergies = profile.foodAllergies;
