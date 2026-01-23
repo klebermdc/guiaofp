@@ -469,6 +469,66 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount_cents: number
+          asaas_boleto_url: string | null
+          asaas_customer_id: string | null
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
+          asaas_pix_payload: string | null
+          asaas_pix_qr_code: string | null
+          created_at: string
+          customer_name: string
+          email: string
+          id: string
+          metadata: Json | null
+          payment_method: string
+          plan_key: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          asaas_boleto_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_pix_qr_code?: string | null
+          created_at?: string
+          customer_name: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          payment_method: string
+          plan_key: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          asaas_boleto_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_pix_qr_code?: string | null
+          created_at?: string
+          customer_name?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string
+          plan_key?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
