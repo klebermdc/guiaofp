@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useGuideContact } from '@/hooks/useGuideContact';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ const Dashboard = () => {
   const { user, travelProfile } = useAuth();
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const { whatsappUrl, guideName, hasGuide } = useGuideContact();
+  const { t } = useLanguage();
   
   // Redirect guides to their dedicated dashboard
   if (!isRoleLoading && isGuide) {
@@ -73,9 +75,9 @@ const Dashboard = () => {
   };
 
   const getStatusText = () => {
-    if (travelProfile.isLocked) return 'Perfil bloqueado';
-    if (travelProfile.completionPercentage >= 100) return 'Perfil completo';
-    return 'Perfil incompleto';
+    if (travelProfile.isLocked) return t('dashboard.profileStatus.locked');
+    if (travelProfile.completionPercentage >= 100) return t('dashboard.profileStatus.complete');
+    return t('dashboard.profileStatus.incomplete');
   };
 
   const getStatusColor = () => {
@@ -116,7 +118,7 @@ const Dashboard = () => {
               transition={{ delay: 0.2 }}
             >
               <span className="text-2xl">✨</span>
-              <span className="text-secondary text-sm font-medium">Área Exclusiva</span>
+              <span className="text-secondary text-sm font-medium">{t('dashboard.exclusiveArea')}</span>
             </motion.div>
             <motion.h1 
               className="font-display text-3xl md:text-4xl font-bold mb-2"
@@ -124,7 +126,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Olá, {user?.user_metadata?.name?.split(' ')[0] || 'Visitante'}!
+              {t('dashboard.welcome')}, {user?.user_metadata?.name?.split(' ')[0] || 'Visitante'}!
             </motion.h1>
             <motion.p 
               className="text-primary-foreground/80 text-lg"
@@ -132,7 +134,7 @@ const Dashboard = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Sua viagem está sendo preparada ✨
+              {t('dashboard.tripBeingPrepared')}
             </motion.p>
           </div>
         </motion.div>
@@ -176,8 +178,8 @@ const Dashboard = () => {
                       <User size={24} />
                     </motion.div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Perfil da Viagem</h3>
-                      <p className="text-sm text-muted-foreground">Completar ou editar</p>
+                      <h3 className="font-semibold text-foreground">{t('dashboard.profileCard.title')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('dashboard.profileCard.subtitle')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -203,8 +205,8 @@ const Dashboard = () => {
                       <Calendar size={24} />
                     </motion.div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Agenda do Guiamento</h3>
-                      <p className="text-sm text-muted-foreground">Ver programação</p>
+                      <h3 className="font-semibold text-foreground">{t('dashboard.itineraryCard.title')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('dashboard.itineraryCard.subtitle')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -236,8 +238,8 @@ const Dashboard = () => {
                         <MessageCircle size={24} />
                       </motion.div>
                       <div>
-                        <h3 className="font-semibold text-foreground">Falar com {guideName}</h3>
-                        <p className="text-sm text-muted-foreground">WhatsApp direto</p>
+                        <h3 className="font-semibold text-foreground">{t('dashboard.guideCard.title')} {guideName}</h3>
+                        <p className="text-sm text-muted-foreground">{t('dashboard.guideCard.subtitle')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -259,8 +261,8 @@ const Dashboard = () => {
                         <MessageCircle size={24} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground">Falar com meu Guia</h3>
-                        <p className="text-sm text-muted-foreground">Selecione seu guia no perfil</p>
+                        <h3 className="font-semibold text-foreground">{t('dashboard.guideCard.noGuide')}</h3>
+                        <p className="text-sm text-muted-foreground">{t('dashboard.guideCard.selectGuide')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -282,7 +284,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     {getStatusIcon()}
-                    Status do Perfil
+                    {t('dashboard.profileStatus.title')}
                   </CardTitle>
                   <motion.span 
                     className={`text-sm font-medium px-3 py-1 rounded-full ${
@@ -298,13 +300,13 @@ const Dashboard = () => {
                   </motion.span>
                 </div>
                 <CardDescription>
-                  Quanto mais completo o perfil, melhor será o seu roteiro
+                  {t('dashboard.profileStatus.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Progresso do preenchimento</span>
+                    <span className="text-muted-foreground">{t('dashboard.profileStatus.progress')}</span>
                     <span className="font-semibold">{travelProfile.completionPercentage}%</span>
                   </div>
                   <Progress value={travelProfile.completionPercentage} className="h-2" />
@@ -317,7 +319,7 @@ const Dashboard = () => {
                     >
                       <Link to="/perfil">
                         <Button variant="gold" size="sm" className="mt-4">
-                          Completar meu perfil
+                          {t('dashboard.profileStatus.button')}
                         </Button>
                       </Link>
                     </motion.div>
@@ -341,7 +343,7 @@ const Dashboard = () => {
                   >
                     <Plane className="w-5 h-5 text-accent" />
                   </motion.div>
-                  Resumo da Viagem
+                  {t('dashboard.tripSummary.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -354,7 +356,7 @@ const Dashboard = () => {
                     >
                       <Calendar className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Datas</p>
+                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.dates')}</p>
                         <p className="font-medium">
                           {travelProfile.arrivalDate} - {travelProfile.departureDate}
                         </p>
@@ -368,11 +370,11 @@ const Dashboard = () => {
                     >
                       <MapPin className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Parques</p>
+                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.parks')}</p>
                         <p className="font-medium">
                           {travelProfile.parks.length > 0 
                             ? travelProfile.parks.join(', ')
-                            : 'Não definido'
+                            : t('dashboard.tripSummary.notDefined')
                           }
                         </p>
                       </div>
@@ -385,9 +387,9 @@ const Dashboard = () => {
                     >
                       <Hotel className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Hospedagem</p>
+                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.hotel')}</p>
                         <p className="font-medium">
-                          {travelProfile.hotel || 'Não definido'}
+                          {travelProfile.hotel || t('dashboard.tripSummary.notDefined')}
                         </p>
                       </div>
                     </motion.div>
@@ -395,11 +397,11 @@ const Dashboard = () => {
                 ) : (
                   <div className="text-center py-6">
                     <p className="text-muted-foreground mb-4">
-                      Preencha seu perfil de viagem para ver o resumo
+                      {t('dashboard.tripSummary.fillProfile')}
                     </p>
                     <Link to="/perfil">
                       <Button variant="outline">
-                        Preencher agora
+                        {t('dashboard.tripSummary.fillNow')}
                       </Button>
                     </Link>
                   </div>
@@ -417,10 +419,10 @@ const Dashboard = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="text-center md:text-left">
                     <h3 className="font-display text-2xl font-bold mb-2">
-                      Precisa de ajuda?
+                      {t('dashboard.needHelp.title')}
                     </h3>
                     <p className="text-primary-foreground/80">
-                      {guideName} está disponível para tirar todas as suas dúvidas em tempo real.
+                      {guideName} {t('dashboard.needHelp.subtitle')}
                     </p>
                   </div>
                   <motion.a 
@@ -432,7 +434,7 @@ const Dashboard = () => {
                   >
                     <Button variant="whatsapp" size="xl">
                       <MessageCircle size={24} />
-                      Falar no WhatsApp
+                      {t('dashboard.needHelp.button')}
                     </Button>
                   </motion.a>
                 </div>
