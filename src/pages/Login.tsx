@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,22 +14,14 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
-const signupSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-});
-
 const Login = () => {
-  const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { login, signup, isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,58 +37,30 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      if (isSignup) {
-        const validation = signupSchema.safeParse({ name, email, password });
-        if (!validation.success) {
-          const fieldErrors: any = {};
-          validation.error.errors.forEach((err) => {
-            fieldErrors[err.path[0]] = err.message;
-          });
-          setErrors(fieldErrors);
-          setIsLoading(false);
-          return;
-        }
+      const validation = loginSchema.safeParse({ email, password });
+      if (!validation.success) {
+        const fieldErrors: any = {};
+        validation.error.errors.forEach((err) => {
+          fieldErrors[err.path[0]] = err.message;
+        });
+        setErrors(fieldErrors);
+        setIsLoading(false);
+        return;
+      }
 
-        const result = await signup(email, password, name);
-        if (result.success) {
-          toast({
-            title: "Conta criada! ✨",
-            description: "Bem-vindo(a) ao Orlando Fast Pass!",
-          });
-          navigate('/dashboard');
-        } else {
-          toast({
-            title: "Erro no cadastro",
-            description: result.error || "Verifique os dados e tente novamente.",
-            variant: "destructive",
-          });
-        }
+      const result = await login(email, password);
+      if (result.success) {
+        toast({
+          title: "Bem-vindo(a)! ✨",
+          description: "Sua área de guiamento está pronta para você.",
+        });
+        navigate('/dashboard');
       } else {
-        const validation = loginSchema.safeParse({ email, password });
-        if (!validation.success) {
-          const fieldErrors: any = {};
-          validation.error.errors.forEach((err) => {
-            fieldErrors[err.path[0]] = err.message;
-          });
-          setErrors(fieldErrors);
-          setIsLoading(false);
-          return;
-        }
-
-        const result = await login(email, password);
-        if (result.success) {
-          toast({
-            title: "Bem-vindo(a)! ✨",
-            description: "Sua área de guiamento está pronta para você.",
-          });
-          navigate('/dashboard');
-        } else {
-          toast({
-            title: "Erro no login",
-            description: result.error || "Verifique suas credenciais e tente novamente.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Erro no login",
+          description: result.error || "Verifique suas credenciais e tente novamente.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({
@@ -120,52 +84,27 @@ const Login = () => {
       <div className="w-full max-w-md relative animate-fadeIn">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src={logo} 
-            alt="Orlando Fast Pass Planejador" 
-            className="w-64 h-auto mx-auto animate-float"
-          />
+          <Link to="/">
+            <img 
+              src={logo} 
+              alt="Orlando Fast Pass Planejador" 
+              className="w-64 h-auto mx-auto animate-float"
+            />
+          </Link>
         </div>
 
         <Card variant="premium" className="overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 gradient-gold" />
           
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl">
-              {isSignup ? 'Criar Conta' : 'Bem-vindo(a)!'}
-            </CardTitle>
+            <CardTitle className="text-2xl">Bem-vindo(a)!</CardTitle>
             <CardDescription className="text-base">
-              {isSignup 
-                ? 'Preencha seus dados para começar sua jornada mágica.'
-                : 'Acesse sua área exclusiva de guiamento remoto e prepare-se para uma viagem inesquecível.'
-              }
+              Acesse sua área exclusiva de guiamento remoto e prepare-se para uma viagem inesquecível.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isSignup && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Nome completo
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Seu nome"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className={`pl-10 h-12 ${errors.name ? 'border-destructive' : ''}`}
-                      required
-                    />
-                  </div>
-                  {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
-                  )}
-                </div>
-              )}
-
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   E-mail
@@ -223,11 +162,11 @@ const Login = () => {
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    {isSignup ? 'Criando conta...' : 'Entrando...'}
+                    Entrando...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    {isSignup ? 'Criar minha conta' : 'Entrar na minha área'}
+                    Entrar na minha área
                     <ArrowRight size={20} />
                   </span>
                 )}
@@ -235,19 +174,15 @@ const Login = () => {
             </form>
 
             <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-center text-sm text-muted-foreground">
-                {isSignup ? 'Já tem uma conta?' : 'Ainda não tem uma conta?'}{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignup(!isSignup);
-                    setErrors({});
-                  }}
-                  className="text-accent font-medium hover:underline"
-                >
-                  {isSignup ? 'Fazer login' : 'Criar conta'}
-                </button>
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                Ainda não tem uma conta?
               </p>
+              <Link to="/#planos">
+                <Button variant="outline" className="w-full" size="lg">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Adquirir meu plano
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
