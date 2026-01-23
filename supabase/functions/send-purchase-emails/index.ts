@@ -15,11 +15,12 @@ interface UserData {
   product?: string;
   tempPassword?: string;
   resetUrl?: string;
+  confirmUrl?: string;
   expiresIn?: string;
 }
 
 interface EmailRequest {
-  type: "purchase-confirmation" | "access-granted" | "welcome-onboarding" | "password-reset";
+  type: "purchase-confirmation" | "access-granted" | "welcome-onboarding" | "password-reset" | "email-confirmation";
   userData: UserData;
   scheduleDelay?: number; // delay in milliseconds
 }
@@ -241,6 +242,70 @@ const getPasswordResetHtml = (customerName: string, resetUrl: string, expiresIn:
 </html>
 `;
 
+const getEmailConfirmationHtml = (customerName: string, confirmUrl: string, expiresIn: string = "24 horas") => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px 0;">
+  <table role="presentation" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <tr>
+      <td style="padding: 40px;">
+        <h1 style="color: #333; font-size: 28px; text-align: center; margin: 0 0 20px;">📧 Confirme seu Email</h1>
+        
+        <p style="color: #333; font-size: 16px; text-align: center;">Olá <strong>${customerName}</strong>,</p>
+        
+        <p style="color: #333; font-size: 16px; line-height: 26px; text-align: center;">
+          Estamos quase lá! Clique no botão abaixo para confirmar seu email e ativar sua conta.
+        </p>
+        
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${confirmUrl}" 
+             style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            ✅ Confirmar Email
+          </a>
+        </div>
+        
+        <!-- Link fallback -->
+        <p style="color: #666; font-size: 14px; text-align: center; margin: 16px 0 8px;">
+          Ou copie e cole este link no seu navegador:
+        </p>
+        <p style="color: #10b981; font-size: 12px; text-align: center; word-break: break-all; font-family: monospace; background: #f0fdf4; padding: 12px; border-radius: 6px; margin: 0 0 20px;">
+          ${confirmUrl}
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 30px 0;" />
+        
+        <!-- Expiration warning -->
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; text-align: center; margin: 20px 0;">
+          <p style="color: #856404; font-size: 14px; margin: 0;">
+            ⏰ Este link expira em <strong>${expiresIn}</strong>
+          </p>
+        </div>
+        
+        <!-- Benefits preview -->
+        <div style="background-color: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin: 0 0 12px; color: #6366f1; font-size: 14px; text-align: center;">Após confirmar, você terá acesso a:</h3>
+          <p style="margin: 6px 0; color: #333; font-size: 14px; text-align: center;"><span style="color: #10b981;">✓</span> Roteiros personalizados de parques</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px; text-align: center;"><span style="color: #10b981;">✓</span> Assistente virtual Joy</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px; text-align: center;"><span style="color: #10b981;">✓</span> Checklist de viagem</p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="color: #8898aa; font-size: 14px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+          <p style="margin: 0;">Se você não criou esta conta, ignore este email.</p>
+          <p style="margin: 10px 0 0; color: #aaa;">OFP Planejador - Sua viagem para Orlando começa aqui 🏰✨</p>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -278,6 +343,14 @@ serve(async (req: Request): Promise<Response> => {
         }
         emailHtml = getPasswordResetHtml(userData.name, userData.resetUrl, userData.expiresIn);
         subject = "🔐 Redefinir sua senha - OFP Planejador";
+        break;
+
+      case "email-confirmation":
+        if (!userData.confirmUrl) {
+          throw new Error("confirmUrl is required for email-confirmation emails");
+        }
+        emailHtml = getEmailConfirmationHtml(userData.name, userData.confirmUrl, userData.expiresIn);
+        subject = "📧 Confirme seu email - OFP Planejador";
         break;
 
       default:
