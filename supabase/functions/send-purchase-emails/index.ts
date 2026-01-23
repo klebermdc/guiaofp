@@ -14,10 +14,12 @@ interface UserData {
   name: string;
   product?: string;
   tempPassword?: string;
+  resetUrl?: string;
+  expiresIn?: string;
 }
 
 interface EmailRequest {
-  type: "purchase-confirmation" | "access-granted" | "welcome-onboarding";
+  type: "purchase-confirmation" | "access-granted" | "welcome-onboarding" | "password-reset";
   userData: UserData;
   scheduleDelay?: number; // delay in milliseconds
 }
@@ -176,6 +178,69 @@ const getWelcomeOnboardingHtml = (customerName: string) => `
 </html>
 `;
 
+const getPasswordResetHtml = (customerName: string, resetUrl: string, expiresIn: string = "1 hora") => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px 0;">
+  <table role="presentation" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    <tr>
+      <td style="padding: 40px;">
+        <h1 style="color: #333; font-size: 28px; text-align: center; margin: 0 0 20px;">🔐 Redefinir Senha</h1>
+        
+        <p style="color: #333; font-size: 16px; text-align: center;">Olá <strong>${customerName}</strong>,</p>
+        
+        <p style="color: #333; font-size: 16px; line-height: 26px; text-align: center;">
+          Recebemos uma solicitação para redefinir a senha da sua conta.
+        </p>
+        
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetUrl}" 
+             style="display: inline-block; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            🔑 Redefinir Senha
+          </a>
+        </div>
+        
+        <!-- Link fallback -->
+        <p style="color: #666; font-size: 14px; text-align: center; margin: 16px 0 8px;">
+          Ou copie e cole este link no seu navegador:
+        </p>
+        <p style="color: #0066cc; font-size: 12px; text-align: center; word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 0 0 20px;">
+          ${resetUrl}
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 30px 0;" />
+        
+        <!-- Expiration warning -->
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; text-align: center; margin: 20px 0;">
+          <p style="color: #856404; font-size: 14px; margin: 0;">
+            ⏰ Este link expira em <strong>${expiresIn}</strong>
+          </p>
+        </div>
+        
+        <!-- Security note -->
+        <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="color: #666; font-size: 14px; line-height: 22px; margin: 0;">
+            🛡️ Se você não solicitou esta redefinição, ignore este email. Sua senha permanecerá inalterada.
+          </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="color: #8898aa; font-size: 14px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+          <p style="margin: 0;">Problemas? Entre em contato com nosso suporte.</p>
+          <p style="margin: 10px 0 0; color: #aaa;">OFP Planejador - Sua viagem para Orlando começa aqui 🏰✨</p>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -205,6 +270,14 @@ serve(async (req: Request): Promise<Response> => {
       case "welcome-onboarding":
         emailHtml = getWelcomeOnboardingHtml(userData.name);
         subject = "🚀 Como começar com o OFP Planejador";
+        break;
+
+      case "password-reset":
+        if (!userData.resetUrl) {
+          throw new Error("resetUrl is required for password-reset emails");
+        }
+        emailHtml = getPasswordResetHtml(userData.name, userData.resetUrl, userData.expiresIn);
+        subject = "🔐 Redefinir sua senha - OFP Planejador";
         break;
 
       default:
