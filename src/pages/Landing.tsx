@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useParallax, useElementInView } from '@/hooks/useParallax';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import {
   Crown,
   MapPin,
@@ -45,6 +47,7 @@ const AnimatedCard = ({ children, delay = 0, className = '' }: { children: React
 };
 
 const Landing = () => {
+  const { t } = useLanguage();
   const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
   const floatParallax = useParallax({ speed: 0.15, direction: 'up' });
   
@@ -65,14 +68,15 @@ const Landing = () => {
             />
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-muted-foreground">
-                Entrar
+                {t('common.login')}
               </Button>
             </Link>
             <Link to="/login">
               <Button size="sm" className="gradient-primary text-primary-foreground rounded-xl">
-                Começar
+                {t('landing.hero.cta')}
               </Button>
             </Link>
           </div>
