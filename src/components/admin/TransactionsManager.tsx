@@ -20,6 +20,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   Receipt, 
   Search, 
@@ -31,11 +37,14 @@ import {
   XCircle,
   QrCode,
   Barcode,
-  CreditCard
+  CreditCard,
+  Mail,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface Transaction {
   id: string;
@@ -72,6 +81,25 @@ export function TransactionsManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [methodFilter, setMethodFilter] = useState<string>('all');
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResendNotification = async (transactionId: string) => {
+    setResendingId(transactionId);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-admin-notification', {
+        body: { transactionId }
+      });
+
+      if (error) throw error;
+
+      toast.success('Email reenviado com sucesso!');
+    } catch (error: any) {
+      console.error('Error resending notification:', error);
+      toast.error('Erro ao reenviar email: ' + (error.message || 'Tente novamente'));
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const { data: transactions, isLoading, refetch } = useQuery({
     queryKey: ['admin-transactions'],
@@ -315,30 +343,66 @@ export function TransactionsManager() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {transaction.asaas_invoice_url && (
-                                <a 
-                                  href={transaction.asaas_invoice_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                >
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <ExternalLink className="h-4 w-4" />
-                                  </Button>
-                                </a>
-                              )}
-                              {transaction.asaas_boleto_url && (
-                                <a 
-                                  href={transaction.asaas_boleto_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                >
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <Barcode className="h-4 w-4" />
-                                  </Button>
-                                </a>
-                              )}
-                            </div>
+                            <TooltipProvider>
+                              <div className="flex items-center justify-end gap-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => handleResendNotification(transaction.id)}
+                                      disabled={resendingId === transaction.id}
+                                    >
+                                      {resendingId === transaction.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Mail className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Reenviar notificação admin</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                {transaction.asaas_invoice_url && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <a 
+                                        href={transaction.asaas_invoice_url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                      >
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <ExternalLink className="h-4 w-4" />
+                                        </Button>
+                                      </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Ver fatura</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {transaction.asaas_boleto_url && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <a 
+                                        href={transaction.asaas_boleto_url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                      >
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <Barcode className="h-4 w-4" />
+                                        </Button>
+                                      </a>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Ver boleto</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            </TooltipProvider>
                           </TableCell>
                         </TableRow>
                       );
