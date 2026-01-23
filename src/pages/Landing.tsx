@@ -46,6 +46,8 @@ const AnimatedCard = ({ children, delay = 0, className = '' }: { children: React
   );
 };
 
+const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
+
 const Landing = () => {
   const { t } = useLanguage();
   const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
@@ -74,11 +76,13 @@ const Landing = () => {
                 {t('common.login')}
               </Button>
             </Link>
-            <Link to="/login">
-              <Button size="sm" className="gradient-primary text-primary-foreground rounded-xl">
-                {t('landing.hero.cta')}
-              </Button>
-            </Link>
+            <Button 
+              size="sm" 
+              className="gradient-primary text-primary-foreground rounded-xl"
+              onClick={() => scrollToSection('planos')}
+            >
+              Ver planos
+            </Button>
           </div>
         </div>
       </header>
@@ -140,12 +144,14 @@ const Landing = () => {
               className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
-              <Link to="/login">
-                <Button size="lg" className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group hover:scale-105 transition-transform">
-                  Criar meu roteiro
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group hover:scale-105 transition-transform"
+                onClick={() => scrollToSection('planos')}
+              >
+                Escolher meu plano
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
@@ -299,7 +305,7 @@ const Landing = () => {
       </section>
 
       {/* Plans Section with Animations */}
-      <section className="py-24 px-4 bg-card/50">
+      <section id="planos" className="py-24 px-4 bg-card/50">
         <div className="max-w-5xl mx-auto">
           <AnimatedCard className="text-center mb-16">
             <p className="text-accent font-medium mb-2">Escolha seu caminho</p>
@@ -399,12 +405,20 @@ const Landing = () => {
                     "Você aproveita. O guia decide."
                   </p>
 
-                  <Link to="/checkout/premium" className="block">
+                  <a 
+                    href={WHATSAPP_PREMIUM_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
                     <Button className="w-full h-12 rounded-xl gradient-primary text-primary-foreground hover:scale-[1.02] transition-transform">
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      Contratar guia
+                      Falar com consultor
                     </Button>
-                  </Link>
+                  </a>
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    Venda assistida via WhatsApp
+                  </p>
                 </CardContent>
               </Card>
             </AnimatedCard>
