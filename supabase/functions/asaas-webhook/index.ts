@@ -162,7 +162,144 @@ const handler = async (req: Request): Promise<Response> => {
         }
       };
 
-      // Helper to send push notification
+      // Helper to send admin notification email
+      const sendAdminOrderNotification = async (txData: Record<string, unknown>) => {
+        try {
+          const resendApiKey = Deno.env.get("RESEND_API_KEY");
+          if (!resendApiKey) {
+            console.error("RESEND_API_KEY not configured");
+            return;
+          }
+
+          const planNames: Record<string, string> = {
+            basic: "Planejador",
+            premium: "Com Guia",
+          };
+
+          const paymentMethods: Record<string, string> = {
+            pix: "PIX",
+            boleto: "Boleto",
+            credit_card: "Cartão de Crédito",
+          };
+
+          const planName = planNames[txData.plan_key as string] || txData.plan_key;
+          const paymentMethod = paymentMethods[txData.payment_method as string] || txData.payment_method;
+          const amountFormatted = ((txData.amount_cents as number) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const discountFormatted = txData.discount_amount_cents 
+            ? ((txData.discount_amount_cents as number) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+            : null;
+          const createdAt = new Date(txData.created_at as string).toLocaleString('pt-BR', { 
+            dateStyle: 'short', 
+            timeStyle: 'short',
+            timeZone: 'America/Sao_Paulo'
+          });
+
+          const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 12px 12px 0 0; padding: 30px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">💰 Nova Venda Realizada!</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Pagamento confirmado via ${paymentMethod}</p>
+    </div>
+    
+    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px;">
+      <h2 style="color: #7c3aed; margin-top: 0; font-size: 18px; border-bottom: 2px solid #f4f4f5; padding-bottom: 10px;">Dados do Cliente</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; width: 35%;">Nome:</td>
+          <td style="padding: 8px 0; color: #1f2937; font-weight: 500;">${txData.customer_name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Email:</td>
+          <td style="padding: 8px 0;"><a href="mailto:${txData.email}" style="color: #7c3aed;">${txData.email}</a></td>
+        </tr>
+      </table>
+      
+      <h2 style="color: #7c3aed; margin-top: 25px; font-size: 18px; border-bottom: 2px solid #f4f4f5; padding-bottom: 10px;">Dados do Pedido</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; width: 35%;">Plano:</td>
+          <td style="padding: 8px 0; color: #1f2937; font-weight: 500;">${planName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Pagamento:</td>
+          <td style="padding: 8px 0; color: #1f2937;">${paymentMethod}</td>
+        </tr>
+        ${txData.coupon_code ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Cupom:</td>
+          <td style="padding: 8px 0; color: #16a34a; font-weight: 500;">${txData.coupon_code}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Desconto:</td>
+          <td style="padding: 8px 0; color: #16a34a;">-${discountFormatted}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Valor:</td>
+          <td style="padding: 8px 0; color: #1f2937; font-weight: 700; font-size: 18px;">${amountFormatted}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Data:</td>
+          <td style="padding: 8px 0; color: #1f2937;">${createdAt}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">ID Transação:</td>
+          <td style="padding: 8px 0; color: #6b7280; font-family: monospace; font-size: 12px;">${txData.id}</td>
+        </tr>
+      </table>
+      
+      <div style="margin-top: 25px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0; color: #92400e; font-size: 14px;">
+          ⚡ O acesso do cliente já foi liberado automaticamente pelo sistema.
+        </p>
+      </div>
+      
+      <div style="margin-top: 25px; text-align: center;">
+        <a href="https://guiaofp.lovable.app/admin" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+          Ver no Painel Admin
+        </a>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px; padding: 15px; color: #6b7280; font-size: 12px;">
+      <p style="margin: 0;">Este é um email automático do sistema OFP Planejador.</p>
+      <p style="margin: 5px 0 0 0;">ID do Pagamento: ${txData.asaas_payment_id}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "OFP Planejador <noreply@ofpplanejador.com>",
+              to: ["contato@ofpplanejador.com"],
+              subject: `💰 Nova Venda: ${txData.customer_name} - ${planName}`,
+              html: emailHtml,
+            }),
+          });
+
+          if (response.ok) {
+            console.log("Admin order notification email sent successfully");
+          } else {
+            const errorText = await response.text();
+            console.error("Error sending admin notification:", errorText);
+          }
+        } catch (error) {
+          console.error("Error sending admin order notification:", error);
+        }
+      };
       const sendPushNotification = async (userId: string, title: string, body: string, data?: Record<string, unknown>) => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
@@ -280,6 +417,9 @@ const handler = async (req: Request): Promise<Response> => {
           email: transaction.email,
           name: transaction.customer_name,
         }, TWO_HOURS_MS);
+
+        // 7. Send admin notification email with order details
+        await sendAdminOrderNotification(transaction);
 
         console.log("Full onboarding flow completed for:", transaction.email);
       } else {
