@@ -28,6 +28,8 @@ import MultiPass from "./pages/MultiPass";
 import RemoteGuidance from "./pages/RemoteGuidance";
 import Checklists from "./pages/Checklists";
 import Checkout from "./pages/Checkout";
+import ResetPassword from "./pages/ResetPassword";
+import NewPassword from "./pages/NewPassword";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,8 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/recuperar-senha" element={<ResetPassword />} />
+                <Route path="/nova-senha" element={<NewPassword />} />
                 <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/guia-dashboard" element={<GuideDashboard />} />
