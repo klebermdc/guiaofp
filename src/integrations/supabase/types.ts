@@ -202,6 +202,57 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_coupons: {
+        Row: {
+          applicable_plans: string[] | null
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          min_amount_cents: number | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_plans?: string[] | null
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_plans?: string[] | null
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_amount_cents?: number | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       multipass_status: {
         Row: {
           confirmed_by: string | null
@@ -478,8 +529,10 @@ export type Database = {
           asaas_payment_id: string | null
           asaas_pix_payload: string | null
           asaas_pix_qr_code: string | null
+          coupon_code: string | null
           created_at: string
           customer_name: string
+          discount_amount_cents: number | null
           email: string
           id: string
           metadata: Json | null
@@ -497,8 +550,10 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_pix_qr_code?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name: string
+          discount_amount_cents?: number | null
           email: string
           id?: string
           metadata?: Json | null
@@ -516,8 +571,10 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_pix_qr_code?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_name?: string
+          discount_amount_cents?: number | null
           email?: string
           id?: string
           metadata?: Json | null

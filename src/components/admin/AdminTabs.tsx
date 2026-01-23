@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -8,11 +8,12 @@ import { PlanAccessManager } from './PlanAccessManager';
 import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
+import { CouponsManager } from './CouponsManager';
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="clients" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex lg:grid-cols-8">
+      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-9">
         <TabsTrigger value="clients" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Clientes</span>
@@ -20,6 +21,10 @@ export function AdminTabs() {
         <TabsTrigger value="transactions" className="flex items-center gap-2">
           <Receipt className="h-4 w-4" />
           <span className="hidden sm:inline">Transações</span>
+        </TabsTrigger>
+        <TabsTrigger value="coupons" className="flex items-center gap-2">
+          <Tag className="h-4 w-4" />
+          <span className="hidden sm:inline">Cupons</span>
         </TabsTrigger>
         <TabsTrigger value="pricing" className="flex items-center gap-2">
           <DollarSign className="h-4 w-4" />
@@ -53,6 +58,10 @@ export function AdminTabs() {
 
       <TabsContent value="transactions">
         <TransactionsManager />
+      </TabsContent>
+
+      <TabsContent value="coupons">
+        <CouponsManager />
       </TabsContent>
 
       <TabsContent value="pricing">
