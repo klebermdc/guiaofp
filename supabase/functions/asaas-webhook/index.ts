@@ -276,6 +276,32 @@ const handler = async (req: Request): Promise<Response> => {
 </body>
 </html>`;
 
+          // Generate plain text version for better deliverability
+          const plainText = `
+NOVA VENDA REALIZADA!
+Pagamento confirmado via ${paymentMethod}
+
+DADOS DO CLIENTE:
+- Nome: ${txData.customer_name}
+- Email: ${txData.email}
+
+DADOS DO PEDIDO:
+- Plano: ${planName}
+- Pagamento: ${paymentMethod}
+${txData.coupon_code ? `- Cupom: ${txData.coupon_code}\n- Desconto: -${discountFormatted}` : ''}
+- Valor: ${amountFormatted}
+- Data: ${createdAt}
+- ID Transação: ${txData.id}
+
+O acesso do cliente já foi liberado automaticamente pelo sistema.
+
+Ver no Painel Admin: https://guiaofp.lovable.app/admin
+
+---
+Este é um email automático do sistema OFP Planejador.
+ID do Pagamento: ${txData.asaas_payment_id}
+          `.trim();
+
           const response = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -283,10 +309,15 @@ const handler = async (req: Request): Promise<Response> => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "OFP Planejador <noreply@ofpplanejador.com>",
+              from: "OFP Planejador <contato@ofpplanejador.com>",
               to: ["contato@ofpplanejador.com"],
-              subject: `💰 Nova Venda: ${txData.customer_name} - ${planName}`,
+              reply_to: "contato@ofpplanejador.com",
+              subject: `Nova Venda: ${txData.customer_name} - ${planName}`,
               html: emailHtml,
+              text: plainText,
+              headers: {
+                "X-Entity-Ref-ID": `admin-order-${Date.now()}`,
+              },
             }),
           });
 
