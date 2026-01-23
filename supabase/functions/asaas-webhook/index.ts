@@ -21,14 +21,28 @@ interface AsaasWebhookPayload {
   };
 }
 
+// Generate a secure temporary password
+function generateTemporaryPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const specialChars = "!@#$%";
+  let password = "";
+  
+  // 8 alphanumeric chars
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  // Add 1 special char
+  password += specialChars.charAt(Math.floor(Math.random() * specialChars.length));
+  
+  return password;
+}
+
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate webhook token if configured
     const webhookToken = req.headers.get("asaas-access-token");
     
     if (ASAAS_WEBHOOK_TOKEN && webhookToken !== ASAAS_WEBHOOK_TOKEN) {
@@ -42,7 +56,6 @@ const handler = async (req: Request): Promise<Response> => {
     const payload: AsaasWebhookPayload = await req.json();
     console.log("Received Asaas webhook:", JSON.stringify(payload, null, 2));
 
-    // Only process payment events
     if (!payload.event.startsWith("PAYMENT_")) {
       console.log("Ignoring non-payment event:", payload.event);
       return new Response(
@@ -65,7 +78,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Map Asaas status to our status
     const statusMap: Record<string, string> = {
       PENDING: "pending",
       RECEIVED: "confirmed",
@@ -85,7 +97,6 @@ const handler = async (req: Request): Promise<Response> => {
     const newStatus = statusMap[payload.payment?.status || ""] || "pending";
     console.log(`Updating payment ${paymentId} to status: ${newStatus}`);
 
-    // Find and update the transaction
     const { data: transaction, error: findError } = await supabase
       .from("transactions")
       .select("*")
@@ -94,14 +105,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (findError) {
       console.error("Transaction not found:", findError);
-      // Transaction might not exist yet, that's okay
       return new Response(
         JSON.stringify({ success: true, message: "Transaction not found, might be processing" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Update transaction status
     const { error: updateError } = await supabase
       .from("transactions")
       .update({
@@ -120,51 +129,95 @@ const handler = async (req: Request): Promise<Response> => {
       throw updateError;
     }
 
-    // If payment is confirmed, enable user access and send emails
+    // If payment is confirmed, handle the full onboarding flow
     if (newStatus === "confirmed" && transaction.status !== "confirmed") {
-      console.log("Payment confirmed! Enabling user access...");
+      console.log("Payment confirmed! Starting onboarding flow...");
 
-      // Send purchase confirmation email immediately
-      try {
-        const planNames: Record<string, string> = {
-          basic: "Plano Básico",
-          premium: "Plano Premium",
-        };
-        
-        const confirmationResponse = await fetch(`${supabaseUrl}/functions/v1/notify-purchase-confirmation`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseServiceKey}`,
+      const planNames: Record<string, string> = {
+        basic: "Plano Básico",
+        premium: "Plano Premium",
+      };
+      const productName = planNames[transaction.plan_key] || transaction.plan_key;
+
+      // Helper to send emails via unified function
+      const sendEmail = async (type: string, userData: Record<string, unknown>, scheduleDelay?: number) => {
+        try {
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ type, userData, scheduleDelay }),
+          });
+          
+          if (response.ok) {
+            console.log(`${type} email sent successfully`);
+          } else {
+            const errorText = await response.text();
+            console.error(`Error sending ${type} email:`, errorText);
+          }
+        } catch (error) {
+          console.error(`Error sending ${type} email:`, error);
+        }
+      };
+
+      // 1. Send purchase confirmation email immediately
+      await sendEmail("purchase-confirmation", {
+        email: transaction.email,
+        name: transaction.customer_name,
+        product: productName,
+      });
+
+      // Check if user already exists
+      const { data: usersData } = await supabase.auth.admin.listUsers();
+      let authUser = usersData?.users?.find(u => u.email === transaction.email);
+      let tempPassword: string | null = null;
+
+      // 2. Create user if doesn't exist
+      if (!authUser) {
+        console.log("Creating new user account for:", transaction.email);
+        tempPassword = generateTemporaryPassword();
+
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: transaction.email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            name: transaction.customer_name,
+            product: productName,
+            plan_tier: transaction.plan_key,
           },
-          body: JSON.stringify({
-            email: transaction.email,
-            customerName: transaction.customer_name,
-            productName: planNames[transaction.plan_key] || transaction.plan_key,
-          }),
         });
 
-        if (confirmationResponse.ok) {
-          console.log("Purchase confirmation email sent to:", transaction.email);
+        if (createError) {
+          console.error("Error creating user:", createError);
         } else {
-          const errorText = await confirmationResponse.text();
-          console.error("Error sending purchase confirmation:", errorText);
+          authUser = newUser.user;
+          console.log("User created successfully:", authUser?.id);
+
+          // Update transaction with user info
+          await supabase
+            .from("transactions")
+            .update({
+              user_id: authUser?.id,
+              metadata: {
+                ...((transaction.metadata as object) || {}),
+                userCreatedAt: new Date().toISOString(),
+              },
+            })
+            .eq("id", transaction.id);
         }
-      } catch (confirmError) {
-        console.error("Error sending purchase confirmation:", confirmError);
       }
 
-      // Find user by email - list users and filter
-      const { data: usersData } = await supabase.auth.admin.listUsers();
-      const authUser = usersData?.users?.find(u => u.email === transaction.email);
-
       if (authUser?.id) {
-        // Update profile to enable access and set plan
+        // 3. Enable access and set plan tier
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
             is_access_enabled: true,
             plan_tier: transaction.plan_key,
+            responsible_name: transaction.customer_name,
           })
           .eq("user_id", authUser.id);
 
@@ -174,39 +227,23 @@ const handler = async (req: Request): Promise<Response> => {
           console.log("User access enabled for:", transaction.email);
         }
 
-        // Get user profile for name
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("responsible_name")
-          .eq("user_id", authUser.id)
-          .single();
+        // 4. Send access-granted email with or without temp password
+        await sendEmail("access-granted", {
+          email: transaction.email,
+          name: transaction.customer_name,
+          tempPassword: tempPassword || undefined,
+        });
 
-        // Send welcome/access enabled email
-        try {
-          const emailResponse = await fetch(`${supabaseUrl}/functions/v1/notify-access-enabled`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              email: transaction.email,
-              nome_completo: profile?.responsible_name || transaction.customer_name,
-            }),
-          });
+        // 5. Schedule onboarding email for 2 hours later
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+        await sendEmail("welcome-onboarding", {
+          email: transaction.email,
+          name: transaction.customer_name,
+        }, TWO_HOURS_MS);
 
-          if (emailResponse.ok) {
-            console.log("Welcome email sent successfully to:", transaction.email);
-          } else {
-            const errorText = await emailResponse.text();
-            console.error("Error sending welcome email:", errorText);
-          }
-        } catch (emailError) {
-          console.error("Error sending welcome email:", emailError);
-        }
+        console.log("Full onboarding flow completed for:", transaction.email);
       } else {
-        console.log("User not found by email, storing for later activation:", transaction.email);
-        // Store in metadata for later activation when user registers
+        console.log("Could not process user, storing for manual activation:", transaction.email);
         await supabase
           .from("transactions")
           .update({
@@ -221,19 +258,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({ success: true, status: newStatus }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in asaas-webhook:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
