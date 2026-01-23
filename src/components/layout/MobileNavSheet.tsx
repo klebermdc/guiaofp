@@ -23,6 +23,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -112,6 +114,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
   const { pageAccess, isLoading } = usePlanPageAccess();
+  const { t } = useLanguage();
 
   // Build dynamic menu based on plan_page_access table (excluding bottom nav items)
   const bottomNavKeys = ['dashboard', 'perfil', 'multipass', 'agenda'];
@@ -232,6 +235,16 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
           )}
         </nav>
 
+        {/* Language Selector */}
+        <motion.div 
+          className="px-6 py-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+        >
+          <LanguageSelector />
+        </motion.div>
+
         {/* Logout Button */}
         <motion.div 
           className="px-6 py-4 border-t border-sidebar-border"
@@ -248,7 +261,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
           >
             <LogOut size={20} />
-            <span className="font-medium">Sair da conta</span>
+            <span className="font-medium">{t('common.logout')}</span>
           </motion.button>
         </motion.div>
       </SheetContent>

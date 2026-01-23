@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -49,39 +50,41 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          {showSplash && isFirstVisit && (
-            <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
-          )}
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/guia-dashboard" element={<GuideDashboard />} />
-              <Route path="/perfil" element={<TravelProfile />} />
-              <Route path="/agenda" element={<Agenda />} />
-              <Route path="/contato" element={<Contact />} />
-              <Route path="/conteudos" element={<Content />} />
-              <Route path="/mapa" element={<ParkMap />} />
-              <Route path="/guia" element={<TravelGuide />} />
-              <Route path="/plano" element={<Plan />} />
-              <Route path="/pos-viagem" element={<PostTrip />} />
-              <Route path="/atracoes" element={<Attractions />} />
-              <Route path="/multipass" element={<MultiPass />} />
-              <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
-              <Route path="/checklists" element={<Checklists />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/cliente/:id" element={<ClientDetails />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            {showSplash && isFirstVisit && (
+              <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
+            )}
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/guia-dashboard" element={<GuideDashboard />} />
+                <Route path="/perfil" element={<TravelProfile />} />
+                <Route path="/agenda" element={<Agenda />} />
+                <Route path="/contato" element={<Contact />} />
+                <Route path="/conteudos" element={<Content />} />
+                <Route path="/mapa" element={<ParkMap />} />
+                <Route path="/guia" element={<TravelGuide />} />
+                <Route path="/plano" element={<Plan />} />
+                <Route path="/pos-viagem" element={<PostTrip />} />
+                <Route path="/atracoes" element={<Attractions />} />
+                <Route path="/multipass" element={<MultiPass />} />
+                <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
+                <Route path="/checklists" element={<Checklists />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/cliente/:id" element={<ClientDetails />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };

@@ -21,6 +21,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
@@ -75,6 +77,7 @@ export const AppSidebar = () => {
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
   const { pageAccess, isLoading } = usePlanPageAccess();
+  const { t } = useLanguage();
 
   // Build dynamic menu based on plan_page_access table
   const dynamicMenuItems = pageAccess
@@ -157,6 +160,11 @@ export const AppSidebar = () => {
             )}
           </nav>
 
+          {/* Language Selector */}
+          <div className="px-4 pb-2">
+            <LanguageSelector />
+          </div>
+
           {/* Logout */}
           <div className="p-4 border-t border-sidebar-border">
             <Button
@@ -165,7 +173,7 @@ export const AppSidebar = () => {
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <LogOut size={20} />
-              <span>Sair</span>
+              <span>{t('common.logout')}</span>
             </Button>
           </div>
         </div>
