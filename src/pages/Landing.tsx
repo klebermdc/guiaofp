@@ -411,13 +411,21 @@ const Landing = () => {
                     rel="noopener noreferrer"
                     className="block"
                   >
-                    <Button className="w-full h-12 rounded-xl gradient-primary text-primary-foreground hover:scale-[1.02] transition-transform">
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                    <Button className="w-full h-14 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white hover:scale-[1.02] transition-transform shadow-lg">
+                      <MessageCircle className="w-5 h-5 mr-2" />
                       Falar com consultor
                     </Button>
                   </a>
-                  <p className="text-xs text-muted-foreground text-center mt-3">
-                    Venda assistida via WhatsApp
+                  
+                  <div className="flex items-center justify-center gap-2 mt-4">
+                    <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary text-xs px-3 py-1">
+                      <Users className="w-3 h-3 mr-1" />
+                      Atendimento Personalizado
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Consultoria especializada via WhatsApp
                   </p>
                 </CardContent>
               </Card>
