@@ -2,18 +2,21 @@ import { Calendar, MapPin, Clock, Info, Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const Agenda = () => {
   const { travelProfile, isLoading } = useAuth();
+  const { t, language } = useLanguage();
 
   // Usar parkDates do perfil de viagem
   const agendaItems = travelProfile.parkDates || [];
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', { 
+    const locale = language === 'pt' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US';
+    return date.toLocaleDateString(locale, { 
       day: 'numeric', 
       month: 'long', 
       year: 'numeric' 
@@ -28,10 +31,10 @@ const Agenda = () => {
           <div className="absolute top-0 right-0 w-64 h-64 gradient-gold opacity-20 rounded-full blur-3xl" />
           <div className="relative">
             <h1 className="font-display text-3xl font-bold mb-2">
-              📅 Agenda do Guiamento
+              📅 {t('agenda.title')}
             </h1>
             <p className="text-primary-foreground/80">
-              Seu roteiro personalizado dia a dia
+              {t('agenda.subtitle')}
             </p>
           </div>
         </div>
@@ -42,10 +45,10 @@ const Agenda = () => {
             <Info className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-foreground mb-1">
-                Sua agenda será atualizada conforme o guiamento
+                {t('agenda.infoCard.title')}
               </p>
               <p className="text-sm text-muted-foreground">
-                As informações abaixo são baseadas no seu perfil de viagem. Para adicionar ou editar parques e datas, acesse seu perfil.
+                {t('agenda.infoCard.desc')}
               </p>
             </div>
           </CardContent>
@@ -73,10 +76,10 @@ const Agenda = () => {
                   <div className="bg-primary text-primary-foreground p-6 md:w-48 flex flex-col items-center justify-center text-center">
                     <Calendar className="w-8 h-8 mb-2" />
                     <p className="font-display font-bold text-lg">
-                      {formatDate(item.date).split(' de ')[0]}
+                      {formatDate(item.date).split(' ')[0]}
                     </p>
                     <p className="text-sm text-primary-foreground/80">
-                      de {formatDate(item.date).split(' de ').slice(1).join(' de ')}
+                      {formatDate(item.date).split(' ').slice(1).join(' ')}
                     </p>
                   </div>
 
@@ -98,7 +101,9 @@ const Agenda = () => {
                     {item.notes && (
                       <div className="p-4 bg-muted/50 rounded-lg">
                         <p className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">Observações:</span>
+                          <span className="font-medium text-foreground">
+                            {language === 'pt' ? 'Observações:' : language === 'es' ? 'Observaciones:' : 'Notes:'}
+                          </span>
                           <br />
                           {item.notes}
                         </p>
@@ -116,14 +121,14 @@ const Agenda = () => {
           <Card className="text-center p-12">
             <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-display text-xl font-bold text-foreground mb-2">
-              Agenda em preparação
+              {t('agenda.emptyTitle')}
             </h3>
             <p className="text-muted-foreground mb-6">
-              Adicione os parques e datas no seu perfil de viagem para ver sua agenda aqui.
+              {t('agenda.emptyDesc')}
             </p>
             <Link to="/perfil">
               <Button variant="gold">
-                Preencher Perfil de Viagem
+                {t('agenda.emptyButton')}
               </Button>
             </Link>
           </Card>

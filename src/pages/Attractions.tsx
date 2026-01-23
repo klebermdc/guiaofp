@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -217,6 +218,7 @@ interface SelectedAttraction {
 
 export default function Attractions() {
   const { user, travelProfile } = useAuth();
+  const { t } = useLanguage();
   const [selectedAttractions, setSelectedAttractions] = useState<SelectedAttraction[]>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -530,10 +532,10 @@ export default function Attractions() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
-              Atrações Desejadas
+              {t('attractions.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Selecione as atrações que você gostaria de fazer em cada parque
+              {t('attractions.subtitle')}
             </p>
           </div>
         </div>
@@ -543,7 +545,7 @@ export default function Attractions() {
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-primary">{selectedAttractions.length}</div>
-              <div className="text-xs text-muted-foreground">Total Selecionadas</div>
+              <div className="text-xs text-muted-foreground">{t('attractions.selected')}</div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5">
@@ -551,7 +553,7 @@ export default function Attractions() {
               <div className="text-2xl font-bold text-blue-600">
                 {new Set(selectedAttractions.map(a => a.parkName)).size}
               </div>
-              <div className="text-xs text-muted-foreground">Parques</div>
+              <div className="text-xs text-muted-foreground">{t('dashboard.tripSummary.parks')}</div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
@@ -561,7 +563,7 @@ export default function Attractions() {
                   parks.flatMap(p => p.attractions.filter(att => att.mustDo && att.name === a.attractionName)).length > 0
                 ).length}
               </div>
-              <div className="text-xs text-muted-foreground">Imperdíveis</div>
+              <div className="text-xs text-muted-foreground">{t('attractions.mustDo')}</div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5">
@@ -569,7 +571,7 @@ export default function Attractions() {
               <div className="text-2xl font-bold text-orange-600">
                 {Object.values(notes).filter(n => n.trim()).length}
               </div>
-              <div className="text-xs text-muted-foreground">Com Notas</div>
+              <div className="text-xs text-muted-foreground">{t('attractions.addNote')}</div>
             </CardContent>
           </Card>
         </div>
@@ -582,11 +584,11 @@ export default function Attractions() {
                 <Route className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold">Gerar Roteiro</h3>
+                <h3 className="font-semibold">{t('attractions.generateItinerary')}</h3>
                 <p className="text-sm text-muted-foreground">
                   {hasGuide 
-                    ? 'Crie um roteiro otimizado para o parque selecionado' 
-                    : 'Receba dicas gerais para sua visita'}
+                    ? t('attractions.subtitle')
+                    : t('attractions.subtitle')}
                 </p>
               </div>
             </div>
@@ -598,12 +600,12 @@ export default function Attractions() {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Gerando...
+                  {t('attractions.generating')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Gerar Roteiro
+                  {t('attractions.generateItinerary')}
                 </>
               )}
             </Button>
@@ -690,7 +692,7 @@ export default function Attractions() {
                                     className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                                   >
                                     <Play className="w-3 h-3" />
-                                    Ver vídeo
+                                    {t('attractions.watchVideo')}
                                   </Link>
                                 )}
                               </div>
@@ -698,7 +700,7 @@ export default function Attractions() {
                               {selected && (
                                 <div className="mt-3">
                                   <Textarea
-                                    placeholder="Adicione observações (opcional)..."
+                                    placeholder={t('attractions.notePlaceholder')}
                                     value={notes[noteKey] || ''}
                                     onChange={(e) => updateNote(park.name, attraction.name, e.target.value)}
                                     className="text-sm resize-none"
