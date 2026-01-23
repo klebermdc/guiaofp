@@ -104,6 +104,19 @@ const availableGateways: PaymentGateway[] = [
       { key: 'client_secret', label: 'Client Secret', type: 'password', placeholder: 'Client Secret' },
     ],
   },
+  {
+    id: 'asaas',
+    name: 'Asaas',
+    description: 'Plataforma brasileira completa com PIX, boleto, cartão e gestão de cobranças.',
+    logo: '💚',
+    isActive: false,
+    isConfigured: false,
+    features: ['PIX', 'Boleto', 'Cartão de Crédito', 'Cobrança Recorrente', 'Nota Fiscal'],
+    requiredFields: [
+      { key: 'api_key', label: 'API Key', type: 'password', placeholder: '$aact_...' },
+      { key: 'webhook_token', label: 'Token do Webhook', type: 'password', placeholder: 'Token para validar webhooks' },
+    ],
+  },
 ];
 
 export function PaymentGatewayManager() {
