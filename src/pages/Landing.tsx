@@ -350,7 +350,7 @@ const Landing = () => {
                     </p>
                   </div>
 
-                  <Link to="/login" className="block">
+                  <Link to="/checkout/basic" className="block">
                     <Button variant="outline" className="w-full h-12 rounded-xl hover:scale-[1.02] transition-transform">
                       Começar agora
                     </Button>
@@ -399,10 +399,10 @@ const Landing = () => {
                     "Você aproveita. O guia decide."
                   </p>
 
-                  <Link to="/login" className="block">
+                  <Link to="/checkout/premium" className="block">
                     <Button className="w-full h-12 rounded-xl gradient-primary text-primary-foreground hover:scale-[1.02] transition-transform">
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      Falar com guia
+                      Contratar guia
                     </Button>
                   </Link>
                 </CardContent>
