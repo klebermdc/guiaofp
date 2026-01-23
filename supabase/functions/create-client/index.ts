@@ -157,7 +157,7 @@ serve(async (req: Request): Promise<Response> => {
       // Send welcome email with credentials
       if (sendWelcomeEmail) {
         try {
-          // Send access-granted email
+          // Send unified access-granted email (includes credentials + onboarding tips)
           const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
             method: "POST",
             headers: {
@@ -175,29 +175,11 @@ serve(async (req: Request): Promise<Response> => {
           });
 
           if (emailResponse.ok) {
-            console.log("Welcome email sent to:", data.email);
+            console.log("Unified welcome email sent to:", data.email);
           } else {
             const errorText = await emailResponse.text();
             console.error("Error sending welcome email:", errorText);
           }
-
-          // Send onboarding email immediately (Resend scheduling requires paid plan)
-          await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
-              type: "welcome-onboarding",
-              userData: {
-                email: data.email,
-                name: clientName,
-              },
-            }),
-          });
-
-          console.log("Onboarding email sent for:", data.email);
         } catch (emailError) {
           console.error("Error sending emails:", emailError);
         }
