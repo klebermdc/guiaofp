@@ -181,8 +181,7 @@ serve(async (req: Request): Promise<Response> => {
             console.error("Error sending welcome email:", errorText);
           }
 
-          // Schedule onboarding email for 2 hours later
-          const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+          // Send onboarding email immediately (Resend scheduling requires paid plan)
           await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
             method: "POST",
             headers: {
@@ -195,11 +194,10 @@ serve(async (req: Request): Promise<Response> => {
                 email: data.email,
                 name: clientName,
               },
-              scheduleDelay: TWO_HOURS_MS,
             }),
           });
 
-          console.log("Onboarding email scheduled for:", data.email);
+          console.log("Onboarding email sent for:", data.email);
         } catch (emailError) {
           console.error("Error sending emails:", emailError);
         }
