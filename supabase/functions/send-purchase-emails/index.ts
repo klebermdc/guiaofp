@@ -83,6 +83,7 @@ const getPurchaseConfirmationHtml = (customerName: string, productName: string) 
 
 const getAccessGrantedHtml = (customerName: string, email: string, tempPassword?: string) => {
   if (tempPassword) {
+    // UNIFIED: Credentials + Onboarding in one email
     return `
 <!DOCTYPE html>
 <html>
@@ -94,21 +95,67 @@ const getAccessGrantedHtml = (customerName: string, email: string, tempPassword?
   <table role="presentation" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
     <tr>
       <td style="padding: 40px;">
-        <h1 style="color: #333; font-size: 28px; text-align: center; margin: 0 0 20px;">🎉 Bem-vindo!</h1>
-        <p style="color: #333; font-size: 16px; text-align: center;">Olá <strong>${customerName}</strong>,</p>
-        <p style="color: #333; font-size: 16px; text-align: center;">Seu acesso está 100% liberado! Use as credenciais abaixo:</p>
-        <div style="background-color: #f8f9fa; border-radius: 12px; padding: 24px; margin: 30px 0;">
-          <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px;">📧 Email:</p>
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #333; font-size: 28px; margin: 0 0 8px;">Bem-vindo ao OFP Planejador!</h1>
+          <p style="color: #6366f1; font-size: 16px; margin: 0;">Sua viagem para Orlando comeca aqui</p>
+        </div>
+        
+        <p style="color: #333; font-size: 16px;">Ola <strong>${customerName}</strong>,</p>
+        <p style="color: #333; font-size: 16px; line-height: 24px;">Seu acesso esta 100% liberado! Use as credenciais abaixo para entrar na plataforma:</p>
+        
+        <!-- Credentials Box -->
+        <div style="background-color: #f8f9fa; border-radius: 12px; padding: 24px; margin: 24px 0; border: 2px solid #e1e4e8;">
+          <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px;">Email:</p>
           <div style="background-color: #fff; border: 1px solid #e1e4e8; border-radius: 6px; color: #0366d6; font-size: 16px; font-family: monospace; padding: 12px; margin: 0 0 16px;">${email}</div>
-          <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px;">🔑 Senha temporária:</p>
+          <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px;">Senha temporaria:</p>
           <div style="background-color: #fff; border: 1px solid #e1e4e8; border-radius: 6px; color: #0366d6; font-size: 18px; font-family: monospace; padding: 12px; font-weight: bold; letter-spacing: 1px;">${tempPassword}</div>
         </div>
+        
+        <!-- CTA Button -->
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/login" style="display: inline-block; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold;">🚀 Acessar Agora</a>
+          <a href="${APP_URL}/login" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Acessar Agora</a>
         </div>
-        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; color: #856404; font-size: 14px; padding: 16px; text-align: center;">⚠️ <strong>Importante:</strong> Troque sua senha no primeiro acesso!</div>
+        
+        <!-- Password Warning -->
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; color: #856404; font-size: 14px; padding: 16px; text-align: center; margin-bottom: 30px;">
+          <strong>Importante:</strong> Recomendamos trocar sua senha no primeiro acesso!
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 30px 0;" />
+        
+        <!-- Onboarding Section -->
+        <h2 style="color: #333; font-size: 20px; text-align: center; margin: 0 0 24px;">Proximos passos para aproveitar ao maximo</h2>
+        
+        <div style="padding: 16px; border-left: 4px solid #6366f1; background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border-radius: 0 8px 8px 0; margin: 16px 0;">
+          <p style="color: #333; font-size: 16px; font-weight: bold; margin: 0 0 4px;">1. Complete seu perfil</p>
+          <p style="color: #666; font-size: 14px; margin: 0;">Adicione suas informacoes de viagem para personalizar seus roteiros.</p>
+        </div>
+        
+        <div style="padding: 16px; border-left: 4px solid #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-radius: 0 8px 8px 0; margin: 16px 0;">
+          <p style="color: #333; font-size: 16px; font-weight: bold; margin: 0 0 4px;">2. Explore as funcionalidades</p>
+          <p style="color: #666; font-size: 14px; margin: 0;">Conheca a Joy, o checklist de viagem e os roteiros de parques!</p>
+        </div>
+        
+        <div style="padding: 16px; border-left: 4px solid #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-radius: 0 8px 8px 0; margin: 16px 0;">
+          <p style="color: #333; font-size: 16px; font-weight: bold; margin: 0 0 4px;">3. Ative as notificacoes</p>
+          <p style="color: #666; font-size: 14px; margin: 0;">Receba dicas e lembretes importantes para sua viagem.</p>
+        </div>
+        
+        <!-- Features Box -->
+        <div style="background-color: #f8f9fa; border-radius: 12px; padding: 20px; margin: 24px 0;">
+          <h3 style="margin: 0 0 12px; color: #6366f1; font-size: 14px; text-align: center;">O que voce pode fazer agora:</h3>
+          <p style="margin: 6px 0; color: #333; font-size: 14px;"><span style="color: #10b981;">&#10003;</span> Acessar roteiros personalizados de parques</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px;"><span style="color: #10b981;">&#10003;</span> Consultar dicas e informacoes sobre atracoes</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px;"><span style="color: #10b981;">&#10003;</span> Utilizar a assistente virtual Joy</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px;"><span style="color: #10b981;">&#10003;</span> Acompanhar seu checklist de viagem</p>
+          <p style="margin: 6px 0; color: #333; font-size: 14px;"><span style="color: #10b981;">&#10003;</span> Receber guiamento remoto durante sua viagem</p>
+        </div>
+        
+        <!-- Footer -->
         <div style="color: #8898aa; font-size: 14px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
-          <p>Problemas para acessar? Responda este email.</p>
+          <p style="margin: 0 0 8px;">Duvidas? Responda este email que ajudaremos voce!</p>
+          <p style="margin: 0; color: #aaa;">OFP Planejador - Prepare-se para a magia!</p>
         </div>
       </td>
     </tr>
@@ -130,23 +177,23 @@ const getAccessGrantedHtml = (customerName: string, email: string, tempPassword?
   <table role="presentation" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
     <tr>
       <td style="padding: 40px;">
-        <h1 style="color: #333; font-size: 28px; text-align: center; margin: 0 0 10px;">✅ Seu Acesso Foi Liberado!</h1>
+        <h1 style="color: #333; font-size: 28px; text-align: center; margin: 0 0 10px;">Seu Acesso Foi Liberado!</h1>
         <p style="color: #6366f1; font-size: 16px; text-align: center; margin: 0 0 30px;">Bem-vindo(a) ao OFP Planejador</p>
-        <p style="color: #333; font-size: 18px;">Olá, <strong>${customerName}</strong>!</p>
-        <p style="color: #333; font-size: 16px; line-height: 26px;">Seu acesso à plataforma foi liberado e agora você pode aproveitar todas as funcionalidades do seu plano.</p>
+        <p style="color: #333; font-size: 18px;">Ola, <strong>${customerName}</strong>!</p>
+        <p style="color: #333; font-size: 16px; line-height: 26px;">Seu acesso a plataforma foi liberado e agora voce pode aproveitar todas as funcionalidades do seu plano.</p>
         <div style="background-color: #f8f9fa; border-radius: 12px; padding: 24px; border-left: 4px solid #6366f1; margin: 30px 0;">
-          <h3 style="margin: 0 0 16px; color: #6366f1; font-size: 16px;">O que você pode fazer agora:</h3>
-          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">✓</span> Acessar seu roteiro personalizado de parques</p>
-          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">✓</span> Consultar dicas e informações sobre atrações</p>
-          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">✓</span> Utilizar a assistente virtual Joy</p>
-          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">✓</span> Acompanhar seu checklist de viagem</p>
-          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">✓</span> Receber guiamento remoto durante sua viagem</p>
+          <h3 style="margin: 0 0 16px; color: #6366f1; font-size: 16px;">O que voce pode fazer agora:</h3>
+          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">&#10003;</span> Acessar seu roteiro personalizado de parques</p>
+          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">&#10003;</span> Consultar dicas e informacoes sobre atracoes</p>
+          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">&#10003;</span> Utilizar a assistente virtual Joy</p>
+          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">&#10003;</span> Acompanhar seu checklist de viagem</p>
+          <p style="margin: 8px 0; color: #333;"><span style="color: #10b981;">&#10003;</span> Receber guiamento remoto durante sua viagem</p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${APP_URL}/login" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold;">🎢 Acessar a Plataforma</a>
+          <a href="${APP_URL}/login" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold;">Acessar a Plataforma</a>
         </div>
         <div style="color: #8898aa; font-size: 14px; text-align: center; background: #1f2937; border-radius: 0 0 12px 12px; padding: 20px; margin: 20px -40px -40px -40px;">
-          <p style="margin: 0; color: #fff;">Prepare-se para a magia! 🏰✨</p>
+          <p style="margin: 0; color: #fff;">Prepare-se para a magia!</p>
         </div>
       </td>
     </tr>

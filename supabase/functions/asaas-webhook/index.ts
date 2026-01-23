@@ -411,13 +411,7 @@ const handler = async (req: Request): Promise<Response> => {
           { plan: transaction.plan_key }
         );
 
-        // 6. Send onboarding email (sent immediately - Resend scheduling requires paid plan)
-        await sendEmail("welcome-onboarding", {
-          email: transaction.email,
-          name: transaction.customer_name,
-        });
-
-        // 7. Send admin notification email with order details
+        // 6. Send admin notification email with order details
         await sendAdminOrderNotification(transaction);
 
         console.log("Full onboarding flow completed for:", transaction.email);
