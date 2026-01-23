@@ -18,7 +18,9 @@ import {
   Loader2,
   Copy,
   ExternalLink,
-  Check
+  Check,
+  Tag,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +82,13 @@ interface PaymentResult {
   invoiceUrl?: string;
 }
 
+interface AppliedCoupon {
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  discountAmount: number;
+}
+
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
@@ -91,21 +100,31 @@ export default function Checkout() {
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [copied, setCopied] = useState(false);
   
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  
   // Form fields
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     cpf: '',
     phone: '',
-    // Credit card holder fields
     cardHolderCep: '',
     cardHolderAddressNumber: '',
-    // Credit card fields
     cardNumber: '',
     cardExpiry: '',
     cardCvv: '',
     cardName: '',
   });
+
+  // Calculate amounts
+  const originalAmountCents = plan ? plan.price * 100 + plan.priceCents : 0;
+  const discountAmountCents = appliedCoupon?.discountAmount || 0;
+  const finalAmountCents = Math.max(0, originalAmountCents - discountAmountCents);
+  const finalPrice = Math.floor(finalAmountCents / 100);
+  const finalCents = finalAmountCents % 100;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -118,6 +137,73 @@ export default function Checkout() {
       }
     });
   }, []);
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Digite um código de cupom');
+      return;
+    }
+
+    setIsValidatingCoupon(true);
+    try {
+      const { data, error } = await supabase
+        .from('discount_coupons')
+        .select('*')
+        .eq('code', couponCode.toUpperCase().trim())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !data) {
+        toast.error('Cupom inválido ou expirado');
+        return;
+      }
+
+      // Check if expired
+      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+        toast.error('Este cupom expirou');
+        return;
+      }
+
+      // Check if max uses reached
+      if (data.max_uses && data.current_uses >= data.max_uses) {
+        toast.error('Este cupom atingiu o limite de uso');
+        return;
+      }
+
+      // Check minimum amount
+      if (data.min_amount_cents && originalAmountCents < data.min_amount_cents) {
+        toast.error(`Valor mínimo para este cupom: R$${(data.min_amount_cents / 100).toFixed(2)}`);
+        return;
+      }
+
+      // Calculate discount
+      let discountAmount = 0;
+      if (data.discount_type === 'percentage') {
+        discountAmount = Math.floor(originalAmountCents * (data.discount_value / 100));
+      } else {
+        discountAmount = data.discount_value;
+      }
+
+      setAppliedCoupon({
+        code: data.code,
+        discount_type: data.discount_type as 'percentage' | 'fixed',
+        discount_value: data.discount_value,
+        discountAmount,
+      });
+
+      toast.success(`Cupom "${data.code}" aplicado!`);
+    } catch (err) {
+      toast.error('Erro ao validar cupom');
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    toast.info('Cupom removido');
+  };
 
   if (!plan) {
     return (
@@ -184,7 +270,6 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!formData.name || !formData.email || !formData.cpf) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
@@ -204,17 +289,12 @@ export default function Checkout() {
     setIsProcessing(true);
 
     try {
-      // Calculate amount in cents
-      const amountCents = plan.price * 100 + plan.priceCents;
-      
-      // Map payment method to Asaas format
       const billingTypeMap: Record<PaymentMethod, string> = {
         pix: 'PIX',
         boleto: 'BOLETO',
         credit_card: 'CREDIT_CARD',
       };
 
-      // Prepare credit card data if applicable
       let creditCardData = undefined;
       if (paymentMethod === 'credit_card') {
         const [expiryMonth, expiryYear] = formData.cardExpiry.split('/');
@@ -233,7 +313,10 @@ export default function Checkout() {
           email: formData.email,
           cpfCnpj: formData.cpf.replace(/\D/g, ''),
           planKey: plan.id,
-          amountCents,
+          amountCents: finalAmountCents,
+          originalAmountCents,
+          discountAmountCents,
+          couponCode: appliedCoupon?.code || null,
           billingType: billingTypeMap[paymentMethod],
           creditCard: creditCardData,
           creditCardHolderInfo: creditCardData ? {
@@ -257,12 +340,10 @@ export default function Checkout() {
         throw new Error(data.error);
       }
 
-      // Handle successful payment creation
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
         toast.success('Pagamento aprovado! Redirecionando...');
         navigate('/login?payment=success');
       } else {
-        // Show PIX or Boleto payment info
         setPaymentResult({
           transactionId: data.transactionId,
           method: paymentMethod,
@@ -286,7 +367,6 @@ export default function Checkout() {
   if (paymentResult) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Header */}
         <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
@@ -314,7 +394,6 @@ export default function Checkout() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* PIX Payment */}
               {paymentResult.method === 'pix' && paymentResult.pixQrCode && (
                 <div className="space-y-4">
                   <div className="bg-white p-4 rounded-xl mx-auto w-fit">
@@ -353,7 +432,6 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Boleto Payment */}
               {paymentResult.method === 'boleto' && (
                 <div className="space-y-4">
                   <div className="p-6 rounded-xl bg-muted/50 text-center">
@@ -407,7 +485,6 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -427,7 +504,6 @@ export default function Checkout() {
         </Link>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Payment Form */}
           <div className="lg:col-span-3 space-y-6">
             <div>
               <h1 className="font-display text-2xl font-bold text-foreground mb-2">
@@ -439,7 +515,6 @@ export default function Checkout() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Info */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Dados pessoais</CardTitle>
@@ -481,7 +556,57 @@ export default function Checkout() {
                 </CardContent>
               </Card>
 
-              {/* Payment Method */}
+              {/* Coupon Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Tag className="h-5 w-5" />
+                    Cupom de desconto
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-success" />
+                        <div>
+                          <p className="font-medium text-foreground">{appliedCoupon.code}</p>
+                          <p className="text-sm text-success">
+                            {appliedCoupon.discount_type === 'percentage' 
+                              ? `${appliedCoupon.discount_value}% de desconto`
+                              : `R$${(appliedCoupon.discount_value / 100).toFixed(2)} de desconto`}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={removeCoupon}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Digite o código do cupom"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        className="uppercase"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={validateCoupon}
+                        disabled={isValidatingCoupon}
+                      >
+                        {isValidatingCoupon ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Aplicar'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Forma de pagamento</CardTitle>
@@ -532,7 +657,6 @@ export default function Checkout() {
                     </button>
                   </div>
 
-                  {/* PIX Info */}
                   {paymentMethod === 'pix' && (
                     <div className="p-4 rounded-xl bg-success/10 border border-success/20">
                       <div className="flex items-start gap-3">
@@ -548,7 +672,6 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {/* Boleto Info */}
                   {paymentMethod === 'boleto' && (
                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
                       <div className="flex items-start gap-3">
@@ -564,7 +687,6 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {/* Credit Card Form */}
                   {paymentMethod === 'credit_card' && (
                     <div className="space-y-4 pt-2">
                       <div className="space-y-2">
@@ -645,7 +767,6 @@ export default function Checkout() {
                 </CardContent>
               </Card>
 
-              {/* Submit Button */}
               <Button
                 type="submit"
                 size="lg"
@@ -660,12 +781,11 @@ export default function Checkout() {
                 ) : (
                   <>
                     <Lock className="w-5 h-5 mr-2" />
-                    Pagar R${plan.price},{plan.priceCents.toString().padStart(2, '0')}
+                    Pagar R${finalPrice},{finalCents.toString().padStart(2, '0')}
                   </>
                 )}
               </Button>
 
-              {/* Security Notice */}
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 Seus dados estão protegidos com criptografia SSL
@@ -673,7 +793,6 @@ export default function Checkout() {
             </form>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-2">
             <Card className={`sticky top-24 ${plan.gradient ? 'border-secondary/50' : ''}`}>
               {plan.gradient && (
@@ -709,17 +828,29 @@ export default function Checkout() {
                     <span className="text-muted-foreground">Plano {plan.name}</span>
                     <span className="text-foreground">R${plan.price},{plan.priceCents.toString().padStart(2, '0')}</span>
                   </div>
+                  
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-success">Desconto ({appliedCoupon.code})</span>
+                      <span className="text-success">-R${(discountAmountCents / 100).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  )}
+                  
                   <Separator />
                   <div className="flex justify-between">
                     <span className="font-medium text-foreground">Total</span>
                     <div className="text-right">
-                      <span className="text-2xl font-bold text-foreground">R${plan.price}</span>
-                      <span className="text-lg text-foreground">,{plan.priceCents.toString().padStart(2, '0')}</span>
+                      {appliedCoupon && (
+                        <span className="text-sm text-muted-foreground line-through mr-2">
+                          R${plan.price},{plan.priceCents.toString().padStart(2, '0')}
+                        </span>
+                      )}
+                      <span className="text-2xl font-bold text-foreground">R${finalPrice}</span>
+                      <span className="text-lg text-foreground">,{finalCents.toString().padStart(2, '0')}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Trust Badges */}
                 <div className="pt-4 space-y-3">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Shield className="w-4 h-4 text-success" />

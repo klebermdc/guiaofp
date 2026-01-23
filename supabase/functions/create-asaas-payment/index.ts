@@ -14,11 +14,14 @@ interface PaymentRequest {
   email: string;
   customerName: string;
   cpf?: string;
-  cpfCnpj?: string; // Alternative field name
+  cpfCnpj?: string;
   planKey: string;
   amountCents: number;
+  originalAmountCents?: number;
+  discountAmountCents?: number;
+  couponCode?: string | null;
   paymentMethod?: "pix" | "boleto" | "credit_card";
-  billingType?: "PIX" | "BOLETO" | "CREDIT_CARD"; // Alternative field name
+  billingType?: "PIX" | "BOLETO" | "CREDIT_CARD";
   creditCard?: {
     holderName: string;
     number: string;
@@ -214,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
     const authUser = usersData?.users?.find(u => u.email === payload.email);
     
     const { error: insertError } = await supabase.from("transactions").insert({
-      user_id: authUser?.id || "00000000-0000-0000-0000-000000000000", // Placeholder if user doesn't exist yet
+      user_id: authUser?.id || "00000000-0000-0000-0000-000000000000",
       email: payload.email,
       customer_name: payload.customerName,
       plan_key: payload.planKey,
@@ -227,6 +230,8 @@ const handler = async (req: Request): Promise<Response> => {
       asaas_pix_qr_code: pixData?.encodedImage,
       asaas_pix_payload: pixData?.payload,
       asaas_boleto_url: payment.bankSlipUrl,
+      coupon_code: payload.couponCode || null,
+      discount_amount_cents: payload.discountAmountCents || 0,
     });
 
     if (insertError) {
