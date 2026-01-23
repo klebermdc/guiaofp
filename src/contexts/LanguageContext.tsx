@@ -64,10 +64,35 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   );
 };
 
+// Fallback translation function for when context is not available
+const fallbackT = (key: string): string => {
+  const keys = key.split('.');
+  let value: any = translations['pt'];
+  
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      return key;
+    }
+  }
+  
+  return typeof value === 'string' ? value : key;
+};
+
+// Default context value for when provider is not available (HMR/SSR edge cases)
+const defaultContextValue: LanguageContextType = {
+  language: 'pt',
+  setLanguage: () => {},
+  t: fallbackT,
+};
+
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
+  // Return default value instead of throwing to handle HMR edge cases
   if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    console.warn('useLanguage was called outside of LanguageProvider, using fallback');
+    return defaultContextValue;
   }
   return context;
 };
