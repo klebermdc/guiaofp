@@ -162,6 +162,38 @@ const handler = async (req: Request): Promise<Response> => {
         }
       };
 
+      // Helper to send push notification
+      const sendPushNotification = async (userId: string, title: string, body: string, data?: Record<string, unknown>) => {
+        try {
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              user_ids: [userId],
+              payload: {
+                title,
+                body,
+                tag: "access-enabled",
+                data: { url: "/dashboard", ...data },
+              },
+            }),
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`Push notification sent successfully:`, result);
+          } else {
+            const errorText = await response.text();
+            console.error(`Error sending push notification:`, errorText);
+          }
+        } catch (error) {
+          console.error(`Error sending push notification:`, error);
+        }
+      };
+
       // 1. Send purchase confirmation email immediately
       await sendEmail("purchase-confirmation", {
         email: transaction.email,
@@ -234,7 +266,15 @@ const handler = async (req: Request): Promise<Response> => {
           tempPassword: tempPassword || undefined,
         });
 
-        // 5. Schedule onboarding email for 2 hours later
+        // 5. Send push notification to inform access is enabled
+        await sendPushNotification(
+          authUser.id,
+          "🎉 Acesso Liberado!",
+          `Olá ${transaction.customer_name.split(' ')[0]}! Seu acesso ao OFP Planejador foi ativado. Toque para começar a planejar sua viagem!`,
+          { plan: transaction.plan_key }
+        );
+
+        // 6. Schedule onboarding email for 2 hours later
         const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
         await sendEmail("welcome-onboarding", {
           email: transaction.email,
