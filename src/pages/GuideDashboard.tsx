@@ -10,7 +10,8 @@ import {
   RefreshCw,
   CalendarDays,
   LayoutGrid,
-  Bell
+  Bell,
+  UserPlus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +24,7 @@ import { GuideStatsCards } from '@/components/guide/GuideStatsCards';
 import { ClientPortfolioCard } from '@/components/guide/ClientPortfolioCard';
 import { GuideCalendar } from '@/components/guide/GuideCalendar';
 import { SendPushNotification } from '@/components/guide/SendPushNotification';
+import { CreatePremiumClient } from '@/components/guide/CreatePremiumClient';
 import { useGuideMultipassStatus } from '@/hooks/useGuideMultipassStatus';
 import logo from '@/assets/logo.png';
 
@@ -197,6 +199,7 @@ const GuideDashboard = () => {
             </div>
             
             <div className="flex gap-2">
+              <CreatePremiumClient onClientCreated={fetchData} />
               <Link to="/admin">
                 <Button variant="secondary" size="sm" className="gap-2">
                   <Settings className="w-4 h-4" />
