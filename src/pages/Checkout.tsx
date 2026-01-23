@@ -96,6 +96,10 @@ export default function Checkout() {
     name: '',
     email: '',
     cpf: '',
+    phone: '',
+    // Credit card holder fields
+    cardHolderCep: '',
+    cardHolderAddressNumber: '',
     // Credit card fields
     cardNumber: '',
     cardExpiry: '',
@@ -153,6 +157,19 @@ export default function Checkout() {
     return numbers.replace(/(\d{2})(\d)/, '$1/$2').slice(0, 5);
   };
 
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers
+      .replace(/(\d{2})(\d)/, '($1) $2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 15);
+  };
+
+  const formatCEP = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers.replace(/(\d{5})(\d)/, '$1-$2').slice(0, 9);
+  };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -176,6 +193,10 @@ export default function Checkout() {
     if (paymentMethod === 'credit_card') {
       if (!formData.cardNumber || !formData.cardExpiry || !formData.cardCvv || !formData.cardName) {
         toast.error('Preencha todos os dados do cartão');
+        return;
+      }
+      if (!formData.phone || !formData.cardHolderCep || !formData.cardHolderAddressNumber) {
+        toast.error('Preencha telefone, CEP e número do endereço do titular');
         return;
       }
     }
@@ -219,9 +240,9 @@ export default function Checkout() {
             name: formData.cardName,
             email: formData.email,
             cpfCnpj: formData.cpf.replace(/\D/g, ''),
-            postalCode: '00000000', // TODO: Add address fields if needed
-            addressNumber: '0',
-            phone: '',
+            postalCode: formData.cardHolderCep.replace(/\D/g, ''),
+            addressNumber: formData.cardHolderAddressNumber,
+            phone: formData.phone.replace(/\D/g, ''),
           } : undefined,
         },
       });
@@ -547,7 +568,7 @@ export default function Checkout() {
                   {paymentMethod === 'credit_card' && (
                     <div className="space-y-4 pt-2">
                       <div className="space-y-2">
-                        <Label htmlFor="cardNumber">Número do cartão</Label>
+                        <Label htmlFor="cardNumber">Número do cartão *</Label>
                         <Input
                           id="cardNumber"
                           placeholder="0000 0000 0000 0000"
@@ -556,7 +577,7 @@ export default function Checkout() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="cardName">Nome no cartão</Label>
+                        <Label htmlFor="cardName">Nome no cartão *</Label>
                         <Input
                           id="cardName"
                           placeholder="Como está no cartão"
@@ -566,7 +587,7 @@ export default function Checkout() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="cardExpiry">Validade</Label>
+                          <Label htmlFor="cardExpiry">Validade *</Label>
                           <Input
                             id="cardExpiry"
                             placeholder="MM/AA"
@@ -575,13 +596,47 @@ export default function Checkout() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="cardCvv">CVV</Label>
+                          <Label htmlFor="cardCvv">CVV *</Label>
                           <Input
                             id="cardCvv"
                             placeholder="000"
                             maxLength={4}
                             value={formData.cardCvv}
                             onChange={(e) => handleInputChange('cardCvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          />
+                        </div>
+                      </div>
+
+                      <Separator className="my-4" />
+                      
+                      <p className="text-sm text-muted-foreground">Dados do titular do cartão (exigido pela operadora)</p>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Telefone com DDD *</Label>
+                        <Input
+                          id="phone"
+                          placeholder="(00) 00000-0000"
+                          value={formData.phone}
+                          onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="cardHolderCep">CEP *</Label>
+                          <Input
+                            id="cardHolderCep"
+                            placeholder="00000-000"
+                            value={formData.cardHolderCep}
+                            onChange={(e) => handleInputChange('cardHolderCep', formatCEP(e.target.value))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cardHolderAddressNumber">Número *</Label>
+                          <Input
+                            id="cardHolderAddressNumber"
+                            placeholder="123"
+                            value={formData.cardHolderAddressNumber}
+                            onChange={(e) => handleInputChange('cardHolderAddressNumber', e.target.value.replace(/\D/g, ''))}
                           />
                         </div>
                       </div>
