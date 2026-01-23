@@ -13,10 +13,12 @@ const ASAAS_BASE_URL = "https://api.asaas.com/v3"; // Production
 interface PaymentRequest {
   email: string;
   customerName: string;
-  cpf: string;
+  cpf?: string;
+  cpfCnpj?: string; // Alternative field name
   planKey: string;
   amountCents: number;
-  paymentMethod: "pix" | "boleto" | "credit_card";
+  paymentMethod?: "pix" | "boleto" | "credit_card";
+  billingType?: "PIX" | "BOLETO" | "CREDIT_CARD"; // Alternative field name
   creditCard?: {
     holderName: string;
     number: string;
@@ -165,28 +167,40 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const payload: PaymentRequest = await req.json();
-    console.log("Received payment request:", { ...payload, creditCard: payload.creditCard ? "[REDACTED]" : undefined });
+    
+    // Normalize field names (accept both formats)
+    const cpf = payload.cpf || payload.cpfCnpj;
+    const paymentMethod = payload.paymentMethod || 
+      (payload.billingType === "PIX" ? "pix" : 
+       payload.billingType === "BOLETO" ? "boleto" : 
+       payload.billingType === "CREDIT_CARD" ? "credit_card" : undefined);
+    
+    console.log("Received payment request:", { 
+      ...payload, 
+      cpf: cpf ? "[REDACTED]" : undefined,
+      creditCard: payload.creditCard ? "[REDACTED]" : undefined 
+    });
 
     // Validate required fields
-    if (!payload.email || !payload.customerName || !payload.cpf || !payload.planKey || !payload.amountCents || !payload.paymentMethod) {
-      throw new Error("Missing required fields");
+    if (!payload.email || !payload.customerName || !cpf || !payload.planKey || !payload.amountCents || !paymentMethod) {
+      throw new Error("Missing required fields: email, customerName, cpf/cpfCnpj, planKey, amountCents, paymentMethod/billingType");
     }
 
     // Create or get customer
-    const customerId = await createOrGetCustomer(payload.email, payload.customerName, payload.cpf);
+    const customerId = await createOrGetCustomer(payload.email, payload.customerName, cpf);
 
     // Create payment
     const payment = await createPayment(
       customerId,
       payload.amountCents,
-      payload.paymentMethod,
+      paymentMethod,
       payload.creditCard,
       payload.creditCardHolderInfo
     );
 
     // Get PIX QR code if payment method is PIX
     let pixData = null;
-    if (payload.paymentMethod === "pix" && payment.id) {
+    if (paymentMethod === "pix" && payment.id) {
       pixData = await getPixQrCode(payment.id);
     }
 
@@ -205,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
       customer_name: payload.customerName,
       plan_key: payload.planKey,
       amount_cents: payload.amountCents,
-      payment_method: payload.paymentMethod,
+      payment_method: paymentMethod,
       status: payment.status === "CONFIRMED" ? "confirmed" : "pending",
       asaas_customer_id: customerId,
       asaas_payment_id: payment.id,
