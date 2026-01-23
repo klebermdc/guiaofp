@@ -10,6 +10,7 @@ const corsHeaders = {
 interface AccessEnabledNotification {
   email: string;
   nome_completo: string;
+  temporary_password?: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -22,97 +23,191 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log("Sending access enabled notification to:", data.email);
 
-    const emailHtml = `
+    const loginUrl = "https://guiaofp.lovable.app/login";
+    const customerName = data.nome_completo || "Cliente";
+    const temporaryPassword = data.temporary_password;
+
+    // Use credentials template if temporary password is provided
+    const emailHtml = temporaryPassword ? `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px 20px; border-radius: 10px 10px 0 0; text-align: center; }
-          .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; }
-          .footer { background: #1f2937; color: #9ca3af; padding: 20px; border-radius: 0 0 10px 10px; font-size: 12px; text-align: center; }
-          .cta-button { 
-            display: inline-block; 
-            background: linear-gradient(135deg, #6366f1, #8b5cf6); 
-            color: white; 
-            padding: 14px 32px; 
-            text-decoration: none; 
-            border-radius: 8px; 
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 16px;
-          }
-          .success-icon { font-size: 48px; margin-bottom: 10px; }
-          .feature-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .feature-item { padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; }
-          .feature-item:last-child { border-bottom: none; }
-          .check-icon { color: #10b981; margin-right: 10px; font-size: 18px; }
-        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Acesso Liberado</title>
       </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <div class="success-icon">✅</div>
-            <h1 style="margin: 0;">Seu Acesso Foi Liberado!</h1>
-            <p style="margin: 10px 0 0 0; opacity: 0.9;">Bem-vindo(a) ao OFP Planejador</p>
-          </div>
-          
-          <div class="content">
-            <p style="font-size: 18px;">Olá, <strong>${data.nome_completo || "Cliente"}</strong>!</p>
-            
-            <p>Temos uma ótima notícia! Seu acesso à plataforma OFP Planejador foi liberado e agora você pode aproveitar todas as funcionalidades disponíveis no seu plano.</p>
-            
-            <div class="feature-list">
-              <h3 style="margin-top: 0; color: #6366f1;">O que você pode fazer agora:</h3>
+      <body style="background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif; margin: 0; padding: 40px 0;">
+        <table role="presentation" style="background-color: #ffffff; margin: 0 auto; padding: 20px 0 48px; margin-bottom: 64px; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td>
+              <!-- Header -->
+              <h1 style="color: #333; font-size: 28px; font-weight: bold; margin: 40px 0 20px; padding: 0; text-align: center;">
+                🎉 Bem-vindo!
+              </h1>
               
-              <div class="feature-item">
-                <span class="check-icon">✓</span>
-                <span>Acessar seu roteiro personalizado de parques</span>
-              </div>
+              <!-- Greeting -->
+              <p style="color: #333; font-size: 16px; line-height: 26px; padding: 0 40px; text-align: center;">
+                Olá <strong>${customerName}</strong>,
+              </p>
               
-              <div class="feature-item">
-                <span class="check-icon">✓</span>
-                <span>Consultar dicas e informações sobre atrações</span>
-              </div>
+              <p style="color: #333; font-size: 16px; line-height: 26px; padding: 0 40px; text-align: center;">
+                Seu acesso está 100% liberado! Use as credenciais abaixo para fazer login:
+              </p>
               
-              <div class="feature-item">
-                <span class="check-icon">✓</span>
-                <span>Utilizar a assistente virtual Joy para tirar dúvidas</span>
-              </div>
+              <!-- Credentials Box -->
+              <table role="presentation" style="width: 100%; margin: 30px 0;">
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 24px;">
+                      <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px 0;">📧 Email:</p>
+                      <div style="background-color: #fff; border: 1px solid #e1e4e8; border-radius: 6px; color: #0366d6; font-size: 16px; font-family: monospace; padding: 12px; margin: 0 0 16px 0;">
+                        ${data.email}
+                      </div>
+                      
+                      <p style="color: #666; font-size: 14px; font-weight: bold; margin: 0 0 8px 0;">🔑 Senha temporária:</p>
+                      <div style="background-color: #fff; border: 1px solid #e1e4e8; border-radius: 6px; color: #0366d6; font-size: 18px; font-family: monospace; padding: 12px; margin: 0; font-weight: bold; letter-spacing: 1px;">
+                        ${temporaryPassword}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
               
-              <div class="feature-item">
-                <span class="check-icon">✓</span>
-                <span>Acompanhar seu checklist de viagem</span>
-              </div>
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; margin: 30px 0;">
+                <tr>
+                  <td style="text-align: center;">
+                    <a href="${loginUrl}" 
+                       style="display: inline-block; background: linear-gradient(135deg, #0066cc, #0052a3); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      🚀 Acessar Agora
+                    </a>
+                  </td>
+                </tr>
+              </table>
               
-              <div class="feature-item">
-                <span class="check-icon">✓</span>
-                <span>Receber guiamento remoto durante sua viagem</span>
+              <!-- Divider -->
+              <hr style="border: none; border-top: 1px solid #e6ebf1; margin: 30px 40px;" />
+              
+              <!-- Important warning -->
+              <table role="presentation" style="width: 100%; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; color: #856404; font-size: 14px; padding: 16px; text-align: center;">
+                      ⚠️ <strong>Importante:</strong> Troque sua senha no primeiro acesso!
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Footer -->
+              <div style="color: #8898aa; font-size: 14px; line-height: 24px; padding: 30px 40px 0; text-align: center; border-top: 1px solid #eee; margin-top: 30px;">
+                <p style="margin: 0;">Problemas para acessar? Responda este email.</p>
+                <p style="margin: 10px 0 0 0; color: #aaa;">OFP Planejador - Sua viagem para Orlando começa aqui 🏰✨</p>
               </div>
-            </div>
-            
-            <p style="text-align: center;">
-              <a href="https://guiaofp.lovable.app/login" class="cta-button">
-                🎢 Acessar a Plataforma
-              </a>
-            </p>
-            
-            <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
-              Se você tiver qualquer dúvida, não hesite em entrar em contato conosco pelo email 
-              <a href="mailto:contato@ofpplanejador.com" style="color: #6366f1;">contato@ofpplanejador.com</a>.
-            </p>
-          </div>
-          
-          <div class="footer">
-            <p style="margin: 0;">Prepare-se para a magia! 🏰✨</p>
-            <p style="margin: 10px 0 0 0;">OFP Planejador - Sua viagem para Orlando começa aqui</p>
-          </div>
-        </div>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    ` : `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Acesso Liberado</title>
+      </head>
+      <body style="background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Ubuntu, sans-serif; margin: 0; padding: 40px 0;">
+        <table role="presentation" style="background-color: #ffffff; margin: 0 auto; padding: 20px 0 48px; margin-bottom: 64px; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td>
+              <!-- Header -->
+              <h1 style="color: #333; font-size: 28px; font-weight: bold; margin: 40px 0 20px; padding: 0; text-align: center;">
+                ✅ Seu Acesso Foi Liberado!
+              </h1>
+              
+              <p style="color: #6366f1; font-size: 16px; text-align: center; margin: 0 0 30px 0;">
+                Bem-vindo(a) ao OFP Planejador
+              </p>
+              
+              <!-- Greeting -->
+              <p style="color: #333; font-size: 18px; line-height: 26px; padding: 0 40px;">
+                Olá, <strong>${customerName}</strong>!
+              </p>
+              
+              <p style="color: #333; font-size: 16px; line-height: 26px; padding: 0 40px;">
+                Temos uma ótima notícia! Seu acesso à plataforma OFP Planejador foi liberado e agora você pode aproveitar todas as funcionalidades disponíveis no seu plano.
+              </p>
+              
+              <!-- Features Box -->
+              <table role="presentation" style="width: 100%; margin: 30px 0;">
+                <tr>
+                  <td style="padding: 0 40px;">
+                    <div style="background-color: #f8f9fa; border-radius: 12px; padding: 24px; border-left: 4px solid #6366f1;">
+                      <h3 style="margin: 0 0 16px 0; color: #6366f1; font-size: 16px;">O que você pode fazer agora:</h3>
+                      
+                      <div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;">
+                        <span style="color: #10b981; margin-right: 10px; font-size: 16px;">✓</span>
+                        <span style="color: #333; font-size: 14px;">Acessar seu roteiro personalizado de parques</span>
+                      </div>
+                      
+                      <div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;">
+                        <span style="color: #10b981; margin-right: 10px; font-size: 16px;">✓</span>
+                        <span style="color: #333; font-size: 14px;">Consultar dicas e informações sobre atrações</span>
+                      </div>
+                      
+                      <div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;">
+                        <span style="color: #10b981; margin-right: 10px; font-size: 16px;">✓</span>
+                        <span style="color: #333; font-size: 14px;">Utilizar a assistente virtual Joy para tirar dúvidas</span>
+                      </div>
+                      
+                      <div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center;">
+                        <span style="color: #10b981; margin-right: 10px; font-size: 16px;">✓</span>
+                        <span style="color: #333; font-size: 14px;">Acompanhar seu checklist de viagem</span>
+                      </div>
+                      
+                      <div style="padding: 10px 0; display: flex; align-items: center;">
+                        <span style="color: #10b981; margin-right: 10px; font-size: 16px;">✓</span>
+                        <span style="color: #333; font-size: 14px;">Receber guiamento remoto durante sua viagem</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; margin: 30px 0;">
+                <tr>
+                  <td style="text-align: center;">
+                    <a href="${loginUrl}" 
+                       style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      🎢 Acessar a Plataforma
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Contact info -->
+              <p style="color: #6b7280; font-size: 14px; line-height: 24px; padding: 0 40px; text-align: center;">
+                Se você tiver qualquer dúvida, não hesite em entrar em contato conosco pelo email 
+                <a href="mailto:contato@ofpplanejador.com" style="color: #6366f1;">contato@ofpplanejador.com</a>.
+              </p>
+              
+              <!-- Footer -->
+              <div style="color: #8898aa; font-size: 14px; line-height: 24px; padding: 30px 40px 0; text-align: center; background: #1f2937; border-radius: 0 0 12px 12px; margin-top: 30px;">
+                <p style="margin: 0; color: #fff;">Prepare-se para a magia! 🏰✨</p>
+                <p style="margin: 10px 0 0 0; color: #9ca3af;">OFP Planejador - Sua viagem para Orlando começa aqui</p>
+              </div>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
+
+    const subject = temporaryPassword 
+      ? `🎉 Seu acesso está liberado! - OFP Planejador`
+      : `✅ Seu acesso ao OFP Planejador foi liberado!`;
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -123,7 +218,7 @@ serve(async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "OFP Planejador <noreply@ofpplanejador.com>",
         to: [data.email],
-        subject: `✅ Seu acesso ao OFP Planejador foi liberado!`,
+        subject,
         html: emailHtml,
       }),
     });
