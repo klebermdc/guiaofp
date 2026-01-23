@@ -569,21 +569,11 @@ const TravelProfile = () => {
                           <>
                             <div className="space-y-2">
                               <Label>E-mail de login do My Disney Experience</Label>
-                              <Input
-                                type="email"
-                                placeholder="email@disney.com"
-                                value={travelProfile.myDisneyEmail}
-                                onChange={(e) => handleFieldChange({ myDisneyEmail: e.target.value })}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Senha do My Disney Experience</Label>
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                value={travelProfile.myDisneyPassword}
-                                onChange={(e) => handleFieldChange({ myDisneyPassword: e.target.value })}
-                              />
+                              {/* Disney email/password fields removed for security - credentials should never be stored */}
+                              <p className="text-sm text-muted-foreground italic">
+                                Por segurança, não armazenamos credenciais do My Disney Experience. 
+                                Configure o app diretamente no seu dispositivo.
+                              </p>
                             </div>
                             <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
                               <Checkbox

@@ -305,8 +305,6 @@ export type Database = {
           is_access_enabled: boolean | null
           is_locked: boolean | null
           last_visit: string | null
-          my_disney_email: string | null
-          my_disney_password: string | null
           park_dates: Json | null
           parks: string[] | null
           physical_restrictions: string | null
@@ -346,8 +344,6 @@ export type Database = {
           is_access_enabled?: boolean | null
           is_locked?: boolean | null
           last_visit?: string | null
-          my_disney_email?: string | null
-          my_disney_password?: string | null
           park_dates?: Json | null
           parks?: string[] | null
           physical_restrictions?: string | null
@@ -387,8 +383,6 @@ export type Database = {
           is_access_enabled?: boolean | null
           is_locked?: boolean | null
           last_visit?: string | null
-          my_disney_email?: string | null
-          my_disney_password?: string | null
           park_dates?: Json | null
           parks?: string[] | null
           physical_restrictions?: string | null
@@ -459,7 +453,114 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_guide_view: {
+        Row: {
+          arrival_date: string | null
+          celebration_type: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          departure_date: string | null
+          email: string | null
+          group_size: number | null
+          group_style: string | null
+          guide_name: string | null
+          has_celebration: boolean | null
+          has_transport: boolean | null
+          hotel: string | null
+          hotel_type: string | null
+          id: string | null
+          is_access_enabled: boolean | null
+          last_visit: string | null
+          park_dates: Json | null
+          parks: string[] | null
+          plan_tier: string | null
+          priority: string[] | null
+          responsible_name: string | null
+          travelers: Json | null
+          updated_at: string | null
+          user_id: string | null
+          visited_before: boolean | null
+          whatsapp: string | null
+        }
+        Insert: {
+          arrival_date?: string | null
+          celebration_type?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          departure_date?: string | null
+          email?: string | null
+          group_size?: number | null
+          group_style?: string | null
+          guide_name?: string | null
+          has_celebration?: boolean | null
+          has_transport?: boolean | null
+          hotel?: string | null
+          hotel_type?: string | null
+          id?: string | null
+          is_access_enabled?: boolean | null
+          last_visit?: string | null
+          park_dates?: Json | null
+          parks?: string[] | null
+          plan_tier?: string | null
+          priority?: string[] | null
+          responsible_name?: string | null
+          travelers?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          visited_before?: boolean | null
+          whatsapp?: string | null
+        }
+        Update: {
+          arrival_date?: string | null
+          celebration_type?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          departure_date?: string | null
+          email?: string | null
+          group_size?: number | null
+          group_style?: string | null
+          guide_name?: string | null
+          has_celebration?: boolean | null
+          has_transport?: boolean | null
+          hotel?: string | null
+          hotel_type?: string | null
+          id?: string | null
+          is_access_enabled?: boolean | null
+          last_visit?: string | null
+          park_dates?: Json | null
+          parks?: string[] | null
+          plan_tier?: string | null
+          priority?: string[] | null
+          responsible_name?: string | null
+          travelers?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+          visited_before?: boolean | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions_guide_view: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
