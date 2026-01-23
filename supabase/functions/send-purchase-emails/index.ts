@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const APP_URL = "https://guiaofp.lovable.app";
-const FROM_EMAIL = "OFP Planejador <noreply@ofpplanejador.com>";
+const FROM_EMAIL = "OFP Planejador <contato@ofpplanejador.com>";
+const REPLY_TO_EMAIL = "contato@ofpplanejador.com";
+const COMPANY_NAME = "OFP Planejador";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +26,28 @@ interface EmailRequest {
   userData: UserData;
   scheduleDelay?: number; // delay in milliseconds
 }
+
+// Generate plain text version from HTML
+const htmlToPlainText = (html: string): string => {
+  return html
+    .replace(/<style[^>]*>.*?<\/style>/gis, '')
+    .replace(/<script[^>]*>.*?<\/script>/gis, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, '$2 ($1)')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+};
 
 // Email Templates
 const getPurchaseConfirmationHtml = (customerName: string, productName: string) => `
@@ -357,12 +381,25 @@ serve(async (req: Request): Promise<Response> => {
         throw new Error(`Unknown email type: ${type}`);
     }
 
-    // Build email payload
+    // Generate plain text version for better deliverability
+    const plainText = htmlToPlainText(emailHtml);
+
+    // Build email payload with anti-spam best practices
     const emailPayload: Record<string, unknown> = {
       from: FROM_EMAIL,
       to: [userData.email],
+      reply_to: REPLY_TO_EMAIL,
       subject,
       html: emailHtml,
+      text: plainText, // Plain text version reduces spam score
+      headers: {
+        "X-Entity-Ref-ID": `${type}-${Date.now()}`, // Unique ID for tracking
+        "List-Unsubscribe": `<mailto:${REPLY_TO_EMAIL}?subject=Unsubscribe>`,
+      },
+      tags: [
+        { name: "type", value: type },
+        { name: "source", value: "ofp-planejador" },
+      ],
     };
 
     // Add scheduling if delay is provided (Resend scheduled emails)
