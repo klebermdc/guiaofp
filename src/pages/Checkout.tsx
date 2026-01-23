@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
@@ -16,7 +15,10 @@ import {
   Lock,
   QrCode,
   Barcode,
-  Loader2
+  Loader2,
+  Copy,
+  ExternalLink,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -69,6 +71,15 @@ const plans: Record<string, Plan> = {
 
 type PaymentMethod = 'pix' | 'boleto' | 'credit_card';
 
+interface PaymentResult {
+  transactionId: string;
+  method: PaymentMethod;
+  pixQrCode?: string;
+  pixPayload?: string;
+  boletoUrl?: string;
+  invoiceUrl?: string;
+}
+
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
@@ -77,6 +88,8 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isProcessing, setIsProcessing] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [copied, setCopied] = useState(false);
   
   // Form fields
   const [formData, setFormData] = useState({
@@ -140,6 +153,17 @@ export default function Checkout() {
     return numbers.replace(/(\d{2})(\d)/, '$1/$2').slice(0, 5);
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('Código copiado!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Erro ao copiar');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -159,22 +183,206 @@ export default function Checkout() {
     setIsProcessing(true);
 
     try {
-      // TODO: Integrate with payment gateway
-      // This would call an edge function that processes the payment
-      // using the configured gateway (Stripe, Asaas, MercadoPago, etc.)
+      // Calculate amount in cents
+      const amountCents = plan.price * 100 + plan.priceCents;
       
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulated delay
-      
-      toast.success('Pagamento processado com sucesso!');
-      navigate('/login?payment=success');
-    } catch (error) {
-      toast.error('Erro ao processar pagamento. Tente novamente.');
+      // Map payment method to Asaas format
+      const billingTypeMap: Record<PaymentMethod, string> = {
+        pix: 'PIX',
+        boleto: 'BOLETO',
+        credit_card: 'CREDIT_CARD',
+      };
+
+      // Prepare credit card data if applicable
+      let creditCardData = undefined;
+      if (paymentMethod === 'credit_card') {
+        const [expiryMonth, expiryYear] = formData.cardExpiry.split('/');
+        creditCardData = {
+          holderName: formData.cardName,
+          number: formData.cardNumber.replace(/\s/g, ''),
+          expiryMonth,
+          expiryYear: `20${expiryYear}`,
+          ccv: formData.cardCvv,
+        };
+      }
+
+      const response = await supabase.functions.invoke('create-asaas-payment', {
+        body: {
+          customerName: formData.name,
+          email: formData.email,
+          cpfCnpj: formData.cpf.replace(/\D/g, ''),
+          planKey: plan.id,
+          amountCents,
+          billingType: billingTypeMap[paymentMethod],
+          creditCard: creditCardData,
+          creditCardHolderInfo: creditCardData ? {
+            name: formData.cardName,
+            email: formData.email,
+            cpfCnpj: formData.cpf.replace(/\D/g, ''),
+            postalCode: '00000000', // TODO: Add address fields if needed
+            addressNumber: '0',
+            phone: '',
+          } : undefined,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao processar pagamento');
+      }
+
+      const data = response.data;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Handle successful payment creation
+      if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
+        toast.success('Pagamento aprovado! Redirecionando...');
+        navigate('/login?payment=success');
+      } else {
+        // Show PIX or Boleto payment info
+        setPaymentResult({
+          transactionId: data.transactionId,
+          method: paymentMethod,
+          pixQrCode: data.pixQrCode,
+          pixPayload: data.pixPayload,
+          boletoUrl: data.boletoUrl,
+          invoiceUrl: data.invoiceUrl,
+        });
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const PlanIcon = plan.icon;
+
+  // Show payment result screen for PIX/Boleto
+  if (paymentResult) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2">
+              <img src={logo} alt="Orlando Fast Pass" className="h-10" />
+            </Link>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="w-4 h-4 text-success" />
+              Compra segura
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <Card className="overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-primary to-accent" />
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-success" />
+              </div>
+              <CardTitle className="text-2xl">Pedido criado!</CardTitle>
+              <CardDescription>
+                {paymentResult.method === 'pix' 
+                  ? 'Escaneie o QR Code ou copie o código PIX para pagar'
+                  : 'Clique no botão abaixo para acessar o boleto'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* PIX Payment */}
+              {paymentResult.method === 'pix' && paymentResult.pixQrCode && (
+                <div className="space-y-4">
+                  <div className="bg-white p-4 rounded-xl mx-auto w-fit">
+                    <img 
+                      src={`data:image/png;base64,${paymentResult.pixQrCode}`} 
+                      alt="QR Code PIX" 
+                      className="w-48 h-48"
+                    />
+                  </div>
+                  
+                  {paymentResult.pixPayload && (
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Código PIX Copia e Cola:</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={paymentResult.pixPayload} 
+                          readOnly 
+                          className="font-mono text-xs"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => copyToClipboard(paymentResult.pixPayload!)}
+                        >
+                          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <p className="text-sm text-amber-600">
+                      ⏱️ O código PIX expira em 30 minutos. Após o pagamento, seu acesso será liberado automaticamente.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Boleto Payment */}
+              {paymentResult.method === 'boleto' && (
+                <div className="space-y-4">
+                  <div className="p-6 rounded-xl bg-muted/50 text-center">
+                    <Barcode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      O boleto foi gerado e está pronto para pagamento
+                    </p>
+                    
+                    {paymentResult.boletoUrl && (
+                      <a href={paymentResult.boletoUrl} target="_blank" rel="noopener noreferrer">
+                        <Button className="w-full gradient-primary">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Abrir Boleto
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <p className="text-sm text-amber-600">
+                      📅 O boleto vence em 3 dias. Após a compensação (até 3 dias úteis), seu acesso será liberado automaticamente.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link to="/" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar ao início
+                  </Button>
+                </Link>
+                {paymentResult.invoiceUrl && (
+                  <a href={paymentResult.invoiceUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                    <Button variant="secondary" className="w-full">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Ver fatura
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -451,16 +659,22 @@ export default function Checkout() {
                     <span className="font-medium text-foreground">Total</span>
                     <div className="text-right">
                       <span className="text-2xl font-bold text-foreground">R${plan.price}</span>
-                      <span className="text-muted-foreground">,{plan.priceCents.toString().padStart(2, '0')}</span>
+                      <span className="text-lg text-foreground">,{plan.priceCents.toString().padStart(2, '0')}</span>
                     </div>
                   </div>
                 </div>
 
-                {plan.gradient && (
-                  <Badge className="w-full justify-center py-2 bg-secondary/10 text-secondary border-secondary/20">
-                    Mais vendido
-                  </Badge>
-                )}
+                {/* Trust Badges */}
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Shield className="w-4 h-4 text-success" />
+                    Pagamento 100% seguro via Asaas
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Lock className="w-4 h-4" />
+                    Dados criptografados
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
