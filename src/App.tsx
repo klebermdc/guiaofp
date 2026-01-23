@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import MultiPass from "./pages/MultiPass";
 import RemoteGuidance from "./pages/RemoteGuidance";
 import Checklists from "./pages/Checklists";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => {
                 <Route path="/multipass" element={<MultiPass />} />
                 <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
                 <Route path="/checklists" element={<Checklists />} />
+                <Route path="/checkout/:planId" element={<Checkout />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/cliente/:id" element={<ClientDetails />} />
                 <Route path="*" element={<NotFound />} />
