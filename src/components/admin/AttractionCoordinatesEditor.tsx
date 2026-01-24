@@ -125,6 +125,16 @@ export function AttractionCoordinatesEditor() {
     }
   }, [selectedAttraction]);
 
+  const handleMarkerDragEnd = useCallback((attraction: AttractionItem, e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      setSelectedAttraction(attraction);
+      setPendingCoords({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
+      });
+    }
+  }, []);
+
   const handleSaveCoords = () => {
     if (!selectedAttraction || !pendingCoords) return;
     
@@ -326,7 +336,9 @@ export function AttractionCoordinatesEditor() {
                     position={{ lat: Number(attraction.latitude), lng: Number(attraction.longitude) }}
                     icon={getMarkerIcon(true, isSelected, false)}
                     title={attraction.title}
+                    draggable={true}
                     onClick={() => handleSelectAttraction(attraction)}
+                    onDragEnd={(e) => handleMarkerDragEnd(attraction, e)}
                   />
                 );
               })}
