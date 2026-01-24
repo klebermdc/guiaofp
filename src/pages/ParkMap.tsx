@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { AttractionDetailSheet } from '@/components/map/AttractionDetailSheet';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
@@ -100,6 +101,7 @@ export default function ParkMap() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
+  const [showAttractionDetail, setShowAttractionDetail] = useState(false);
 
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
@@ -532,6 +534,7 @@ export default function ParkMap() {
                         className="py-3 flex items-center justify-between gap-3 active:bg-muted/50"
                         onClick={() => {
                           setSelectedAttraction(attraction);
+                          setShowAttractionDetail(true);
                           handleNavigateToAttraction(attraction.position);
                           setShowAttractionsList(false);
                         }}
@@ -610,68 +613,12 @@ export default function ParkMap() {
                 position={attraction.position}
                 icon={getMarkerIcon(attraction)}
                 title={`${attraction.name}${attraction.waitTime !== undefined ? ` - ${attraction.waitTime} min` : ''}`}
-                onClick={() => setSelectedAttraction(attraction)}
+                onClick={() => {
+                  setSelectedAttraction(attraction);
+                  setShowAttractionDetail(true);
+                }}
               />
             ))}
-
-            {/* InfoWindow for selected attraction */}
-            {selectedAttraction && (
-              <InfoWindow
-                position={selectedAttraction.position}
-                onCloseClick={() => setSelectedAttraction(null)}
-                options={{ maxWidth: 280 }}
-              >
-                <div className="p-1">
-                  <h3 className="font-bold text-gray-900 mb-2 text-sm leading-tight">{selectedAttraction.name}</h3>
-                  
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    {selectedAttraction.waitTime !== undefined ? (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                        selectedAttraction.waitTime > 60 ? 'bg-red-500 text-white' :
-                        selectedAttraction.waitTime > 30 ? 'bg-amber-500 text-white' :
-                        'bg-green-500 text-white'
-                      }`}>
-                        {selectedAttraction.waitTime} min
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-gray-200 text-gray-600">
-                        Sem dados
-                      </span>
-                    )}
-                    
-                    {selectedAttraction.isOpen !== undefined && (
-                      <span className={`text-xs font-medium ${selectedAttraction.isOpen ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedAttraction.isOpen ? '● Aberto' : '● Fechado'}
-                      </span>
-                    )}
-                  </div>
-
-                  {selectedAttraction.minHeight && (
-                    <p className="text-xs text-gray-500 mb-2">
-                      Altura: {selectedAttraction.minHeight}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
-                    disabled={isCalculatingRoute}
-                    className="w-full bg-blue-600 text-white text-sm py-2.5 px-3 rounded-lg font-bold disabled:opacity-50 flex items-center justify-center gap-2 active:bg-blue-700"
-                  >
-                    {isCalculatingRoute ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Calculando...
-                      </>
-                    ) : (
-                      <>
-                        <Navigation className="w-4 h-4" />
-                        Navegar até aqui
-                      </>
-                    )}
-                  </button>
-                </div>
-              </InfoWindow>
-            )}
 
             {/* Directions renderer */}
             {directions && (
@@ -803,6 +750,22 @@ export default function ParkMap() {
           </Card>
         </div>
       )}
+
+      {/* Attraction Detail Sheet */}
+      <AttractionDetailSheet
+        attraction={selectedAttraction}
+        parkName={selectedPark.name}
+        isOpen={showAttractionDetail}
+        onClose={() => {
+          setShowAttractionDetail(false);
+          setSelectedAttraction(null);
+        }}
+        onNavigate={(pos, name) => {
+          setShowAttractionDetail(false);
+          handleRouteToAttraction(pos, name);
+        }}
+        isCalculatingRoute={isCalculatingRoute}
+      />
     </div>
   );
 }
