@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
@@ -107,6 +108,75 @@ export default function ParkMap() {
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
+  const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Play arrival notification sound using Web Audio API
+  const playArrivalSound = useCallback(() => {
+    try {
+      // Create or reuse AudioContext
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      
+      // Resume context if suspended (required for some browsers)
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+      
+      // Create a pleasant chime sequence (3 ascending notes)
+      const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 (major chord)
+      
+      frequencies.forEach((freq, index) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(freq, now + index * 0.15);
+        
+        // Envelope: quick attack, sustain, then fade
+        gainNode.gain.setValueAtTime(0, now + index * 0.15);
+        gainNode.gain.linearRampToValueAtTime(0.3, now + index * 0.15 + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + index * 0.15 + 0.4);
+        
+        oscillator.start(now + index * 0.15);
+        oscillator.stop(now + index * 0.15 + 0.5);
+      });
+    } catch (error) {
+      console.log('Could not play arrival sound:', error);
+    }
+  }, []);
+
+  // Check proximity to destination and play sound when within 50 meters
+  useEffect(() => {
+    if (!isNavigating || !userPosition || !routeInfo?.destination || hasPlayedArrivalSound) {
+      return;
+    }
+
+    const distanceToDestination = calculateStraightLineDistance(userPosition, routeInfo.destination);
+    
+    if (distanceToDestination <= 50) {
+      playArrivalSound();
+      setHasPlayedArrivalSound(true);
+      toast.success('🎉 Você chegou ao destino!', {
+        description: routeInfo.destinationName,
+        duration: 5000,
+      });
+    }
+  }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
+
+  // Reset arrival sound flag when starting a new navigation
+  useEffect(() => {
+    if (!isNavigating) {
+      setHasPlayedArrivalSound(false);
+    }
+  }, [isNavigating]);
 
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
