@@ -146,10 +146,13 @@ export default function ParkMap() {
       if (error) {
         console.error('Error fetching wait times:', error);
         setWaitTimes([]);
-      } else if (data?.success && data?.data) {
-        setWaitTimes(data.data);
-        setDataSource(data.source || 'unknown');
+      } else if (Array.isArray((data as any)?.data)) {
+        // Some deployments return { data: Ride[] } without a success flag.
+        setWaitTimes((data as any).data);
+        setDataSource((data as any)?.source || 'unknown');
         setLastWaitTimeUpdate(new Date());
+      } else {
+        setWaitTimes([]);
       }
     } catch (err) {
       console.error('Failed to fetch wait times:', err);
