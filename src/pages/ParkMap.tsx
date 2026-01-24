@@ -1107,15 +1107,20 @@ export default function ParkMap() {
             {isNavPanelExpanded && routeSteps.length === 0 && routeInfo?.destination && userPosition && (
               <CardContent className="py-4 pb-6">
                 <div className="flex flex-col items-center gap-3">
-                  {/* Large centered compass arrow */}
+                  {/* Large centered compass arrow with pulse animation */}
                   <div className="relative w-24 h-24">
+                    {/* Outer pulse ring */}
+                    <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    {/* Static outer ring */}
                     <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
+                    {/* Inner glow */}
                     <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+                    {/* Arrow with rotation */}
                     <div 
                       className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
                       style={{ transform: `rotate(${bearingToDestination}deg)` }}
                     >
-                      <ArrowUp className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={3} />
+                      <ArrowUp className="w-12 h-12 text-white drop-shadow-lg animate-pulse" strokeWidth={3} />
                     </div>
                     {/* Cardinal indicators */}
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/70">N</span>
