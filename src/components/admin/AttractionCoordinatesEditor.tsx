@@ -127,13 +127,17 @@ export function AttractionCoordinatesEditor() {
 
   const handleMarkerDragEnd = useCallback((attraction: AttractionItem, e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
-      setSelectedAttraction(attraction);
-      setPendingCoords({
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng(),
+      const newLat = e.latLng.lat();
+      const newLng = e.latLng.lng();
+      
+      // Auto-save on drag
+      saveMutation.mutate({
+        id: attraction.id,
+        lat: newLat,
+        lng: newLng,
       });
     }
-  }, []);
+  }, [saveMutation]);
 
   const handleSaveCoords = () => {
     if (!selectedAttraction || !pendingCoords) return;
