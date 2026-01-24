@@ -178,7 +178,10 @@ export function AttractionPopup({
         </div>
 
         {/* Popup Card */}
-        <div className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[280px] max-w-[90vw]">
+        <div
+          data-attraction-popup="true"
+          className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[280px] max-w-[90vw]"
+        >
           {/* Header */}
           <div className="p-3 pb-2">
             <div className="flex items-start justify-between gap-2">
