@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { OverlayView } from '@react-google-maps/api';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,12 +12,9 @@ import {
   X,
   Ruler,
   Flame,
-  Ticket,
   Play,
   Heart,
   Check,
-  Clock,
-  ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 
@@ -166,9 +164,13 @@ export function AttractionPopup({
       position={attraction.position}
       mapPaneName={OverlayView.FLOAT_PANE}
     >
-      <div 
-        className="relative animate-scale-in"
+      <motion.div 
+        className="relative"
         style={{ transform: 'translate(-50%, -100%)', marginTop: '-20px' }}
+        initial={{ opacity: 0, scale: 0.85, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.85, y: 10 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
       >
         {/* Arrow pointer */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
@@ -315,7 +317,7 @@ export function AttractionPopup({
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </OverlayView>
   );
 }
