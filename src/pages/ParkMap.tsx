@@ -94,16 +94,20 @@ interface RouteInfo {
 
 export default function ParkMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
   const [dataSource, setDataSource] = useState<string>('');
   const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
   const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
   const [userPosition, setUserPosition] = useState<LatLng | null>(null);
+  const [userHeading, setUserHeading] = useState<number | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [routeSteps, setRouteSteps] = useState<google.maps.DirectionsStep[]>([]);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -227,6 +231,14 @@ export default function ParkMap() {
             duration: leg.duration?.text || '',
             destinationName,
           });
+          setRouteSteps(leg.steps || []);
+          setIsNavigating(true);
+          
+          // Center on user and zoom to show route
+          if (mapRef.current && userPosition) {
+            mapRef.current.panTo(userPosition);
+            mapRef.current.setZoom(19);
+          }
         } else {
           setLocationError('Não foi possível calcular a rota. Tente novamente.');
         }
@@ -234,30 +246,42 @@ export default function ParkMap() {
     );
   }, [userPosition]);
 
-  const clearRoute = () => {
+  const clearRoute = useCallback(() => {
     setDirections(null);
     setRouteInfo(null);
-  };
+    setRouteSteps([]);
+    setIsNavigating(false);
+  }, []);
 
-  const handleGetLocation = () => {
-    setIsLoadingLocation(true);
-    setLocationError(null);
-
+  // Start continuous location tracking for navigation
+  const startLocationTracking = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationError('Geolocalização não suportada pelo navegador');
-      setIsLoadingLocation(false);
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    // Clear any existing watch
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+
+    setIsLoadingLocation(true);
+    setLocationError(null);
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+        const pos: LatLng = { 
+          lat: position.coords.latitude, 
+          lng: position.coords.longitude 
+        };
         setUserPosition(pos);
-        if (mapRef.current) {
-          mapRef.current.panTo(pos);
-          mapRef.current.setZoom(18);
-        }
+        setUserHeading(position.coords.heading);
         setIsLoadingLocation(false);
+        
+        // Keep map centered on user during navigation
+        if (isNavigating && mapRef.current) {
+          mapRef.current.panTo(pos);
+        }
       },
       (error) => {
         switch (error.code) {
@@ -275,6 +299,46 @@ export default function ParkMap() {
         }
         setIsLoadingLocation(false);
       },
+      { 
+        enableHighAccuracy: true, 
+        timeout: 10000, 
+        maximumAge: 1000 // Update more frequently during navigation
+      }
+    );
+  }, [isNavigating]);
+
+  // Stop location tracking
+  const stopLocationTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopLocationTracking();
+    };
+  }, [stopLocationTracking]);
+
+  const handleGetLocation = () => {
+    startLocationTracking();
+    
+    // Initial position fetch to center map
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setUserPosition(pos);
+        if (mapRef.current) {
+          mapRef.current.panTo(pos);
+          mapRef.current.setZoom(18);
+        }
+        setIsLoadingLocation(false);
+      },
+      () => {
+        setIsLoadingLocation(false);
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   };
@@ -288,21 +352,34 @@ export default function ParkMap() {
 
   const handleRouteToAttraction = (position: LatLng, name: string) => {
     if (!userPosition) {
-      handleGetLocation();
-      setTimeout(() => {
+      // Start tracking and wait for position
+      startLocationTracking();
+      
+      // Store destination for when position is available
+      const checkPosition = setInterval(() => {
         if (userPosition) {
+          clearInterval(checkPosition);
           calculateRoute(position, name);
         }
-      }, 2000);
+      }, 500);
+      
+      // Timeout after 10 seconds
+      setTimeout(() => clearInterval(checkPosition), 10000);
     } else {
       calculateRoute(position, name);
     }
+  };
+
+  const handleStopNavigation = () => {
+    clearRoute();
+    // Keep tracking location but stop navigation mode
   };
 
   const handleParkChange = (parkId: string) => {
     const park = PARKS.find(p => p.id === parkId);
     if (park) {
       setSelectedPark(park);
+      clearRoute();
     }
   };
 
@@ -342,12 +419,13 @@ export default function ParkMap() {
       return undefined;
     }
     return {
-      path: google.maps.SymbolPath.CIRCLE,
+      path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#3B82F6',
       fillOpacity: 1,
       strokeColor: '#FFFFFF',
-      strokeWeight: 3,
-      scale: 12,
+      strokeWeight: 2,
+      scale: 7,
+      rotation: userHeading || 0,
     };
   };
 
@@ -440,8 +518,68 @@ export default function ParkMap() {
           </div>
         )}
 
-        {/* Route Info Card */}
-        {routeInfo && (
+        {/* Navigation Panel - GPS Mode */}
+        {isNavigating && routeInfo && (
+          <Card className="border-2 border-blue-500 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-xl">
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Navigation className="w-5 h-5 animate-pulse" />
+                  Navegando para {routeInfo.destinationName}
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleStopNavigation}
+                  className="text-white hover:bg-white/20"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-3">
+              <div className="flex items-center gap-6 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">🚶</span>
+                  <div>
+                    <p className="text-xs text-blue-200">Distância</p>
+                    <p className="font-bold text-2xl">{routeInfo.distance}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">⏱️</span>
+                  <div>
+                    <p className="text-xs text-blue-200">Tempo</p>
+                    <p className="font-bold text-2xl">{routeInfo.duration}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Turn-by-turn instructions */}
+              {routeSteps.length > 0 && (
+                <div className="bg-white/10 rounded-lg p-3 max-h-32 overflow-auto">
+                  <p className="text-xs text-blue-200 mb-2">Próximos passos:</p>
+                  <div className="space-y-2">
+                    {routeSteps.slice(0, 3).map((step, index) => (
+                      <div key={index} className="flex items-start gap-2 text-sm">
+                        <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center text-xs shrink-0">
+                          {index + 1}
+                        </span>
+                        <span 
+                          className="text-white/90"
+                          dangerouslySetInnerHTML={{ __html: step.instructions }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Route Info Card - Non-navigation mode */}
+        {routeInfo && !isNavigating && (
           <Card className="border-2 border-blue-400 bg-blue-50 dark:bg-blue-950/20">
             <CardHeader className="py-3">
               <CardTitle className="text-base flex items-center justify-between">
@@ -551,31 +689,21 @@ export default function ParkMap() {
                         </p>
                       )}
 
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
-                          disabled={isCalculatingRoute}
-                          className="w-full bg-blue-500 text-white text-sm py-2 px-3 rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                          {isCalculatingRoute ? (
-                            <>
-                              <span className="animate-spin">⏳</span> Calculando...
-                            </>
-                          ) : (
-                            <>🚶 Rota a Pé</>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            const { lat, lng } = selectedAttraction.position;
-                            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-                            window.open(url, '_blank');
-                          }}
-                          className="w-full bg-green-600 text-white text-sm py-2 px-3 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
-                        >
-                          📍 Abrir no Google Maps
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
+                        disabled={isCalculatingRoute}
+                        className="w-full bg-blue-600 text-white text-sm py-3 px-4 rounded-lg hover:bg-blue-700 font-bold disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        {isCalculatingRoute ? (
+                          <>
+                            <span className="animate-spin">⏳</span> Calculando rota...
+                          </>
+                        ) : (
+                          <>
+                            <span>🧭</span> Iniciar Navegação GPS
+                          </>
+                        )}
+                      </button>
                     </div>
                   </InfoWindow>
                 )}
