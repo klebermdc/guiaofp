@@ -256,6 +256,56 @@ export default function ParkMap() {
     ? calculateBearing(userPosition, routeInfo.destination)
     : 0;
 
+  // Translate navigation instructions from English to Portuguese
+  const translateNavigationStep = (instruction: string): string => {
+    const translations: [RegExp, string][] = [
+      // Directions
+      [/\bHead\b/gi, 'Siga'],
+      [/\bnorth\b/gi, 'norte'],
+      [/\bsouth\b/gi, 'sul'],
+      [/\beast\b/gi, 'leste'],
+      [/\bwest\b/gi, 'oeste'],
+      [/\bnortheast\b/gi, 'nordeste'],
+      [/\bnorthwest\b/gi, 'noroeste'],
+      [/\bsoutheast\b/gi, 'sudeste'],
+      [/\bsouthwest\b/gi, 'sudoeste'],
+      // Actions
+      [/\bTurn right\b/gi, 'Vire à direita'],
+      [/\bTurn left\b/gi, 'Vire à esquerda'],
+      [/\bContinue\b/gi, 'Continue'],
+      [/\bKeep right\b/gi, 'Mantenha-se à direita'],
+      [/\bKeep left\b/gi, 'Mantenha-se à esquerda'],
+      [/\bSlightly right\b/gi, 'Levemente à direita'],
+      [/\bSlightly left\b/gi, 'Levemente à esquerda'],
+      [/\bSharp right\b/gi, 'Curva acentuada à direita'],
+      [/\bSharp left\b/gi, 'Curva acentuada à esquerda'],
+      [/\bMake a U-turn\b/gi, 'Faça retorno'],
+      // Prepositions
+      [/\bon\b/gi, 'na'],
+      [/\bonto\b/gi, 'para'],
+      [/\btoward\b/gi, 'em direção a'],
+      [/\btowards\b/gi, 'em direção a'],
+      [/\bafter\b/gi, 'após'],
+      [/\bPass by\b/gi, 'Passe por'],
+      [/\bat\b/gi, 'em'],
+      [/\bthe\b/gi, ''],
+      // Distance
+      [/\bin (\d+) ft\b/gi, 'em $1 pés'],
+      [/\bin (\d+) m\b/gi, 'em $1 m'],
+      [/\bft\b/gi, 'pés'],
+      // Location hints
+      [/\(on the right\)/gi, '(à direita)'],
+      [/\(on the left\)/gi, '(à esquerda)'],
+    ];
+
+    let translated = instruction;
+    for (const [pattern, replacement] of translations) {
+      translated = translated.replace(pattern, replacement);
+    }
+    // Clean up double spaces
+    return translated.replace(/\s+/g, ' ').trim();
+  };
+
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
     if (!userPosition) {
       setLocationError('Ative sua localização primeiro para calcular a rota');
@@ -998,7 +1048,7 @@ export default function ParkMap() {
         )}
       </div>
 
-      {/* Navigation Panel - Collapsible bottom sheet style */}
+      {/* Navigation Panel - GPS Style */}
       {isNavigating && routeInfo && (
         <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom ${isNavPanelExpanded ? 'h-auto' : 'h-16'}`}>
           <Card className="rounded-t-xl rounded-b-none border-t-2 border-blue-500 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl">
@@ -1034,7 +1084,7 @@ export default function ParkMap() {
             
             {isNavPanelExpanded && routeSteps.length > 0 && (
               <CardContent className="py-2 pb-4">
-                <div className="bg-white/10 rounded-lg p-2 max-h-24 overflow-auto">
+                <div className="bg-white/10 rounded-lg p-2 max-h-28 overflow-auto">
                   <p className="text-xs text-blue-200 mb-1">Próximos passos:</p>
                   <div className="space-y-1.5">
                     {routeSteps.slice(0, 3).map((step, index) => (
@@ -1044,7 +1094,7 @@ export default function ParkMap() {
                         </span>
                         <span 
                           className="text-white/90 leading-tight"
-                          dangerouslySetInnerHTML={{ __html: step.instructions }}
+                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(step.instructions) }}
                         />
                       </div>
                     ))}
@@ -1053,35 +1103,39 @@ export default function ParkMap() {
               </CardContent>
             )}
 
-            {/* Fallback: Direction indicator when no detailed route */}
+            {/* Fallback: Centered compass when no detailed route */}
             {isNavPanelExpanded && routeSteps.length === 0 && routeInfo?.destination && userPosition && (
-              <CardContent className="py-3 pb-5">
-                <div className="flex items-center gap-4">
-                  {/* Large compass arrow pointing to destination */}
-                  <div className="relative w-20 h-20 shrink-0">
-                    <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/30" />
-                    <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+              <CardContent className="py-4 pb-6">
+                <div className="flex flex-col items-center gap-3">
+                  {/* Large centered compass arrow */}
+                  <div className="relative w-24 h-24">
+                    <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
+                    <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
                     <div 
                       className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
                       style={{ transform: `rotate(${bearingToDestination}deg)` }}
                     >
-                      <div className="flex flex-col items-center">
-                        <ArrowUp className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
-                      </div>
+                      <ArrowUp className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={3} />
                     </div>
-                    {/* N indicator */}
-                    <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/60">N</span>
+                    {/* Cardinal indicators */}
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/70">N</span>
+                    <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-bold text-white/50">L</span>
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/50">S</span>
+                    <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-bold text-white/50">O</span>
                   </div>
 
-                  {/* Direction info */}
-                  <div className="flex-1">
-                    <p className="text-xs text-blue-200 mb-1">Direção estimada</p>
-                    <p className="text-sm text-white/90">
-                      Siga na direção indicada pela seta. A rota detalhada não está disponível, mas você está a aproximadamente <strong>{routeInfo.distance}</strong> do destino.
+                  {/* Direction info - centered text */}
+                  <div className="text-center">
+                    <p className="text-sm text-white/90 mb-1">
+                      Siga na direção da seta
                     </p>
-                    <p className="text-xs text-blue-200 mt-2 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Tempo estimado: {routeInfo.duration}
+                    <p className="text-xs text-blue-200 flex items-center justify-center gap-2">
+                      <span>Distância: <strong className="text-white">{routeInfo.distance}</strong></span>
+                      <span className="text-blue-300">•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <strong className="text-white">{routeInfo.duration}</strong>
+                      </span>
                     </p>
                   </div>
                 </div>
