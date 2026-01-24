@@ -225,7 +225,7 @@ export function AttractionPopup({
 
             {/* Description */}
             {contentItem?.attraction_description && (
-              <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+              <p className="mt-2 text-xs text-muted-foreground">
                 {contentItem.attraction_description}
               </p>
             )}
