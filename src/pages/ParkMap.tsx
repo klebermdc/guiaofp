@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
+import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -617,18 +618,20 @@ export default function ParkMap() {
             ))}
 
             {/* Attraction Popup over marker */}
-            {selectedAttraction && !isNavigating && (
-              <AttractionPopup
-                attraction={selectedAttraction}
-                parkName={selectedPark.name}
-                onClose={() => setSelectedAttraction(null)}
-                onNavigate={(pos, name) => {
-                  setSelectedAttraction(null);
-                  handleRouteToAttraction(pos, name);
-                }}
-                isCalculatingRoute={isCalculatingRoute}
-              />
-            )}
+            <AnimatePresence>
+              {selectedAttraction && !isNavigating && (
+                <AttractionPopup
+                  attraction={selectedAttraction}
+                  parkName={selectedPark.name}
+                  onClose={() => setSelectedAttraction(null)}
+                  onNavigate={(pos, name) => {
+                    setSelectedAttraction(null);
+                    handleRouteToAttraction(pos, name);
+                  }}
+                  isCalculatingRoute={isCalculatingRoute}
+                />
+              )}
+            </AnimatePresence>
 
             {/* Directions renderer */}
             {directions && (
