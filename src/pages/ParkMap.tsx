@@ -201,6 +201,42 @@ export default function ParkMap() {
     }
   }, [selectedPark, isMapLoaded]);
 
+  // Calculate straight-line distance between two points (Haversine formula)
+  const calculateStraightLineDistance = (from: LatLng, to: LatLng): number => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = (from.lat * Math.PI) / 180;
+    const φ2 = (to.lat * Math.PI) / 180;
+    const Δφ = ((to.lat - from.lat) * Math.PI) / 180;
+    const Δλ = ((to.lng - from.lng) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
+  };
+
+  // Format distance for display
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) {
+      return `${Math.round(meters)} m`;
+    }
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  // Estimate walking time (average walking speed ~5 km/h = 83.3 m/min)
+  const estimateWalkingTime = (meters: number): string => {
+    const minutes = Math.round(meters / 83.3);
+    if (minutes < 1) return '1 min';
+    if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
+    }
+    return `${minutes} min`;
+  };
+
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
     if (!userPosition) {
       setLocationError('Ative sua localização primeiro para calcular a rota');
@@ -209,6 +245,7 @@ export default function ParkMap() {
 
     setIsCalculatingRoute(true);
     setSelectedAttraction(null);
+    setLocationError(null);
 
     const directionsService = new google.maps.DirectionsService();
     
@@ -239,7 +276,31 @@ export default function ParkMap() {
             mapRef.current.setZoom(19);
           }
         } else {
-          setLocationError('Não foi possível calcular a rota. Tente novamente.');
+          // Fallback: Calculate straight-line distance when Directions API fails
+          console.log('Directions API failed with status:', status);
+          
+          const straightLineDistance = calculateStraightLineDistance(userPosition, destination);
+          // Walking routes are typically 1.3x longer than straight-line distance
+          const estimatedWalkingDistance = straightLineDistance * 1.3;
+          
+          setDirections(null);
+          setRouteInfo({
+            distance: `~${formatDistance(estimatedWalkingDistance)}`,
+            duration: `~${estimateWalkingTime(estimatedWalkingDistance)}`,
+            destinationName,
+          });
+          setRouteSteps([]);
+          setIsNavigating(true);
+          setIsNavPanelExpanded(true);
+          
+          // Pan to destination to help user navigate
+          if (mapRef.current) {
+            // Fit both points in view
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(userPosition);
+            bounds.extend(destination);
+            mapRef.current.fitBounds(bounds, { top: 100, bottom: 200, left: 50, right: 50 });
+          }
         }
       }
     );
