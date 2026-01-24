@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { VideoModal } from './VideoModal';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Navigation,
   Loader2,
@@ -57,10 +58,12 @@ export function AttractionPopup({
   isCalculatingRoute,
 }: AttractionPopupProps) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [contentItem, setContentItem] = useState<ContentItem | null>(null);
   const [isInPreferences, setIsInPreferences] = useState(false);
   const [savingPreference, setSavingPreference] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showInlineVideo, setShowInlineVideo] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -234,63 +237,91 @@ export function AttractionPopup({
             )}
           </div>
 
-          {/* Video Section with Thumbnail */}
+          {/* Video Section */}
           {contentItem?.file_url && (
             <div className="px-2 pb-2">
-              <div
-                role="button"
-                tabIndex={0}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowVideoModal(true);
-                }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowVideoModal(true);
-                }}
-                className="w-full relative overflow-hidden rounded-xl group cursor-pointer touch-manipulation"
-              >
-                {/* Thumbnail with gradient overlay */}
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20">
-                  <img
-                    src={contentItem.thumbnail_url || getYoutubeThumbnail(contentItem.file_url) || ''}
-                    alt={attraction.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 group-active:scale-105"
-                    onError={(e) => {
-                      e.currentTarget.src = getYoutubeThumbnail(contentItem.file_url!) || '';
-                    }}
-                  />
+              {/* Desktop: Inline video player */}
+              {!isMobile && showInlineVideo ? (
+                <div className="aspect-video rounded-xl overflow-hidden bg-black">
+                  {contentItem.file_url.includes('youtube') || contentItem.file_url.includes('youtu.be') ? (
+                    <iframe
+                      src={`${getYoutubeEmbedUrl(contentItem.file_url)}?autoplay=1&rel=0`}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  ) : (
+                    <video
+                      src={contentItem.file_url}
+                      controls
+                      autoPlay
+                      className="w-full h-full"
+                    />
+                  )}
                 </div>
-                
-                {/* Animated play overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
-                  <motion.div 
-                    className="w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lg"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={{ 
-                      boxShadow: ['0 0 0 0 rgba(255,255,255,0.4)', '0 0 0 12px rgba(255,255,255,0)', '0 0 0 0 rgba(255,255,255,0.4)']
-                    }}
-                    transition={{ 
-                      boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-                    }}
-                  >
-                    <Play className="w-7 h-7 text-primary-foreground ml-1" fill="currentColor" />
-                  </motion.div>
-                </div>
-                
-                {/* Label with icon */}
-                <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-5 h-5 bg-red-600 rounded flex items-center justify-center">
-                      <Play className="w-3 h-3 text-white" fill="currentColor" />
+              ) : (
+                /* Thumbnail - Desktop: inline, Mobile: modal */
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onTouchEnd={(e) => {
+                    if (isMobile) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowVideoModal(true);
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (isMobile) {
+                      setShowVideoModal(true);
+                    } else {
+                      setShowInlineVideo(true);
+                    }
+                  }}
+                  className="w-full relative overflow-hidden rounded-xl group cursor-pointer touch-manipulation"
+                >
+                  {/* Thumbnail with gradient overlay */}
+                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20">
+                    <img
+                      src={contentItem.thumbnail_url || getYoutubeThumbnail(contentItem.file_url) || ''}
+                      alt={attraction.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 group-active:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.src = getYoutubeThumbnail(contentItem.file_url!) || '';
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Animated play overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
+                    <motion.div 
+                      className="w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      animate={{ 
+                        boxShadow: ['0 0 0 0 rgba(255,255,255,0.4)', '0 0 0 12px rgba(255,255,255,0)', '0 0 0 0 rgba(255,255,255,0.4)']
+                      }}
+                      transition={{ 
+                        boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                      }}
+                    >
+                      <Play className="w-7 h-7 text-primary-foreground ml-1" fill="currentColor" />
+                    </motion.div>
+                  </div>
+                  
+                  {/* Label with icon */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 bg-red-600 rounded flex items-center justify-center">
+                        <Play className="w-3 h-3 text-white" fill="currentColor" />
+                      </div>
+                      <span className="text-white text-xs font-semibold drop-shadow-lg">Assistir vídeo</span>
                     </div>
-                    <span className="text-white text-xs font-semibold drop-shadow-lg">Assistir vídeo</span>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
