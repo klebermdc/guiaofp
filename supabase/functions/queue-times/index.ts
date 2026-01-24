@@ -22,8 +22,8 @@ const QUEUE_TIMES_IDS: Record<string, number> = {
   '03e87b8e-7467-4121-971b-91826dd55bec': 5,  // EPCOT
   'ffdca010-b62c-40cc-98ee-37a853da037d': 7,  // Hollywood Studios
   '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': 8,  // Animal Kingdom
-  'c63c98b3-1cef-4d90-8142-0a68331907e1': 10, // Universal Studios
-  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 9,  // Islands of Adventure
+  'c63c98b3-1cef-4d90-8142-0a68331907e1': 65, // Universal Studios Florida
+  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 64, // Islands of Adventure
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': 334, // Epic Universe
 };
 
