@@ -227,9 +227,9 @@ export function AttractionPopup({
             )}
 
             {/* Description */}
-            {contentItem?.attraction_description && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {contentItem.attraction_description}
+            {(contentItem?.attraction_description || attraction.description) && (
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                {contentItem?.attraction_description || attraction.description}
               </p>
             )}
           </div>
