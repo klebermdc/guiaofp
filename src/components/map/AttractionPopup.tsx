@@ -206,7 +206,7 @@ export function AttractionPopup({
             </div>
 
             {/* Technical specs */}
-            {(displayData.minHeight || displayData.passType) && (
+            {(displayData.minHeight || displayData.thrillLevel) && (
               <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                 {displayData.minHeight && (
                   <span className="flex items-center gap-1">
@@ -221,6 +221,13 @@ export function AttractionPopup({
                   </span>
                 )}
               </div>
+            )}
+
+            {/* Description */}
+            {contentItem?.attraction_description && (
+              <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                {contentItem.attraction_description}
+              </p>
             )}
           </div>
 
