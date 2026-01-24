@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -9,11 +9,12 @@ import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
+import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="clients" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-9">
+      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-10">
         <TabsTrigger value="clients" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Clientes</span>
@@ -49,6 +50,10 @@ export function AdminTabs() {
         <TabsTrigger value="password" className="flex items-center gap-2">
           <KeyRound className="h-4 w-4" />
           <span className="hidden sm:inline">Senhas</span>
+        </TabsTrigger>
+        <TabsTrigger value="coordinates" className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <span className="hidden sm:inline">Coordenadas</span>
         </TabsTrigger>
       </TabsList>
 
@@ -86,6 +91,10 @@ export function AdminTabs() {
 
       <TabsContent value="password">
         <PasswordGenerator />
+      </TabsContent>
+
+      <TabsContent value="coordinates">
+        <AttractionCoordinatesEditor />
       </TabsContent>
     </Tabs>
   );
