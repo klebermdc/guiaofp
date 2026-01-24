@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw, Search } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, Route, X, Clock, RefreshCw } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
-const LIBRARIES: ("places")[] = ["places"];
 
 type LatLng = { lat: number; lng: number };
 
@@ -18,7 +18,6 @@ interface Park {
   name: string;
   center: LatLng;
   zoom: number;
-  placeId?: string;
 }
 
 interface WaitTimeData {
@@ -27,7 +26,6 @@ interface WaitTimeData {
   isOpen: boolean;
   waitTime: number;
   lastUpdated: string;
-  source?: string;
 }
 
 interface Attraction {
@@ -37,22 +35,20 @@ interface Attraction {
   description: string;
   waitTime?: number;
   isOpen?: boolean;
-  isNextInAgenda?: boolean;
   thrillLevel?: number;
   minHeight?: string;
   passType?: string;
-  placeId?: string;
 }
 
-// Parks data with coordinates (category IDs from database)
+// Parks with their database IDs and center coordinates
 const PARKS: Park[] = [
   { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', center: { lat: 28.4177, lng: -81.5812 }, zoom: 17 },
-  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 17 },
+  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 16 },
   { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
-  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3553, lng: -81.5901 }, zoom: 16 },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios Florida', center: { lat: 28.4780, lng: -81.4690 }, zoom: 17 },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4710, lng: -81.4720 }, zoom: 17 },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 17 },
+  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3580, lng: -81.5900 }, zoom: 16 },
+  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4752, lng: -81.4683 }, zoom: 17 },
+  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4711, lng: -81.4710 }, zoom: 17 },
+  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 16 },
 ];
 
 const mapContainerStyle = {
@@ -68,7 +64,7 @@ const mapOptions: google.maps.MapOptions = {
   zoomControl: true,
 };
 
-// Helper to normalize attraction names for matching
+// Normalize attraction names for matching with wait times
 const normalizeAttractionName = (name: string): string => {
   return name
     .toLowerCase()
@@ -98,12 +94,9 @@ interface RouteInfo {
 
 export default function ParkMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
-  const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
   const [dataSource, setDataSource] = useState<string>('');
-  const [isLoadingAttractions, setIsLoadingAttractions] = useState(false);
   const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
   const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
   const [userPosition, setUserPosition] = useState<LatLng | null>(null);
@@ -115,7 +108,36 @@ export default function ParkMap() {
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  const nextAttraction = attractions.find(a => a.isNextInAgenda);
+  // Fetch attractions from database with real coordinates
+  const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
+    queryKey: ['park-attractions', selectedPark.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('id, title, description, latitude, longitude, thrill_level, min_height, pass_type')
+        .eq('category_id', selectedPark.id)
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null);
+
+      if (error) {
+        console.error('Error fetching attractions:', error);
+        return [];
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        name: item.title,
+        position: {
+          lat: Number(item.latitude),
+          lng: Number(item.longitude),
+        },
+        description: item.description || '',
+        thrillLevel: item.thrill_level,
+        minHeight: item.min_height,
+        passType: item.pass_type,
+      })) as Attraction[];
+    },
+  });
 
   // Fetch wait times from API
   const fetchWaitTimes = useCallback(async (parkId: string) => {
@@ -142,134 +164,23 @@ export default function ParkMap() {
     setIsLoadingWaitTimes(false);
   }, []);
 
-  // Search attractions using Google Places API
-  const searchAttractionsWithPlaces = useCallback(async (parkCenter: LatLng, parkName: string) => {
-    if (!placesServiceRef.current || !mapRef.current) {
-      console.log('Places service not ready');
-      return;
-    }
-
-    setIsLoadingAttractions(true);
-    
-    const attractionsFound: Attraction[] = [];
-    
-    // Search for attractions, theme park rides, and points of interest
-    const searchTypes = ['amusement_park', 'tourist_attraction', 'point_of_interest'];
-    
-    const searchPromises = searchTypes.map(type => {
-      return new Promise<google.maps.places.PlaceResult[]>((resolve) => {
-        const request: google.maps.places.PlaceSearchRequest = {
-          location: parkCenter,
-          radius: 1500, // 1.5km radius
-          type: type,
-          keyword: parkName.includes('Universal') || parkName.includes('Epic') 
-            ? 'ride attraction' 
-            : parkName.includes('Disney') || parkName.includes('Magic') || parkName.includes('EPCOT') || parkName.includes('Hollywood') || parkName.includes('Animal')
-            ? 'Disney ride attraction'
-            : 'ride attraction',
-        };
-
-        placesServiceRef.current!.nearbySearch(request, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-            resolve(results);
-          } else {
-            resolve([]);
-          }
-        });
-      });
-    });
-
-    try {
-      const allResults = await Promise.all(searchPromises);
-      const combinedResults = allResults.flat();
-      
-      // Remove duplicates based on place_id
-      const uniquePlaces = new Map<string, google.maps.places.PlaceResult>();
-      combinedResults.forEach(place => {
-        if (place.place_id && place.geometry?.location) {
-          uniquePlaces.set(place.place_id, place);
-        }
-      });
-
-      uniquePlaces.forEach((place, placeId) => {
-        if (place.geometry?.location) {
-          attractionsFound.push({
-            id: placeId,
-            name: place.name || 'Atração',
-            position: {
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-            },
-            description: place.vicinity || '',
-            placeId: placeId,
-          });
-        }
-      });
-
-      console.log(`Found ${attractionsFound.length} attractions from Google Places`);
-      setAttractions(attractionsFound);
-    } catch (error) {
-      console.error('Error searching places:', error);
-      setAttractions([]);
-    }
-    
-    setIsLoadingAttractions(false);
-  }, []);
-
-  // Alternative: Use wait times data directly as attractions (they have the correct names)
-  const useWaitTimesAsAttractions = useCallback((waitTimesData: WaitTimeData[], parkCenter: LatLng) => {
-    // Create attractions from wait times data
-    // Since we don't have exact coordinates, we'll place them around the park center
-    const attractionsFromWaitTimes: Attraction[] = waitTimesData.map((wt, index) => {
-      // Distribute attractions in a spiral pattern around the center
-      const angle = (index / waitTimesData.length) * 2 * Math.PI;
-      const radius = 0.002 + (index % 5) * 0.0005; // Vary radius slightly
-      
-      return {
-        id: String(wt.id),
-        name: wt.name,
-        position: {
-          lat: parkCenter.lat + radius * Math.cos(angle),
-          lng: parkCenter.lng + radius * Math.sin(angle),
-        },
-        description: wt.isOpen ? 'Aberto' : 'Fechado',
-        waitTime: wt.waitTime,
-        isOpen: wt.isOpen,
-      };
-    });
-
-    setAttractions(attractionsFromWaitTimes);
-  }, []);
-
-  // Merge wait times with attractions
-  const attractionsWithWaitTimes = attractions.map(attraction => {
+  // Merge database attractions with wait times
+  const attractionsWithWaitTimes: Attraction[] = dbAttractions.map(attraction => {
     const waitTimeData = findWaitTime(attraction.name, waitTimes);
     return {
       ...attraction,
-      waitTime: waitTimeData?.waitTime ?? attraction.waitTime,
-      isOpen: waitTimeData?.isOpen ?? attraction.isOpen,
+      waitTime: waitTimeData?.waitTime,
+      isOpen: waitTimeData?.isOpen,
     };
   });
 
-  // Fetch data when park changes
+  // Fetch wait times when park changes
   useEffect(() => {
     fetchWaitTimes(selectedPark.id);
     setDirections(null);
     setRouteInfo(null);
     setSelectedAttraction(null);
-    
-    // If map is loaded, search for attractions
-    if (isMapLoaded && placesServiceRef.current) {
-      searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
-    }
-  }, [selectedPark.id, fetchWaitTimes, isMapLoaded, searchAttractionsWithPlaces, selectedPark.center, selectedPark.name]);
-
-  // When wait times are loaded, use them as attractions if no Places results
-  useEffect(() => {
-    if (waitTimes.length > 0 && attractions.length === 0) {
-      useWaitTimesAsAttractions(waitTimes, selectedPark.center);
-    }
-  }, [waitTimes, attractions.length, selectedPark.center, useWaitTimesAsAttractions]);
+  }, [selectedPark.id, fetchWaitTimes]);
 
   // Auto-refresh wait times every 5 minutes
   useEffect(() => {
@@ -279,6 +190,14 @@ export default function ParkMap() {
 
     return () => clearInterval(interval);
   }, [selectedPark.id, fetchWaitTimes]);
+
+  // Center map when park changes or map loads
+  useEffect(() => {
+    if (mapRef.current && isMapLoaded) {
+      mapRef.current.panTo(selectedPark.center);
+      mapRef.current.setZoom(selectedPark.zoom);
+    }
+  }, [selectedPark, isMapLoaded]);
 
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
     if (!userPosition) {
@@ -384,7 +303,6 @@ export default function ParkMap() {
     const park = PARKS.find(p => p.id === parkId);
     if (park) {
       setSelectedPark(park);
-      setAttractions([]); // Clear attractions when changing parks
     }
   };
 
@@ -392,38 +310,17 @@ export default function ParkMap() {
     fetchWaitTimes(selectedPark.id);
   };
 
-  const handleSearchAttractions = () => {
-    if (isMapLoaded && placesServiceRef.current) {
-      searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
-    }
-  };
-
   const onMapLoad = (map: google.maps.Map) => {
     mapRef.current = map;
-    placesServiceRef.current = new google.maps.places.PlacesService(map);
     setIsMapLoaded(true);
-    
-    // Search for attractions once map is loaded
-    searchAttractionsWithPlaces(selectedPark.center, selectedPark.name);
   };
 
-  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol | google.maps.Icon => {
+  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol => {
     const waitTimeColor = attraction.waitTime !== undefined 
       ? attraction.waitTime > 60 ? '#EF4444' 
         : attraction.waitTime > 30 ? '#F59E0B' 
         : '#22C55E'
       : '#6B7280';
-
-    if (attraction.isNextInAgenda) {
-      return {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: '#F59E0B',
-        fillOpacity: 1,
-        strokeColor: '#FFFFFF',
-        strokeWeight: 3,
-        scale: 14,
-      };
-    }
 
     return {
       path: google.maps.SymbolPath.CIRCLE,
@@ -468,16 +365,6 @@ export default function ParkMap() {
                 ))}
               </SelectContent>
             </Select>
-
-            <Button
-              onClick={handleSearchAttractions}
-              disabled={isLoadingAttractions || !isMapLoaded}
-              variant="outline"
-              size="icon"
-              title="Buscar atrações no Google Maps"
-            >
-              <Search className={`w-4 h-4 ${isLoadingAttractions ? 'animate-pulse' : ''}`} />
-            </Button>
 
             <Button
               onClick={handleRefreshWaitTimes}
@@ -569,54 +456,11 @@ export default function ParkMap() {
           </Card>
         )}
 
-        {/* Next Attraction Card */}
-        {nextAttraction && !routeInfo && (
-          <Card className="border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/20">
-            <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                Próxima Atração na Agenda
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-2">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <p className="font-semibold">{nextAttraction.name}</p>
-                  <p className="text-sm text-muted-foreground">{nextAttraction.description}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleNavigateToAttraction(nextAttraction.position)}
-                  >
-                    <MapPin className="w-4 h-4 mr-1" />
-                    Ver
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleRouteToAttraction(nextAttraction.position, nextAttraction.name)}
-                    className="bg-amber-500 hover:bg-amber-600 text-white"
-                    disabled={isCalculatingRoute}
-                  >
-                    {isCalculatingRoute ? (
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    ) : (
-                      <Route className="w-4 h-4 mr-1" />
-                    )}
-                    Como Chegar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Map and Attractions Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-350px)] min-h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-320px)] min-h-[400px]">
           {/* Map */}
           <div className="lg:col-span-2 rounded-xl overflow-hidden border shadow-lg">
-            <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={LIBRARIES}>
+            <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={selectedPark.center}
@@ -634,14 +478,14 @@ export default function ParkMap() {
                       fillOpacity: 1,
                       strokeColor: '#FFFFFF',
                       strokeWeight: 3,
-                      scale: 10,
+                      scale: 12,
                     }}
                     title="Sua localização"
                     zIndex={1000}
                   />
                 )}
 
-                {/* Attraction markers */}
+                {/* Attraction markers from database */}
                 {attractionsWithWaitTimes.map((attraction) => (
                   <Marker
                     key={attraction.id}
@@ -649,7 +493,6 @@ export default function ParkMap() {
                     icon={getMarkerIcon(attraction)}
                     title={`${attraction.name}${attraction.waitTime !== undefined ? ` - ${attraction.waitTime} min` : ''}`}
                     onClick={() => setSelectedAttraction(attraction)}
-                    zIndex={attraction.isNextInAgenda ? 999 : 1}
                   />
                 ))}
 
@@ -659,12 +502,12 @@ export default function ParkMap() {
                     position={selectedAttraction.position}
                     onCloseClick={() => setSelectedAttraction(null)}
                   >
-                    <div className="p-2 max-w-[250px]">
-                      <h3 className="font-bold text-gray-900 mb-1">{selectedAttraction.name}</h3>
+                    <div className="p-2 max-w-[280px]">
+                      <h3 className="font-bold text-gray-900 mb-2 text-base">{selectedAttraction.name}</h3>
                       
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
                         {selectedAttraction.waitTime !== undefined ? (
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
                             selectedAttraction.waitTime > 60 ? 'bg-red-500 text-white' :
                             selectedAttraction.waitTime > 30 ? 'bg-amber-500 text-white' :
                             'bg-green-500 text-white'
@@ -672,30 +515,36 @@ export default function ParkMap() {
                             {selectedAttraction.waitTime} min
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded text-xs bg-gray-200 text-gray-600">
+                          <span className="px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-600">
                             Sem dados
                           </span>
                         )}
                         
                         {selectedAttraction.isOpen !== undefined && (
-                          <span className={`text-xs ${selectedAttraction.isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                          <span className={`text-sm font-medium ${selectedAttraction.isOpen ? 'text-green-600' : 'text-red-600'}`}>
                             {selectedAttraction.isOpen ? '● Aberto' : '● Fechado'}
                           </span>
                         )}
                       </div>
 
-                      {selectedAttraction.description && (
-                        <p className="text-xs text-gray-600 mb-2">{selectedAttraction.description}</p>
+                      {selectedAttraction.passType && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          <strong>Pass:</strong> {selectedAttraction.passType}
+                        </p>
                       )}
 
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
-                          className="flex-1 bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600"
-                        >
-                          Como Chegar
-                        </button>
-                      </div>
+                      {selectedAttraction.minHeight && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          <strong>Altura mínima:</strong> {selectedAttraction.minHeight}
+                        </p>
+                      )}
+
+                      <button
+                        onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
+                        className="w-full bg-blue-500 text-white text-sm py-2 px-3 rounded-lg hover:bg-blue-600 font-medium"
+                      >
+                        🚶 Como Chegar
+                      </button>
                     </div>
                   </InfoWindow>
                 )}
@@ -720,7 +569,7 @@ export default function ParkMap() {
 
           {/* Attractions List */}
           <div className="overflow-auto rounded-xl border bg-card">
-            <div className="p-4 border-b bg-muted/50 sticky top-0">
+            <div className="p-4 border-b bg-muted/50 sticky top-0 z-10">
               <h2 className="font-semibold flex items-center gap-2">
                 <Star className="w-4 h-4 text-primary" />
                 Atrações ({attractionsWithWaitTimes.length})
@@ -738,20 +587,16 @@ export default function ParkMap() {
               ) : attractionsWithWaitTimes.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhuma atração encontrada</p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={handleSearchAttractions}
-                    className="mt-2"
-                  >
-                    Buscar atrações
-                  </Button>
+                  <p>Nenhuma atração cadastrada</p>
+                  <p className="text-xs mt-1">Este parque ainda não possui atrações com coordenadas</p>
                 </div>
               ) : (
                 attractionsWithWaitTimes
                   .sort((a, b) => {
-                    // Sort by wait time (lower first), then by name
+                    // Sort: open first, then by wait time (lower first), then by name
+                    if (a.isOpen !== b.isOpen) {
+                      return a.isOpen ? -1 : 1;
+                    }
                     if (a.waitTime !== undefined && b.waitTime !== undefined) {
                       return a.waitTime - b.waitTime;
                     }
@@ -777,6 +622,11 @@ export default function ParkMap() {
                             {attraction.isOpen !== undefined && (
                               <span className={`text-xs ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
                                 {attraction.isOpen ? '● Aberto' : '● Fechado'}
+                              </span>
+                            )}
+                            {attraction.passType && (
+                              <span className="text-xs text-muted-foreground">
+                                {attraction.passType}
                               </span>
                             )}
                           </div>
