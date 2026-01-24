@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +10,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
@@ -82,6 +84,7 @@ interface RouteInfo {
 }
 
 export default function ParkMap() {
+  const isMobile = useIsMobile();
   const mapRef = useRef<google.maps.Map | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
@@ -102,6 +105,7 @@ export default function ParkMap() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
+  const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
 
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
@@ -441,10 +445,165 @@ export default function ParkMap() {
     return a.name.localeCompare(b.name);
   });
 
+  // Apply filter to attractions
+  const filteredAttractions = sortedAttractions.filter(attraction => {
+    if (attractionFilter === 'open') return attraction.isOpen === true;
+    if (attractionFilter === 'low-wait') return attraction.waitTime !== undefined && attraction.waitTime <= 30;
+    return true;
+  });
+
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
-      {/* Compact Mobile Header */}
-      <div className="bg-background/95 backdrop-blur-sm border-b z-20 p-2 sm:p-3 safe-area-top">
+    <div className="fixed inset-0 flex bg-background">
+      {/* Desktop Sidebar - Attractions List */}
+      {!isMobile && (
+        <aside className="hidden lg:flex flex-col w-80 border-r bg-background z-20">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <Star className="w-5 h-5 text-primary" />
+                Atrações
+              </h2>
+              <Button
+                onClick={handleRefreshWaitTimes}
+                disabled={isLoadingWaitTimes}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingWaitTimes ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            
+            {/* Park Selector */}
+            <Select value={selectedPark.id} onValueChange={handleParkChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione o parque" />
+              </SelectTrigger>
+              <SelectContent>
+                {PARKS.map((park) => (
+                  <SelectItem key={park.id} value={park.id}>
+                    {park.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Filter Buttons */}
+            <div className="flex gap-1">
+              <Button
+                variant={attractionFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 text-xs h-8"
+                onClick={() => setAttractionFilter('all')}
+              >
+                Todas
+              </Button>
+              <Button
+                variant={attractionFilter === 'open' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 text-xs h-8"
+                onClick={() => setAttractionFilter('open')}
+              >
+                Abertas
+              </Button>
+              <Button
+                variant={attractionFilter === 'low-wait' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 text-xs h-8"
+                onClick={() => setAttractionFilter('low-wait')}
+              >
+                &lt;30 min
+              </Button>
+            </div>
+
+            {/* Last Update */}
+            {lastWaitTimeUpdate && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                Atualizado às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                {waitTimes.length > 0 && (
+                  <Badge variant="secondary" className="text-xs ml-auto">
+                    {waitTimes.filter(w => w.isOpen).length} abertas
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Attractions List */}
+          <ScrollArea className="flex-1">
+            {isLoadingAttractions ? (
+              <div className="p-8 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : filteredAttractions.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhuma atração encontrada</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {filteredAttractions.map((attraction) => (
+                  <div
+                    key={attraction.id}
+                    className={`p-3 flex items-center justify-between gap-3 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      selectedAttraction?.id === attraction.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedAttraction(attraction);
+                      handleNavigateToAttraction(attraction.position);
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{attraction.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {attraction.isOpen !== undefined && (
+                          <span className={`text-xs ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                            ● {attraction.isOpen ? 'Aberto' : 'Fechado'}
+                          </span>
+                        )}
+                        {attraction.passType && (
+                          <span className="text-xs text-muted-foreground truncate">
+                            {attraction.passType}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Badge className={`${getWaitTimeColor(attraction.waitTime)} shrink-0`}>
+                      {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : '—'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Sidebar Footer with Location Button */}
+          <div className="p-3 border-t">
+            <Button
+              onClick={handleGetLocation}
+              disabled={isLoadingLocation}
+              variant={userPosition ? 'default' : 'outline'}
+              className="w-full"
+            >
+              {isLoadingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Navigation className="w-4 h-4 mr-2" />
+              )}
+              {userPosition ? 'Localização ativa' : 'Ativar localização'}
+            </Button>
+          </div>
+        </aside>
+      )}
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative">
+        {/* Compact Mobile Header - Only on mobile */}
+        {isMobile && (
+        <div className="bg-background/95 backdrop-blur-sm border-b z-20 p-2 sm:p-3 safe-area-top">
         <div className="flex items-center gap-2">
           {/* Park Selector - Compact on mobile */}
           <Select value={selectedPark.id} onValueChange={handleParkChange}>
@@ -569,9 +728,29 @@ export default function ParkMap() {
           </Sheet>
         </div>
       </div>
+        )}
 
-      {/* Location Error Banner */}
-      {locationError && (
+        {/* Desktop Header - Minimal */}
+        {!isMobile && (
+          <div className="bg-background/95 backdrop-blur-sm border-b z-20 p-2 flex items-center justify-end gap-2">
+            <Button
+              onClick={handleGetLocation}
+              disabled={isLoadingLocation}
+              variant={userPosition ? 'default' : 'outline'}
+              size="sm"
+            >
+              {isLoadingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Navigation className="w-4 h-4 mr-2" />
+              )}
+              Minha localização
+            </Button>
+          </div>
+        )}
+
+        {/* Location Error Banner */}
+        {locationError && (
         <div className="absolute top-[60px] left-2 right-2 z-30 flex items-center gap-2 p-2 bg-destructive/90 text-destructive-foreground rounded-lg text-sm safe-area-top">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span className="flex-1 text-xs">{locationError}</span>
@@ -771,7 +950,7 @@ export default function ParkMap() {
           </Card>
         </div>
       )}
-
+      </div>
     </div>
   );
 }
