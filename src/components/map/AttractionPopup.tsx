@@ -233,10 +233,15 @@ export function AttractionPopup({
 
           {/* Video Section with Thumbnail */}
           {contentItem?.file_url && (
-            <>
+            <div className="px-2 pb-2">
               {!isExpanded ? (
                 <button
-                  onClick={() => setIsExpanded(true)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsExpanded(true);
+                  }}
                   className="w-full relative overflow-hidden rounded-lg group"
                 >
                   {/* Thumbnail */}
@@ -268,17 +273,22 @@ export function AttractionPopup({
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
                     {contentItem.file_url.includes('youtube') || contentItem.file_url.includes('youtu.be') ? (
                       <iframe
-                        src={getYoutubeEmbedUrl(contentItem.file_url)}
+                        src={`${getYoutubeEmbedUrl(contentItem.file_url)}?autoplay=1`}
                         className="w-full h-full"
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       />
                     ) : (
-                      <video src={contentItem.file_url} controls className="w-full h-full" />
+                      <video src={contentItem.file_url} controls autoPlay className="w-full h-full" />
                     )}
                   </div>
                   <button
-                    onClick={() => setIsExpanded(false)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsExpanded(false);
+                    }}
                     className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1"
                   >
                     <ChevronUp className="w-3 h-3" />
@@ -286,7 +296,7 @@ export function AttractionPopup({
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {/* Actions */}
