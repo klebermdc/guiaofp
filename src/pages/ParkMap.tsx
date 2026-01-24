@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,7 @@ interface RouteInfo {
   distance: string;
   duration: string;
   destinationName: string;
+  destination?: LatLng; // Store destination for fallback line
 }
 
 export default function ParkMap() {
@@ -288,6 +289,7 @@ export default function ParkMap() {
             distance: `~${formatDistance(estimatedWalkingDistance)}`,
             duration: `~${estimateWalkingTime(estimatedWalkingDistance)}`,
             destinationName,
+            destination, // Store destination for fallback line
           });
           setRouteSteps([]);
           setIsNavigating(true);
@@ -881,7 +883,7 @@ export default function ParkMap() {
               )}
             </AnimatePresence>
 
-            {/* Directions renderer */}
+            {/* Directions renderer - when API returns full route */}
             {directions && (
               <DirectionsRenderer
                 directions={directions}
@@ -892,6 +894,30 @@ export default function ParkMap() {
                     strokeWeight: 6,
                     strokeOpacity: 0.9,
                   },
+                }}
+              />
+            )}
+
+            {/* Fallback line - when Directions API fails, show straight line to destination */}
+            {!directions && isNavigating && userPosition && routeInfo?.destination && (
+              <Polyline
+                path={[userPosition, routeInfo.destination]}
+                options={{
+                  strokeColor: '#8B5CF6',
+                  strokeWeight: 4,
+                  strokeOpacity: 0.8,
+                  geodesic: true,
+                  icons: [
+                    {
+                      icon: {
+                        path: 'M 0,-1 0,1',
+                        strokeOpacity: 1,
+                        scale: 4,
+                      },
+                      offset: '0',
+                      repeat: '20px',
+                    },
+                  ],
                 }}
               />
             )}
