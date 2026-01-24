@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2 } from 'lucide-react';
 
@@ -11,7 +12,13 @@ interface VideoModalProps {
 
 export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps) {
   const [isLandscape, setIsLandscape] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Mount check for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Detect orientation changes
   useEffect(() => {
@@ -48,61 +55,75 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
 
   const isYoutube = videoUrl.includes('youtube') || videoUrl.includes('youtu.be');
 
-  const handleBackdropClick = (e: React.MouseEvent | React.TouchEvent) => {
-    if (e.target === containerRef.current) {
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  return (
+  // Não renderizar se não estiver montado
+  if (!mounted) return null;
+
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={containerRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={handleBackdropClick}
-          onTouchEnd={handleBackdropClick}
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+          }}
         >
-          {/* Close button - only visible in portrait */}
-          {!isLandscape && (
-            <motion.button
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
-            >
-              <X className="w-6 h-6 text-white" />
-            </motion.button>
-          )}
+          {/* Close button */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ delay: 0.1 }}
+            onClick={onClose}
+            className="absolute top-4 right-4 z-[100000] p-3 bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
+            style={{ position: 'absolute' }}
+          >
+            <X className="w-6 h-6 text-white" />
+          </motion.button>
 
           {/* Video container */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            initial={{ scale: 0.8, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.8, opacity: 0, y: 50 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
             className={`relative ${
               isLandscape 
                 ? 'w-full h-full' 
-                : 'w-[95vw] max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl'
+                : 'w-[92vw] max-w-lg'
             }`}
-            onClick={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
           >
             {/* Title bar - only in portrait */}
             {!isLandscape && (
-              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-3 z-10">
-                <h3 className="text-white font-semibold text-sm truncate pr-8">{title}</h3>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mb-3 px-1"
+              >
+                <h3 className="text-white font-bold text-base text-center">{title}</h3>
+              </motion.div>
             )}
 
             {/* Video player */}
-            <div className={`w-full h-full bg-black ${isLandscape ? '' : 'rounded-2xl overflow-hidden'}`}>
+            <div className={`bg-black ${isLandscape ? 'w-full h-full' : 'aspect-video rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20'}`}>
               {isYoutube ? (
                 <iframe
                   src={`${getYoutubeEmbedUrl(videoUrl)}?autoplay=1&playsinline=1&rel=0&modestbranding=1`}
@@ -126,29 +147,19 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full"
-              >
-                <Maximize2 className="w-3.5 h-3.5 text-white/80" />
-                <span className="text-white/80 text-xs font-medium">Gire para tela cheia</span>
-              </motion.div>
-            )}
-
-            {/* Close hint in landscape */}
-            {isLandscape && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                onClick={onClose}
-                className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 active:bg-black/80 rounded-full transition-colors touch-manipulation z-10"
+                className="mt-4 flex items-center justify-center gap-2"
               >
-                <X className="w-5 h-5 text-white" />
-              </motion.button>
+                <Maximize2 className="w-4 h-4 text-white/60" />
+                <span className="text-white/60 text-sm">Gire o celular para tela cheia</span>
+              </motion.div>
             )}
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  // Usar createPortal para renderizar no body, fora do contexto do mapa
+  return createPortal(modalContent, document.body);
 }
