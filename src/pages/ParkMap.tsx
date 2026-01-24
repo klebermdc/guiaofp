@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -111,6 +111,7 @@ export default function ParkMap() {
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
+  const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
   const audioContextRef = useRef<AudioContext | null>(null);
 
   // Play arrival notification sound using Web Audio API
@@ -971,7 +972,7 @@ export default function ParkMap() {
             center={selectedPark.center}
             zoom={selectedPark.zoom}
             options={{
-              mapTypeId: 'satellite',
+              mapTypeId: mapType,
               mapTypeControl: false,
               streetViewControl: false,
               fullscreenControl: false,
@@ -1084,6 +1085,20 @@ export default function ParkMap() {
 
         {/* Zoom Controls - Mobile friendly */}
         <div className="absolute bottom-20 right-2 flex flex-col gap-1 z-10">
+          {/* Map Type Toggle */}
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-10 w-10 shadow-lg"
+            onClick={() => setMapType(mapType === 'satellite' ? 'roadmap' : 'satellite')}
+            title={mapType === 'satellite' ? 'Mudar para mapa normal' : 'Mudar para satélite'}
+          >
+            {mapType === 'satellite' ? (
+              <Map className="w-5 h-5" />
+            ) : (
+              <Satellite className="w-5 h-5" />
+            )}
+          </Button>
           <Button
             variant="secondary"
             size="icon"
