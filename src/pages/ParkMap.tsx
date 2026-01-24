@@ -315,7 +315,12 @@ export default function ParkMap() {
     setIsMapLoaded(true);
   };
 
-  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol => {
+  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol | undefined => {
+    // Only create icon if Google Maps API is loaded
+    if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
+      return undefined;
+    }
+    
     const waitTimeColor = attraction.waitTime !== undefined 
       ? attraction.waitTime > 60 ? '#EF4444' 
         : attraction.waitTime > 30 ? '#F59E0B' 
@@ -329,6 +334,20 @@ export default function ParkMap() {
       strokeColor: '#FFFFFF',
       strokeWeight: 2,
       scale: 10,
+    };
+  };
+
+  const getUserMarkerIcon = (): google.maps.Symbol | undefined => {
+    if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
+      return undefined;
+    }
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: '#3B82F6',
+      fillOpacity: 1,
+      strokeColor: '#FFFFFF',
+      strokeWeight: 3,
+      scale: 12,
     };
   };
 
@@ -469,24 +488,17 @@ export default function ParkMap() {
                 onLoad={onMapLoad}
               >
                 {/* User location marker */}
-                {userPosition && (
+                {userPosition && isMapLoaded && (
                   <Marker
                     position={userPosition}
-                    icon={{
-                      path: google.maps.SymbolPath.CIRCLE,
-                      fillColor: '#3B82F6',
-                      fillOpacity: 1,
-                      strokeColor: '#FFFFFF',
-                      strokeWeight: 3,
-                      scale: 12,
-                    }}
+                    icon={getUserMarkerIcon()}
                     title="Sua localização"
                     zIndex={1000}
                   />
                 )}
 
-                {/* Attraction markers from database */}
-                {attractionsWithWaitTimes.map((attraction) => (
+                {/* Attraction markers from database - only render when map is loaded */}
+                {isMapLoaded && attractionsWithWaitTimes.map((attraction) => (
                   <Marker
                     key={attraction.id}
                     position={attraction.position}
