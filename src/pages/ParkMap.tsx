@@ -551,12 +551,31 @@ export default function ParkMap() {
                         </p>
                       )}
 
-                      <button
-                        onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
-                        className="w-full bg-blue-500 text-white text-sm py-2 px-3 rounded-lg hover:bg-blue-600 font-medium"
-                      >
-                        🚶 Como Chegar
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleRouteToAttraction(selectedAttraction.position, selectedAttraction.name)}
+                          disabled={isCalculatingRoute}
+                          className="w-full bg-blue-500 text-white text-sm py-2 px-3 rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {isCalculatingRoute ? (
+                            <>
+                              <span className="animate-spin">⏳</span> Calculando...
+                            </>
+                          ) : (
+                            <>🚶 Rota a Pé</>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const { lat, lng } = selectedAttraction.position;
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+                            window.open(url, '_blank');
+                          }}
+                          className="w-full bg-green-600 text-white text-sm py-2 px-3 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
+                        >
+                          📍 Abrir no Google Maps
+                        </button>
+                      </div>
                     </div>
                   </InfoWindow>
                 )}
