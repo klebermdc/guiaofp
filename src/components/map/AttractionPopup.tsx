@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { OverlayView } from '@react-google-maps/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -162,6 +163,187 @@ export function AttractionPopup({
     passType: contentItem?.pass_type || attraction.passType,
   };
 
+  // Mobile: Render as centered modal portal
+  if (isMobile) {
+    return createPortal(
+      <AnimatePresence>
+        <motion.div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={(e) => {
+            // Close only if clicking backdrop
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
+          <motion.div
+            data-attraction-popup="true"
+            className="bg-background rounded-2xl shadow-2xl border-2 overflow-hidden w-full max-w-[340px]"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-4 pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-bold text-foreground text-base leading-tight flex-1 pr-1">
+                  {attraction.name}
+                </h3>
+                <button
+                  onClick={onClose}
+                  className="shrink-0 p-1.5 rounded-full hover:bg-muted transition-colors -mt-0.5 -mr-1"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Badges */}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge className={`${getWaitTimeColor(attraction.waitTime)} text-xs h-5`}>
+                  {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : '—'}
+                </Badge>
+                {attraction.isOpen !== undefined && (
+                  <span className={`text-xs font-medium ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                    ● {attraction.isOpen ? 'Aberto' : 'Fechado'}
+                  </span>
+                )}
+              </div>
+
+              {/* Technical specs */}
+              {(displayData.minHeight || displayData.thrillLevel) && (
+                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  {displayData.minHeight && (
+                    <span className="flex items-center gap-1">
+                      <Ruler className="w-3 h-3" />
+                      {displayData.minHeight}
+                    </span>
+                  )}
+                  {displayData.thrillLevel && (
+                    <span className="flex items-center gap-1">
+                      <Flame className="w-3 h-3" />
+                      {displayData.thrillLevel}/5
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Description */}
+              {(contentItem?.attraction_description || attraction.description) && (
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {contentItem?.attraction_description || attraction.description}
+                </p>
+              )}
+            </div>
+
+            {/* Video Section - Mobile */}
+            {contentItem?.file_url && (
+              <div className="px-3 pb-3">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowVideoModal(true);
+                  }}
+                  className="w-full relative overflow-hidden rounded-xl group cursor-pointer touch-manipulation"
+                >
+                  {/* Thumbnail with gradient overlay */}
+                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20">
+                    <img
+                      src={contentItem.thumbnail_url || getYoutubeThumbnail(contentItem.file_url) || ''}
+                      alt={attraction.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-active:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.src = getYoutubeThumbnail(contentItem.file_url!) || '';
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Animated play overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-center justify-center">
+                    <motion.div 
+                      className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                      whileTap={{ scale: 0.95 }}
+                      animate={{ 
+                        boxShadow: ['0 0 0 0 rgba(255,255,255,0.4)', '0 0 0 12px rgba(255,255,255,0)', '0 0 0 0 rgba(255,255,255,0.4)']
+                      }}
+                      transition={{ 
+                        boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                      }}
+                    >
+                      <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
+                    </motion.div>
+                  </div>
+                  
+                  {/* Label with icon */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 bg-red-600 rounded flex items-center justify-center">
+                        <Play className="w-3 h-3 text-white" fill="currentColor" />
+                      </div>
+                      <span className="text-white text-xs font-semibold drop-shadow-lg">Assistir vídeo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="p-3 flex gap-2 border-t">
+              {user && (
+                <Button
+                  variant={isInPreferences ? 'secondary' : 'outline'}
+                  size="sm"
+                  onClick={togglePreference}
+                  disabled={savingPreference}
+                  className="h-10 w-10 p-0"
+                >
+                  {savingPreference ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isInPreferences ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Heart className="w-4 h-4" />
+                  )}
+                </Button>
+              )}
+              <Button
+                onClick={() => onNavigate(attraction.position, attraction.name)}
+                disabled={isCalculatingRoute}
+                className="flex-1 h-10 text-sm font-bold"
+              >
+                {isCalculatingRoute ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Navigation className="w-4 h-4 mr-1" />
+                    Navegar
+                  </>
+                )}
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Video Modal */}
+          {contentItem?.file_url && (
+            <VideoModal
+              isOpen={showVideoModal}
+              onClose={() => setShowVideoModal(false)}
+              videoUrl={contentItem.file_url}
+              title={attraction.name}
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>,
+      document.body
+    );
+  }
+
+  // Desktop: Render anchored to map position
   return (
     <OverlayView
       position={attraction.position}
@@ -237,11 +419,10 @@ export function AttractionPopup({
             )}
           </div>
 
-          {/* Video Section */}
+          {/* Video Section - Desktop inline */}
           {contentItem?.file_url && (
             <div className="px-2 pb-2">
-              {/* Desktop: Inline video player */}
-              {!isMobile && showInlineVideo ? (
+              {showInlineVideo ? (
                 <div className="aspect-video rounded-xl overflow-hidden bg-black">
                   {contentItem.file_url.includes('youtube') || contentItem.file_url.includes('youtu.be') ? (
                     <iframe
@@ -260,34 +441,22 @@ export function AttractionPopup({
                   )}
                 </div>
               ) : (
-                /* Thumbnail - Desktop: inline, Mobile: modal */
                 <div
                   role="button"
                   tabIndex={0}
-                  onTouchEnd={(e) => {
-                    if (isMobile) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowVideoModal(true);
-                    }
-                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (isMobile) {
-                      setShowVideoModal(true);
-                    } else {
-                      setShowInlineVideo(true);
-                    }
+                    setShowInlineVideo(true);
                   }}
-                  className="w-full relative overflow-hidden rounded-xl group cursor-pointer touch-manipulation"
+                  className="w-full relative overflow-hidden rounded-xl group cursor-pointer"
                 >
                   {/* Thumbnail with gradient overlay */}
                   <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20">
                     <img
                       src={contentItem.thumbnail_url || getYoutubeThumbnail(contentItem.file_url) || ''}
                       alt={attraction.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 group-active:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         e.currentTarget.src = getYoutubeThumbnail(contentItem.file_url!) || '';
                       }}
@@ -360,16 +529,6 @@ export function AttractionPopup({
             </Button>
           </div>
         </div>
-
-        {/* Video Modal */}
-        {contentItem?.file_url && (
-          <VideoModal
-            isOpen={showVideoModal}
-            onClose={() => setShowVideoModal(false)}
-            videoUrl={contentItem.file_url}
-            title={attraction.name}
-          />
-        )}
       </motion.div>
     </OverlayView>
   );
