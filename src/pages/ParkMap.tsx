@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -237,6 +237,24 @@ export default function ParkMap() {
     }
     return `${minutes} min`;
   };
+
+  // Calculate bearing (angle) from one point to another
+  const calculateBearing = (from: LatLng, to: LatLng): number => {
+    const φ1 = (from.lat * Math.PI) / 180;
+    const φ2 = (to.lat * Math.PI) / 180;
+    const Δλ = ((to.lng - from.lng) * Math.PI) / 180;
+
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    const θ = Math.atan2(y, x);
+    
+    return ((θ * 180) / Math.PI + 360) % 360; // Bearing in degrees (0-360)
+  };
+
+  // Get bearing to destination for the compass arrow
+  const bearingToDestination = userPosition && routeInfo?.destination 
+    ? calculateBearing(userPosition, routeInfo.destination)
+    : 0;
 
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
     if (!userPosition) {
@@ -1030,6 +1048,41 @@ export default function ParkMap() {
                         />
                       </div>
                     ))}
+                  </div>
+                </div>
+              </CardContent>
+            )}
+
+            {/* Fallback: Direction indicator when no detailed route */}
+            {isNavPanelExpanded && routeSteps.length === 0 && routeInfo?.destination && userPosition && (
+              <CardContent className="py-3 pb-5">
+                <div className="flex items-center gap-4">
+                  {/* Large compass arrow pointing to destination */}
+                  <div className="relative w-20 h-20 shrink-0">
+                    <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/30" />
+                    <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
+                      style={{ transform: `rotate(${bearingToDestination}deg)` }}
+                    >
+                      <div className="flex flex-col items-center">
+                        <ArrowUp className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
+                      </div>
+                    </div>
+                    {/* N indicator */}
+                    <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/60">N</span>
+                  </div>
+
+                  {/* Direction info */}
+                  <div className="flex-1">
+                    <p className="text-xs text-blue-200 mb-1">Direção estimada</p>
+                    <p className="text-sm text-white/90">
+                      Siga na direção indicada pela seta. A rota detalhada não está disponível, mas você está a aproximadamente <strong>{routeInfo.distance}</strong> do destino.
+                    </p>
+                    <p className="text-xs text-blue-200 mt-2 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Tempo estimado: {routeInfo.duration}
+                    </p>
                   </div>
                 </div>
               </CardContent>
