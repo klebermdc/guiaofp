@@ -36,6 +36,7 @@ interface ContentItem {
   id: string;
   title: string;
   file_url: string | null;
+  thumbnail_url: string | null;
   min_height: string | null;
   thrill_level: number | null;
   pass_type: string | null;
@@ -80,7 +81,7 @@ export function AttractionPopup({
   const loadContent = async () => {
     const { data } = await supabase
       .from('content_items')
-      .select('id, title, file_url, min_height, thrill_level, pass_type, attraction_description')
+      .select('id, title, file_url, thumbnail_url, min_height, thrill_level, pass_type, attraction_description')
       .eq('is_published', true);
 
     if (data) {
@@ -140,6 +141,11 @@ export function AttractionPopup({
   const getYoutubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+  };
+
+  const getYoutubeThumbnail = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    return match ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` : null;
   };
 
   const getWaitTimeColor = (waitTime: number | undefined) => {
@@ -216,30 +222,59 @@ export function AttractionPopup({
             )}
           </div>
 
-          {/* Expandable Video Section */}
+          {/* Video Section with Thumbnail */}
           {contentItem?.file_url && (
             <>
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-3 py-2 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 text-xs font-medium text-primary border-t"
-              >
-                <Play className="w-3 h-3" />
-                {isExpanded ? 'Ocultar vídeo' : 'Ver vídeo'}
-                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-
-              {isExpanded && (
-                <div className="aspect-video bg-black">
-                  {contentItem.file_url.includes('youtube') || contentItem.file_url.includes('youtu.be') ? (
-                    <iframe
-                      src={getYoutubeEmbedUrl(contentItem.file_url)}
-                      className="w-full h-full"
-                      allowFullScreen
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              {!isExpanded ? (
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="w-full relative overflow-hidden rounded-lg group"
+                >
+                  {/* Thumbnail */}
+                  <div className="aspect-video bg-muted">
+                    <img
+                      src={contentItem.thumbnail_url || getYoutubeThumbnail(contentItem.file_url) || ''}
+                      alt={attraction.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = getYoutubeThumbnail(contentItem.file_url!) || '';
+                      }}
                     />
-                  ) : (
-                    <video src={contentItem.file_url} controls className="w-full h-full" />
-                  )}
+                  </div>
+                  
+                  {/* Play overlay */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                    <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-6 h-6 text-primary ml-0.5" fill="currentColor" />
+                    </div>
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <span className="text-white text-xs font-medium">Vídeo exclusivo</span>
+                  </div>
+                </button>
+              ) : (
+                <div className="space-y-1">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    {contentItem.file_url.includes('youtube') || contentItem.file_url.includes('youtu.be') ? (
+                      <iframe
+                        src={getYoutubeEmbedUrl(contentItem.file_url)}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    ) : (
+                      <video src={contentItem.file_url} controls className="w-full h-full" />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setIsExpanded(false)}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                    Ocultar vídeo
+                  </button>
                 </div>
               )}
             </>
