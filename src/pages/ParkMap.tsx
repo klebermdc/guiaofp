@@ -54,7 +54,6 @@ interface POI {
   type: POIType;
   name: string;
   position: LatLng;
-  parkId: string;
 }
 
 const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
@@ -63,66 +62,6 @@ const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string 
   shop: { label: 'Lojas', color: '#A855F7', emoji: '🛍️' },
   firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
 };
-
-// Sample POI data for parks (can be moved to database later)
-const PARK_POIS: POI[] = [
-  // Magic Kingdom
-  { id: 'mk-restroom-1', type: 'restroom', name: 'Banheiro - Main Street', position: { lat: 28.4167, lng: -81.5805 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-restroom-2', type: 'restroom', name: 'Banheiro - Fantasyland', position: { lat: 28.4201, lng: -81.5797 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-restroom-3', type: 'restroom', name: 'Banheiro - Adventureland', position: { lat: 28.4182, lng: -81.5835 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-restaurant-1', type: 'restaurant', name: 'Be Our Guest Restaurant', position: { lat: 28.4208, lng: -81.5812 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-restaurant-2', type: 'restaurant', name: 'Cinderella\'s Royal Table', position: { lat: 28.4195, lng: -81.5811 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-restaurant-3', type: 'restaurant', name: 'Pecos Bill', position: { lat: 28.4185, lng: -81.5840 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-shop-1', type: 'shop', name: 'Emporium', position: { lat: 28.4165, lng: -81.5800 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-shop-2', type: 'shop', name: 'Castle Couture', position: { lat: 28.4198, lng: -81.5798 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  { id: 'mk-firstaid-1', type: 'firstaid', name: 'First Aid Center', position: { lat: 28.4172, lng: -81.5793 }, parkId: 'dd6b79b8-d934-4e15-8967-1f1af1911fef' },
-  
-  // EPCOT
-  { id: 'ep-restroom-1', type: 'restroom', name: 'Banheiro - World Celebration', position: { lat: 28.3747, lng: -81.5494 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  { id: 'ep-restroom-2', type: 'restroom', name: 'Banheiro - World Showcase', position: { lat: 28.3695, lng: -81.5515 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  { id: 'ep-restaurant-1', type: 'restaurant', name: 'Space 220', position: { lat: 28.3755, lng: -81.5475 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  { id: 'ep-restaurant-2', type: 'restaurant', name: 'Le Cellier', position: { lat: 28.3685, lng: -81.5510 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  { id: 'ep-shop-1', type: 'shop', name: 'Creations Shop', position: { lat: 28.3742, lng: -81.5502 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  { id: 'ep-firstaid-1', type: 'firstaid', name: 'First Aid - Odyssey', position: { lat: 28.3720, lng: -81.5505 }, parkId: '03e87b8e-7467-4121-971b-91826dd55bec' },
-  
-  // Hollywood Studios
-  { id: 'hs-restroom-1', type: 'restroom', name: 'Banheiro - Hollywood Blvd', position: { lat: 28.3570, lng: -81.5590 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  { id: 'hs-restroom-2', type: 'restroom', name: 'Banheiro - Galaxy\'s Edge', position: { lat: 28.3540, lng: -81.5610 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  { id: 'hs-restaurant-1', type: 'restaurant', name: 'Oga\'s Cantina', position: { lat: 28.3538, lng: -81.5615 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  { id: 'hs-restaurant-2', type: 'restaurant', name: 'Docking Bay 7', position: { lat: 28.3542, lng: -81.5605 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  { id: 'hs-shop-1', type: 'shop', name: 'Dok-Ondar\'s', position: { lat: 28.3535, lng: -81.5620 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  { id: 'hs-firstaid-1', type: 'firstaid', name: 'First Aid Center', position: { lat: 28.3568, lng: -81.5585 }, parkId: 'ffdca010-b62c-40cc-98ee-37a853da037d' },
-  
-  // Animal Kingdom
-  { id: 'ak-restroom-1', type: 'restroom', name: 'Banheiro - Discovery Island', position: { lat: 28.3580, lng: -81.5895 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  { id: 'ak-restroom-2', type: 'restroom', name: 'Banheiro - Pandora', position: { lat: 28.3555, lng: -81.5925 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  { id: 'ak-restaurant-1', type: 'restaurant', name: 'Satu\'li Canteen', position: { lat: 28.3558, lng: -81.5920 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  { id: 'ak-restaurant-2', type: 'restaurant', name: 'Tusker House', position: { lat: 28.3595, lng: -81.5880 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  { id: 'ak-shop-1', type: 'shop', name: 'Windtraders', position: { lat: 28.3552, lng: -81.5928 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  { id: 'ak-firstaid-1', type: 'firstaid', name: 'First Aid', position: { lat: 28.3582, lng: -81.5888 }, parkId: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205' },
-  
-  // Universal Studios Florida
-  { id: 'usf-restroom-1', type: 'restroom', name: 'Banheiro - Production Central', position: { lat: 28.4755, lng: -81.4680 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  { id: 'usf-restroom-2', type: 'restroom', name: 'Banheiro - Springfield', position: { lat: 28.4795, lng: -81.4665 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  { id: 'usf-restaurant-1', type: 'restaurant', name: 'Moe\'s Tavern', position: { lat: 28.4792, lng: -81.4668 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  { id: 'usf-restaurant-2', type: 'restaurant', name: 'Leaky Cauldron', position: { lat: 28.4793, lng: -81.4698 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  { id: 'usf-shop-1', type: 'shop', name: 'Universal Studios Store', position: { lat: 28.4748, lng: -81.4682 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  { id: 'usf-firstaid-1', type: 'firstaid', name: 'First Aid', position: { lat: 28.4752, lng: -81.4678 }, parkId: 'c63c98b3-1cef-4d90-8142-0a68331907e1' },
-  
-  // Islands of Adventure
-  { id: 'ioa-restroom-1', type: 'restroom', name: 'Banheiro - Port of Entry', position: { lat: 28.4715, lng: -81.4705 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  { id: 'ioa-restroom-2', type: 'restroom', name: 'Banheiro - Hogsmeade', position: { lat: 28.4725, lng: -81.4735 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  { id: 'ioa-restaurant-1', type: 'restaurant', name: 'Three Broomsticks', position: { lat: 28.4728, lng: -81.4732 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  { id: 'ioa-restaurant-2', type: 'restaurant', name: 'Mythos Restaurant', position: { lat: 28.4698, lng: -81.4718 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  { id: 'ioa-shop-1', type: 'shop', name: 'Honeydukes', position: { lat: 28.4722, lng: -81.4738 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  { id: 'ioa-firstaid-1', type: 'firstaid', name: 'First Aid', position: { lat: 28.4708, lng: -81.4712 }, parkId: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148' },
-  
-  // Epic Universe
-  { id: 'eu-restroom-1', type: 'restroom', name: 'Banheiro - Central', position: { lat: 28.4720, lng: -81.4450 }, parkId: 'ba562b14-26bf-4b12-a13d-2aa7df43297e' },
-  { id: 'eu-restaurant-1', type: 'restaurant', name: 'Restaurante Principal', position: { lat: 28.4725, lng: -81.4445 }, parkId: 'ba562b14-26bf-4b12-a13d-2aa7df43297e' },
-  { id: 'eu-shop-1', type: 'shop', name: 'Loja Principal', position: { lat: 28.4718, lng: -81.4455 }, parkId: 'ba562b14-26bf-4b12-a13d-2aa7df43297e' },
-  { id: 'eu-firstaid-1', type: 'firstaid', name: 'First Aid', position: { lat: 28.4722, lng: -81.4448 }, parkId: 'ba562b14-26bf-4b12-a13d-2aa7df43297e' },
-];
 
 // Parks with their database IDs and center coordinates
 const PARKS: Park[] = [
@@ -194,8 +133,31 @@ export default function ParkMap() {
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Get POIs for current park
-  const currentParkPOIs = PARK_POIS.filter(poi => poi.parkId === selectedPark.id);
+  // Fetch POIs for current park from database
+  const { data: dbPOIs = [] } = useQuery({
+    queryKey: ['park-pois', selectedPark.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('id, title, latitude, longitude, icon')
+        .eq('category_id', selectedPark.id)
+        .eq('type', 'poi')
+        .eq('is_published', true);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Transform database POIs to the expected format
+  const currentParkPOIs: POI[] = dbPOIs
+    .filter(poi => poi.latitude && poi.longitude)
+    .map(poi => ({
+      id: poi.id,
+      type: (poi.icon as POIType) || 'restroom',
+      name: poi.title,
+      position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
+    }));
 
   // Toggle POI visibility
   const togglePOIType = (type: POIType) => {

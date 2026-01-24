@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Navigation } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -10,11 +10,12 @@ import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
 import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
+import { POIEditor } from './POIEditor';
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="clients" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-10">
+      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-11">
         <TabsTrigger value="clients" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Clientes</span>
@@ -54,6 +55,10 @@ export function AdminTabs() {
         <TabsTrigger value="coordinates" className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
           <span className="hidden sm:inline">Coordenadas</span>
+        </TabsTrigger>
+        <TabsTrigger value="pois" className="flex items-center gap-2">
+          <Navigation className="h-4 w-4" />
+          <span className="hidden sm:inline">POIs</span>
         </TabsTrigger>
       </TabsList>
 
@@ -95,6 +100,10 @@ export function AdminTabs() {
 
       <TabsContent value="coordinates">
         <AttractionCoordinatesEditor />
+      </TabsContent>
+
+      <TabsContent value="pois">
+        <POIEditor />
       </TabsContent>
     </Tabs>
   );
