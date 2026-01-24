@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { AttractionDetailSheet } from '@/components/map/AttractionDetailSheet';
+import { AttractionFloatingCard } from '@/components/map/AttractionFloatingCard';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
@@ -101,7 +101,6 @@ export default function ParkMap() {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
-  const [showAttractionDetail, setShowAttractionDetail] = useState(false);
 
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
@@ -534,7 +533,6 @@ export default function ParkMap() {
                         className="py-3 flex items-center justify-between gap-3 active:bg-muted/50"
                         onClick={() => {
                           setSelectedAttraction(attraction);
-                          setShowAttractionDetail(true);
                           handleNavigateToAttraction(attraction.position);
                           setShowAttractionsList(false);
                         }}
@@ -613,10 +611,7 @@ export default function ParkMap() {
                 position={attraction.position}
                 icon={getMarkerIcon(attraction)}
                 title={`${attraction.name}${attraction.waitTime !== undefined ? ` - ${attraction.waitTime} min` : ''}`}
-                onClick={() => {
-                  setSelectedAttraction(attraction);
-                  setShowAttractionDetail(true);
-                }}
+                onClick={() => setSelectedAttraction(attraction)}
               />
             ))}
 
@@ -751,21 +746,19 @@ export default function ParkMap() {
         </div>
       )}
 
-      {/* Attraction Detail Sheet */}
-      <AttractionDetailSheet
-        attraction={selectedAttraction}
-        parkName={selectedPark.name}
-        isOpen={showAttractionDetail}
-        onClose={() => {
-          setShowAttractionDetail(false);
-          setSelectedAttraction(null);
-        }}
-        onNavigate={(pos, name) => {
-          setShowAttractionDetail(false);
-          handleRouteToAttraction(pos, name);
-        }}
-        isCalculatingRoute={isCalculatingRoute}
-      />
+      {/* Attraction Floating Card */}
+      {selectedAttraction && !isNavigating && (
+        <AttractionFloatingCard
+          attraction={selectedAttraction}
+          parkName={selectedPark.name}
+          onClose={() => setSelectedAttraction(null)}
+          onNavigate={(pos, name) => {
+            setSelectedAttraction(null);
+            handleRouteToAttraction(pos, name);
+          }}
+          isCalculatingRoute={isCalculatingRoute}
+        />
+      )}
     </div>
   );
 }
