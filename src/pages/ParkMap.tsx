@@ -593,6 +593,7 @@ export default function ParkMap() {
               gestureHandling: 'greedy',
             }}
             onLoad={onMapLoad}
+            onClick={() => setSelectedAttraction(null)}
           >
             {/* User location marker */}
             {userPosition && isMapLoaded && (
