@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2 } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -87,6 +88,7 @@ interface RouteInfo {
 
 export default function ParkMap() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const mapRef = useRef<google.maps.Map | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
@@ -1136,15 +1138,29 @@ export default function ParkMap() {
                   <Navigation className="w-4 h-4 animate-pulse shrink-0" />
                   <span className="truncate">{routeInfo.destinationName}</span>
                 </span>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-bold">{routeInfo.distance}</span>
-                  <span className="text-blue-200">|</span>
-                  <span className="font-bold">{routeInfo.duration}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-bold text-xs">{routeInfo.distance}</span>
+                  <span className="text-blue-200 text-xs">|</span>
+                  <span className="font-bold text-xs">{routeInfo.duration}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      handleStopNavigation();
+                      navigate('/dashboard');
+                    }}
+                    className="text-white hover:bg-white/20 h-8 px-2 gap-1"
+                    title="Voltar ao início"
+                  >
+                    <Home className="w-4 h-4" />
+                    <span className="text-xs hidden sm:inline">Início</span>
+                  </Button>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={handleStopNavigation}
-                    className="text-white hover:bg-white/20 h-8 w-8 p-0 ml-1"
+                    className="text-white hover:bg-red-500/50 h-8 w-8 p-0"
+                    title="Parar navegação"
                   >
                     <X className="w-5 h-5" />
                   </Button>
