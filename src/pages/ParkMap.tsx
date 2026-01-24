@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { AttractionFloatingCard } from '@/components/map/AttractionFloatingCard';
+import { AttractionPopup } from '@/components/map/AttractionPopup';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
@@ -615,6 +615,20 @@ export default function ParkMap() {
               />
             ))}
 
+            {/* Attraction Popup over marker */}
+            {selectedAttraction && !isNavigating && (
+              <AttractionPopup
+                attraction={selectedAttraction}
+                parkName={selectedPark.name}
+                onClose={() => setSelectedAttraction(null)}
+                onNavigate={(pos, name) => {
+                  setSelectedAttraction(null);
+                  handleRouteToAttraction(pos, name);
+                }}
+                isCalculatingRoute={isCalculatingRoute}
+              />
+            )}
+
             {/* Directions renderer */}
             {directions && (
               <DirectionsRenderer
@@ -746,19 +760,6 @@ export default function ParkMap() {
         </div>
       )}
 
-      {/* Attraction Floating Card */}
-      {selectedAttraction && !isNavigating && (
-        <AttractionFloatingCard
-          attraction={selectedAttraction}
-          parkName={selectedPark.name}
-          onClose={() => setSelectedAttraction(null)}
-          onNavigate={(pos, name) => {
-            setSelectedAttraction(null);
-            handleRouteToAttraction(pos, name);
-          }}
-          isCalculatingRoute={isCalculatingRoute}
-        />
-      )}
     </div>
   );
 }
