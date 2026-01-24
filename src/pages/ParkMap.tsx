@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -103,24 +103,29 @@ interface RouteInfo {
   destination?: LatLng; // Store destination for fallback line
 }
 
+// Navigation modes: 'preview' shows full route, 'guided' is turn-by-turn with auto-rotation
+type NavigationMode = 'preview' | 'guided';
+
 export default function ParkMap() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const mapRef = useRef<google.maps.Map | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const headingWatchIdRef = useRef<number | null>(null);
   const [selectedPark, setSelectedPark] = useState(PARKS[0]);
   const [waitTimes, setWaitTimes] = useState<WaitTimeData[]>([]);
   const [dataSource, setDataSource] = useState<string>('');
   const [isLoadingWaitTimes, setIsLoadingWaitTimes] = useState(false);
   const [lastWaitTimeUpdate, setLastWaitTimeUpdate] = useState<Date | null>(null);
   const [userPosition, setUserPosition] = useState<LatLng | null>(null);
-  const [userHeading, setUserHeading] = useState<number | null>(null);
+  const [userHeading, setUserHeading] = useState<number>(0);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routeSteps, setRouteSteps] = useState<google.maps.DirectionsStep[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationMode, setNavigationMode] = useState<NavigationMode>('preview');
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -132,6 +137,7 @@ export default function ParkMap() {
   const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'firstaid']));
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const lastHeadingRef = useRef<number>(0);
 
   // Fetch POIs for current park from database
   const { data: dbPOIs = [] } = useQuery({
@@ -481,15 +487,22 @@ export default function ParkMap() {
             distance: leg.distance?.text || '',
             duration: leg.duration?.text || '',
             destinationName,
+            destination,
           });
           setRouteSteps(leg.steps || []);
           setIsNavigating(true);
+          setNavigationMode('preview'); // Start in preview mode - show full route
           setIsNavPanelExpanded(true);
           
-          // Center on user and zoom to show route
-          if (mapRef.current && userPosition) {
-            mapRef.current.panTo(userPosition);
-            mapRef.current.setZoom(19);
+          // Fit the entire route in view for preview mode
+          if (mapRef.current) {
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(userPosition);
+            bounds.extend(destination);
+            mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
+            // Reset rotation for preview
+            mapRef.current.setHeading(0);
+            mapRef.current.setTilt(0);
           }
         } else {
           // Fallback: Calculate straight-line distance when Directions API fails
@@ -508,15 +521,17 @@ export default function ParkMap() {
           });
           setRouteSteps([]);
           setIsNavigating(true);
+          setNavigationMode('preview');
           setIsNavPanelExpanded(true);
           
-          // Pan to destination to help user navigate
+          // Fit both points in view
           if (mapRef.current) {
-            // Fit both points in view
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(userPosition);
             bounds.extend(destination);
             mapRef.current.fitBounds(bounds, { top: 100, bottom: 200, left: 50, right: 50 });
+            mapRef.current.setHeading(0);
+            mapRef.current.setTilt(0);
           }
         }
       }
@@ -528,7 +543,42 @@ export default function ParkMap() {
     setRouteInfo(null);
     setRouteSteps([]);
     setIsNavigating(false);
+    setNavigationMode('preview');
+    // Reset map rotation
+    if (mapRef.current) {
+      mapRef.current.setHeading(0);
+      mapRef.current.setTilt(0);
+    }
   }, []);
+
+  // Start guided navigation mode with auto-rotation
+  const startGuidedNavigation = useCallback(() => {
+    setNavigationMode('guided');
+    
+    // Center on user and zoom in for guided mode
+    if (mapRef.current && userPosition) {
+      mapRef.current.panTo(userPosition);
+      mapRef.current.setZoom(19);
+      mapRef.current.setTilt(45); // Add 3D perspective
+      mapRef.current.setHeading(userHeading); // Rotate to user heading
+    }
+  }, [userPosition, userHeading]);
+
+  // Update map rotation when in guided mode
+  useEffect(() => {
+    if (navigationMode === 'guided' && mapRef.current && isNavigating) {
+      // Smooth rotation - only rotate if heading changed significantly (>5 degrees)
+      const headingDiff = Math.abs(userHeading - lastHeadingRef.current);
+      if (headingDiff > 5 || headingDiff > 355) {
+        mapRef.current.setHeading(userHeading);
+        lastHeadingRef.current = userHeading;
+      }
+      // Keep user centered
+      if (userPosition) {
+        mapRef.current.panTo(userPosition);
+      }
+    }
+  }, [userHeading, userPosition, navigationMode, isNavigating]);
 
   // Start continuous location tracking for navigation
   const startLocationTracking = useCallback(() => {
@@ -552,13 +602,13 @@ export default function ParkMap() {
           lng: position.coords.longitude 
         };
         setUserPosition(pos);
-        setUserHeading(position.coords.heading);
-        setIsLoadingLocation(false);
         
-        // Keep map centered on user during navigation
-        if (isNavigating && mapRef.current) {
-          mapRef.current.panTo(pos);
+        // Update heading from GPS if available
+        if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
+          setUserHeading(position.coords.heading);
         }
+        
+        setIsLoadingLocation(false);
       },
       (error) => {
         switch (error.code) {
@@ -582,7 +632,42 @@ export default function ParkMap() {
         maximumAge: 1000
       }
     );
-  }, [isNavigating]);
+
+    // Also use device orientation for more accurate heading on mobile
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (event.alpha !== null && navigationMode === 'guided') {
+        // Convert device orientation to compass heading
+        // alpha is 0-360 where 0 = north
+        let heading = event.alpha;
+        if ((event as any).webkitCompassHeading !== undefined) {
+          heading = (event as any).webkitCompassHeading;
+        } else if (event.alpha !== null) {
+          heading = 360 - event.alpha;
+        }
+        setUserHeading(heading);
+      }
+    };
+
+    // Request permission for device orientation on iOS 13+
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      (DeviceOrientationEvent as any).requestPermission()
+        .then((response: string) => {
+          if (response === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+          }
+        })
+        .catch(console.error);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+
+    // Store cleanup function reference
+    headingWatchIdRef.current = 1; // Flag that orientation listener is active
+    
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+    };
+  }, [navigationMode]);
 
   // Stop location tracking
   const stopLocationTracking = useCallback(() => {
@@ -590,6 +675,7 @@ export default function ParkMap() {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    headingWatchIdRef.current = null;
   }, []);
 
   // Cleanup on unmount
@@ -693,14 +779,17 @@ export default function ParkMap() {
     if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
       return undefined;
     }
+    
+    // In guided mode, we don't rotate the marker since the map rotates instead
+    // The arrow always points "forward" (up) relative to the map
     return {
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#3B82F6',
       fillOpacity: 1,
       strokeColor: '#FFFFFF',
-      strokeWeight: 2,
-      scale: 8,
-      rotation: userHeading || 0,
+      strokeWeight: 3,
+      scale: navigationMode === 'guided' ? 10 : 8,
+      rotation: navigationMode === 'guided' ? 0 : (userHeading || 0),
     };
   };
 
@@ -1161,7 +1250,28 @@ export default function ParkMap() {
           </GoogleMap>
         </LoadScript>
 
-        {/* POI Filters - Floating buttons */}
+        {/* Centered Navigation Arrow - Guided Mode Overlay */}
+        {navigationMode === 'guided' && isNavigating && userPosition && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+            {/* Centered arrow indicator */}
+            <div className="relative">
+              {/* Glow effect */}
+              <div className="absolute inset-0 w-20 h-20 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 rounded-full bg-blue-500/30 blur-xl animate-pulse" />
+              {/* Arrow container */}
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                {/* Outer ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-blue-500/50" />
+                {/* Inner circle */}
+                <div className="absolute inset-2 rounded-full bg-blue-500 shadow-lg" />
+                {/* Arrow always points up - map rotates instead */}
+                <ArrowUp className="relative w-8 h-8 text-white z-10" strokeWidth={3} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* POI Filters - Floating buttons (hide during guided navigation) */}
+        {navigationMode !== 'guided' && (
         <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
           {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
             const config = POI_CONFIG[type];
@@ -1183,6 +1293,7 @@ export default function ParkMap() {
             );
           })}
         </div>
+        )}
 
         {/* Selected POI Info Card */}
         {selectedPOI && (
@@ -1288,7 +1399,7 @@ export default function ParkMap() {
         )}
       </div>
 
-      {/* Navigation Panel - GPS Style */}
+      {/* Navigation Panel - GPS Style with Preview/Guided modes */}
       {isNavigating && routeInfo && (
         <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom ${isNavPanelExpanded ? 'h-auto' : 'h-16'}`}>
           <Card className="rounded-t-xl rounded-b-none border-t-2 border-blue-500 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl">
@@ -1303,7 +1414,7 @@ export default function ParkMap() {
             <CardHeader className="py-2 pb-1 pt-4">
               <CardTitle className="text-sm flex items-center justify-between">
                 <span className="flex items-center gap-2 truncate">
-                  <Navigation className="w-4 h-4 animate-pulse shrink-0" />
+                  <Navigation className={`w-4 h-4 shrink-0 ${navigationMode === 'guided' ? 'animate-pulse' : ''}`} />
                   <span className="truncate">{routeInfo.destinationName}</span>
                 </span>
                 <div className="flex items-center gap-2 shrink-0">
@@ -1336,68 +1447,146 @@ export default function ParkMap() {
               </CardTitle>
             </CardHeader>
             
-            {isNavPanelExpanded && routeSteps.length > 0 && (
-              <CardContent className="py-2 pb-4">
-                <div className="bg-white/10 rounded-lg p-2 max-h-28 overflow-auto">
-                  <p className="text-xs text-blue-200 mb-1">Próximos passos:</p>
-                  <div className="space-y-1.5">
-                    {routeSteps.slice(0, 3).map((step, index) => (
-                      <div key={index} className="flex items-start gap-2 text-xs">
-                        <span className="bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                          {index + 1}
-                        </span>
-                        <span 
-                          className="text-white/90 leading-tight"
-                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(step.instructions) }}
+            {isNavPanelExpanded && (
+              <CardContent className="py-3 pb-5">
+                {/* Mode indicator and controls */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant={navigationMode === 'guided' ? 'default' : 'secondary'}
+                      className={navigationMode === 'guided' ? 'bg-green-500 text-white' : 'bg-white/20 text-white'}
+                    >
+                      {navigationMode === 'guided' ? '🧭 Navegando' : '👁️ Visualizando rota'}
+                    </Badge>
+                  </div>
+                  
+                  {/* Play/Pause Navigation Button */}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (navigationMode === 'preview') {
+                        startGuidedNavigation();
+                      } else {
+                        setNavigationMode('preview');
+                        // Reset map to show full route
+                        if (mapRef.current && userPosition && routeInfo.destination) {
+                          const bounds = new google.maps.LatLngBounds();
+                          bounds.extend(userPosition);
+                          bounds.extend(routeInfo.destination);
+                          mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
+                          mapRef.current.setHeading(0);
+                          mapRef.current.setTilt(0);
+                        }
+                      }
+                    }}
+                    className={`gap-2 ${
+                      navigationMode === 'guided' 
+                        ? 'bg-amber-500 hover:bg-amber-600' 
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                  >
+                    {navigationMode === 'guided' ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        Ver Rota
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        Iniciar Navegação
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Preview Mode: Show route steps */}
+                {navigationMode === 'preview' && routeSteps.length > 0 && (
+                  <div className="bg-white/10 rounded-lg p-3">
+                    <p className="text-xs text-blue-200 mb-2 font-medium">📋 Instruções da rota:</p>
+                    <div className="space-y-2 max-h-32 overflow-auto">
+                      {routeSteps.map((step, index) => (
+                        <div key={index} className="flex items-start gap-2 text-xs">
+                          <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-bold">
+                            {index + 1}
+                          </span>
+                          <span 
+                            className="text-white/90 leading-tight"
+                            dangerouslySetInnerHTML={{ __html: translateNavigationStep(step.instructions) }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-blue-200 mt-3 text-center">
+                      Toque em "Iniciar Navegação" para ser guiado em tempo real
+                    </p>
+                  </div>
+                )}
+
+                {/* Guided Mode: Centered compass arrow */}
+                {navigationMode === 'guided' && routeInfo?.destination && userPosition && (
+                  <div className="flex flex-col items-center gap-3">
+                    {/* Large centered compass arrow with pulse animation */}
+                    <div className="relative w-28 h-28">
+                      {/* Outer pulse ring */}
+                      <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" style={{ animationDuration: '2s' }} />
+                      {/* Static outer ring */}
+                      <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
+                      {/* Inner glow */}
+                      <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+                      {/* Arrow - always points UP because map rotates */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <ArrowUp className="w-14 h-14 text-white drop-shadow-lg" strokeWidth={3} />
+                      </div>
+                      {/* User indicator */}
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
+                        <LocateFixed className="w-5 h-5 text-blue-300 animate-pulse" />
+                      </div>
+                    </div>
+
+                    {/* Distance to destination */}
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-white mb-1">
+                        {routeInfo.distance}
+                      </p>
+                      <p className="text-sm text-blue-200 flex items-center justify-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        <span>Chegada em ~{routeInfo.duration}</span>
+                      </p>
+                    </div>
+
+                    {/* Current instruction */}
+                    {routeSteps.length > 0 && (
+                      <div className="bg-white/10 rounded-lg p-3 w-full">
+                        <p className="text-xs text-blue-200 mb-1">Próxima instrução:</p>
+                        <p 
+                          className="text-sm text-white font-medium"
+                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[0]?.instructions || '') }}
                         />
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            )}
+                )}
 
-            {/* Fallback: Centered compass when no detailed route */}
-            {isNavPanelExpanded && routeSteps.length === 0 && routeInfo?.destination && userPosition && (
-              <CardContent className="py-4 pb-6">
-                <div className="flex flex-col items-center gap-3">
-                  {/* Large centered compass arrow with pulse animation */}
-                  <div className="relative w-24 h-24">
-                    {/* Outer pulse ring */}
-                    <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" style={{ animationDuration: '2s' }} />
-                    {/* Static outer ring */}
-                    <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
-                    {/* Inner glow */}
-                    <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-                    {/* Arrow with rotation */}
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
-                      style={{ transform: `rotate(${bearingToDestination}deg)` }}
-                    >
-                      <ArrowUp className="w-12 h-12 text-white drop-shadow-lg animate-pulse" strokeWidth={3} />
+                {/* Fallback: When no route steps available */}
+                {navigationMode === 'preview' && routeSteps.length === 0 && routeInfo?.destination && (
+                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                    <div className="relative w-20 h-20 mx-auto mb-3">
+                      <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
+                        style={{ transform: `rotate(${bearingToDestination}deg)` }}
+                      >
+                        <ArrowUp className="w-10 h-10 text-white" strokeWidth={3} />
+                      </div>
                     </div>
-                    {/* Cardinal indicators */}
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/70">N</span>
-                    <span className="absolute top-1/2 -right-2 -translate-y-1/2 text-[10px] font-bold text-white/50">L</span>
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/50">S</span>
-                    <span className="absolute top-1/2 -left-2 -translate-y-1/2 text-[10px] font-bold text-white/50">O</span>
-                  </div>
-
-                  {/* Direction info - centered text */}
-                  <div className="text-center">
-                    <p className="text-sm text-white/90 mb-1">
-                      Siga na direção da seta
+                    <p className="text-sm text-white/90">
+                      Siga na direção indicada
                     </p>
-                    <p className="text-xs text-blue-200 flex items-center justify-center gap-2">
-                      <span>Distância: <strong className="text-white">{routeInfo.distance}</strong></span>
-                      <span className="text-blue-300">•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <strong className="text-white">{routeInfo.duration}</strong>
-                      </span>
+                    <p className="text-xs text-blue-200 mt-1">
+                      Distância aproximada: {routeInfo.distance}
                     </p>
                   </div>
-                </div>
+                )}
               </CardContent>
             )}
           </Card>
