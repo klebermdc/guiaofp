@@ -1250,22 +1250,68 @@ export default function ParkMap() {
           </GoogleMap>
         </LoadScript>
 
-        {/* Centered Navigation Arrow - Guided Mode Overlay */}
+        {/* Centered GPS Navigation Arrow - Waze Style */}
         {navigationMode === 'guided' && isNavigating && userPosition && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            {/* Centered arrow indicator */}
+            {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
-              {/* Glow effect */}
-              <div className="absolute inset-0 w-20 h-20 -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 rounded-full bg-blue-500/30 blur-xl animate-pulse" />
-              {/* Arrow container */}
-              <div className="relative w-16 h-16 flex items-center justify-center">
-                {/* Outer ring */}
-                <div className="absolute inset-0 rounded-full border-4 border-blue-500/50" />
-                {/* Inner circle */}
-                <div className="absolute inset-2 rounded-full bg-blue-500 shadow-lg" />
-                {/* Arrow always points up - map rotates instead */}
-                <ArrowUp className="relative w-8 h-8 text-white z-10" strokeWidth={3} />
-              </div>
+              {/* Outer glow pulse */}
+              <div className="absolute -inset-4 rounded-full bg-blue-400/20 blur-xl animate-pulse" />
+              
+              {/* Direction cone/beam (the "vision" area) */}
+              <div 
+                className="absolute w-0 h-0 left-1/2 -translate-x-1/2"
+                style={{
+                  bottom: '50%',
+                  borderLeft: '40px solid transparent',
+                  borderRight: '40px solid transparent',
+                  borderBottom: '80px solid rgba(59, 130, 246, 0.25)',
+                }}
+              />
+              
+              {/* Main navigation arrow - Waze style triangle */}
+              <svg 
+                width="60" 
+                height="60" 
+                viewBox="0 0 60 60" 
+                className="drop-shadow-2xl"
+                style={{
+                  filter: 'drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5))',
+                }}
+              >
+                {/* Outer glow layer */}
+                <defs>
+                  <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#60A5FA" />
+                    <stop offset="100%" stopColor="#2563EB" />
+                  </linearGradient>
+                  <filter id="arrowShadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#1E40AF" floodOpacity="0.5"/>
+                  </filter>
+                </defs>
+                
+                {/* White outline */}
+                <polygon 
+                  points="30,5 50,50 30,40 10,50" 
+                  fill="white"
+                  filter="url(#arrowShadow)"
+                />
+                
+                {/* Blue fill with gradient */}
+                <polygon 
+                  points="30,8 47,47 30,38 13,47" 
+                  fill="url(#arrowGradient)"
+                />
+                
+                {/* Highlight on left side */}
+                <polygon 
+                  points="30,8 30,38 13,47" 
+                  fill="rgba(255,255,255,0.15)"
+                />
+              </svg>
+              
+              {/* Center dot */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-blue-600 shadow-lg" />
             </div>
           </div>
         )}
@@ -1522,48 +1568,45 @@ export default function ParkMap() {
                   </div>
                 )}
 
-                {/* Guided Mode: Centered compass arrow */}
+                {/* Guided Mode: Navigation info */}
                 {navigationMode === 'guided' && routeInfo?.destination && userPosition && (
                   <div className="flex flex-col items-center gap-3">
-                    {/* Large centered compass arrow with pulse animation */}
-                    <div className="relative w-28 h-28">
-                      {/* Outer pulse ring */}
-                      <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" style={{ animationDuration: '2s' }} />
-                      {/* Static outer ring */}
-                      <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
-                      {/* Inner glow */}
-                      <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-                      {/* Arrow - always points UP because map rotates */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ArrowUp className="w-14 h-14 text-white drop-shadow-lg" strokeWidth={3} />
+                    {/* Distance and ETA - prominent display */}
+                    <div className="flex items-center justify-center gap-6 w-full">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-white">
+                          {routeInfo.distance}
+                        </p>
+                        <p className="text-xs text-blue-200">Distância</p>
                       </div>
-                      {/* User indicator */}
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
-                        <LocateFixed className="w-5 h-5 text-blue-300 animate-pulse" />
+                      <div className="w-px h-10 bg-white/30" />
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-white">
+                          {routeInfo.duration}
+                        </p>
+                        <p className="text-xs text-blue-200">Tempo estimado</p>
                       </div>
-                    </div>
-
-                    {/* Distance to destination */}
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-white mb-1">
-                        {routeInfo.distance}
-                      </p>
-                      <p className="text-sm text-blue-200 flex items-center justify-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>Chegada em ~{routeInfo.duration}</span>
-                      </p>
                     </div>
 
                     {/* Current instruction */}
                     {routeSteps.length > 0 && (
                       <div className="bg-white/10 rounded-lg p-3 w-full">
-                        <p className="text-xs text-blue-200 mb-1">Próxima instrução:</p>
+                        <p className="text-xs text-blue-200 mb-1 flex items-center gap-1">
+                          <Navigation className="w-3 h-3" />
+                          Próxima instrução:
+                        </p>
                         <p 
                           className="text-sm text-white font-medium"
                           dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[0]?.instructions || '') }}
                         />
                       </div>
                     )}
+
+                    {/* Status indicator */}
+                    <p className="text-xs text-blue-200 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      GPS ativo • Mapa gira automaticamente
+                    </p>
                   </div>
                 )}
 
