@@ -597,7 +597,12 @@ export default function ParkMap() {
               gestureHandling: 'greedy',
             }}
             onLoad={onMapLoad}
-            onClick={() => setSelectedAttraction(null)}
+            onClick={(e) => {
+              const target = (e as any)?.domEvent?.target as HTMLElement | null;
+              // Don't close the popup when interacting with it (e.g., tapping the video thumbnail).
+              if (target?.closest?.('[data-attraction-popup="true"]')) return;
+              setSelectedAttraction(null);
+            }}
           >
             {/* User location marker */}
             {userPosition && isMapLoaded && (
