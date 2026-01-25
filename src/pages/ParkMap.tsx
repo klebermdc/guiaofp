@@ -851,8 +851,8 @@ export default function ParkMap() {
         : '#22C55E'
       : '#6B7280';
 
-    // Attraction marker: Star/burst shape with wait time - DOUBLED SIZE for visibility
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+    // Attraction marker: Star/burst shape with wait time - 64px size (reduced 20% from 80px)
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 80 80">
       <!-- Outer glow -->
       <circle cx="40" cy="40" r="36" fill="${waitTimeColor}" opacity="0.3"/>
       <!-- Main star shape -->
@@ -868,8 +868,8 @@ export default function ParkMap() {
     
     return {
       url: svgUrl,
-      scaledSize: new google.maps.Size(80, 80),
-      anchor: new google.maps.Point(40, 40),
+      scaledSize: new google.maps.Size(64, 64),
+      anchor: new google.maps.Point(32, 32),
     };
   };
 
