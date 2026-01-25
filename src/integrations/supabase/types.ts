@@ -101,6 +101,7 @@ export type Database = {
           menu_url: string | null
           min_height: string | null
           pass_type: string | null
+          schedule: string | null
           sort_order: number | null
           thrill_level: number | null
           thumbnail_url: string | null
@@ -125,6 +126,7 @@ export type Database = {
           menu_url?: string | null
           min_height?: string | null
           pass_type?: string | null
+          schedule?: string | null
           sort_order?: number | null
           thrill_level?: number | null
           thumbnail_url?: string | null
@@ -149,6 +151,7 @@ export type Database = {
           menu_url?: string | null
           min_height?: string | null
           pass_type?: string | null
+          schedule?: string | null
           sort_order?: number | null
           thrill_level?: number | null
           thumbnail_url?: string | null

@@ -54,6 +54,7 @@ interface POI {
   type: POIType;
   name: string;
   position: LatLng;
+  schedule?: string | null;
 }
 
 const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
@@ -189,7 +190,7 @@ export default function ParkMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, latitude, longitude, icon')
+        .select('id, title, latitude, longitude, icon, schedule')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .eq('is_published', true);
@@ -207,6 +208,7 @@ export default function ParkMap() {
       type: (poi.icon as POIType) || 'restroom',
       name: poi.title,
       position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
+      schedule: poi.schedule,
     }));
 
   // Toggle POI visibility
@@ -1508,7 +1510,7 @@ export default function ParkMap() {
 
         {/* Selected POI Info Card */}
         {selectedPOI && (
-          <div className="absolute top-14 right-2 z-20 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-[200px]">
+          <div className="absolute top-14 right-2 z-20 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-[220px]">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
@@ -1518,6 +1520,12 @@ export default function ParkMap() {
                   </span>
                 </div>
                 <p className="text-sm font-medium">{selectedPOI.name}</p>
+                {selectedPOI.schedule && (
+                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    <span>{selectedPOI.schedule}</span>
+                  </div>
+                )}
               </div>
               <button 
                 onClick={() => setSelectedPOI(null)} 
