@@ -30,6 +30,7 @@ import Checklists from "./pages/Checklists";
 import Checkout from "./pages/Checkout";
 import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
+import Restaurants from "./pages/Restaurants";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => {
                 <Route path="/multipass" element={<MultiPass />} />
                 <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
                 <Route path="/checklists" element={<Checklists />} />
+                <Route path="/restaurantes" element={<Restaurants />} />
                 <Route path="/checkout/:planId" element={<Checkout />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/cliente/:id" element={<ClientDetails />} />
