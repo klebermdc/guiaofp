@@ -330,8 +330,9 @@ export default function ParkMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, description, latitude, longitude, thrill_level, min_height, pass_type')
+        .select('id, title, description, latitude, longitude, thrill_level, min_height, pass_type, type')
         .eq('category_id', selectedPark.id)
+        .neq('type', 'poi') // Exclude POIs - only attractions get star markers
         .not('latitude', 'is', null)
         .not('longitude', 'is', null);
 
