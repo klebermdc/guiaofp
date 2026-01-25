@@ -846,16 +846,16 @@ export default function ParkMap() {
         : '#22C55E'
       : '#6B7280';
 
-    // Attraction marker: Star/burst shape with wait time
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    // Attraction marker: Star/burst shape with wait time - DOUBLED SIZE for visibility
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
       <!-- Outer glow -->
-      <circle cx="20" cy="20" r="18" fill="${waitTimeColor}" opacity="0.3"/>
+      <circle cx="40" cy="40" r="36" fill="${waitTimeColor}" opacity="0.3"/>
       <!-- Main star shape -->
-      <path d="M20 2 L23 14 L35 14 L25 22 L29 35 L20 27 L11 35 L15 22 L5 14 L17 14 Z" 
-            fill="${waitTimeColor}" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M40 4 L46 28 L70 28 L50 44 L58 70 L40 54 L22 70 L30 44 L10 28 L34 28 Z" 
+            fill="${waitTimeColor}" stroke="white" stroke-width="3" stroke-linejoin="round"/>
       ${attraction.waitTime !== undefined ? `
-        <circle cx="20" cy="20" r="8" fill="white" opacity="0.95"/>
-        <text x="20" y="24" text-anchor="middle" fill="${waitTimeColor}" font-size="10" font-weight="bold" font-family="Arial, sans-serif">${attraction.waitTime}</text>
+        <circle cx="40" cy="40" r="16" fill="white" opacity="0.95"/>
+        <text x="40" y="46" text-anchor="middle" fill="${waitTimeColor}" font-size="18" font-weight="bold" font-family="Arial, sans-serif">${attraction.waitTime}</text>
       ` : ''}
     </svg>`;
     
@@ -863,8 +863,8 @@ export default function ParkMap() {
     
     return {
       url: svgUrl,
-      scaledSize: new google.maps.Size(40, 40),
-      anchor: new google.maps.Point(20, 20),
+      scaledSize: new google.maps.Size(80, 80),
+      anchor: new google.maps.Point(40, 40),
     };
   };
 
