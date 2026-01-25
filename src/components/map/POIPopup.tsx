@@ -42,6 +42,10 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     e.preventDefault();
     if (onOpenMenu && poi.menuUrl) {
       onOpenMenu(poi.menuUrl, poi.name);
+      // Close popup after setting the menu modal state
+      setTimeout(() => {
+        onClose();
+      }, 50);
     }
   };
 
@@ -132,6 +136,7 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
         >
           {cardContent}
         </motion.div>
