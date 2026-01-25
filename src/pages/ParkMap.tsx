@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,6 +55,8 @@ interface POI {
   name: string;
   position: LatLng;
   schedule?: string | null;
+  description?: string | null;
+  menuUrl?: string | null;
 }
 
 const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
@@ -190,7 +192,7 @@ export default function ParkMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, latitude, longitude, icon, schedule')
+        .select('id, title, latitude, longitude, icon, schedule, description, menu_url')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .eq('is_published', true);
@@ -209,6 +211,8 @@ export default function ParkMap() {
       name: poi.title,
       position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
       schedule: poi.schedule,
+      description: poi.description,
+      menuUrl: poi.menu_url,
     }));
 
   // Toggle POI visibility
@@ -1510,9 +1514,9 @@ export default function ParkMap() {
 
         {/* Selected POI Info Card */}
         {selectedPOI && (
-          <div className="absolute top-14 right-2 z-20 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-[220px]">
+          <div className="absolute top-14 right-2 z-20 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-[260px]">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="text-lg">{POI_CONFIG[selectedPOI.type].emoji}</span>
                   <span className="text-xs font-medium" style={{ color: POI_CONFIG[selectedPOI.type].color }}>
@@ -1520,16 +1524,39 @@ export default function ParkMap() {
                   </span>
                 </div>
                 <p className="text-sm font-medium">{selectedPOI.name}</p>
+                
+                {/* Description */}
+                {selectedPOI.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                    {selectedPOI.description}
+                  </p>
+                )}
+                
+                {/* Schedule for shows */}
                 {selectedPOI.schedule && (
-                  <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
+                  <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3 shrink-0" />
                     <span>{selectedPOI.schedule}</span>
                   </div>
+                )}
+                
+                {/* Menu link for restaurants */}
+                {selectedPOI.type === 'restaurant' && selectedPOI.menuUrl && (
+                  <a
+                    href={selectedPOI.menuUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 mt-1.5 text-xs text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Ver cardápio
+                  </a>
                 )}
               </div>
               <button 
                 onClick={() => setSelectedPOI(null)} 
-                className="text-muted-foreground hover:text-foreground p-1"
+                className="text-muted-foreground hover:text-foreground p-1 shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
