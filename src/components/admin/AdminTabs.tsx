@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Navigation } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Navigation, Palette } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -11,11 +11,12 @@ import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
 import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
 import { POIEditor } from './POIEditor';
+import { MarkerIconManager } from './MarkerIconManager';
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="clients" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex lg:grid-cols-11">
+      <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex lg:grid-cols-12">
         <TabsTrigger value="clients" className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Clientes</span>
@@ -59,6 +60,10 @@ export function AdminTabs() {
         <TabsTrigger value="pois" className="flex items-center gap-2">
           <Navigation className="h-4 w-4" />
           <span className="hidden sm:inline">POIs</span>
+        </TabsTrigger>
+        <TabsTrigger value="markers" className="flex items-center gap-2">
+          <Palette className="h-4 w-4" />
+          <span className="hidden sm:inline">Ícones</span>
         </TabsTrigger>
       </TabsList>
 
@@ -104,6 +109,10 @@ export function AdminTabs() {
 
       <TabsContent value="pois">
         <POIEditor />
+      </TabsContent>
+
+      <TabsContent value="markers">
+        <MarkerIconManager />
       </TabsContent>
     </Tabs>
   );
