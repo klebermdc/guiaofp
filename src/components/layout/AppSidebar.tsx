@@ -16,7 +16,8 @@ import {
   Headphones,
   CheckCircle2,
   Map,
-  FileText
+  FileText,
+  UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -44,6 +45,7 @@ const iconMap: Record<string, React.ElementType> = {
   Sparkles,
   CreditCard,
   Headphones,
+  UtensilsCrossed,
 };
 
 // Static menu items (not controlled by plan_page_access)
@@ -63,6 +65,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   multipass: { path: '/multipass', label: 'Multi Pass', defaultIcon: Zap },
   guia: { path: '/guia', label: 'Guia de Viagem', defaultIcon: BookOpen },
   checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
+  restaurantes: { path: '/restaurantes', label: 'Restaurantes', defaultIcon: UtensilsCrossed },
   conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
   contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
 };
