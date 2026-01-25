@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
 
 type LatLng = { lat: number; lng: number };
-type POIType = 'restroom' | 'restaurant' | 'shop' | 'firstaid';
+type POIType = 'restroom' | 'restaurant' | 'shop' | 'firstaid' | 'show';
 
 interface Park {
   id: string;
@@ -49,6 +49,7 @@ const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string 
   restaurant: { label: 'Restaurante', color: '#F97316', emoji: '🍽️' },
   shop: { label: 'Loja', color: '#A855F7', emoji: '🛍️' },
   firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
+  show: { label: 'Show', color: '#EC4899', emoji: '🎭' },
 };
 
 const mapContainerStyle = {
