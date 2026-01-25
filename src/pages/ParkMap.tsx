@@ -1331,6 +1331,26 @@ export default function ParkMap() {
               )}
             </AnimatePresence>
 
+            {/* POI Popup over marker - INSIDE GoogleMap for OverlayView to work */}
+            <AnimatePresence>
+              {selectedPOI && (
+                <POIPopup
+                  poi={{
+                    id: selectedPOI.id,
+                    name: selectedPOI.name,
+                    type: selectedPOI.type,
+                    position: selectedPOI.position,
+                    description: selectedPOI.description || undefined,
+                    schedule: selectedPOI.schedule || undefined,
+                    menuUrl: selectedPOI.menuUrl || undefined,
+                  }}
+                  poiConfig={POI_CONFIG[selectedPOI.type]}
+                  onClose={() => setSelectedPOI(null)}
+                  onNavigate={handleRouteToAttraction}
+                />
+              )}
+            </AnimatePresence>
+
             {/* Directions renderer - when API returns full route */}
             {directions && (
               <DirectionsRenderer
@@ -1475,25 +1495,6 @@ export default function ParkMap() {
         </div>
         )}
 
-        {/* Selected POI Popup - Anchored above marker */}
-        <AnimatePresence>
-          {selectedPOI && (
-            <POIPopup
-              poi={{
-                id: selectedPOI.id,
-                name: selectedPOI.name,
-                type: selectedPOI.type,
-                position: selectedPOI.position,
-                description: selectedPOI.description || undefined,
-                schedule: selectedPOI.schedule || undefined,
-                menuUrl: selectedPOI.menuUrl || undefined,
-              }}
-              poiConfig={POI_CONFIG[selectedPOI.type]}
-              onClose={() => setSelectedPOI(null)}
-              onNavigate={handleRouteToAttraction}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Map Legend - Compact floating - adjusted for mobile nav */}
         <div className="absolute bottom-24 lg:bottom-4 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
