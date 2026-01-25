@@ -47,7 +47,7 @@ interface Attraction {
 }
 
 // POI Types and their visual configuration
-type POIType = 'restroom' | 'restaurant' | 'shop' | 'firstaid';
+type POIType = 'restroom' | 'restaurant' | 'shop' | 'firstaid' | 'show';
 
 interface POI {
   id: string;
@@ -61,6 +61,7 @@ const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string 
   restaurant: { label: 'Restaurantes', color: '#F97316', emoji: '🍽️' },
   shop: { label: 'Lojas', color: '#A855F7', emoji: '🛍️' },
   firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
+  show: { label: 'Shows', color: '#EC4899', emoji: '🎭' },
 };
 
 // Parks with their database IDs and center coordinates
@@ -134,7 +135,7 @@ export default function ParkMap() {
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
   const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
-  const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid']));
+  const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -258,11 +259,25 @@ export default function ParkMap() {
         <rect x="22" y="24" width="2.5" height="5" rx="1" fill="white"/>
         <rect x="25.5" y="24" width="2.5" height="5" rx="1" fill="white"/>
       </svg>`,
-      // First Aid: Diamond shape with cross
+      // First Aid: Square with cross
       firstaid: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
         <rect x="4" y="4" width="28" height="28" rx="4" transform="rotate(0 18 18)" fill="${config.color}" stroke="white" stroke-width="2"/>
         <rect x="15" y="8" width="6" height="20" rx="1" fill="white"/>
         <rect x="8" y="15" width="20" height="6" rx="1" fill="white"/>
+      </svg>`,
+      // Show: Theater masks / stage curtain
+      show: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="16" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <!-- Comedy mask -->
+        <ellipse cx="12" cy="15" rx="6" ry="7" fill="white"/>
+        <circle cx="10" cy="13" r="1.5" fill="${config.color}"/>
+        <circle cx="14" cy="13" r="1.5" fill="${config.color}"/>
+        <path d="M9 18 Q12 21 15 18" stroke="${config.color}" stroke-width="1.5" fill="none"/>
+        <!-- Tragedy mask -->
+        <ellipse cx="24" cy="20" rx="6" ry="7" fill="white"/>
+        <circle cx="22" cy="18" r="1.5" fill="${config.color}"/>
+        <circle cx="26" cy="18" r="1.5" fill="${config.color}"/>
+        <path d="M21 24 Q24 21 27 24" stroke="${config.color}" stroke-width="1.5" fill="none"/>
       </svg>`,
     };
 
