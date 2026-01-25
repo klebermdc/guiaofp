@@ -134,7 +134,8 @@ export default function ParkMap() {
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
   const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
-  const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'firstaid']));
+  const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid']));
+  const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastHeadingRef = useRef<number>(0);
@@ -220,42 +221,48 @@ export default function ParkMap() {
     });
   };
 
-  // Get POI marker icon with custom SVG paths
+  // Get POI marker icon with unique, visually distinct SVG paths
   const getPOIMarkerIcon = (type: POIType): google.maps.Icon | google.maps.Symbol | undefined => {
     if (typeof google === 'undefined') {
       return undefined;
     }
     const config = POI_CONFIG[type];
     
-    // Custom SVG icons for each POI type
+    // Unique SVG icons for each POI type - distinct shapes
     const svgIcons: Record<POIType, string> = {
-      // Restaurant: Fork and knife
-      restaurant: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <path d="M3 11h3a2 2 0 0 0 2-2V4" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
-        <path d="M3 4v7a2 2 0 0 0 2 2h1" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
-        <path d="M7 4v16" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
-        <path d="M14 4v4a2 2 0 0 0 2 2h1v10" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
+      // Restaurant: Rounded square with fork and knife
+      restaurant: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+        <rect x="2" y="2" width="32" height="32" rx="8" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <path d="M11 8v6c0 1.5 1.5 2.5 3 2.5V24" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M11 8c0 2 1 4 3 4" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M22 8v4c0 1.5 1 2 2 2.5V24" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M22 8c2 0 2 3 2 4" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
       </svg>`,
-      // Shop: Shopping bag
-      shop: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <path d="M6 8h12l-1.5 9h-9L6 8z" fill="white" transform="translate(0, 1)"/>
-        <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="white" stroke-width="2" fill="none" transform="translate(0, 1)"/>
+      // Shop: Shopping bag shape (hexagon-ish)
+      shop: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+        <path d="M8 12L11 6h14l3 6v16a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V12z" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <path d="M13 12V9a5 5 0 0 1 10 0v3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <circle cx="18" cy="20" r="3" fill="white" opacity="0.8"/>
       </svg>`,
-      // Restroom: WC symbol
-      restroom: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <circle cx="8" cy="7" r="1.5" fill="white"/>
-        <path d="M6 10h4l-0.5 7h-3L6 10z" fill="white"/>
-        <circle cx="16" cy="7" r="1.5" fill="white"/>
-        <path d="M14 10h4v3h-1.5v4h-1v-4H14v-3z" fill="white"/>
+      // Restroom: Rounded rectangle with WC figures  
+      restroom: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+        <rect x="2" y="4" width="32" height="28" rx="4" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <!-- Male figure -->
+        <circle cx="11" cy="10" r="2.5" fill="white"/>
+        <rect x="8" y="14" width="6" height="10" rx="1" fill="white"/>
+        <rect x="8" y="24" width="2.5" height="5" rx="1" fill="white"/>
+        <rect x="12" y="24" width="2.5" height="5" rx="1" fill="white"/>
+        <!-- Female figure -->
+        <circle cx="25" cy="10" r="2.5" fill="white"/>
+        <path d="M21 14h8l-1.5 10h-5L21 14z" fill="white"/>
+        <rect x="22" y="24" width="2.5" height="5" rx="1" fill="white"/>
+        <rect x="25.5" y="24" width="2.5" height="5" rx="1" fill="white"/>
       </svg>`,
-      // First Aid: Cross
-      firstaid: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <rect x="10" y="6" width="4" height="12" rx="1" fill="white"/>
-        <rect x="6" y="10" width="12" height="4" rx="1" fill="white"/>
+      // First Aid: Diamond shape with cross
+      firstaid: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+        <rect x="4" y="4" width="28" height="28" rx="4" transform="rotate(0 18 18)" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <rect x="15" y="8" width="6" height="20" rx="1" fill="white"/>
+        <rect x="8" y="15" width="20" height="6" rx="1" fill="white"/>
       </svg>`,
     };
 
@@ -264,8 +271,8 @@ export default function ParkMap() {
     
     return {
       url: svgUrl,
-      scaledSize: new google.maps.Size(32, 32),
-      anchor: new google.maps.Point(16, 16),
+      scaledSize: new google.maps.Size(36, 36),
+      anchor: new google.maps.Point(18, 18),
     };
   };
 
@@ -858,16 +865,16 @@ export default function ParkMap() {
         : '#22C55E'
       : '#6B7280';
 
-    // Mickey head silhouette SVG
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-      <!-- Left ear -->
-      <circle cx="8" cy="8" r="7" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
-      <!-- Right ear -->
-      <circle cx="28" cy="8" r="7" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
-      <!-- Main head -->
-      <circle cx="18" cy="20" r="14" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
+    // Attraction marker: Star/burst shape with wait time
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+      <!-- Outer glow -->
+      <circle cx="20" cy="20" r="18" fill="${waitTimeColor}" opacity="0.3"/>
+      <!-- Main star shape -->
+      <path d="M20 2 L23 14 L35 14 L25 22 L29 35 L20 27 L11 35 L15 22 L5 14 L17 14 Z" 
+            fill="${waitTimeColor}" stroke="white" stroke-width="2" stroke-linejoin="round"/>
       ${attraction.waitTime !== undefined ? `
-        <text x="18" y="24" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">${attraction.waitTime}</text>
+        <circle cx="20" cy="20" r="8" fill="white" opacity="0.95"/>
+        <text x="20" y="24" text-anchor="middle" fill="${waitTimeColor}" font-size="10" font-weight="bold" font-family="Arial, sans-serif">${attraction.waitTime}</text>
       ` : ''}
     </svg>`;
     
@@ -875,8 +882,8 @@ export default function ParkMap() {
     
     return {
       url: svgUrl,
-      scaledSize: new google.maps.Size(36, 36),
-      anchor: new google.maps.Point(18, 20),
+      scaledSize: new google.maps.Size(40, 40),
+      anchor: new google.maps.Point(20, 20),
     };
   };
 
@@ -1267,7 +1274,7 @@ export default function ParkMap() {
             )}
 
             {/* Attraction markers from database */}
-            {isMapLoaded && attractionsWithWaitTimes.map((attraction) => (
+            {isMapLoaded && showAttractionMarkers && attractionsWithWaitTimes.map((attraction) => (
               <Marker
                 key={attraction.id}
                 position={attraction.position}
@@ -1450,6 +1457,18 @@ export default function ParkMap() {
         {/* POI Filters - Floating buttons (hide during guided navigation) */}
         {navigationMode !== 'guided' && (
         <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
+          {/* Attractions toggle */}
+          <Button
+            variant={showAttractionMarkers ? 'default' : 'secondary'}
+            size="sm"
+            className={`h-8 px-2 shadow-lg text-xs gap-1 ${showAttractionMarkers ? 'bg-gradient-to-r from-green-500 to-amber-500' : 'opacity-70'}`}
+            onClick={() => setShowAttractionMarkers(!showAttractionMarkers)}
+            title="Atrações"
+          >
+            <span>⭐</span>
+            <span className="hidden sm:inline">{attractionsWithWaitTimes.length}</span>
+          </Button>
+          {/* POI type toggles */}
           {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
             const config = POI_CONFIG[type];
             const isActive = visiblePOIs.has(type);
@@ -1459,7 +1478,7 @@ export default function ParkMap() {
                 key={type}
                 variant={isActive ? 'default' : 'secondary'}
                 size="sm"
-                className={`h-8 px-2 shadow-lg text-xs gap-1 ${isActive ? '' : 'opacity-70'}`}
+                className={`h-8 px-2 shadow-lg text-xs gap-1 ${isActive ? '' : 'opacity-50'}`}
                 onClick={() => togglePOIType(type)}
                 title={config.label}
                 style={isActive ? { backgroundColor: config.color } : {}}
