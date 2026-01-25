@@ -259,6 +259,36 @@ export type Database = {
         }
         Relationships: []
       }
+      marker_icon_config: {
+        Row: {
+          created_at: string
+          fallback_emoji: string
+          icon_url: string | null
+          id: string
+          marker_color: string
+          poi_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fallback_emoji?: string
+          icon_url?: string | null
+          id?: string
+          marker_color?: string
+          poi_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fallback_emoji?: string
+          icon_url?: string | null
+          id?: string
+          marker_color?: string
+          poi_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       multipass_status: {
         Row: {
           confirmed_by: string | null
