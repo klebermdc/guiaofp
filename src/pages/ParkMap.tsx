@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -138,6 +138,48 @@ export default function ParkMap() {
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastHeadingRef = useRef<number>(0);
+  
+  // Car parking location - persisted in localStorage
+  const [carLocation, setCarLocation] = useState<LatLng | null>(() => {
+    const saved = localStorage.getItem('parked-car-location');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  // Save car location to localStorage whenever it changes
+  useEffect(() => {
+    if (carLocation) {
+      localStorage.setItem('parked-car-location', JSON.stringify(carLocation));
+    } else {
+      localStorage.removeItem('parked-car-location');
+    }
+  }, [carLocation]);
+
+  // Save car location at current position
+  const saveCarLocation = useCallback(() => {
+    if (!userPosition) {
+      toast.error('Ative sua localização primeiro', {
+        description: 'Precisamos saber onde você está para marcar o carro'
+      });
+      return;
+    }
+    setCarLocation(userPosition);
+    toast.success('🚗 Localização do carro salva!', {
+      description: 'Toque no botão do carro para navegar de volta'
+    });
+  }, [userPosition]);
+
+  // Clear car location
+  const clearCarLocation = useCallback(() => {
+    setCarLocation(null);
+    toast.info('Localização do carro removida');
+  }, []);
 
   // Fetch POIs for current park from database
   const { data: dbPOIs = [] } = useQuery({
@@ -550,6 +592,23 @@ export default function ParkMap() {
       mapRef.current.setTilt(0);
     }
   }, []);
+
+  // Navigate to parked car
+  const navigateToCar = useCallback(() => {
+    if (!carLocation) {
+      toast.error('Nenhum carro marcado', {
+        description: 'Primeiro estacione e marque a localização'
+      });
+      return;
+    }
+    if (!userPosition) {
+      toast.info('Ativando localização...', {
+        description: 'Tente novamente em alguns segundos'
+      });
+      return;
+    }
+    calculateRoute(carLocation, '🚗 Meu Carro');
+  }, [carLocation, userPosition, calculateRoute]);
 
   // Start guided navigation mode with auto-rotation
   const startGuidedNavigation = useCallback(() => {
@@ -1193,6 +1252,29 @@ export default function ParkMap() {
               ))
             }
 
+            {/* Car parking marker */}
+            {carLocation && isMapLoaded && (
+              <Marker
+                position={carLocation}
+                icon={{
+                  path: google.maps.SymbolPath.CIRCLE,
+                  fillColor: '#F59E0B',
+                  fillOpacity: 1,
+                  strokeColor: '#FFFFFF',
+                  strokeWeight: 3,
+                  scale: 12,
+                }}
+                title="🚗 Meu Carro"
+                zIndex={900}
+                onClick={() => {
+                  if (mapRef.current) {
+                    mapRef.current.panTo(carLocation);
+                    mapRef.current.setZoom(18);
+                  }
+                }}
+              />
+            )}
+
             {/* Attraction Popup over marker */}
             <AnimatePresence>
               {selectedAttraction && !isNavigating && (
@@ -1443,6 +1525,33 @@ export default function ParkMap() {
             <Navigation className="w-5 h-5 text-blue-500" />
           </Button>
         )}
+
+        {/* Car Parking Controls - Floating on left side */}
+        <div className="absolute bottom-32 left-2 flex flex-col gap-1 z-10">
+          {/* Save Car Location Button */}
+          <Button
+            variant={carLocation ? 'default' : 'secondary'}
+            size="icon"
+            className={`h-10 w-10 shadow-lg ${carLocation ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+            onClick={carLocation ? navigateToCar : saveCarLocation}
+            title={carLocation ? 'Ir para o carro' : 'Marcar onde estacionei'}
+          >
+            <Car className={`w-5 h-5 ${carLocation ? 'text-white' : ''}`} />
+          </Button>
+          
+          {/* Clear Car Location (only show if car is saved) */}
+          {carLocation && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 shadow-lg"
+              onClick={clearCarLocation}
+              title="Remover marcação do carro"
+            >
+              <X className="w-4 h-4 text-red-500" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Navigation Panel - GPS Style with Preview/Guided modes */}
