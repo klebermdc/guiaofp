@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
 import { POIPopup } from '@/components/map/POIPopup';
+import { MenuModal } from '@/components/map/MenuModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -143,6 +144,7 @@ export default function ParkMap() {
   const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
+  const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastHeadingRef = useRef<number>(0);
   
@@ -1347,6 +1349,9 @@ export default function ParkMap() {
                   poiConfig={POI_CONFIG[selectedPOI.type]}
                   onClose={() => setSelectedPOI(null)}
                   onNavigate={handleRouteToAttraction}
+                  onOpenMenu={(url, name) => {
+                    setMenuModalData({ url, name });
+                  }}
                 />
               )}
             </AnimatePresence>
@@ -1787,6 +1792,17 @@ export default function ParkMap() {
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Menu Modal - Rendered at root level for proper z-index */}
+      <AnimatePresence>
+        {menuModalData && (
+          <MenuModal
+            menuUrl={menuModalData.url}
+            restaurantName={menuModalData.name}
+            onClose={() => setMenuModalData(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
