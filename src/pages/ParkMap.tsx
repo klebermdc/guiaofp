@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, ExternalLink } from 'lucide-react';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1536,8 +1537,8 @@ export default function ParkMap() {
           </div>
         )}
 
-        {/* Map Legend - Compact floating */}
-        <div className="absolute bottom-20 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
+        {/* Map Legend - Compact floating - adjusted for mobile nav */}
+        <div className="absolute bottom-24 lg:bottom-4 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
@@ -1554,8 +1555,8 @@ export default function ParkMap() {
           </div>
         </div>
 
-        {/* Zoom Controls - Mobile friendly */}
-        <div className="absolute bottom-20 right-2 flex flex-col gap-1 z-10">
+        {/* Zoom Controls - Mobile friendly - adjusted for mobile nav */}
+        <div className="absolute bottom-24 lg:bottom-4 right-2 flex flex-col gap-1 z-10">
           {/* Map Type Toggle */}
           <Button
             variant="secondary"
@@ -1593,7 +1594,7 @@ export default function ParkMap() {
           <Button
             variant="secondary"
             size="icon"
-            className="absolute bottom-32 right-2 h-10 w-10 shadow-lg z-10"
+            className="absolute bottom-44 lg:bottom-36 right-2 h-10 w-10 shadow-lg z-10"
             onClick={() => {
               if (mapRef.current && userPosition) {
                 mapRef.current.panTo(userPosition);
@@ -1605,8 +1606,8 @@ export default function ParkMap() {
           </Button>
         )}
 
-        {/* Car Parking Controls - Floating on left side */}
-        <div className="absolute bottom-32 left-2 flex flex-col gap-1 z-10">
+        {/* Car Parking Controls - Floating on left side - adjusted for mobile nav */}
+        <div className="absolute bottom-36 lg:bottom-16 left-2 flex flex-col gap-1 z-10">
           {/* Save Car Location Button */}
           <Button
             variant={carLocation ? 'default' : 'secondary'}
@@ -1824,6 +1825,9 @@ export default function ParkMap() {
         </div>
       )}
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }
