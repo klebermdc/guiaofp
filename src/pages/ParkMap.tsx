@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
+import { POIPopup } from '@/components/map/POIPopup';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -1474,68 +1475,25 @@ export default function ParkMap() {
         </div>
         )}
 
-        {/* Selected POI Info Card */}
-        {selectedPOI && (
-          <div className="absolute top-14 right-2 z-20 bg-background/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-[260px]">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-lg">{POI_CONFIG[selectedPOI.type].emoji}</span>
-                  <span className="text-xs font-medium" style={{ color: POI_CONFIG[selectedPOI.type].color }}>
-                    {POI_CONFIG[selectedPOI.type].label}
-                  </span>
-                </div>
-                <p className="text-sm font-medium">{selectedPOI.name}</p>
-                
-                {/* Description */}
-                {selectedPOI.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
-                    {selectedPOI.description}
-                  </p>
-                )}
-                
-                {/* Schedule for shows */}
-                {selectedPOI.schedule && (
-                  <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3 shrink-0" />
-                    <span>{selectedPOI.schedule}</span>
-                  </div>
-                )}
-                
-                {/* Menu link for restaurants */}
-                {selectedPOI.type === 'restaurant' && selectedPOI.menuUrl && (
-                  <a
-                    href={selectedPOI.menuUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 mt-1.5 text-xs text-primary hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Ver cardápio
-                  </a>
-                )}
-              </div>
-              <button 
-                onClick={() => setSelectedPOI(null)} 
-                className="text-muted-foreground hover:text-foreground p-1 shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <Button
-              size="sm"
-              className="w-full mt-2 h-8 text-xs"
-              onClick={() => {
-                handleRouteToAttraction(selectedPOI.position, selectedPOI.name);
-                setSelectedPOI(null);
+        {/* Selected POI Popup - Anchored above marker */}
+        <AnimatePresence>
+          {selectedPOI && (
+            <POIPopup
+              poi={{
+                id: selectedPOI.id,
+                name: selectedPOI.name,
+                type: selectedPOI.type,
+                position: selectedPOI.position,
+                description: selectedPOI.description || undefined,
+                schedule: selectedPOI.schedule || undefined,
+                menuUrl: selectedPOI.menuUrl || undefined,
               }}
-            >
-              <Navigation className="w-3 h-3 mr-1" />
-              Ir para cá
-            </Button>
-          </div>
-        )}
+              poiConfig={POI_CONFIG[selectedPOI.type]}
+              onClose={() => setSelectedPOI(null)}
+              onNavigate={handleRouteToAttraction}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Map Legend - Compact floating - adjusted for mobile nav */}
         <div className="absolute bottom-24 lg:bottom-4 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
