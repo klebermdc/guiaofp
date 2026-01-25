@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { OverlayView } from '@react-google-maps/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Navigation, X, Clock, ExternalLink } from 'lucide-react';
+import { Navigation, X, Clock, UtensilsCrossed, Loader2 } from 'lucide-react';
 
 interface POI {
   id: string;
@@ -28,12 +29,86 @@ interface POIPopupProps {
   onNavigate: (position: { lat: number; lng: number }, name: string) => void;
 }
 
+// Menu Modal Component - Similar to VideoModal
+function MenuModal({ 
+  menuUrl, 
+  restaurantName, 
+  onClose 
+}: { 
+  menuUrl: string; 
+  restaurantName: string; 
+  onClose: () => void; 
+}) {
+  const [isLoading, setIsLoading] = useState(true);
+
+  return createPortal(
+    <motion.div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="relative w-full h-full max-w-4xl max-h-[90vh] m-4 bg-background rounded-xl overflow-hidden shadow-2xl flex flex-col"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 border-b bg-background shrink-0">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="w-5 h-5 text-primary" />
+            <span className="font-medium text-sm truncate">{restaurantName}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background z-10 mt-14">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Carregando cardápio...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Iframe */}
+        <iframe
+          src={menuUrl}
+          className="flex-1 w-full border-0"
+          title={`Cardápio - ${restaurantName}`}
+          onLoad={() => setIsLoading(false)}
+          sandbox="allow-scripts allow-same-origin allow-popups"
+        />
+      </motion.div>
+    </motion.div>,
+    document.body
+  );
+}
+
 export function POIPopup({ poi, poiConfig, onClose, onNavigate }: POIPopupProps) {
   const isMobile = useIsMobile();
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleNavigate = () => {
     onNavigate(poi.position, poi.name);
     onClose();
+  };
+
+  const handleOpenMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowMenu(true);
   };
 
   const cardContent = (
@@ -70,18 +145,15 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate }: POIPopupProps)
               </div>
             )}
             
-            {/* Menu link for restaurants */}
+            {/* Menu button for restaurants - opens modal */}
             {poi.type === 'restaurant' && poi.menuUrl && (
-              <a
-                href={poi.menuUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleOpenMenu}
                 className="flex items-center gap-1 mt-1.5 text-xs text-primary hover:underline"
-                onClick={(e) => e.stopPropagation()}
               >
-                <ExternalLink className="w-3 h-3" />
+                <UtensilsCrossed className="w-3 h-3" />
                 Ver cardápio
-              </a>
+              </button>
             )}
           </div>
           <button 
@@ -100,6 +172,17 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate }: POIPopupProps)
           Ir para cá
         </Button>
       </div>
+
+      {/* Menu Modal */}
+      <AnimatePresence>
+        {showMenu && poi.menuUrl && (
+          <MenuModal
+            menuUrl={poi.menuUrl}
+            restaurantName={poi.name}
+            onClose={() => setShowMenu(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 
