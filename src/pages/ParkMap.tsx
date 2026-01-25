@@ -220,19 +220,52 @@ export default function ParkMap() {
     });
   };
 
-  // Get POI marker icon
-  const getPOIMarkerIcon = (type: POIType): google.maps.Symbol | undefined => {
-    if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
+  // Get POI marker icon with custom SVG paths
+  const getPOIMarkerIcon = (type: POIType): google.maps.Icon | google.maps.Symbol | undefined => {
+    if (typeof google === 'undefined') {
       return undefined;
     }
     const config = POI_CONFIG[type];
+    
+    // Custom SVG icons for each POI type
+    const svgIcons: Record<POIType, string> = {
+      // Restaurant: Fork and knife
+      restaurant: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <path d="M3 11h3a2 2 0 0 0 2-2V4" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
+        <path d="M3 4v7a2 2 0 0 0 2 2h1" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
+        <path d="M7 4v16" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
+        <path d="M14 4v4a2 2 0 0 0 2 2h1v10" transform="translate(4, 3) scale(0.7)" stroke="white" stroke-width="2.5"/>
+      </svg>`,
+      // Shop: Shopping bag
+      shop: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <path d="M6 8h12l-1.5 9h-9L6 8z" fill="white" transform="translate(0, 1)"/>
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="white" stroke-width="2" fill="none" transform="translate(0, 1)"/>
+      </svg>`,
+      // Restroom: WC symbol
+      restroom: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <circle cx="8" cy="7" r="1.5" fill="white"/>
+        <path d="M6 10h4l-0.5 7h-3L6 10z" fill="white"/>
+        <circle cx="16" cy="7" r="1.5" fill="white"/>
+        <path d="M14 10h4v3h-1.5v4h-1v-4H14v-3z" fill="white"/>
+      </svg>`,
+      // First Aid: Cross
+      firstaid: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="${config.color}" stroke="white" stroke-width="2"/>
+        <rect x="10" y="6" width="4" height="12" rx="1" fill="white"/>
+        <rect x="6" y="10" width="12" height="4" rx="1" fill="white"/>
+      </svg>`,
+    };
+
+    const svg = svgIcons[type];
+    const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    
     return {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: config.color,
-      fillOpacity: 0.9,
-      strokeColor: '#FFFFFF',
-      strokeWeight: 2,
-      scale: 10,
+      url: svgUrl,
+      scaledSize: new google.maps.Size(32, 32),
+      anchor: new google.maps.Point(16, 16),
     };
   };
 
@@ -813,8 +846,9 @@ export default function ParkMap() {
     setIsMapLoaded(true);
   };
 
-  const getMarkerIcon = (attraction: Attraction): google.maps.Symbol | undefined => {
-    if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
+  // Mickey head SVG for attraction markers with wait time colors
+  const getMarkerIcon = (attraction: Attraction): google.maps.Icon | undefined => {
+    if (typeof google === 'undefined') {
       return undefined;
     }
     
@@ -824,13 +858,25 @@ export default function ParkMap() {
         : '#22C55E'
       : '#6B7280';
 
+    // Mickey head silhouette SVG
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+      <!-- Left ear -->
+      <circle cx="8" cy="8" r="7" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
+      <!-- Right ear -->
+      <circle cx="28" cy="8" r="7" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
+      <!-- Main head -->
+      <circle cx="18" cy="20" r="14" fill="${waitTimeColor}" stroke="white" stroke-width="2"/>
+      ${attraction.waitTime !== undefined ? `
+        <text x="18" y="24" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="Arial, sans-serif">${attraction.waitTime}</text>
+      ` : ''}
+    </svg>`;
+    
+    const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    
     return {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: waitTimeColor,
-      fillOpacity: 1,
-      strokeColor: '#FFFFFF',
-      strokeWeight: 2,
-      scale: 12,
+      url: svgUrl,
+      scaledSize: new google.maps.Size(36, 36),
+      anchor: new google.maps.Point(18, 20),
     };
   };
 
@@ -1257,12 +1303,15 @@ export default function ParkMap() {
               <Marker
                 position={carLocation}
                 icon={{
-                  path: google.maps.SymbolPath.CIRCLE,
-                  fillColor: '#F59E0B',
-                  fillOpacity: 1,
-                  strokeColor: '#FFFFFF',
-                  strokeWeight: 3,
-                  scale: 12,
+                  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="11" fill="#F59E0B" stroke="white" stroke-width="2"/>
+                    <path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11" stroke="white" stroke-width="1.5" fill="none" transform="translate(0, 1)"/>
+                    <rect x="4" y="11" width="16" height="6" rx="2" fill="white" transform="translate(0, 1)"/>
+                    <circle cx="7" cy="16" r="1.5" fill="#F59E0B" transform="translate(0, 1)"/>
+                    <circle cx="17" cy="16" r="1.5" fill="#F59E0B" transform="translate(0, 1)"/>
+                  </svg>`)}`,
+                  scaledSize: new google.maps.Size(36, 36),
+                  anchor: new google.maps.Point(18, 18),
                 }}
                 title="🚗 Meu Carro"
                 zIndex={900}
