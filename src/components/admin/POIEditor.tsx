@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { MapPin, Save, X, Search, Plus, Trash2, Loader2 } from 'lucide-react';
+import { MapPin, Save, X, Search, Plus, Trash2, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,6 +32,7 @@ interface POIItem {
   latitude: number | null;
   longitude: number | null;
   icon: string; // stores POI type
+  schedule: string | null;
 }
 
 const PARKS: Park[] = [
@@ -76,6 +77,7 @@ export function POIEditor() {
   const [filterType, setFilterType] = useState<POIType | 'all'>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newPOI, setNewPOI] = useState({ name: '', type: 'restroom' as POIType });
+  const [editingSchedule, setEditingSchedule] = useState<{ id: string; schedule: string } | null>(null);
 
   // Fetch all POIs for selected park
   const { data: pois = [], isLoading } = useQuery({
@@ -83,7 +85,7 @@ export function POIEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, category_id, latitude, longitude, icon')
+        .select('id, title, category_id, latitude, longitude, icon, schedule')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .order('title');
@@ -161,6 +163,28 @@ export function POIEditor() {
     onError: (error) => {
       console.error('Error deleting POI:', error);
       toast.error('Erro ao excluir POI');
+    },
+  });
+
+  // Update schedule mutation
+  const updateScheduleMutation = useMutation({
+    mutationFn: async ({ id, schedule }: { id: string; schedule: string }) => {
+      const { error } = await supabase
+        .from('content_items')
+        .update({ schedule: schedule || null })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-pois'] });
+      queryClient.invalidateQueries({ queryKey: ['park-pois'] });
+      toast.success('Horário salvo!');
+      setEditingSchedule(null);
+    },
+    onError: (error) => {
+      console.error('Error saving schedule:', error);
+      toast.error('Erro ao salvar horário');
     },
   });
 
@@ -406,6 +430,8 @@ export function POIEditor() {
                     const config = POI_CONFIG[poiType] || POI_CONFIG.restroom;
                     const hasCoords = poi.latitude && poi.longitude;
                     const isSelected = selectedPOI?.id === poi.id;
+                    const isShowType = poiType === 'show';
+                    const isEditingThisSchedule = editingSchedule?.id === poi.id;
 
                     return (
                       <div
@@ -416,11 +442,69 @@ export function POIEditor() {
                         onClick={() => handleSelectPOI(poi)}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             <span className="text-lg">{config.emoji}</span>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="font-medium text-sm truncate">{poi.title}</p>
                               <p className="text-xs text-muted-foreground">{config.label}</p>
+                              {isShowType && (
+                                <div className="mt-1">
+                                  {isEditingThisSchedule ? (
+                                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <Input
+                                        placeholder="Ex: 10:00, 14:00, 18:00"
+                                        className="h-6 text-xs"
+                                        value={editingSchedule.schedule}
+                                        onChange={(e) => setEditingSchedule({ ...editingSchedule, schedule: e.target.value })}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            updateScheduleMutation.mutate({ id: poi.id, schedule: editingSchedule.schedule });
+                                          }
+                                          if (e.key === 'Escape') {
+                                            setEditingSchedule(null);
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => updateScheduleMutation.mutate({ id: poi.id, schedule: editingSchedule.schedule })}
+                                        disabled={updateScheduleMutation.isPending}
+                                      >
+                                        {updateScheduleMutation.isPending ? (
+                                          <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Save className="w-3 h-3" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => setEditingSchedule(null)}
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingSchedule({ id: poi.id, schedule: poi.schedule || '' });
+                                      }}
+                                    >
+                                      <Clock className="w-3 h-3" />
+                                      {poi.schedule ? (
+                                        <span>{poi.schedule}</span>
+                                      ) : (
+                                        <span className="italic opacity-60">+ Adicionar horário</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
@@ -533,6 +617,7 @@ export function POIEditor() {
                 <li>• Selecione um POI na lista e clique no mapa para definir sua localização</li>
                 <li>• Arraste marcadores existentes para ajustar a posição</li>
                 <li>• POIs com coordenadas aparecem com indicador verde</li>
+                <li>• Para shows: clique no ícone <Clock className="w-3 h-3 inline" /> para adicionar horários (ex: "10:00, 14:00, 18:00")</li>
               </ul>
             </div>
           </div>
