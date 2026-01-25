@@ -196,7 +196,7 @@ export default function ParkMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, latitude, longitude, icon, schedule, description, menu_url')
+        .select('id, title, latitude, longitude, icon, schedule, description, attraction_description, menu_url')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .eq('is_published', true);
@@ -215,7 +215,12 @@ export default function ParkMap() {
       name: poi.title,
       position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
       schedule: poi.schedule,
-      description: poi.description,
+      description:
+        (typeof poi.description === 'string' && poi.description.trim())
+          ? poi.description
+          : (typeof (poi as any).attraction_description === 'string' && (poi as any).attraction_description.trim())
+            ? (poi as any).attraction_description
+            : null,
       menuUrl: poi.menu_url,
     }));
 
@@ -1244,7 +1249,7 @@ export default function ParkMap() {
             onClick={(e) => {
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
               // Don't close the popup when interacting with it (e.g., tapping the video thumbnail).
-              if (target?.closest?.('[data-attraction-popup="true"]')) return;
+              if (target?.closest?.('[data-attraction-popup="true"], [data-poi-popup="true"]')) return;
               setSelectedAttraction(null);
               setSelectedPOI(null);
             }}

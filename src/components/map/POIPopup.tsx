@@ -42,10 +42,11 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     e.preventDefault();
     if (onOpenMenu && poi.menuUrl) {
       onOpenMenu(poi.menuUrl, poi.name);
-      // Close popup after setting the menu modal state
-      setTimeout(() => {
+      // No mobile, manter o popup aberto para evitar que o toque feche a UI
+      // antes do modal de cardápio estabilizar/renderizar.
+      if (!isMobile) {
         onClose();
-      }, 50);
+      }
     }
   };
 
