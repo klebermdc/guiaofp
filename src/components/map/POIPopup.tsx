@@ -29,7 +29,7 @@ interface POIPopupProps {
   onNavigate: (position: { lat: number; lng: number }, name: string) => void;
 }
 
-// Menu Modal Component - Similar to VideoModal
+// Menu Modal Component - Rendered via portal for all devices
 function MenuModal({ 
   menuUrl, 
   restaurantName, 
@@ -172,72 +172,82 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate }: POIPopupProps)
           Ir para cá
         </Button>
       </div>
-
-      {/* Menu Modal */}
-      <AnimatePresence>
-        {showMenu && poi.menuUrl && (
-          <MenuModal
-            menuUrl={poi.menuUrl}
-            restaurantName={poi.name}
-            onClose={() => setShowMenu(false)}
-          />
-        )}
-      </AnimatePresence>
     </div>
+  );
+
+  // Menu Modal - Always rendered via portal at root level
+  const menuModal = (
+    <AnimatePresence>
+      {showMenu && poi.menuUrl && (
+        <MenuModal
+          menuUrl={poi.menuUrl}
+          restaurantName={poi.name}
+          onClose={() => setShowMenu(false)}
+        />
+      )}
+    </AnimatePresence>
   );
 
   // Mobile: Use portal to render centered modal
   if (isMobile) {
-    return createPortal(
-      <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-      >
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-black/30"
-          onClick={onClose}
-        />
-        
-        {/* Card */}
-        <motion.div
-          data-poi-popup="true"
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-        >
-          {cardContent}
-        </motion.div>
-      </motion.div>,
-      document.body
+    return (
+      <>
+        {createPortal(
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/30"
+              onClick={onClose}
+            />
+            
+            {/* Card */}
+            <motion.div
+              data-poi-popup="true"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {cardContent}
+            </motion.div>
+          </motion.div>,
+          document.body
+        )}
+        {menuModal}
+      </>
     );
   }
 
   // Desktop: Render anchored above the marker using OverlayView
   return (
-    <OverlayView
-      position={poi.position}
-      mapPaneName={OverlayView.FLOAT_PANE}
-    >
-      <motion.div 
-        className="relative"
-        style={{ transform: 'translate(-50%, -100%)', marginTop: '-20px' }}
-        initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.85, y: 10 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
+    <>
+      <OverlayView
+        position={poi.position}
+        mapPaneName={OverlayView.FLOAT_PANE}
       >
-        {/* Arrow pointer */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-          <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-background" />
-        </div>
+        <motion.div 
+          className="relative"
+          style={{ transform: 'translate(-50%, -100%)', marginTop: '-20px' }}
+          initial={{ opacity: 0, scale: 0.85, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.85, y: 10 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          {/* Arrow pointer */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
+            <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-background" />
+          </div>
 
-        {cardContent}
-      </motion.div>
-    </OverlayView>
+          {cardContent}
+        </motion.div>
+      </OverlayView>
+      {menuModal}
+    </>
   );
 }
