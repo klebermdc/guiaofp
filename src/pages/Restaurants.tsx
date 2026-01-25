@@ -15,7 +15,8 @@ import {
   Clock,
   DollarSign,
   Loader2,
-  Navigation
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ interface Restaurant {
   category_id: string;
   latitude: number | null;
   longitude: number | null;
+  menu_url: string | null;
   park_name?: string;
 }
 
@@ -134,7 +136,7 @@ const Restaurants = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, description, category_id, latitude, longitude')
+        .select('id, title, description, category_id, latitude, longitude, menu_url')
         .eq('type', 'poi')
         .eq('icon', 'restaurant')
         .eq('is_published', true)
@@ -284,17 +286,30 @@ const Restaurants = () => {
                                 )}
                               </div>
                             </div>
-                            {hasCoords && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="shrink-0 text-primary hover:bg-primary/10"
-                                onClick={() => navigateToRestaurant(restaurant)}
-                                title="Navegar até o restaurante"
-                              >
-                                <Navigation className="w-4 h-4" />
-                              </Button>
-                            )}
+                            <div className="flex gap-1 shrink-0">
+                              {restaurant.menu_url && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-orange-500 hover:bg-orange-500/10"
+                                  onClick={() => window.open(restaurant.menu_url!, '_blank')}
+                                  title="Ver menu virtual"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {hasCoords && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-primary hover:bg-primary/10"
+                                  onClick={() => navigateToRestaurant(restaurant)}
+                                  title="Navegar até o restaurante"
+                                >
+                                  <Navigation className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
 
                           {details?.tip && (
