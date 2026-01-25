@@ -60,11 +60,11 @@ interface POI {
 }
 
 const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
-  restroom: { label: 'Banheiros', color: '#3B82F6', emoji: '🚻' },
-  restaurant: { label: 'Restaurantes', color: '#F97316', emoji: '🍽️' },
-  shop: { label: 'Lojas', color: '#A855F7', emoji: '🛍️' },
-  firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
-  show: { label: 'Shows', color: '#EC4899', emoji: '🎭' },
+  restroom: { label: 'Banheiros', color: '#0EA5E9', emoji: '🚽' },
+  restaurant: { label: 'Restaurantes', color: '#F97316', emoji: '🍔' },
+  shop: { label: 'Lojas', color: '#A855F7', emoji: '🛒' },
+  firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '⛑️' },
+  show: { label: 'Shows', color: '#EC4899', emoji: '🎪' },
 };
 
 // Parks with their database IDs and center coordinates
@@ -235,65 +235,25 @@ export default function ParkMap() {
     }
     const config = POI_CONFIG[type];
     
-    // Unique SVG icons for each POI type - distinct shapes
-    const svgIcons: Record<POIType, string> = {
-      // Restaurant: Rounded square with fork and knife
-      restaurant: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-        <rect x="2" y="2" width="32" height="32" rx="8" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <path d="M11 8v6c0 1.5 1.5 2.5 3 2.5V24" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        <path d="M11 8c0 2 1 4 3 4" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        <path d="M22 8v4c0 1.5 1 2 2 2.5V24" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        <path d="M22 8c2 0 2 3 2 4" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-      </svg>`,
-      // Shop: Shopping bag shape (hexagon-ish)
-      shop: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-        <path d="M8 12L11 6h14l3 6v16a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V12z" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <path d="M13 12V9a5 5 0 0 1 10 0v3" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <circle cx="18" cy="20" r="3" fill="white" opacity="0.8"/>
-      </svg>`,
-      // Restroom: Rounded rectangle with WC figures  
-      restroom: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-        <rect x="2" y="4" width="32" height="28" rx="4" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <!-- Male figure -->
-        <circle cx="11" cy="10" r="2.5" fill="white"/>
-        <rect x="8" y="14" width="6" height="10" rx="1" fill="white"/>
-        <rect x="8" y="24" width="2.5" height="5" rx="1" fill="white"/>
-        <rect x="12" y="24" width="2.5" height="5" rx="1" fill="white"/>
-        <!-- Female figure -->
-        <circle cx="25" cy="10" r="2.5" fill="white"/>
-        <path d="M21 14h8l-1.5 10h-5L21 14z" fill="white"/>
-        <rect x="22" y="24" width="2.5" height="5" rx="1" fill="white"/>
-        <rect x="25.5" y="24" width="2.5" height="5" rx="1" fill="white"/>
-      </svg>`,
-      // First Aid: Square with cross
-      firstaid: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-        <rect x="4" y="4" width="28" height="28" rx="4" transform="rotate(0 18 18)" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <rect x="15" y="8" width="6" height="20" rx="1" fill="white"/>
-        <rect x="8" y="15" width="20" height="6" rx="1" fill="white"/>
-      </svg>`,
-      // Show: Theater masks / stage curtain
-      show: `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="16" fill="${config.color}" stroke="white" stroke-width="2"/>
-        <!-- Comedy mask -->
-        <ellipse cx="12" cy="15" rx="6" ry="7" fill="white"/>
-        <circle cx="10" cy="13" r="1.5" fill="${config.color}"/>
-        <circle cx="14" cy="13" r="1.5" fill="${config.color}"/>
-        <path d="M9 18 Q12 21 15 18" stroke="${config.color}" stroke-width="1.5" fill="none"/>
-        <!-- Tragedy mask -->
-        <ellipse cx="24" cy="20" rx="6" ry="7" fill="white"/>
-        <circle cx="22" cy="18" r="1.5" fill="${config.color}"/>
-        <circle cx="26" cy="18" r="1.5" fill="${config.color}"/>
-        <path d="M21 24 Q24 21 27 24" stroke="${config.color}" stroke-width="1.5" fill="none"/>
-      </svg>`,
-    };
-
-    const svg = svgIcons[type];
+    // Beautiful modern markers with emoji in the center - clean pill/badge shape
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="52" viewBox="0 0 44 52">
+      <!-- Drop shadow -->
+      <ellipse cx="22" cy="48" rx="8" ry="3" fill="rgba(0,0,0,0.25)"/>
+      <!-- Pin body - rounded balloon shape -->
+      <path d="M22 47 C22 47 40 30 40 20 C40 9 32 2 22 2 C12 2 4 9 4 20 C4 30 22 47 22 47Z" 
+            fill="${config.color}" stroke="white" stroke-width="2.5"/>
+      <!-- Inner white circle for emoji -->
+      <circle cx="22" cy="19" r="13" fill="white"/>
+      <!-- Emoji text -->
+      <text x="22" y="25" text-anchor="middle" font-size="16" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${config.emoji}</text>
+    </svg>`;
+    
     const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     
     return {
       url: svgUrl,
-      scaledSize: new google.maps.Size(36, 36),
-      anchor: new google.maps.Point(18, 18),
+      scaledSize: new google.maps.Size(44, 52),
+      anchor: new google.maps.Point(22, 48),
     };
   };
 
