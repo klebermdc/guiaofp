@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ const DISNEY_HOTELS = [
   "pop century", "all-star", "fort wilderness", "animal kingdom lodge"
 ];
 
-export const MultipassStatusCard = () => {
+export const MultipassStatusCard = forwardRef<HTMLDivElement>((_, ref) => {
   const { travelProfile, planTier } = useAuth();
   const { status, isLoading, confirmPurchase, undoPurchase } = useMultipassStatus();
   const { toast } = useToast();
@@ -104,6 +104,7 @@ export const MultipassStatusCard = () => {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -204,4 +205,6 @@ export const MultipassStatusCard = () => {
       </Card>
     </motion.div>
   );
-};
+});
+
+MultipassStatusCard.displayName = 'MultipassStatusCard';

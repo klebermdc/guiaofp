@@ -45,7 +45,8 @@ const TravelProfile = () => {
 
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
