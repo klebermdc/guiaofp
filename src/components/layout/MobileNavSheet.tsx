@@ -145,7 +145,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0">
+      <SheetContent side="bottom" hideCloseButton className="h-[85vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0">
         <SheetHeader className="px-6 pb-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
             <motion.img 
