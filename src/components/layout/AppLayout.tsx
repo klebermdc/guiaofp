@@ -6,6 +6,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { AppSidebar } from './AppSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { OrlandoAssistant } from '@/components/chat/OrlandoAssistant';
+import { AuthLoadingScreen } from './AuthLoadingScreen';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -35,7 +36,7 @@ const pageVariants = {
 };
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const { isAuthenticated, isAccessEnabled, isLoading } = useAuth();
+  const { isAuthenticated, isAccessEnabled, isLoading, isProfileLoading } = useAuth();
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
@@ -43,17 +44,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Wait for both auth and role to load
-  if (isLoading || isRoleLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div 
-          className="rounded-full h-8 w-8 border-b-2 border-primary"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        />
-      </div>
-    );
+  // Wait for auth, role, AND profile to load before checking access
+  // This prevents the flash of "access blocked" screen
+  if (isLoading || isRoleLoading || isProfileLoading) {
+    return <AuthLoadingScreen />;
   }
 
   // Guides and admins always have access, clients need explicit access
