@@ -1506,21 +1506,26 @@ export default function ParkMap() {
         )}
 
 
-        {/* Map Legend - Top positioned with title */}
-        <div className="absolute top-16 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
-          <p className="font-semibold text-[10px] text-muted-foreground mb-1">Tempo de Espera (min)</p>
-          <div className="flex items-center gap-2">
+        {/* Map Legend - Top positioned with styled header */}
+        <div className="absolute top-16 left-2 bg-background/95 backdrop-blur-sm rounded-xl p-2.5 shadow-lg z-10 border border-border/50">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+              <Clock className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-semibold text-xs text-foreground">Tempo de Espera</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-              <span>&lt;30</span>
+              <span className="text-muted-foreground">&lt;30</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-              <span>30-60</span>
+              <span className="text-muted-foreground">30-60</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              <span>&gt;60</span>
+              <span className="text-muted-foreground">&gt;60</span>
             </div>
           </div>
         </div>
