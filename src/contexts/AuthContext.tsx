@@ -333,6 +333,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         // Pass userId directly to avoid closure issues
         await loadProfile(session.user.id);
+      } else {
+        // No session - mark profile as loaded (empty) to avoid blocking
+        setIsProfileLoaded(true);
       }
       setIsLoading(false);
     }).catch((err) => {
