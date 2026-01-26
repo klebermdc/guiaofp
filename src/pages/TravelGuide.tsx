@@ -1318,69 +1318,6 @@ const TravelGuide = () => {
             </Accordion>
           </div>
 
-          {/* DICAS DISNEY */}
-          <div data-section="parques-disney" className="group">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="parques-disney" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center shadow-lg shadow-yellow-500/30 flex-shrink-0">
-                      <Star className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas Disney</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Lightning Lane, Genie+, estratégias</p>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 sm:px-6 pb-6">
-                  <div className="space-y-6">
-                    {/* Lightning Lane */}
-                    <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
-                      <h5 className="font-bold text-lg mb-3 flex items-center gap-2">
-                        <Zap className="w-5 h-5" />
-                        Lightning Lane
-                      </h5>
-                      <p className="text-white/90 text-sm mb-4">
-                        Sistema pago para furar filas. Existem duas opções:
-                      </p>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
-                          <p className="font-semibold">Lightning Lane Multi Pass</p>
-                          <p className="text-white/80 text-sm">Várias atrações por dia (~$15-30)</p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
-                          <p className="font-semibold">Individual Lightning Lane</p>
-                          <p className="text-white/80 text-sm">Atrações premium ($15-25 cada)</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dicas Gerais */}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {[
-                        { icon: Clock, title: 'Chegue Cedo', desc: 'As primeiras horas têm menos filas', color: 'from-blue-500 to-cyan-500' },
-                        { icon: Phone, title: 'Use o App', desc: 'My Disney Experience é essencial', color: 'from-purple-500 to-pink-500' },
-                        { icon: Users, title: 'Rider Switch', desc: 'Revezamento para crianças pequenas', color: 'from-green-500 to-emerald-500' },
-                        { icon: Accessibility, title: 'Single Rider', desc: 'Fila menor para quem vai sozinho', color: 'from-amber-500 to-orange-500' },
-                      ].map((tip) => (
-                        <div key={tip.title} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tip.color} flex items-center justify-center flex-shrink-0`}>
-                            <tip.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <p className="font-semibold">{tip.title}</p>
-                            <p className="text-sm text-muted-foreground">{tip.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-
           {/* DICAS UNIVERSAL */}
           <div data-section="parques-universal" className="group">
             <Accordion type="single" collapsible className="w-full">
