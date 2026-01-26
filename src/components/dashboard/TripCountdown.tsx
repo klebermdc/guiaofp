@@ -53,19 +53,19 @@ export const TripCountdown = ({ arrivalDate, departureDate, groupSize, parks }: 
   const formattedArrival = format(arrival, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   return (
-    <Card className="relative overflow-hidden border-0">
+    <Card className="relative overflow-hidden border-0" role="region" aria-label="Contagem regressiva para viagem">
       {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-secondary opacity-90" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-accent to-secondary opacity-90" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" aria-hidden="true" />
       
       {/* Decorative elements */}
-      <div className="absolute top-4 right-4 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse" />
-      <div className="absolute bottom-4 left-4 w-24 h-24 bg-secondary/30 rounded-full blur-xl" />
+      <div className="absolute top-4 right-4 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse-glow" aria-hidden="true" />
+      <div className="absolute bottom-4 left-4 w-24 h-24 bg-secondary/30 rounded-full blur-xl" aria-hidden="true" />
       
       <CardContent className="relative p-6 md:p-8 text-white">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-secondary" />
+          <Sparkles className="w-5 h-5 text-secondary animate-float" aria-hidden="true" />
           <span className="text-sm font-medium text-white/80">{getCountdownMessage()}</span>
         </div>
 
@@ -73,7 +73,10 @@ export const TripCountdown = ({ arrivalDate, departureDate, groupSize, parks }: 
         {!isTripStarted && (
           <div className="mb-6">
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-6xl md:text-7xl font-display font-bold tracking-tight">
+              <span 
+                className="text-6xl md:text-7xl font-display font-bold tracking-tight tabular-nums"
+                aria-label={`${daysUntilTrip} dias até sua viagem`}
+              >
                 {daysUntilTrip}
               </span>
               <span className="text-2xl md:text-3xl font-medium pb-2 text-white/80">
@@ -82,7 +85,7 @@ export const TripCountdown = ({ arrivalDate, departureDate, groupSize, parks }: 
             </div>
             
             {daysUntilTrip <= 7 && daysUntilTrip > 0 && (
-              <div className="flex gap-4 text-sm text-white/70">
+              <div className="flex gap-4 text-sm text-white/70 tabular-nums">
                 <span>{hoursUntilTrip}h {minutesUntilTrip}min restantes</span>
               </div>
             )}
