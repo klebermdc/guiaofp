@@ -1,4 +1,4 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, forwardRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Map, Clock, X, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
 ];
 
-export const TravelModeQuickActions = memo(() => {
+const TravelModeQuickActionsInner = forwardRef<HTMLDivElement>((_, ref) => {
   const { isTravelMode, disableTravelMode } = useTravelMode();
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export const TravelModeQuickActions = memo(() => {
   }
 
   return (
-    <div className="fixed bottom-24 lg:bottom-6 right-4 z-50 flex flex-col items-end gap-2">
+    <div ref={ref} className="fixed bottom-24 lg:bottom-6 right-4 z-50 flex flex-col items-end gap-2">
       {/* Quick Actions Menu */}
       {isExpanded && (
         <div className="flex flex-col gap-2 mb-2 animate-fade-in">
@@ -112,4 +112,6 @@ export const TravelModeQuickActions = memo(() => {
   );
 });
 
-TravelModeQuickActions.displayName = 'TravelModeQuickActions';
+TravelModeQuickActionsInner.displayName = 'TravelModeQuickActionsInner';
+
+export const TravelModeQuickActions = memo(TravelModeQuickActionsInner);

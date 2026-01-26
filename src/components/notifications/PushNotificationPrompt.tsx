@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Bell, BellOff, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function PushNotificationPrompt() {
+export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
   const { 
     isSupported, 
     permission, 
@@ -65,6 +65,7 @@ export function PushNotificationPrompt() {
   return (
     <AnimatePresence>
       <motion.div
+        ref={ref}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
@@ -121,7 +122,9 @@ export function PushNotificationPrompt() {
       </motion.div>
     </AnimatePresence>
   );
-}
+});
+
+PushNotificationPrompt.displayName = 'PushNotificationPrompt';
 
 // Settings component for managing notifications
 export function NotificationSettings() {
