@@ -937,14 +937,14 @@ export default function ParkMap() {
   });
 
   return (
-    <div className="fixed inset-0 flex bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* App Sidebar - Navigation Menu (left) - Desktop Only */}
       <AppSidebar />
 
-      {/* Main Content Area - flex with right sidebar on desktop */}
-      <div className="flex-1 flex lg:ml-72 relative">
-        {/* Map + Controls Column */}
-        <div className="flex-1 flex flex-col relative">
+      {/* Main Content Area - flex layout with proper desktop sidebar spacing */}
+      <div className="flex-1 flex lg:ml-72 min-h-0 overflow-hidden">
+        {/* Map + Controls Column - Takes remaining space */}
+        <div className="flex-1 flex flex-col min-w-0 relative">
           {/* Compact Mobile Header - Only on mobile */}
           {isMobile && (
           <div className="bg-background/95 backdrop-blur-sm border-b z-20 p-2 sm:p-3 safe-area-top">
@@ -1104,8 +1104,8 @@ export default function ParkMap() {
         </div>
       )}
 
-      {/* Full Screen Map */}
-      <div className="flex-1 relative">
+      {/* Full Screen Map - flex-1 and min-h-0 to fill remaining space */}
+      <div className="flex-1 min-h-0 relative">
         <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -1675,9 +1675,9 @@ export default function ParkMap() {
       )}
         </div>
 
-        {/* Right Sidebar - Park Info (Desktop Only) */}
+        {/* Right Sidebar - Park Info (Desktop Only) - Fixed height with overflow */}
         {!isMobile && (
-          <aside className="hidden lg:flex flex-col w-72 xl:w-80 border-l bg-background shrink-0">
+          <aside className="hidden lg:flex flex-col w-72 xl:w-80 border-l bg-background shrink-0 h-full overflow-hidden">
             {/* Sidebar Header */}
             <div className="p-3 border-b space-y-2">
               {/* Park Selector */}
