@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PageAccess {
@@ -15,22 +15,27 @@ export function usePlanPageAccess() {
   const [pageAccess, setPageAccess] = useState<PageAccess[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchPageAccess = async () => {
+  const fetchPageAccess = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("plan_page_access")
-      .select("*")
-      .order("sort_order", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("plan_page_access")
+        .select("*")
+        .order("sort_order", { ascending: true });
 
-    if (!error && data) {
-      setPageAccess(data as PageAccess[]);
+      if (!error && data) {
+        setPageAccess(data as PageAccess[]);
+      }
+    } catch (err) {
+      console.error('Error fetching page access:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchPageAccess();
-  }, []);
+  }, [fetchPageAccess]);
 
   const updatePageAccess = async (
     id: string,
