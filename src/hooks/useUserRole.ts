@@ -10,6 +10,8 @@ export const useUserRole = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchRoles = async () => {
       if (!user) {
         setRoles([]);
@@ -17,18 +19,29 @@ export const useUserRole = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
 
-      if (!error && data) {
-        setRoles(data.map((r) => r.role as AppRole));
+        if (!isMounted) return;
+        
+        if (!error && data) {
+          setRoles(data.map((r) => r.role as AppRole));
+        }
+      } catch (err) {
+        console.error('Error fetching user roles:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchRoles();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   const isGuide = roles.includes('guide') || roles.includes('admin');

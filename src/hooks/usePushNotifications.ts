@@ -27,16 +27,6 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window;
-    setIsSupported(supported);
-    
-    if (supported) {
-      setPermission(Notification.permission);
-      checkExistingSubscription();
-    }
-  }, []);
-
   const checkExistingSubscription = useCallback(async () => {
     try {
       const registration = await navigator.serviceWorker.ready;
@@ -46,6 +36,16 @@ export function usePushNotifications() {
       console.error('Error checking subscription:', error);
     }
   }, []);
+
+  useEffect(() => {
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+    setIsSupported(supported);
+    
+    if (supported) {
+      setPermission(Notification.permission);
+      checkExistingSubscription();
+    }
+  }, [checkExistingSubscription]);
 
   const registerServiceWorker = async () => {
     if ('serviceWorker' in navigator) {

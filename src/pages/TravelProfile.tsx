@@ -45,7 +45,7 @@ const TravelProfile = () => {
 
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [loadProfile]);
 
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
