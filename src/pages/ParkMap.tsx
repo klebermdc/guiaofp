@@ -60,6 +60,10 @@ interface POI {
   schedule?: string | null;
   description?: string | null;
   menuUrl?: string | null;
+  cuisineType?: string | null;
+  requiresReservation?: boolean | null;
+  hasWarning?: boolean | null;
+  warningText?: string | null;
 }
 
 const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
@@ -196,7 +200,7 @@ export default function ParkMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, latitude, longitude, icon, schedule, description, attraction_description, menu_url')
+        .select('id, title, latitude, longitude, icon, schedule, description, attraction_description, menu_url, cuisine_type, requires_reservation, has_warning, warning_text')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .eq('is_published', true);
@@ -222,6 +226,10 @@ export default function ParkMap() {
             ? (poi as any).attraction_description
             : null,
       menuUrl: poi.menu_url,
+      cuisineType: poi.cuisine_type,
+      requiresReservation: poi.requires_reservation,
+      hasWarning: poi.has_warning,
+      warningText: poi.warning_text,
     }));
 
   // Toggle POI visibility

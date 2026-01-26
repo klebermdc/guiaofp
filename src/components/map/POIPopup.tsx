@@ -2,8 +2,9 @@ import { createPortal } from 'react-dom';
 import { OverlayView } from '@react-google-maps/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Navigation, X, Clock, UtensilsCrossed } from 'lucide-react';
+import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock } from 'lucide-react';
 
 interface POI {
   id: string;
@@ -13,6 +14,10 @@ interface POI {
   description?: string;
   schedule?: string;
   menuUrl?: string;
+  cuisineType?: string;
+  requiresReservation?: boolean;
+  hasWarning?: boolean;
+  warningText?: string;
 }
 
 interface POIConfig {
@@ -68,6 +73,37 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
               </span>
             </div>
             <p className="text-sm font-medium text-foreground">{poi.name}</p>
+            
+            {/* Restaurant metadata badges */}
+            {poi.type === 'restaurant' && (poi.cuisineType || poi.requiresReservation || poi.hasWarning) && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                {poi.cuisineType && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                    {poi.cuisineType}
+                  </Badge>
+                )}
+                {poi.requiresReservation && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 border-amber-500/50 text-amber-500">
+                    <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
+                    Reserva
+                  </Badge>
+                )}
+                {poi.hasWarning && (
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
+                    <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />
+                    Atenção
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            {/* Warning message */}
+            {poi.hasWarning && poi.warningText && (
+              <p className="text-[10px] text-amber-500 mt-1 flex items-start gap-1">
+                <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                {poi.warningText}
+              </p>
+            )}
             
             {/* Description */}
             {poi.description && (

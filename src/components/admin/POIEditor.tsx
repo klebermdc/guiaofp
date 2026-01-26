@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { MapPin, Save, X, Search, Plus, Trash2, Loader2, Clock } from 'lucide-react';
+import { MapPin, Save, X, Search, Plus, Trash2, Loader2, Clock, UtensilsCrossed, AlertTriangle, CalendarClock, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,11 @@ interface POIItem {
   longitude: number | null;
   icon: string; // stores POI type
   schedule: string | null;
+  cuisine_type: string | null;
+  requires_reservation: boolean | null;
+  has_warning: boolean | null;
+  warning_text: string | null;
+  menu_url: string | null;
 }
 
 const PARKS: Park[] = [
@@ -78,6 +84,14 @@ export function POIEditor() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newPOI, setNewPOI] = useState({ name: '', type: 'restroom' as POIType });
   const [editingSchedule, setEditingSchedule] = useState<{ id: string; schedule: string } | null>(null);
+  const [editingRestaurant, setEditingRestaurant] = useState<{
+    id: string;
+    cuisineType: string;
+    requiresReservation: boolean;
+    hasWarning: boolean;
+    warningText: string;
+    menuUrl: string;
+  } | null>(null);
 
   // Fetch all POIs for selected park
   const { data: pois = [], isLoading } = useQuery({
@@ -85,7 +99,7 @@ export function POIEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
-        .select('id, title, category_id, latitude, longitude, icon, schedule')
+        .select('id, title, category_id, latitude, longitude, icon, schedule, cuisine_type, requires_reservation, has_warning, warning_text, menu_url')
         .eq('category_id', selectedPark.id)
         .eq('type', 'poi')
         .order('title');
@@ -185,6 +199,41 @@ export function POIEditor() {
     onError: (error) => {
       console.error('Error saving schedule:', error);
       toast.error('Erro ao salvar horário');
+    },
+  });
+
+  // Update restaurant metadata mutation
+  const updateRestaurantMutation = useMutation({
+    mutationFn: async (data: {
+      id: string;
+      cuisineType: string;
+      requiresReservation: boolean;
+      hasWarning: boolean;
+      warningText: string;
+      menuUrl: string;
+    }) => {
+      const { error } = await supabase
+        .from('content_items')
+        .update({
+          cuisine_type: data.cuisineType || null,
+          requires_reservation: data.requiresReservation,
+          has_warning: data.hasWarning,
+          warning_text: data.warningText || null,
+          menu_url: data.menuUrl || null,
+        })
+        .eq('id', data.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-pois'] });
+      queryClient.invalidateQueries({ queryKey: ['park-pois'] });
+      toast.success('Restaurante atualizado!');
+      setEditingRestaurant(null);
+    },
+    onError: (error) => {
+      console.error('Error saving restaurant data:', error);
+      toast.error('Erro ao salvar dados do restaurante');
     },
   });
 
@@ -500,6 +549,120 @@ export function POIEditor() {
                                         <span>{poi.schedule}</span>
                                       ) : (
                                         <span className="italic opacity-60">+ Adicionar horário</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Restaurant metadata */}
+                              {poiType === 'restaurant' && (
+                                <div className="mt-1.5 space-y-1">
+                                  {editingRestaurant?.id === poi.id ? (
+                                    <div className="space-y-2 p-2 bg-muted/30 rounded" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex items-center gap-2">
+                                        <UtensilsCrossed className="w-3 h-3 text-muted-foreground" />
+                                        <Input
+                                          placeholder="Estilo (ex: Americana, Italiana)"
+                                          className="h-6 text-xs flex-1"
+                                          value={editingRestaurant.cuisineType}
+                                          onChange={(e) => setEditingRestaurant({ ...editingRestaurant, cuisineType: e.target.value })}
+                                        />
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                                        <Input
+                                          placeholder="URL do cardápio"
+                                          className="h-6 text-xs flex-1"
+                                          value={editingRestaurant.menuUrl}
+                                          onChange={(e) => setEditingRestaurant({ ...editingRestaurant, menuUrl: e.target.value })}
+                                        />
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <CalendarClock className="w-3 h-3 text-amber-500" />
+                                          <span className="text-xs">Precisa reserva</span>
+                                        </div>
+                                        <Switch
+                                          checked={editingRestaurant.requiresReservation}
+                                          onCheckedChange={(v) => setEditingRestaurant({ ...editingRestaurant, requiresReservation: v })}
+                                        />
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <AlertTriangle className="w-3 h-3 text-red-500" />
+                                          <span className="text-xs">Atenção especial</span>
+                                        </div>
+                                        <Switch
+                                          checked={editingRestaurant.hasWarning}
+                                          onCheckedChange={(v) => setEditingRestaurant({ ...editingRestaurant, hasWarning: v })}
+                                        />
+                                      </div>
+                                      {editingRestaurant.hasWarning && (
+                                        <Input
+                                          placeholder="Texto do aviso"
+                                          className="h-6 text-xs"
+                                          value={editingRestaurant.warningText}
+                                          onChange={(e) => setEditingRestaurant({ ...editingRestaurant, warningText: e.target.value })}
+                                        />
+                                      )}
+                                      <div className="flex justify-end gap-1 pt-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 text-xs"
+                                          onClick={() => setEditingRestaurant(null)}
+                                        >
+                                          Cancelar
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          className="h-6 text-xs"
+                                          onClick={() => updateRestaurantMutation.mutate(editingRestaurant)}
+                                          disabled={updateRestaurantMutation.isPending}
+                                        >
+                                          {updateRestaurantMutation.isPending ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            'Salvar'
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className="flex flex-wrap items-center gap-1 text-[10px] cursor-pointer hover:opacity-80"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingRestaurant({
+                                          id: poi.id,
+                                          cuisineType: poi.cuisine_type || '',
+                                          requiresReservation: poi.requires_reservation || false,
+                                          hasWarning: poi.has_warning || false,
+                                          warningText: poi.warning_text || '',
+                                          menuUrl: poi.menu_url || '',
+                                        });
+                                      }}
+                                    >
+                                      {poi.cuisine_type && (
+                                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                                          {poi.cuisine_type}
+                                        </Badge>
+                                      )}
+                                      {poi.requires_reservation && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/50 text-amber-500">
+                                          <CalendarClock className="w-2.5 h-2.5 mr-0.5" />
+                                          Reserva
+                                        </Badge>
+                                      )}
+                                      {poi.has_warning && (
+                                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+                                          <AlertTriangle className="w-2.5 h-2.5 mr-0.5" />
+                                          ⚠️
+                                        </Badge>
+                                      )}
+                                      {!poi.cuisine_type && !poi.requires_reservation && !poi.has_warning && (
+                                        <span className="text-muted-foreground italic opacity-60">+ Editar detalhes</span>
                                       )}
                                     </div>
                                   )}
