@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, MapPin, Compass, Timer, Navigation, Sparkles } from 'lucide-react';
+import { Plane, MapPin, Power } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent } from '@/components/ui/card';
 import { useTravelMode } from '@/contexts/TravelModeContext';
 
 export const TravelModeToggle = () => {
@@ -12,180 +13,127 @@ export const TravelModeToggle = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
     >
-      <motion.div 
-        className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
+      <Card 
+        className={`relative overflow-hidden transition-all duration-500 ${
           isTravelMode 
-            ? 'shadow-xl shadow-primary/20' 
-            : 'shadow-lg'
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 border-blue-500 shadow-lg shadow-blue-500/25' 
+            : 'bg-gradient-to-r from-muted/50 to-muted/30 border-border'
         }`}
-        style={{
-          background: isTravelMode 
-            ? 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(280 70% 50%) 50%, hsl(320 70% 50%) 100%)'
-            : 'hsl(var(--card))',
-          border: `1px solid ${isTravelMode ? 'rgba(255,255,255,0.2)' : 'hsl(var(--border))'}`,
-        }}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
       >
-        {/* Animated background effects when active */}
+        {/* Animated background effect when active */}
         <AnimatePresence>
           {isTravelMode && (
-            <>
-              {/* Floating orbs */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute inset-0 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-400/20 rounded-full blur-xl" />
+              {/* Animated plane */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 overflow-hidden pointer-events-none"
-              >
-                <motion.div
-                  className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-3xl"
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    x: [0, 10, 0],
-                    y: [0, -10, 0],
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <motion.div
-                  className="absolute -bottom-8 -left-8 w-24 h-24 bg-purple-300/30 rounded-full blur-2xl"
-                  animate={{ 
-                    scale: [1, 1.3, 1],
-                    x: [0, -5, 0],
-                    y: [0, 5, 0],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-                />
-                
-                {/* Animated plane */}
-                <motion.div
-                  initial={{ x: -60, y: 80 }}
-                  animate={{ x: 200, y: -40 }}
-                  transition={{ 
-                    duration: 4, 
-                    repeat: Infinity, 
-                    repeatType: 'loop',
-                    ease: 'linear',
-                    repeatDelay: 2,
-                  }}
-                  className="absolute opacity-30"
-                >
-                  <Plane className="w-5 h-5 text-white rotate-[-35deg]" />
-                </motion.div>
-              </motion.div>
-
-              {/* Sparkle decorations */}
-              <motion.div
-                className="absolute top-3 right-16"
-                animate={{ 
-                  scale: [0.8, 1.2, 0.8],
-                  opacity: [0.5, 1, 0.5],
-                  rotate: [0, 180, 360],
+                initial={{ x: -50, y: 50 }}
+                animate={{ x: 150, y: -50 }}
+                transition={{ 
+                  duration: 3, 
+                  repeat: Infinity, 
+                  repeatType: 'loop',
+                  ease: 'linear' 
                 }}
-                transition={{ duration: 3, repeat: Infinity }}
+                className="absolute opacity-20"
               >
-                <Sparkles className="w-3 h-3 text-yellow-300" />
+                <Plane className="w-6 h-6 text-white rotate-[-30deg]" />
               </motion.div>
-            </>
+            </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="relative z-10 p-4">
-          {/* Header row */}
+        <CardContent className="p-4 relative z-10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {/* Icon container */}
               <motion.div 
-                className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300 ${
                   isTravelMode 
-                    ? 'bg-white/20 shadow-inner' 
-                    : 'bg-gradient-to-br from-primary/20 to-primary/5'
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-primary/10 text-primary'
                 }`}
                 animate={isTravelMode ? { 
-                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
                 } : {}}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
                 {isTravelMode ? (
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'spring', stiffness: 200 }}
-                  >
-                    <Compass className="w-6 h-6 text-white" />
-                  </motion.div>
+                  <MapPin className="w-6 h-6" />
                 ) : (
-                  <Plane className="w-6 h-6 text-primary" />
+                  <Plane className="w-6 h-6" />
                 )}
               </motion.div>
               
-              {/* Text content */}
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className={`font-bold text-base ${isTravelMode ? 'text-white' : 'text-foreground'}`}>
-                    Modo Viagem
-                  </h3>
-                  {isTravelMode && (
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 border border-green-400/30 rounded-full"
-                    >
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-                      </span>
-                      <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">Ativo</span>
-                    </motion.span>
-                  )}
-                </div>
-                <p className={`text-sm mt-0.5 ${isTravelMode ? 'text-white/80' : 'text-muted-foreground'}`}>
-                  {isTravelMode ? 'Interface otimizada para os parques' : 'Otimize para uso no parque'}
+                <h3 className={`font-semibold ${isTravelMode ? 'text-white' : 'text-foreground'}`}>
+                  Modo Viagem
+                </h3>
+                <p className={`text-sm ${isTravelMode ? 'text-white/80' : 'text-muted-foreground'}`}>
+                  {isTravelMode ? 'Ativo • Interface otimizada' : 'Otimize para uso no parque'}
                 </p>
               </div>
             </div>
 
-            {/* Toggle Switch */}
-            <Switch
-              checked={isTravelMode}
-              onCheckedChange={toggleTravelMode}
-              className={`scale-110 ${isTravelMode ? 'data-[state=checked]:bg-white/30' : ''}`}
-            />
+            <div className="flex items-center gap-3">
+              {/* Status indicator */}
+              <AnimatePresence mode="wait">
+                {isTravelMode && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    className="flex items-center gap-1.5 px-2 py-1 bg-white/20 rounded-full"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+                    </span>
+                    <span className="text-xs font-medium text-white">ON</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Toggle Switch */}
+              <Switch
+                checked={isTravelMode}
+                onCheckedChange={toggleTravelMode}
+                className={isTravelMode ? 'data-[state=checked]:bg-white/30' : ''}
+              />
+            </div>
           </div>
 
-          {/* Feature highlights */}
-          <AnimatePresence mode="wait">
+          {/* Feature highlights when inactive */}
+          <AnimatePresence>
             {!isTravelMode && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="mt-4 pt-3 border-t border-border/30"
+                className="mt-3 pt-3 border-t border-border/50"
               >
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { icon: MapPin, label: 'Mapa como Home', color: 'text-blue-400' },
-                    { icon: Timer, label: 'Filas ao Vivo', color: 'text-amber-400' },
-                    { icon: Navigation, label: 'GPS Ativo', color: 'text-green-400' },
-                  ].map((feature, i) => (
-                    <motion.span
-                      key={feature.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-muted/50 border border-border/50 rounded-lg text-xs font-medium text-muted-foreground"
-                    >
-                      <feature.icon className={`w-3.5 h-3.5 ${feature.color}`} />
-                      {feature.label}
-                    </motion.span>
-                  ))}
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-muted rounded-full">
+                    🗺️ Mapa como Home
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-1 bg-muted rounded-full">
+                    ⏱️ Filas ao Vivo
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-1 bg-muted rounded-full">
+                    📍 GPS Ativo
+                  </span>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </motion.div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
