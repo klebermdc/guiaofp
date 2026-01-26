@@ -219,7 +219,7 @@ const Restaurants = () => {
         <div className="flex gap-2 flex-wrap">
           <Badge 
             variant={selectedPark === 'all' ? 'default' : 'outline'}
-            className="cursor-pointer"
+            className="cursor-pointer px-3 py-1.5"
             onClick={() => setSelectedPark('all')}
           >
             Todos ({restaurants.length})
@@ -231,10 +231,10 @@ const Restaurants = () => {
               <Badge
                 key={park.id}
                 variant={selectedPark === park.id ? 'default' : 'secondary'}
-                className="cursor-pointer"
+                className="cursor-pointer px-3 py-1.5"
                 onClick={() => setSelectedPark(selectedPark === park.id ? 'all' : park.id)}
               >
-                {park.emoji} {count}
+                {park.emoji} {park.name} ({count})
               </Badge>
             );
           })}
