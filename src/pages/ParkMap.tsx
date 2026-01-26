@@ -424,14 +424,15 @@ export default function ParkMap() {
     };
   });
 
-  // Auto-refresh wait times every 5 seconds (background update)
+  // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
   useEffect(() => {
+    const refreshInterval = isMobile ? 30000 : 15000;
     const interval = setInterval(() => {
       fetchWaitTimes(selectedPark.id, true);
-    }, 5000); // 5 seconds
+    }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [selectedPark.id, fetchWaitTimes]);
+  }, [selectedPark.id, fetchWaitTimes, isMobile]);
 
   // Center map when park changes or map loads
   useEffect(() => {
@@ -1770,8 +1771,11 @@ export default function ParkMap() {
 
                   {lastWaitTimeUpdate && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      Atualizado às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="relative">
+                        <Clock className="w-3 h-3" />
+                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      </div>
+                      <span>Ao vivo • {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                       {waitTimes.length > 0 && (
                         <Badge variant="secondary" className="text-xs ml-auto">
                           {waitTimes.filter(w => w.isOpen).length} abertas
