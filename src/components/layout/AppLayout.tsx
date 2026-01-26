@@ -35,7 +35,7 @@ const pageVariants = {
 };
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const { isAuthenticated, isAccessEnabled, isLoading } = useAuth();
+  const { isAuthenticated, isAccessEnabled, isLoading, isProfileLoaded } = useAuth();
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
@@ -43,8 +43,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Wait for both auth and role to load
-  if (isLoading || isRoleLoading) {
+  // Wait for auth, role, AND profile to load before making access decisions
+  if (isLoading || isRoleLoading || !isProfileLoaded) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div 
