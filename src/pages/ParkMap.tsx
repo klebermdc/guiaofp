@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1357,6 +1358,8 @@ export default function ParkMap() {
         </div>
         )}
 
+        {/* Travel Mode Indicator */}
+        <TravelModeIndicator />
 
         {/* Map Legend - Top positioned with styled header */}
         <div className="absolute top-16 left-2 bg-background/95 backdrop-blur-sm rounded-xl p-2.5 shadow-lg z-10 border border-border/50">

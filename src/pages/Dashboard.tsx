@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
+import { TravelModeToggle } from '@/components/travel-mode/TravelModeToggle';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import { SEO, SEO_PAGES } from '@/components/SEO';
@@ -140,6 +141,11 @@ const Dashboard = () => {
               {t('dashboard.tripBeingPrepared')}
             </motion.p>
           </div>
+        </motion.div>
+
+        {/* Travel Mode Toggle - Prominent position */}
+        <motion.div variants={itemVariants}>
+          <TravelModeToggle />
         </motion.div>
 
         {/* Trip Countdown */}
