@@ -211,13 +211,19 @@ const Restaurants = () => {
                             <div className="flex gap-1 shrink-0">
                               {restaurant.menu_url && (
                                 <Button
+                                  asChild
                                   size="icon"
                                   variant="ghost"
-                                  className="text-orange-500 hover:bg-orange-500/10"
-                                  onClick={() => window.open(restaurant.menu_url!, '_blank')}
-                                  title="Ver menu virtual"
+                                  className="text-primary hover:bg-primary/10"
                                 >
-                                  <ExternalLink className="w-4 h-4" />
+                                  <a
+                                    href={restaurant.menu_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Ver menu virtual"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
                                 </Button>
                               )}
                               {hasCoords && (
