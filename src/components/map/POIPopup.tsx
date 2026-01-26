@@ -1,10 +1,11 @@
 import { createPortal } from 'react-dom';
 import { OverlayView } from '@react-google-maps/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock, Star, ExternalLink } from 'lucide-react';
+import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
 
 interface POI {
   id: string;
@@ -36,6 +37,10 @@ interface POIPopupProps {
 
 export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: POIPopupProps) {
   const isMobile = useIsMobile();
+  const isRestaurant = poi.type === 'restaurant';
+  const details = isRestaurant ? RESTAURANT_DETAILS[poi.name] : null;
+  const typeInfo = details ? getTypeLabel(details.type) : null;
+  const reservation = details?.reservation || poi.requiresReservation;
 
   const handleNavigate = () => {
     onNavigate(poi.position, poi.name);
@@ -47,8 +52,6 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     e.preventDefault();
     if (onOpenMenu && poi.menuUrl) {
       onOpenMenu(poi.menuUrl, poi.name);
-      // No mobile, manter o popup aberto para evitar que o toque feche a UI
-      // antes do modal de cardápio estabilizar/renderizar.
       if (!isMobile) {
         onClose();
       }
@@ -58,9 +61,10 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
   const cardContent = (
     <div
       data-poi-popup="true"
-      className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[260px] max-w-[90vw]"
+      className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[280px] max-w-[90vw]"
     >
-      <div className="p-3">
+      <div className="p-3 space-y-2.5">
+        {/* Header with close button */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
@@ -72,11 +76,79 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
                 {poiConfig.label}
               </span>
             </div>
-            <p className="text-sm font-medium text-foreground">{poi.name}</p>
-            
-            {/* Restaurant metadata badges */}
-            {poi.type === 'restaurant' && (poi.cuisineType || poi.requiresReservation || poi.hasWarning) && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <p className="text-sm font-semibold text-foreground">{poi.name}</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors -mt-0.5 -mr-1"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Restaurant-specific content */}
+        {isRestaurant && (
+          <>
+            {/* Type, Price, Reservation badges */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {typeInfo && (
+                <Badge className={`${typeInfo.color} text-white text-[10px] px-1.5 h-5`}>
+                  {typeInfo.label}
+                </Badge>
+              )}
+              {details && (
+                <span className="text-xs text-green-500 font-bold">
+                  {getPriceIndicator(details.priceLevel)}
+                </span>
+              )}
+              {reservation && (
+                <Badge variant="outline" className="text-[10px] px-1.5 h-5 border-amber-500/50 text-amber-500 gap-0.5">
+                  <CalendarClock className="w-2.5 h-2.5" />
+                  Reserva
+                </Badge>
+              )}
+              {poi.cuisineType && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
+                  {poi.cuisineType}
+                </Badge>
+              )}
+            </div>
+
+            {/* Tip Section */}
+            {details?.tip && (
+              <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
+                <Star className="w-3 h-3 mt-0.5 shrink-0 text-yellow-500" />
+                <span className="line-clamp-2">{details.tip}</span>
+              </p>
+            )}
+
+            {/* Must Try Section */}
+            {details?.mustTry && (
+              <p className="text-[11px] font-medium text-primary flex items-start gap-1.5">
+                <UtensilsCrossed className="w-3 h-3 mt-0.5 shrink-0" />
+                <span>Experimente: {details.mustTry}</span>
+              </p>
+            )}
+
+            {/* Menu button as styled tag */}
+            {poi.menuUrl && (
+              <button
+                onClick={handleOpenMenu}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-colors text-[11px] font-medium border border-orange-500/30"
+              >
+                <UtensilsCrossed className="w-3 h-3" />
+                Ver cardápio
+              </button>
+            )}
+          </>
+        )}
+
+        {/* Non-restaurant content */}
+        {!isRestaurant && (
+          <>
+            {/* Metadata badges for other POI types */}
+            {(poi.cuisineType || poi.requiresReservation || poi.hasWarning) && (
+              <div className="flex flex-wrap items-center gap-1.5">
                 {poi.cuisineType && (
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
                     {poi.cuisineType}
@@ -97,53 +169,38 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
               </div>
             )}
             
-            {/* Warning message */}
-            {poi.hasWarning && poi.warningText && (
-              <p className="text-[10px] text-amber-500 mt-1 flex items-start gap-1">
-                <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
-                {poi.warningText}
-              </p>
-            )}
-            
             {/* Description */}
             {poi.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+              <p className="text-xs text-muted-foreground line-clamp-3">
                 {poi.description}
               </p>
             )}
             
             {/* Schedule for shows */}
             {poi.schedule && (
-              <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3 shrink-0" />
                 <span>{poi.schedule}</span>
               </div>
             )}
-            
-            {/* Menu button for restaurants - opens modal */}
-            {poi.type === 'restaurant' && poi.menuUrl && (
-              <button
-                onClick={handleOpenMenu}
-                className="flex items-center gap-1 mt-1.5 text-xs text-primary hover:underline"
-              >
-                <UtensilsCrossed className="w-3 h-3" />
-                Ver cardápio
-              </button>
-            )}
-          </div>
-          <button 
-            onClick={onClose}
-            className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors -mt-0.5 -mr-1"
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
+          </>
+        )}
+        
+        {/* Warning message */}
+        {poi.hasWarning && poi.warningText && (
+          <p className="text-[10px] text-amber-500 flex items-start gap-1">
+            <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+            {poi.warningText}
+          </p>
+        )}
+
+        {/* Navigate button */}
         <Button
           size="sm"
-          className="w-full mt-2 h-8 text-xs"
+          className="w-full h-9 text-xs"
           onClick={handleNavigate}
         >
-          <Navigation className="w-3 h-3 mr-1" />
+          <Navigation className="w-3.5 h-3.5 mr-1.5" />
           Ir para cá
         </Button>
       </div>
