@@ -373,9 +373,19 @@ export default function ParkMap() {
     },
   });
 
-  // Fetch wait times from API
-  const fetchWaitTimes = useCallback(async (parkId: string) => {
-    setIsLoadingWaitTimes(true);
+  // Ref to track if a fetch is in progress (prevents overlapping requests)
+  const isFetchingRef = useRef(false);
+  
+  // Fetch wait times from API - optimized for frequent updates
+  const fetchWaitTimes = useCallback(async (parkId: string, isBackground = false) => {
+    // Prevent overlapping requests
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    
+    // Only show loading indicator on initial load, not background updates
+    if (!isBackground) {
+      setIsLoadingWaitTimes(true);
+    }
     
     try {
       const { data, error } = await supabase.functions.invoke('queue-times', {
@@ -384,21 +394,22 @@ export default function ParkMap() {
 
       if (error) {
         console.error('Error fetching wait times:', error);
-        setWaitTimes([]);
+        // Don't clear wait times on error - keep showing last known data
       } else if (Array.isArray((data as any)?.data)) {
         // Some deployments return { data: Ride[] } without a success flag.
         setWaitTimes((data as any).data);
         setDataSource((data as any)?.source || 'unknown');
         setLastWaitTimeUpdate(new Date());
-      } else {
-        setWaitTimes([]);
       }
     } catch (err) {
       console.error('Failed to fetch wait times:', err);
-      setWaitTimes([]);
+      // Don't clear wait times on error - keep showing last known data
     }
     
-    setIsLoadingWaitTimes(false);
+    if (!isBackground) {
+      setIsLoadingWaitTimes(false);
+    }
+    isFetchingRef.current = false;
   }, []);
 
   // Merge database attractions with wait times
@@ -411,19 +422,11 @@ export default function ParkMap() {
     };
   });
 
-  // Fetch wait times when park changes
-  useEffect(() => {
-    fetchWaitTimes(selectedPark.id);
-    setDirections(null);
-    setRouteInfo(null);
-    setSelectedAttraction(null);
-  }, [selectedPark.id, fetchWaitTimes]);
-
-  // Auto-refresh wait times every 5 minutes
+  // Auto-refresh wait times every 5 seconds (background update)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchWaitTimes(selectedPark.id);
-    }, 5 * 60 * 1000);
+      fetchWaitTimes(selectedPark.id, true);
+    }, 5000); // 5 seconds
 
     return () => clearInterval(interval);
   }, [selectedPark.id, fetchWaitTimes]);
