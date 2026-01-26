@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
 import { POIPopup } from '@/components/map/POIPopup';
 import { MenuModal } from '@/components/map/MenuModal';
+import { RestaurantSidebarCard } from '@/components/map/RestaurantSidebarCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -1864,7 +1865,28 @@ export default function ParkMap() {
                       <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Nenhum local encontrado</p>
                     </div>
+                  ) : sidebarTab === 'restaurant' ? (
+                    // Special styling for restaurants - similar to Restaurants page
+                    <div className="p-2 space-y-2">
+                      {currentParkPOIs
+                        .filter(p => p.type === 'restaurant')
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((poi) => (
+                          <RestaurantSidebarCard
+                            key={poi.id}
+                            poi={poi}
+                            isSelected={selectedPOI?.id === poi.id}
+                            onSelect={() => {
+                              setSelectedPOI(poi);
+                              handleNavigateToAttraction(poi.position);
+                            }}
+                            onNavigate={() => calculateRoute(poi.position, poi.name)}
+                            onOpenMenu={(url, name) => setMenuModalData({ url, name })}
+                          />
+                        ))}
+                    </div>
                   ) : (
+                    // Default styling for other POIs
                     <div className="divide-y">
                       {currentParkPOIs
                         .filter(p => p.type === sidebarTab)
@@ -1884,16 +1906,6 @@ export default function ParkMap() {
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm leading-tight line-clamp-2">{poi.name}</p>
                               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                {poi.type === 'restaurant' && poi.cuisineType && (
-                                  <Badge variant="secondary" className="text-[10px] px-1 h-4">
-                                    {poi.cuisineType}
-                                  </Badge>
-                                )}
-                                {poi.type === 'restaurant' && poi.requiresReservation && (
-                                  <Badge variant="outline" className="text-[10px] px-1 h-4 border-amber-500/50 text-amber-500">
-                                    Reserva
-                                  </Badge>
-                                )}
                                 {poi.type === 'show' && poi.schedule && (
                                   <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
                                     <Clock className="w-2.5 h-2.5" />
