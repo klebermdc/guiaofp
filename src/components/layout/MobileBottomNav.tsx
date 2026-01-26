@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { PrefetchLink } from '@/components/PrefetchLink';
 import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -35,7 +36,7 @@ export const MobileBottomNav = () => {
           {mainNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
-              <NavLink
+              <PrefetchLink
                 key={item.path}
                 to={item.path}
                 className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl min-w-[60px]"
@@ -64,7 +65,7 @@ export const MobileBottomNav = () => {
                 >
                   {item.label}
                 </motion.span>
-              </NavLink>
+              </PrefetchLink>
             );
           })}
           
