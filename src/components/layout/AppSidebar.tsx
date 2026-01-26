@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { PrefetchLink } from '@/components/PrefetchLink';
 import { 
   LayoutDashboard, 
   User, 
@@ -145,7 +146,7 @@ export const AppSidebar = () => {
               allMenuItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
-                  <NavLink
+                  <PrefetchLink
                     key={item.path}
                     to={item.path}
                     className={cn(
@@ -157,7 +158,7 @@ export const AppSidebar = () => {
                   >
                     <item.icon size={20} />
                     <span className="font-medium">{item.label}</span>
-                  </NavLink>
+                  </PrefetchLink>
                 );
               })
             )}

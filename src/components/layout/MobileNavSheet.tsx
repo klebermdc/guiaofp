@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { PrefetchLink } from '@/components/PrefetchLink';
 import { 
   Ticket,
   MapPin,
@@ -212,9 +212,9 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
               initial="hidden"
               animate="visible"
             >
-              {allItems.map((item, index) => (
+              {allItems.map((item) => (
                 <motion.div key={item.path} variants={itemVariants}>
-                  <NavLink
+                  <PrefetchLink
                     to={item.path}
                     onClick={() => onOpenChange(false)}
                     className={({ isActive }) => cn(
@@ -228,7 +228,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
                       <item.icon size={24} />
                     </motion.div>
                     <span className="text-sm font-medium text-center leading-tight">{item.label}</span>
-                  </NavLink>
+                  </PrefetchLink>
                 </motion.div>
               ))}
             </motion.div>
