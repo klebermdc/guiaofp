@@ -74,6 +74,7 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isProfileLoading: boolean;
   isAccessEnabled: boolean;
   planTier: 'basic' | 'premium';
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -204,6 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [travelProfile, setTravelProfile] = useState<TravelProfile>(defaultTravelProfile);
 
   const calculateCompletionPercentage = (profile: TravelProfile): number => {
@@ -226,77 +228,99 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadProfile = async () => {
     if (!user) return;
     
-    // Fetch profile data
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    setIsProfileLoading(true);
     
-    // Fetch contract data (created by edge function)
-    const { data: contractData, error: contractError } = await supabase
-      .from('contracts')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    
-    let profile = defaultTravelProfile;
-    
-    if (profileData && !profileError) {
-      profile = dbToFrontend(profileData);
+    try {
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      // Fetch contract data (created by edge function)
+      const { data: contractData, error: contractError } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      let profile = defaultTravelProfile;
+      
+      if (profileData && !profileError) {
+        profile = dbToFrontend(profileData);
+      }
+      
+      // Merge contract data if available and profile is missing this data
+      if (contractData && !contractError) {
+        // Only use contract data if profile doesn't have it
+        if (!profile.guideName && contractData.guide_name) {
+          profile.guideName = contractData.guide_name;
+        }
+        if ((!profile.parkDates || profile.parkDates.length === 0) && contractData.parks && Array.isArray(contractData.parks)) {
+          profile.parkDates = contractData.parks as any[];
+        }
+        if (!profile.arrivalDate && contractData.start_date) {
+          profile.arrivalDate = contractData.start_date;
+        }
+        if (!profile.departureDate && contractData.end_date) {
+          profile.departureDate = contractData.end_date;
+        }
+      }
+      
+      setTravelProfile(profile);
+    } finally {
+      setIsProfileLoading(false);
     }
-    
-    // Merge contract data if available and profile is missing this data
-    if (contractData && !contractError) {
-      // Only use contract data if profile doesn't have it
-      if (!profile.guideName && contractData.guide_name) {
-        profile.guideName = contractData.guide_name;
-      }
-      if ((!profile.parkDates || profile.parkDates.length === 0) && contractData.parks && Array.isArray(contractData.parks)) {
-        profile.parkDates = contractData.parks as any[];
-      }
-      if (!profile.arrivalDate && contractData.start_date) {
-        profile.arrivalDate = contractData.start_date;
-      }
-      if (!profile.departureDate && contractData.end_date) {
-        profile.departureDate = contractData.end_date;
-      }
-    }
-    
-    setTravelProfile(profile);
   };
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
-        setIsLoading(false);
         
         // Load profile after auth state changes
         if (session?.user) {
-          setTimeout(() => {
-            loadProfile();
+          setIsProfileLoading(true);
+          // Use setTimeout to defer Supabase calls and avoid auth deadlock
+          setTimeout(async () => {
+            if (isMounted) {
+              await loadProfile();
+            }
           }, 0);
         } else {
           setTravelProfile(defaultTravelProfile);
         }
+        
+        setIsLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
-      setIsLoading(false);
       
       if (session?.user) {
-        loadProfile();
+        setIsProfileLoading(true);
+        await loadProfile();
       }
+      
+      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -368,6 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       isAuthenticated: !!user,
       isLoading,
+      isProfileLoading,
       isAccessEnabled: travelProfile.isAccessEnabled,
       planTier: travelProfile.planTier,
       login,
