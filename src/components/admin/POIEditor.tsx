@@ -13,18 +13,9 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
+import { PARKS, POI_CONFIG_ADMIN as POI_CONFIG, GOOGLE_MAPS_API_KEY, type POIType } from '@/data/constants';
 
 type LatLng = { lat: number; lng: number };
-type POIType = 'restroom' | 'restaurant' | 'shop' | 'firstaid' | 'show';
-
-interface Park {
-  id: string;
-  name: string;
-  center: LatLng;
-  zoom: number;
-}
 
 interface POIItem {
   id: string;
@@ -40,24 +31,6 @@ interface POIItem {
   warning_text: string | null;
   menu_url: string | null;
 }
-
-const PARKS: Park[] = [
-  { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', center: { lat: 28.4177, lng: -81.5812 }, zoom: 17 },
-  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 16 },
-  { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
-  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3580, lng: -81.5900 }, zoom: 16 },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4752, lng: -81.4683 }, zoom: 17 },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4711, lng: -81.4710 }, zoom: 17 },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 16 },
-];
-
-const POI_CONFIG: Record<POIType, { label: string; color: string; emoji: string }> = {
-  restroom: { label: 'Banheiro', color: '#3B82F6', emoji: '🚻' },
-  restaurant: { label: 'Restaurante', color: '#F97316', emoji: '🍽️' },
-  shop: { label: 'Loja', color: '#A855F7', emoji: '🛍️' },
-  firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
-  show: { label: 'Show', color: '#EC4899', emoji: '🎭' },
-};
 
 const mapContainerStyle = {
   width: '100%',
