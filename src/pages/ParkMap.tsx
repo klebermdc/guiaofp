@@ -1506,8 +1506,9 @@ export default function ParkMap() {
         )}
 
 
-        {/* Map Legend - Compact floating - adjusted for mobile nav */}
-        <div className="absolute bottom-24 lg:bottom-4 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
+        {/* Map Legend - Top positioned with title */}
+        <div className="absolute top-16 left-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-10 text-xs">
+          <p className="font-semibold text-[10px] text-muted-foreground mb-1">Tempo de Espera (min)</p>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
