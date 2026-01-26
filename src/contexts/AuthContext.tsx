@@ -277,6 +277,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Handle token refresh errors - logout automatically
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, logging out');
+          setSession(null);
+          setUser(null);
+          setTravelProfile(defaultTravelProfile);
+          setIsProfileLoaded(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Handle sign out event
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setTravelProfile(defaultTravelProfile);
+          setIsProfileLoaded(false);
+          setIsLoading(false);
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -294,7 +315,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      // If there's an error getting session (expired token), clear state
+      if (error) {
+        console.log('Session error, clearing auth state:', error.message);
+        setSession(null);
+        setUser(null);
+        setTravelProfile(defaultTravelProfile);
+        setIsProfileLoaded(false);
+        setIsLoading(false);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -302,6 +334,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Pass userId directly to avoid closure issues
         await loadProfile(session.user.id);
       }
+      setIsLoading(false);
+    }).catch((err) => {
+      // Catch any unexpected errors
+      console.error('Unexpected auth error:', err);
+      setSession(null);
+      setUser(null);
       setIsLoading(false);
     });
 
