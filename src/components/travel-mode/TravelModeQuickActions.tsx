@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, memo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Map, Clock, X, Compass, Zap } from 'lucide-react';
+import { Map, Clock, X, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTravelMode } from '@/contexts/TravelModeContext';
 
@@ -30,127 +29,87 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
 ];
 
-export const TravelModeQuickActions = () => {
+export const TravelModeQuickActions = memo(() => {
   const { isTravelMode, disableTravelMode } = useTravelMode();
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't show on map page (it's the main page in travel mode)
+  const handleAction = useCallback((path: string) => {
+    navigate(path);
+    setIsExpanded(false);
+  }, [navigate]);
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  // Don't show on map page or when travel mode is off
   if (!isTravelMode || location.pathname === '/mapa') {
     return null;
   }
 
-  const handleAction = (action: QuickAction) => {
-    navigate(action.path);
-    setIsExpanded(false);
-  };
-
   return (
     <div className="fixed bottom-24 lg:bottom-6 right-4 z-50 flex flex-col items-end gap-2">
       {/* Quick Actions Menu */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="flex flex-col gap-2 mb-2"
-          >
-            {QUICK_ACTIONS.map((action, index) => (
-              <motion.div
-                key={action.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Button
-                  onClick={() => handleAction(action)}
-                  className={`${action.color} text-white shadow-lg flex items-center gap-2 pr-4`}
-                  size="lg"
-                >
-                  {action.icon}
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
-              </motion.div>
-            ))}
-
-            {/* Exit Travel Mode */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ delay: QUICK_ACTIONS.length * 0.05 }}
+      {isExpanded && (
+        <div className="flex flex-col gap-2 mb-2 animate-fade-in">
+          {QUICK_ACTIONS.map((action) => (
+            <Button
+              key={action.id}
+              onClick={() => handleAction(action.path)}
+              className={`${action.color} text-white shadow-lg flex items-center gap-2 pr-4`}
+              size="lg"
             >
-              <Button
-                onClick={disableTravelMode}
-                variant="outline"
-                className="shadow-lg flex items-center gap-2 bg-background/95 backdrop-blur-sm"
-                size="lg"
-              >
-                <X className="w-4 h-4" />
-                <span className="text-sm">Sair do Modo Viagem</span>
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {action.icon}
+              <span className="text-sm font-medium">{action.label}</span>
+            </Button>
+          ))}
+
+          {/* Exit Travel Mode */}
+          <Button
+            onClick={disableTravelMode}
+            variant="outline"
+            className="shadow-lg flex items-center gap-2 bg-background/95"
+            size="lg"
+          >
+            <X className="w-4 h-4" />
+            <span className="text-sm">Sair do Modo Viagem</span>
+          </Button>
+        </div>
+      )}
 
       {/* Main FAB Button */}
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <Button
+        onClick={toggleExpanded}
+        className={`w-14 h-14 rounded-full shadow-xl transition-colors ${
+          isExpanded 
+            ? 'bg-muted text-foreground' 
+            : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+        }`}
+        size="icon"
       >
-        <Button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-14 h-14 rounded-full shadow-xl transition-all duration-300 ${
-            isExpanded 
-              ? 'bg-muted text-foreground' 
-              : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-          }`}
-          size="icon"
-        >
-          <AnimatePresence mode="wait">
-            {isExpanded ? (
-              <motion.div
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-              >
-                <X className="w-6 h-6" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="compass"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                className="relative"
-              >
-                <Compass className="w-6 h-6" />
-                {/* Pulsing indicator */}
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Button>
-      </motion.div>
+        {isExpanded ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <div className="relative">
+            <Compass className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+            </span>
+          </div>
+        )}
+      </Button>
 
       {/* Travel Mode Label */}
       {!isExpanded && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-[10px] font-medium text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-full"
-        >
+        <div className="text-[10px] font-medium text-muted-foreground bg-background/80 px-2 py-0.5 rounded-full">
           Modo Viagem
-        </motion.div>
+        </div>
       )}
     </div>
   );
-};
+});
+
+TravelModeQuickActions.displayName = 'TravelModeQuickActions';
