@@ -145,8 +145,8 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" hideCloseButton className="h-[85vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0">
-        <SheetHeader className="px-6 pb-4 border-b border-sidebar-border">
+      <SheetContent side="bottom" hideCloseButton className="h-[85vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0 flex flex-col">
+        <SheetHeader className="px-6 pb-4 border-b border-sidebar-border flex-shrink-0">
           <div className="flex items-center justify-between">
             <motion.img 
               src={logo} 
@@ -172,7 +172,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* User Info */}
         <motion.div 
-          className="px-6 py-4 border-b border-sidebar-border"
+          className="px-6 py-4 border-b border-sidebar-border flex-shrink-0"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -196,7 +196,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
         </motion.div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <motion.div 
@@ -237,7 +237,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* Language Selector */}
         <motion.div 
-          className="px-6 py-2"
+          className="px-6 py-2 flex-shrink-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
@@ -247,7 +247,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* Logout Button */}
         <motion.div 
-          className="px-6 py-4 border-t border-sidebar-border"
+          className="px-6 py-4 border-t border-sidebar-border flex-shrink-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
