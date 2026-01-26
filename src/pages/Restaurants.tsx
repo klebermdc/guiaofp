@@ -21,6 +21,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
+import { PARKS } from '@/data/constants';
+import { SEO, SEO_PAGES } from '@/components/SEO';
 
 interface Restaurant {
   id: string;
@@ -33,15 +35,17 @@ interface Restaurant {
   park_name?: string;
 }
 
-const PARKS = [
-  { id: 'dd6b79b8-d934-4e15-8967-1f1af1911fef', name: 'Magic Kingdom', emoji: '🏰' },
-  { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', emoji: '🌍' },
-  { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', emoji: '🎬' },
-  { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', emoji: '🦁' },
-  { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', emoji: '🎢' },
-  { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', emoji: '🏝️' },
-  { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', emoji: '🌌' },
-];
+// Extended parks with emojis for display
+const PARKS_WITH_EMOJI = PARKS.map(park => ({
+  ...park,
+  emoji: park.name === 'Magic Kingdom' ? '🏰' :
+         park.name === 'EPCOT' ? '🌍' :
+         park.name === 'Hollywood Studios' ? '🎬' :
+         park.name === 'Animal Kingdom' ? '🦁' :
+         park.name === 'Universal Studios' ? '🎢' :
+         park.name === 'Islands of Adventure' ? '🏝️' :
+         park.name === 'Epic Universe' ? '🌌' : '🎡'
+}));
 
 const Restaurants = () => {
   const navigate = useNavigate();
@@ -63,7 +67,7 @@ const Restaurants = () => {
       
       // Add park name to each restaurant
       return (data || []).map(r => {
-        const park = PARKS.find(p => p.id === r.category_id);
+        const park = PARKS_WITH_EMOJI.find(p => p.id === r.category_id);
         return { ...r, park_name: park?.name || 'Unknown' };
       });
     },
@@ -107,6 +111,7 @@ const Restaurants = () => {
 
   return (
     <AppLayout>
+      <SEO {...SEO_PAGES.restaurants} />
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -141,7 +146,7 @@ const Restaurants = () => {
           >
             Todos ({restaurants.length})
           </Badge>
-          {PARKS.map(park => {
+          {PARKS_WITH_EMOJI.map(park => {
             const count = restaurants.filter(r => r.category_id === park.id).length;
             if (count === 0) return null;
             return (
@@ -160,7 +165,7 @@ const Restaurants = () => {
         {/* Restaurant List by Park */}
         <div className="space-y-6">
           {Object.entries(groupedByPark).map(([parkId, parkRestaurants]) => {
-            const park = PARKS.find(p => p.id === parkId);
+            const park = PARKS_WITH_EMOJI.find(p => p.id === parkId);
             if (!park) return null;
 
             return (

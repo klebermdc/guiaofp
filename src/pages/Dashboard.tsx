@@ -22,6 +22,7 @@ import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
+import { SEO, SEO_PAGES } from '@/components/SEO';
 import logo from '@/assets/logo.png';
 
 // Animation variants
@@ -88,6 +89,7 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
+      <SEO {...SEO_PAGES.dashboard} />
       <motion.div 
         className="max-w-6xl mx-auto space-y-6 relative"
         variants={containerVariants}
