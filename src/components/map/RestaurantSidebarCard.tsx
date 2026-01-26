@@ -44,7 +44,9 @@ export function RestaurantSidebarCard({
     if (poi.menuUrl) {
       // On mobile, open directly in new tab (iframes often blocked)
       if (isMobile) {
-        window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
+        const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
+        // Some mobile browsers/PWA contexts block popups; fallback to same-tab navigation.
+        if (!opened) window.location.assign(poi.menuUrl);
       } else if (onOpenMenu) {
         onOpenMenu(poi.menuUrl, poi.name);
       }
