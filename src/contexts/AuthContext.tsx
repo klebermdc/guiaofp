@@ -224,25 +224,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const completedFields = requiredFields.filter(Boolean).length;
     return Math.round((completedFields / requiredFields.length) * 100);
   };
-
-  const loadProfile = async () => {
-    if (!user) return;
-    
-    setIsProfileLoading(true);
-    
+  const loadProfileForUser = async (userId: string) => {
     try {
       // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
       
       // Fetch contract data (created by edge function)
       const { data: contractData, error: contractError } = await supabase
         .from('contracts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
       
       let profile = defaultTravelProfile;
@@ -268,6 +263,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
+      return profile;
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      return defaultTravelProfile;
+    }
+  };
+
+  const loadProfile = async () => {
+    if (!user) return;
+    
+    setIsProfileLoading(true);
+    
+    try {
+      const profile = await loadProfileForUser(user.id);
       setTravelProfile(profile);
     } finally {
       setIsProfileLoading(false);
@@ -277,7 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener for ONGOING changes (does NOT control isLoading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
@@ -285,37 +294,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Load profile after auth state changes
+        // Load profile in background after auth state changes
         if (session?.user) {
-          setIsProfileLoading(true);
-          // Use setTimeout to defer Supabase calls and avoid auth deadlock
-          setTimeout(async () => {
-            if (isMounted) {
-              await loadProfile();
-            }
-          }, 0);
+          const profile = await loadProfileForUser(session.user.id);
+          if (isMounted) {
+            setTravelProfile(profile);
+            setIsProfileLoading(false);
+          }
         } else {
           setTravelProfile(defaultTravelProfile);
+          setIsProfileLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setIsProfileLoading(true);
-        await loadProfile();
+    // INITIAL load - this controls isLoading
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setIsProfileLoading(true);
+          const profile = await loadProfileForUser(session.user.id);
+          if (isMounted) {
+            setTravelProfile(profile);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        // CRITICAL: isLoading só é false APÓS profile carregar
+        if (isMounted) {
+          setIsLoading(false);
+          setIsProfileLoading(false);
+        }
       }
-      
-      setIsLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       isMounted = false;
