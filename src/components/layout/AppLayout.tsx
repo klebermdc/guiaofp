@@ -6,6 +6,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { AppSidebar } from './AppSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { OrlandoAssistant } from '@/components/chat/OrlandoAssistant';
+import { TravelModeFloatingButton } from '@/components/travel-mode/TravelModeFloatingButton';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -79,6 +80,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           </motion.div>
         </AnimatePresence>
       </main>
+      <TravelModeFloatingButton />
       <OrlandoAssistant />
     </div>
   );
