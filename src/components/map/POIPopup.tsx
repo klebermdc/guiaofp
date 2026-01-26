@@ -50,9 +50,12 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
   const handleOpenMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (onOpenMenu && poi.menuUrl) {
-      onOpenMenu(poi.menuUrl, poi.name);
-      if (!isMobile) {
+    if (poi.menuUrl) {
+      // On mobile, open directly in new tab (iframes often blocked)
+      if (isMobile) {
+        window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
+      } else if (onOpenMenu) {
+        onOpenMenu(poi.menuUrl, poi.name);
         onClose();
       }
     }
