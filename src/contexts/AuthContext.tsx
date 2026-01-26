@@ -225,22 +225,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
-  const loadProfile = async () => {
-    if (!user) return;
+  const loadProfile = async (userId?: string) => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) return;
     
     try {
       // Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .maybeSingle();
       
       // Fetch contract data (created by edge function)
       const { data: contractData, error: contractError } = await supabase
         .from('contracts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .maybeSingle();
       
       let profile = defaultTravelProfile;
@@ -281,11 +282,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Load profile after auth state changes
         if (session?.user) {
-          // Don't set isLoading to false until profile is loaded
-          setTimeout(async () => {
-            await loadProfile();
-            setIsLoading(false);
-          }, 0);
+          // Pass userId directly to avoid closure issues
+          await loadProfile(session.user.id);
+          setIsLoading(false);
         } else {
           setTravelProfile(defaultTravelProfile);
           setIsProfileLoaded(false);
@@ -300,8 +299,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Load profile before setting isLoading to false
-        await loadProfile();
+        // Pass userId directly to avoid closure issues
+        await loadProfile(session.user.id);
       }
       setIsLoading(false);
     });
