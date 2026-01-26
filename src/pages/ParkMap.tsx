@@ -1416,21 +1416,52 @@ export default function ParkMap() {
           </Button>
         </div>
 
-        {/* Center on User Button */}
-        {userPosition && (
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute bottom-44 lg:bottom-36 right-2 h-10 w-10 shadow-lg z-10"
-            onClick={() => {
-              if (mapRef.current && userPosition) {
-                mapRef.current.panTo(userPosition);
-                mapRef.current.setZoom(19);
-              }
-            }}
-          >
-            <Navigation className="w-5 h-5 text-blue-500" />
-          </Button>
+        {/* "Onde Estou" Button - GPS Location with prominent styling */}
+        <Button
+          variant={userPosition ? 'default' : 'secondary'}
+          size="icon"
+          className={`absolute bottom-44 lg:bottom-36 right-2 h-12 w-12 shadow-lg z-10 transition-all duration-300 ${
+            userPosition 
+              ? 'bg-blue-500 hover:bg-blue-600 ring-4 ring-blue-500/30' 
+              : 'hover:bg-muted'
+          } ${isLoadingLocation ? 'animate-pulse' : ''}`}
+          onClick={() => {
+            if (userPosition && mapRef.current) {
+              // If already have position, just center on it
+              mapRef.current.panTo(userPosition);
+              mapRef.current.setZoom(19);
+              toast.success('📍 Localização centralizada', {
+                description: 'Mapa focado na sua posição atual',
+                duration: 2000,
+              });
+            } else {
+              // Request location for the first time
+              handleGetLocation();
+              toast.info('🔄 Obtendo localização...', {
+                description: 'Aguarde enquanto localizamos você',
+                duration: 3000,
+              });
+            }
+          }}
+          disabled={isLoadingLocation}
+          title={userPosition ? 'Centralizar na minha localização' : 'Ativar GPS - Onde Estou'}
+        >
+          {isLoadingLocation ? (
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          ) : (
+            <LocateFixed className={`w-6 h-6 ${userPosition ? 'text-white' : 'text-blue-500'}`} />
+          )}
+        </Button>
+        
+        {/* GPS Status Indicator - Shows when location is active */}
+        {userPosition && !isNavigating && (
+          <div className="absolute bottom-[220px] lg:bottom-[180px] right-2 bg-background/95 backdrop-blur-sm rounded-lg px-2 py-1 shadow-lg z-10 flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span className="text-[10px] font-medium text-muted-foreground">GPS Ativo</span>
+          </div>
         )}
 
         {/* Car Parking Controls - Floating on left side - adjusted for mobile nav */}
