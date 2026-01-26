@@ -937,7 +937,7 @@ export default function ParkMap() {
     <div className="fixed inset-0 flex bg-background">
       {/* Desktop Sidebar - Attractions List */}
       {!isMobile && (
-        <aside className="hidden lg:flex flex-col w-80 border-r bg-background z-20">
+        <aside className="hidden lg:flex flex-col w-72 xl:w-80 border-r bg-background z-20 shrink-0">
           {/* Sidebar Header */}
           <div className="p-4 border-b space-y-3">
             <div className="flex items-center justify-between">
@@ -1028,7 +1028,7 @@ export default function ParkMap() {
                 {filteredAttractions.map((attraction) => (
                   <div
                     key={attraction.id}
-                    className={`p-3 flex items-center justify-between gap-3 cursor-pointer transition-colors hover:bg-muted/50 ${
+                    className={`p-2.5 flex items-start gap-2 cursor-pointer transition-colors hover:bg-muted/50 ${
                       selectedAttraction?.id === attraction.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
                     }`}
                     onClick={() => {
@@ -1037,23 +1037,23 @@ export default function ParkMap() {
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{attraction.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <p className="font-medium text-sm leading-tight line-clamp-2">{attraction.name}</p>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {attraction.isOpen !== undefined && (
-                          <span className={`text-xs ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                          <span className={`text-[11px] ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
                             ● {attraction.isOpen ? 'Aberto' : 'Fechado'}
                           </span>
                         )}
                         {attraction.passType && (
-                          <span className="text-xs text-muted-foreground truncate">
+                          <span className="text-[11px] text-muted-foreground">
                             {attraction.passType}
                           </span>
                         )}
                       </div>
                     </div>
                     
-                    <Badge className={`${getWaitTimeColor(attraction.waitTime)} shrink-0`}>
-                      {attraction.waitTime !== undefined ? `${attraction.waitTime} min` : '—'}
+                    <Badge className={`${getWaitTimeColor(attraction.waitTime)} shrink-0 text-[11px] px-1.5`}>
+                      {attraction.waitTime !== undefined ? `${attraction.waitTime}m` : '—'}
                     </Badge>
                   </div>
                 ))}
