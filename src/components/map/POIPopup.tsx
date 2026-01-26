@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock, Star, ExternalLink } from 'lucide-react';
+import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock, Star } from 'lucide-react';
 import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
+import { MenuLinkChip } from '@/components/map/MenuLinkChip';
 
 interface POI {
   id: string;
@@ -45,22 +46,6 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
   const handleNavigate = () => {
     onNavigate(poi.position, poi.name);
     onClose();
-  };
-
-  const handleOpenMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (poi.menuUrl) {
-      // On mobile, open directly in new tab (iframes often blocked)
-      if (isMobile) {
-        const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
-        // Some mobile browsers/PWA contexts block popups; fallback to same-tab navigation.
-        if (!opened) window.location.assign(poi.menuUrl);
-      } else if (onOpenMenu) {
-        onOpenMenu(poi.menuUrl, poi.name);
-        onClose();
-      }
-    }
   };
 
   const cardContent = (
@@ -137,13 +122,17 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
 
             {/* Menu button as styled tag */}
             {poi.menuUrl && (
-              <button
-                onClick={handleOpenMenu}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-colors text-[11px] font-medium border border-orange-500/30"
-              >
-                <UtensilsCrossed className="w-3 h-3" />
-                Ver cardápio
-              </button>
+              <MenuLinkChip
+                href={poi.menuUrl}
+                onOpenInApp={
+                  onOpenMenu
+                    ? () => {
+                        onOpenMenu(poi.menuUrl!, poi.name);
+                      }
+                    : undefined
+                }
+                onAfterOpen={onClose}
+              />
             )}
           </>
         )}

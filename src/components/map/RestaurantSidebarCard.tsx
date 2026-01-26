@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Navigation, Star, Clock, UtensilsCrossed } from 'lucide-react';
 import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { MenuLinkChip } from '@/components/map/MenuLinkChip';
 
 interface POI {
   id: string;
@@ -34,24 +34,9 @@ export function RestaurantSidebarCard({
   onNavigate,
   onOpenMenu 
 }: RestaurantSidebarCardProps) {
-  const isMobile = useIsMobile();
   const details = RESTAURANT_DETAILS[poi.name];
   const typeInfo = details ? getTypeLabel(details.type) : getTypeLabel('quick-service');
   const reservation = details?.reservation || poi.requiresReservation;
-
-  const handleOpenMenu = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (poi.menuUrl) {
-      // On mobile, open directly in new tab (iframes often blocked)
-      if (isMobile) {
-        const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
-        // Some mobile browsers/PWA contexts block popups; fallback to same-tab navigation.
-        if (!opened) window.location.assign(poi.menuUrl);
-      } else if (onOpenMenu) {
-        onOpenMenu(poi.menuUrl, poi.name);
-      }
-    }
-  };
 
   return (
     <Card 
@@ -131,13 +116,16 @@ export function RestaurantSidebarCard({
 
         {/* Menu button as styled tag */}
         {poi.menuUrl && (
-          <button
-            onClick={handleOpenMenu}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 transition-colors text-[11px] font-medium border border-orange-500/30"
-          >
-            <UtensilsCrossed className="w-3 h-3" />
-            Ver cardápio
-          </button>
+          <MenuLinkChip
+            href={poi.menuUrl}
+            onOpenInApp={
+              onOpenMenu
+                ? () => {
+                    onOpenMenu(poi.menuUrl!, poi.name);
+                  }
+                : undefined
+            }
+          />
         )}
 
         {/* Warning */}
@@ -150,3 +138,4 @@ export function RestaurantSidebarCard({
     </Card>
   );
 }
+
