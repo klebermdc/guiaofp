@@ -91,8 +91,10 @@ export type Database = {
           color: string | null
           created_at: string | null
           created_by: string | null
+          cuisine_type: string | null
           description: string | null
           file_url: string | null
+          has_warning: boolean | null
           icon: string | null
           id: string
           is_published: boolean | null
@@ -101,6 +103,7 @@ export type Database = {
           menu_url: string | null
           min_height: string | null
           pass_type: string | null
+          requires_reservation: boolean | null
           schedule: string | null
           sort_order: number | null
           thrill_level: number | null
@@ -108,6 +111,7 @@ export type Database = {
           title: string
           type: string
           updated_at: string | null
+          warning_text: string | null
         }
         Insert: {
           attraction_description?: string | null
@@ -116,8 +120,10 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          cuisine_type?: string | null
           description?: string | null
           file_url?: string | null
+          has_warning?: boolean | null
           icon?: string | null
           id?: string
           is_published?: boolean | null
@@ -126,6 +132,7 @@ export type Database = {
           menu_url?: string | null
           min_height?: string | null
           pass_type?: string | null
+          requires_reservation?: boolean | null
           schedule?: string | null
           sort_order?: number | null
           thrill_level?: number | null
@@ -133,6 +140,7 @@ export type Database = {
           title: string
           type: string
           updated_at?: string | null
+          warning_text?: string | null
         }
         Update: {
           attraction_description?: string | null
@@ -141,8 +149,10 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           created_by?: string | null
+          cuisine_type?: string | null
           description?: string | null
           file_url?: string | null
+          has_warning?: boolean | null
           icon?: string | null
           id?: string
           is_published?: boolean | null
@@ -151,6 +161,7 @@ export type Database = {
           menu_url?: string | null
           min_height?: string | null
           pass_type?: string | null
+          requires_reservation?: boolean | null
           schedule?: string | null
           sort_order?: number | null
           thrill_level?: number | null
@@ -158,6 +169,7 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string | null
+          warning_text?: string | null
         }
         Relationships: [
           {
