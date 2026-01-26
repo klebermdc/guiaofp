@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
+import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import { SEO, SEO_PAGES } from '@/components/SEO';
@@ -152,6 +153,14 @@ const Dashboard = () => {
             />
           </motion.div>
         )}
+
+        {/* Weather Widget */}
+        <motion.div variants={itemVariants}>
+          <WeatherWidget 
+            arrivalDate={travelProfile.arrivalDate}
+            departureDate={travelProfile.departureDate}
+          />
+        </motion.div>
 
         {/* MultiPass Status Card (for premium clients) */}
         <motion.div variants={itemVariants}>
