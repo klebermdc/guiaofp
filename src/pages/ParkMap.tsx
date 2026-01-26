@@ -143,6 +143,7 @@ export default function ParkMap() {
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
+  const [sidebarTab, setSidebarTab] = useState<'attractions' | POIType>('attractions');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
   const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
   const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
@@ -195,7 +196,7 @@ export default function ParkMap() {
   }, []);
 
   // Fetch POIs for current park from database
-  const { data: dbPOIs = [] } = useQuery({
+  const { data: dbPOIs = [], isLoading: isLoadingPOIs } = useQuery({
     queryKey: ['park-pois', selectedPark.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -939,125 +940,258 @@ export default function ParkMap() {
       {!isMobile && (
         <aside className="hidden lg:flex flex-col w-72 xl:w-80 border-r bg-background z-20 shrink-0">
           {/* Sidebar Header */}
-          <div className="p-4 border-b space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <Star className="w-5 h-5 text-primary" />
-                Atrações
-              </h2>
+          <div className="p-3 border-b space-y-2">
+            {/* Park Selector */}
+            <div className="flex items-center gap-2">
+              <Select value={selectedPark.id} onValueChange={handleParkChange}>
+                <SelectTrigger className="flex-1 h-9">
+                  <SelectValue placeholder="Selecione o parque" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PARKS.map((park) => (
+                    <SelectItem key={park.id} value={park.id}>
+                      {park.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 onClick={handleRefreshWaitTimes}
                 disabled={isLoadingWaitTimes}
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-9 w-9 shrink-0"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingWaitTimes ? 'animate-spin' : ''}`} />
               </Button>
             </div>
-            
-            {/* Park Selector */}
-            <Select value={selectedPark.id} onValueChange={handleParkChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione o parque" />
-              </SelectTrigger>
-              <SelectContent>
-                {PARKS.map((park) => (
-                  <SelectItem key={park.id} value={park.id}>
-                    {park.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
 
-            {/* Filter Buttons */}
-            <div className="flex gap-1">
+            {/* Category Tabs - Horizontal scrollable */}
+            <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
               <Button
-                variant={attractionFilter === 'all' ? 'default' : 'outline'}
+                variant={sidebarTab === 'attractions' ? 'default' : 'outline'}
                 size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setAttractionFilter('all')}
+                className="h-7 px-2 text-xs shrink-0 gap-1"
+                onClick={() => setSidebarTab('attractions')}
               >
-                Todas
+                ⭐ Atrações
+                <Badge variant="secondary" className="text-[10px] px-1 h-4 ml-0.5">
+                  {attractionsWithWaitTimes.length}
+                </Badge>
               </Button>
-              <Button
-                variant={attractionFilter === 'open' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setAttractionFilter('open')}
-              >
-                Abertas
-              </Button>
-              <Button
-                variant={attractionFilter === 'low-wait' ? 'default' : 'outline'}
-                size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setAttractionFilter('low-wait')}
-              >
-                &lt;30 min
-              </Button>
+              {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
+                const config = POI_CONFIG[type];
+                const count = currentParkPOIs.filter(p => p.type === type).length;
+                return (
+                  <Button
+                    key={type}
+                    variant={sidebarTab === type ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 px-2 text-xs shrink-0 gap-1"
+                    onClick={() => setSidebarTab(type)}
+                    style={sidebarTab === type ? { backgroundColor: config.color } : {}}
+                  >
+                    {config.emoji}
+                    <Badge variant="secondary" className="text-[10px] px-1 h-4 ml-0.5">
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
             </div>
 
-            {/* Last Update */}
-            {lastWaitTimeUpdate && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                Atualizado às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                {waitTimes.length > 0 && (
-                  <Badge variant="secondary" className="text-xs ml-auto">
-                    {waitTimes.filter(w => w.isOpen).length} abertas
-                  </Badge>
+            {/* Attraction Filters - Only show when attractions tab is active */}
+            {sidebarTab === 'attractions' && (
+              <>
+                <div className="flex gap-1">
+                  <Button
+                    variant={attractionFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 text-xs h-7"
+                    onClick={() => setAttractionFilter('all')}
+                  >
+                    Todas
+                  </Button>
+                  <Button
+                    variant={attractionFilter === 'open' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 text-xs h-7"
+                    onClick={() => setAttractionFilter('open')}
+                  >
+                    Abertas
+                  </Button>
+                  <Button
+                    variant={attractionFilter === 'low-wait' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 text-xs h-7"
+                    onClick={() => setAttractionFilter('low-wait')}
+                  >
+                    &lt;30 min
+                  </Button>
+                </div>
+
+                {/* Last Update */}
+                {lastWaitTimeUpdate && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    Atualizado às {lastWaitTimeUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    {waitTimes.length > 0 && (
+                      <Badge variant="secondary" className="text-xs ml-auto">
+                        {waitTimes.filter(w => w.isOpen).length} abertas
+                      </Badge>
+                    )}
+                  </div>
                 )}
+              </>
+            )}
+
+            {/* POI Category Header */}
+            {sidebarTab !== 'attractions' && (
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
+                  style={{ backgroundColor: POI_CONFIG[sidebarTab].color }}
+                >
+                  {POI_CONFIG[sidebarTab].emoji}
+                </div>
+                <span className="font-medium text-sm">{POI_CONFIG[sidebarTab].label}</span>
+                <Badge variant="secondary" className="text-xs ml-auto">
+                  {currentParkPOIs.filter(p => p.type === sidebarTab).length} locais
+                </Badge>
               </div>
             )}
           </div>
 
-          {/* Attractions List */}
+          {/* Content List */}
           <ScrollArea className="flex-1">
-            {isLoadingAttractions ? (
-              <div className="p-8 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              </div>
-            ) : filteredAttractions.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhuma atração encontrada</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {filteredAttractions.map((attraction) => (
-                  <div
-                    key={attraction.id}
-                    className={`p-2.5 flex items-start gap-2 cursor-pointer transition-colors hover:bg-muted/50 ${
-                      selectedAttraction?.id === attraction.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedAttraction(attraction);
-                      handleNavigateToAttraction(attraction.position);
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-tight line-clamp-2">{attraction.name}</p>
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        {attraction.isOpen !== undefined && (
-                          <span className={`text-[11px] ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
-                            ● {attraction.isOpen ? 'Aberto' : 'Fechado'}
-                          </span>
-                        )}
-                        {attraction.passType && (
-                          <span className="text-[11px] text-muted-foreground">
-                            {attraction.passType}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <Badge className={`${getWaitTimeColor(attraction.waitTime)} shrink-0 text-[11px] px-1.5`}>
-                      {attraction.waitTime !== undefined ? `${attraction.waitTime}m` : '—'}
-                    </Badge>
+            {/* Attractions List */}
+            {sidebarTab === 'attractions' && (
+              <>
+                {isLoadingAttractions ? (
+                  <div className="p-8 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
-                ))}
-              </div>
+                ) : filteredAttractions.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Nenhuma atração encontrada</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {filteredAttractions.map((attraction) => (
+                      <div
+                        key={attraction.id}
+                        className={`p-2.5 flex items-start gap-2 cursor-pointer transition-colors hover:bg-muted/50 ${
+                          selectedAttraction?.id === attraction.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
+                        }`}
+                        onClick={() => {
+                          setSelectedAttraction(attraction);
+                          handleNavigateToAttraction(attraction.position);
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm leading-tight line-clamp-2">{attraction.name}</p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {attraction.isOpen !== undefined && (
+                              <span className={`text-[11px] ${attraction.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                                ● {attraction.isOpen ? 'Aberto' : 'Fechado'}
+                              </span>
+                            )}
+                            {attraction.passType && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {attraction.passType}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Badge className={`${getWaitTimeColor(attraction.waitTime)} shrink-0 text-[11px] px-1.5`}>
+                          {attraction.waitTime !== undefined ? `${attraction.waitTime}m` : '—'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* POI List */}
+            {sidebarTab !== 'attractions' && (
+              <>
+                {isLoadingPOIs ? (
+                  <div className="p-8 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : currentParkPOIs.filter(p => p.type === sidebarTab).length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Nenhum local encontrado</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {currentParkPOIs
+                      .filter(p => p.type === sidebarTab)
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((poi) => (
+                        <div
+                          key={poi.id}
+                          className={`p-2.5 flex items-start gap-2 cursor-pointer transition-colors hover:bg-muted/50 ${
+                            selectedPOI?.id === poi.id ? 'bg-primary/10 border-l-4' : ''
+                          }`}
+                          style={selectedPOI?.id === poi.id ? { borderLeftColor: POI_CONFIG[poi.type].color } : {}}
+                          onClick={() => {
+                            setSelectedPOI(poi);
+                            handleNavigateToAttraction(poi.position);
+                          }}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm leading-tight line-clamp-2">{poi.name}</p>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {poi.type === 'restaurant' && poi.cuisineType && (
+                                <Badge variant="secondary" className="text-[10px] px-1 h-4">
+                                  {poi.cuisineType}
+                                </Badge>
+                              )}
+                              {poi.type === 'restaurant' && poi.requiresReservation && (
+                                <Badge variant="outline" className="text-[10px] px-1 h-4 border-amber-500/50 text-amber-500">
+                                  Reserva
+                                </Badge>
+                              )}
+                              {poi.type === 'show' && poi.schedule && (
+                                <span className="text-[11px] text-muted-foreground flex items-center gap-0.5">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  {poi.schedule}
+                                </span>
+                              )}
+                              {poi.hasWarning && (
+                                <Badge variant="destructive" className="text-[10px] px-1 h-4">
+                                  ⚠️
+                                </Badge>
+                              )}
+                            </div>
+                            {poi.description && (
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
+                                {poi.description}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              calculateRoute(poi.position, poi.name);
+                            }}
+                          >
+                            <Navigation className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
             )}
           </ScrollArea>
 
