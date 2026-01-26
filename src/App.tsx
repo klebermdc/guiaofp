@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { TravelModeProvider } from "@/contexts/TravelModeContext";
+import { TravelModeQuickActions } from "@/components/travel-mode/TravelModeQuickActions";
 import { SplashScreen } from "@/components/SplashScreen";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -55,43 +57,47 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            {showSplash && isFirstVisit && (
-              <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
-            )}
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/recuperar-senha" element={<ResetPassword />} />
-                <Route path="/nova-senha" element={<NewPassword />} />
-                <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/guia-dashboard" element={<GuideDashboard />} />
-                <Route path="/perfil" element={<TravelProfile />} />
-                <Route path="/agenda" element={<Agenda />} />
-                <Route path="/contato" element={<Contact />} />
-                <Route path="/conteudos" element={<Content />} />
-                <Route path="/mapa" element={<ParkMap />} />
-                <Route path="/guia" element={<TravelGuide />} />
-                <Route path="/plano" element={<Plan />} />
-                <Route path="/pos-viagem" element={<PostTrip />} />
-                <Route path="/atracoes" element={<Attractions />} />
-                <Route path="/multipass" element={<MultiPass />} />
-                <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
-                <Route path="/checklists" element={<Checklists />} />
-                <Route path="/restaurantes" element={<Restaurants />} />
-                <Route path="/checkout/:planId" element={<Checkout />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/cliente/:id" element={<ClientDetails />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <TravelModeProvider>
+              <TooltipProvider>
+                {showSplash && isFirstVisit && (
+                  <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
+                )}
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/recuperar-senha" element={<ResetPassword />} />
+                  <Route path="/nova-senha" element={<NewPassword />} />
+                  <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/guia-dashboard" element={<GuideDashboard />} />
+                  <Route path="/perfil" element={<TravelProfile />} />
+                  <Route path="/agenda" element={<Agenda />} />
+                  <Route path="/contato" element={<Contact />} />
+                  <Route path="/conteudos" element={<Content />} />
+                  <Route path="/mapa" element={<ParkMap />} />
+                  <Route path="/guia" element={<TravelGuide />} />
+                  <Route path="/plano" element={<Plan />} />
+                  <Route path="/pos-viagem" element={<PostTrip />} />
+                  <Route path="/atracoes" element={<Attractions />} />
+                  <Route path="/multipass" element={<MultiPass />} />
+                  <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
+                  <Route path="/checklists" element={<Checklists />} />
+                  <Route path="/restaurantes" element={<Restaurants />} />
+                  <Route path="/checkout/:planId" element={<Checkout />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin/cliente/:id" element={<ClientDetails />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                {/* Travel Mode Quick Actions - Global FAB */}
+                <TravelModeQuickActions />
+              </TooltipProvider>
+            </TravelModeProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </LanguageProvider>
     </QueryClientProvider>
   );
