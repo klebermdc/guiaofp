@@ -1329,7 +1329,7 @@ const TravelGuide = () => {
                     </div>
                     <div className="text-left">
                       <h3 className="font-display font-bold text-xl">Dicas dos Parques Universal</h3>
-                      <p className="text-sm text-muted-foreground">Express Pass, Virtual Line, estratégias</p>
+                      <p className="text-sm text-muted-foreground">Express Pass, estratégias</p>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -1353,7 +1353,6 @@ const TravelGuide = () => {
                     {/* Dicas */}
                     <div className="grid gap-4 md:grid-cols-2">
                       {[
-                        { icon: Phone, title: 'Virtual Line', desc: 'Agende horário pelo app para algumas atrações', color: 'from-indigo-500 to-blue-500' },
                         { icon: Accessibility, title: 'Single Rider', desc: 'Disponível em várias atrações', color: 'from-green-500 to-emerald-500' },
                         { icon: Ticket, title: 'Early Park Admission', desc: 'Entre 1h antes sendo hóspede', color: 'from-amber-500 to-orange-500' },
                         { icon: Navigation, title: 'Hogwarts Express', desc: 'Precisa de ingresso Park-to-Park', color: 'from-red-500 to-rose-500' },
