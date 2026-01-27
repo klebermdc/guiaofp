@@ -271,11 +271,11 @@ Retorne APENAS o JSON válido, sem explicações adicionais.`;
     }
 
     // Update the itinerary in the database
+    // Note: total_days is a generated column, do not update it directly
     const { error: updateError } = await supabase
       .from("itineraries")
       .update({
         generated_itinerary: generatedItinerary,
-        total_days: totalDays,
         estimated_budget: generatedItinerary.estimated_budget?.total || null,
         updated_at: new Date().toISOString(),
       })
