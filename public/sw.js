@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications & Asset Caching
 // NOTE: Bump CACHE_VERSION when changing caching logic to force clients to refresh.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
@@ -25,24 +25,23 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => {
-            return name.startsWith('static-') || 
-                   name.startsWith('images-') || 
-                   name.startsWith('api-');
-          })
-          .filter((name) => {
-            return name !== STATIC_CACHE && 
-                   name !== IMAGE_CACHE && 
-                   name !== API_CACHE;
-          })
-          .map((name) => caches.delete(name))
-      );
-    }).then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(
+      cacheNames
+        .filter((name) => name.startsWith('static-') || name.startsWith('images-') || name.startsWith('api-'))
+        .filter((name) => name !== STATIC_CACHE && name !== IMAGE_CACHE && name !== API_CACHE)
+        .map((name) => caches.delete(name))
+    );
+
+    await self.clients.claim();
+
+    // Tell pages a new SW took control so they can refresh and use latest assets.
+    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clientList.forEach((client) => {
+      client.postMessage({ type: 'SW_ACTIVATED', version: CACHE_VERSION });
+    });
+  })());
 });
 
 // Fetch event - implement caching strategies
