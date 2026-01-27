@@ -40,6 +40,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NewPassword = lazy(() => import("./pages/NewPassword"));
 const Restaurants = lazy(() => import("./pages/Restaurants"));
 const RoteiroPersonalizado = lazy(() => import("./pages/RoteiroPersonalizado"));
+const RoteiroPersonalizadoCriar = lazy(() => import("./pages/RoteiroPersonalizadoCriar"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -109,6 +110,7 @@ const App = () => {
                     <Route path="/checklists" element={<Checklists />} />
                     <Route path="/restaurantes" element={<Restaurants />} />
                     <Route path="/roteiro-personalizado" element={<RoteiroPersonalizado />} />
+                    <Route path="/roteiro-personalizado/criar" element={<RoteiroPersonalizadoCriar />} />
                     <Route path="/checkout/:planId" element={<Checkout />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/admin/cliente/:id" element={<ClientDetails />} />
