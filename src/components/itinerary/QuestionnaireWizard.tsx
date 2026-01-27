@@ -6,9 +6,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CalendarIcon, ChevronLeft, ChevronRight, Users, Wallet, Compass, 
-  Plus, Minus, Car, Ticket, Loader2, Save, Check
+  Plus, Minus, Car, Ticket, Loader2, Save, Check, CreditCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { TicketUploadSection } from "./TicketUploadSection";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,12 @@ const questionnaireSchema = z.object({
   accommodationType: z.enum(["hotel_economico", "hotel_medio", "hotel_luxo", "resort_disney", "resort_universal", "casa_airbnb", "outro"]),
   selectedParks: z.array(z.string()).min(1, "Selecione pelo menos um parque"),
   additionalActivities: z.array(z.string()),
+  // Step 7: Tickets
+  hasTickets: z.boolean().nullable(),
+  ticketTypes: z.array(z.string()),
+  ticketDays: z.number().min(0).max(14),
+  ticketStartDate: z.string(),
+  ticketUploadedUrls: z.array(z.string()),
 });
 
 export type QuestionnaireFormData = z.infer<typeof questionnaireSchema>;
@@ -97,7 +104,7 @@ interface QuestionnaireWizardProps {
   isLoading?: boolean;
 }
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const stepConfig = [
   { title: "Datas da Viagem", icon: CalendarIcon },
@@ -106,6 +113,7 @@ const stepConfig = [
   { title: "Estilo de Viagem", icon: Compass },
   { title: "Transporte e Hospedagem", icon: Car },
   { title: "Parques e Atividades", icon: Ticket },
+  { title: "Ingressos Disney", icon: CreditCard },
 ];
 
 const budgetOptions = [
@@ -220,6 +228,12 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           childrenAges: normalizeNumberArray((parsed as any).childrenAges),
           selectedParks: normalizeStringArray((parsed as any).selectedParks),
           additionalActivities: normalizeStringArray((parsed as any).additionalActivities),
+          // Step 7 fields
+          hasTickets: typeof (parsed as any).hasTickets === "boolean" ? (parsed as any).hasTickets : null,
+          ticketTypes: normalizeStringArray((parsed as any).ticketTypes),
+          ticketDays: typeof (parsed as any).ticketDays === "number" ? (parsed as any).ticketDays : 0,
+          ticketStartDate: typeof (parsed as any).ticketStartDate === "string" ? (parsed as any).ticketStartDate : "",
+          ticketUploadedUrls: normalizeStringArray((parsed as any).ticketUploadedUrls),
         };
 
         // Persist sanitized draft so the user doesn't get stuck in a crash loop
@@ -256,10 +270,33 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
       accommodationType: "hotel_medio",
       selectedParks: [],
       additionalActivities: [],
+      // Step 7 defaults
+      hasTickets: null,
+      ticketTypes: [],
+      ticketDays: 0,
+      ticketStartDate: "",
+      ticketUploadedUrls: [],
     },
   });
 
   const watchedValues = form.watch();
+
+  // Build itinerary context for ticket suggestions
+  const itineraryContext = {
+    selectedParks: watchedValues.selectedParks?.map(p => {
+      const park = parksOptions.find(po => po.value === p);
+      return park?.label || p;
+    }) || [],
+    duration: watchedValues.startDate && watchedValues.endDate 
+      ? Math.ceil((watchedValues.endDate.getTime() - watchedValues.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : 7,
+    budget: budgetOptions.find(b => b.value === watchedValues.budgetLevel)?.label || "Moderado",
+    parkInterest: parksInterestOptions.find(p => p.value === watchedValues.parksInterestLevel)?.label || "Alto",
+    adultsCount: watchedValues.adultsCount || 2,
+    childrenCount: watchedValues.childrenCount || 0,
+    childrenAges: watchedValues.childrenAges || [],
+    travelStyle: travelStyleOptions.find(t => t.value === watchedValues.travelStyle)?.label || "Equilibrado",
+  };
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -306,6 +343,10 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
         break;
       case 6:
         fieldsToValidate = ["selectedParks", "additionalActivities"];
+        break;
+      case 7:
+        // Step 7 has no required validation - user can skip or complete tickets section
+        fieldsToValidate = [];
         break;
     }
 
@@ -814,6 +855,31 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                           </div>
                         </FormItem>
                       );
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 7: Ingressos Disney */}
+            {currentStep === 7 && (
+              <Card className="border-none shadow-none bg-transparent">
+                <CardContent className="p-0 space-y-4">
+                  <TicketUploadSection
+                    initialHasTickets={watchedValues.hasTickets}
+                    initialTicketData={{
+                      ticketType: watchedValues.ticketTypes,
+                      parkDays: watchedValues.ticketDays,
+                      startDate: watchedValues.ticketStartDate,
+                      uploadedUrls: watchedValues.ticketUploadedUrls,
+                    }}
+                    itineraryContext={itineraryContext}
+                    onUpdate={({ hasTickets, ticketData }) => {
+                      form.setValue("hasTickets", hasTickets);
+                      form.setValue("ticketTypes", ticketData.ticketType);
+                      form.setValue("ticketDays", ticketData.parkDays);
+                      form.setValue("ticketStartDate", ticketData.startDate);
+                      form.setValue("ticketUploadedUrls", ticketData.uploadedUrls);
                     }}
                   />
                 </CardContent>
