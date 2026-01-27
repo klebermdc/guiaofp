@@ -3,6 +3,8 @@ import { Bell, BellOff, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useIOSPushSupport } from '@/hooks/useIOSPushSupport';
+import { IOSInstallPrompt } from './IOSInstallPrompt';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,8 +18,11 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
     unsubscribe 
   } = usePushNotifications();
   
+  const { isIOS, needsInstallation, canReceivePush } = useIOSPushSupport();
+  
   const [isDismissed, setIsDismissed] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
   useEffect(() => {
     // Check if user has dismissed before
@@ -27,11 +32,18 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
       return;
     }
 
-    // Show prompt immediately if not subscribed and permission is default
-    if (isSupported && permission === 'default' && !isSubscribed) {
+    // iOS users who need to install the PWA first
+    if (isIOS && needsInstallation && !isSubscribed) {
+      setShowIOSPrompt(true);
+      return;
+    }
+
+    // Show prompt if supported and not subscribed
+    const effectivelySupported = isIOS ? canReceivePush : isSupported;
+    if (effectivelySupported && permission === 'default' && !isSubscribed) {
       setShowPrompt(true);
     }
-  }, [isSupported, permission, isSubscribed]);
+  }, [isSupported, permission, isSubscribed, isIOS, needsInstallation, canReceivePush]);
 
   const handleSubscribe = async () => {
     const result = await subscribe();
@@ -57,6 +69,19 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
       toast.error(result.error || 'Erro ao desativar notificações');
     }
   };
+
+  // Show iOS installation prompt
+  if (showIOSPrompt && !isDismissed) {
+    return (
+      <IOSInstallPrompt 
+        onDismiss={() => {
+          setShowIOSPrompt(false);
+          setIsDismissed(true);
+          localStorage.setItem('push-prompt-dismissed', 'true');
+        }} 
+      />
+    );
+  }
 
   if (!isSupported || isDismissed || !showPrompt) {
     return null;
@@ -136,6 +161,8 @@ export function NotificationSettings() {
     subscribe, 
     unsubscribe 
   } = usePushNotifications();
+  
+  const { isIOS, needsInstallation, canReceivePush, isStandalone } = useIOSPushSupport();
 
   const handleToggle = async () => {
     if (isSubscribed) {
@@ -155,13 +182,35 @@ export function NotificationSettings() {
     }
   };
 
-  if (!isSupported) {
+  // iOS user needs to install PWA first
+  if (isIOS && needsInstallation) {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-500/10">
+        <BellOff className="w-5 h-5 text-blue-500" />
+        <div>
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Instalação necessária</p>
+          <p className="text-xs text-muted-foreground">
+            Para notificações no iPhone/iPad, adicione o app à tela inicial via Safari (Compartilhar → Adicionar à Tela Inicial)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check effective support (considering iOS requirements)
+  const effectivelySupported = isIOS ? canReceivePush : isSupported;
+
+  if (!effectivelySupported) {
     return (
       <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
         <BellOff className="w-5 h-5 text-muted-foreground" />
         <div>
           <p className="text-sm font-medium">Notificações não suportadas</p>
-          <p className="text-xs text-muted-foreground">Seu navegador não suporta notificações push</p>
+          <p className="text-xs text-muted-foreground">
+            {isIOS 
+              ? 'Requer Safari 16.4+ e o app instalado na tela inicial' 
+              : 'Seu navegador não suporta notificações push'}
+          </p>
         </div>
       </div>
     );
@@ -173,7 +222,11 @@ export function NotificationSettings() {
         <BellOff className="w-5 h-5 text-destructive" />
         <div>
           <p className="text-sm font-medium text-destructive">Notificações bloqueadas</p>
-          <p className="text-xs text-muted-foreground">Ative nas configurações do navegador</p>
+          <p className="text-xs text-muted-foreground">
+            {isIOS 
+              ? 'Vá em Ajustes → [App] → Notificações para ativar'
+              : 'Ative nas configurações do navegador'}
+          </p>
         </div>
       </div>
     );
