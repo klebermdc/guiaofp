@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TravelModeProvider } from "@/contexts/TravelModeContext";
+import { LoadingProvider } from "@/components/ui/loading-overlay";
 import { TravelModeQuickActions } from "@/components/travel-mode/TravelModeQuickActions";
 import { SplashScreen } from "@/components/SplashScreen";
 
@@ -75,7 +76,8 @@ const App = () => {
         <BrowserRouter>
           <AuthProvider>
             <TravelModeProvider>
-              <TooltipProvider>
+              <LoadingProvider>
+                <TooltipProvider>
                 {showSplash && isFirstVisit && (
                   <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
                 )}
@@ -111,7 +113,8 @@ const App = () => {
                 </Suspense>
                 {/* Travel Mode Quick Actions - Global FAB */}
                 <TravelModeQuickActions />
-              </TooltipProvider>
+                </TooltipProvider>
+              </LoadingProvider>
             </TravelModeProvider>
           </AuthProvider>
         </BrowserRouter>
