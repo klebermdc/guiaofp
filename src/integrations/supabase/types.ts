@@ -271,6 +271,66 @@ export type Database = {
         }
         Relationships: []
       }
+      itineraries: {
+        Row: {
+          adults_count: number
+          budget_level: string
+          children_ages: number[] | null
+          children_count: number
+          created_at: string
+          end_date: string
+          generated_at: string | null
+          generated_itinerary: Json | null
+          generation_status: string | null
+          id: string
+          is_first_trip: boolean
+          parks_interest_level: string
+          preferences: Json | null
+          start_date: string
+          travel_style: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adults_count?: number
+          budget_level?: string
+          children_ages?: number[] | null
+          children_count?: number
+          created_at?: string
+          end_date: string
+          generated_at?: string | null
+          generated_itinerary?: Json | null
+          generation_status?: string | null
+          id?: string
+          is_first_trip?: boolean
+          parks_interest_level?: string
+          preferences?: Json | null
+          start_date: string
+          travel_style?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adults_count?: number
+          budget_level?: string
+          children_ages?: number[] | null
+          children_count?: number
+          created_at?: string
+          end_date?: string
+          generated_at?: string | null
+          generated_itinerary?: Json | null
+          generation_status?: string | null
+          id?: string
+          is_first_trip?: boolean
+          parks_interest_level?: string
+          preferences?: Json | null
+          start_date?: string
+          travel_style?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       marker_icon_config: {
         Row: {
           created_at: string
