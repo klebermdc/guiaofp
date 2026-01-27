@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode, memo } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,38 +39,38 @@ export const LoadingProvider = ({ children }: LoadingProviderProps) => {
   return (
     <LoadingContext.Provider value={{ isLoading, message, showLoading, hideLoading }}>
       {children}
-      <LoadingOverlay isLoading={isLoading} message={message} />
+      {isLoading && <LoadingOverlay message={message} />}
     </LoadingContext.Provider>
   );
 };
 
 interface LoadingOverlayProps {
-  isLoading: boolean;
   message?: string;
   className?: string;
 }
 
-const LoadingOverlayComponent = ({ isLoading, message, className }: LoadingOverlayProps) => {
-  if (!isLoading) return null;
-
-  return (
-    <div 
-      className={cn(
-        "fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50",
-        "animate-fade-in",
-        className
-      )}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="bg-card border border-border p-6 rounded-xl shadow-lg flex flex-col items-center gap-4 min-w-[200px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-foreground font-medium text-center">
-          {message || 'Carregando...'}
-        </p>
+export const LoadingOverlay = forwardRef<HTMLDivElement, LoadingOverlayProps>(
+  ({ message, className }, ref) => {
+    return (
+      <div 
+        ref={ref}
+        className={cn(
+          "fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50",
+          "animate-fade-in",
+          className
+        )}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="bg-card border border-border p-6 rounded-xl shadow-lg flex flex-col items-center gap-4 min-w-[200px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-foreground font-medium text-center">
+            {message || 'Carregando...'}
+          </p>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
 
-export const LoadingOverlay = memo(LoadingOverlayComponent);
+LoadingOverlay.displayName = 'LoadingOverlay';
