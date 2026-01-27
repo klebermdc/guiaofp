@@ -273,59 +273,50 @@ export type Database = {
       }
       itineraries: {
         Row: {
-          adults_count: number
-          budget_level: string
-          children_ages: number[] | null
-          children_count: number
           created_at: string
+          destination: string | null
           end_date: string
-          generated_at: string | null
+          estimated_budget: number | null
           generated_itinerary: Json | null
-          generation_status: string | null
           id: string
-          is_first_trip: boolean
-          parks_interest_level: string
-          preferences: Json | null
+          is_favorite: boolean | null
+          questionnaire_answers: Json | null
           start_date: string
-          travel_style: string
+          title: string | null
+          total_days: number | null
+          travelers: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          adults_count?: number
-          budget_level?: string
-          children_ages?: number[] | null
-          children_count?: number
           created_at?: string
+          destination?: string | null
           end_date: string
-          generated_at?: string | null
+          estimated_budget?: number | null
           generated_itinerary?: Json | null
-          generation_status?: string | null
           id?: string
-          is_first_trip?: boolean
-          parks_interest_level?: string
-          preferences?: Json | null
+          is_favorite?: boolean | null
+          questionnaire_answers?: Json | null
           start_date: string
-          travel_style?: string
+          title?: string | null
+          total_days?: number | null
+          travelers?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          adults_count?: number
-          budget_level?: string
-          children_ages?: number[] | null
-          children_count?: number
           created_at?: string
+          destination?: string | null
           end_date?: string
-          generated_at?: string | null
+          estimated_budget?: number | null
           generated_itinerary?: Json | null
-          generation_status?: string | null
           id?: string
-          is_first_trip?: boolean
-          parks_interest_level?: string
-          preferences?: Json | null
+          is_favorite?: boolean | null
+          questionnaire_answers?: Json | null
           start_date?: string
-          travel_style?: string
+          title?: string | null
+          total_days?: number | null
+          travelers?: Json | null
           updated_at?: string
           user_id?: string
         }
