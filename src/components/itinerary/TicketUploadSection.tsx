@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Upload, X, FileText, Ticket, Check, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { TicketSuggestions } from './TicketSuggestions';
 
 interface TicketUpload {
   ticketType: string[];
@@ -12,10 +13,22 @@ interface TicketUpload {
   uploadedUrls: string[];
 }
 
+interface ItineraryContext {
+  selectedParks: string[];
+  duration: number;
+  budget: string;
+  parkInterest: string;
+  adultsCount?: number;
+  childrenCount?: number;
+  childrenAges?: number[];
+  travelStyle?: string;
+}
+
 interface TicketUploadSectionProps {
   onUpdate: (data: { hasTickets: boolean | null; ticketData: TicketUpload }) => void;
   initialHasTickets?: boolean | null;
   initialTicketData?: Partial<TicketUpload>;
+  itineraryContext?: ItineraryContext;
 }
 
 const TICKET_OPTIONS = [
@@ -31,7 +44,8 @@ const TICKET_OPTIONS = [
 export const TicketUploadSection = ({ 
   onUpdate, 
   initialHasTickets = null,
-  initialTicketData 
+  initialTicketData,
+  itineraryContext
 }: TicketUploadSectionProps) => {
   const [hasTickets, setHasTickets] = useState<boolean | null>(initialHasTickets);
   const [isUploading, setIsUploading] = useState(false);
@@ -284,8 +298,13 @@ export const TicketUploadSection = ({
         </div>
       )}
 
-      {/* Se NÃO TEM ingressos */}
-      {hasTickets === false && (
+      {/* Se NÃO TEM ingressos - Mostrar sugestões */}
+      {hasTickets === false && itineraryContext && (
+        <TicketSuggestions itineraryData={itineraryContext} />
+      )}
+
+      {/* Fallback se não tem contexto */}
+      {hasTickets === false && !itineraryContext && (
         <div className="bg-muted/50 p-5 rounded-xl border border-border">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
