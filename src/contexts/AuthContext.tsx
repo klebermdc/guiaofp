@@ -285,34 +285,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
-    
-    // Set up auth state listener for ONGOING changes (does NOT control isLoading)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!isMounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Load profile in background after auth state changes
-        if (session?.user) {
-          const profile = await loadProfileForUser(session.user.id);
-          if (isMounted) {
-            setTravelProfile(profile);
-            setIsProfileLoading(false);
-          }
-        } else {
-          setTravelProfile(defaultTravelProfile);
-          setIsProfileLoading(false);
-        }
+    let initCompleted = false;
+
+    // Safety timeout to NEVER get stuck in loading state (max 10s)
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && (isLoading || isProfileLoading)) {
+        console.warn('[Auth] Safety timeout triggered - forcing loading to complete');
+        setIsLoading(false);
+        setIsProfileLoading(false);
       }
-    );
+    }, 10000);
 
     // INITIAL load - this controls isLoading
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (!isMounted) return;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setSession(null);
+          setUser(null);
+          return;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -327,18 +322,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        // CRITICAL: isLoading só é false APÓS profile carregar
         if (isMounted) {
           setIsLoading(false);
           setIsProfileLoading(false);
+          initCompleted = true;
         }
       }
     };
+
+    // Set up auth state listener for ONGOING changes (does NOT control isLoading initially)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        if (!isMounted) return;
+        
+        // Skip if this is during initial load - initializeAuth handles it
+        if (!initCompleted && event === 'INITIAL_SESSION') {
+          return;
+        }
+        
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Only update profile for genuine auth changes after init
+        if (initCompleted) {
+          if (newSession?.user) {
+            setIsProfileLoading(true);
+            const profile = await loadProfileForUser(newSession.user.id);
+            if (isMounted) {
+              setTravelProfile(profile);
+              setIsProfileLoading(false);
+            }
+          } else {
+            setTravelProfile(defaultTravelProfile);
+            setIsProfileLoading(false);
+          }
+        }
+      }
+    );
 
     initializeAuth();
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);

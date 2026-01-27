@@ -18,23 +18,25 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    // Only redirect if authenticated AND auth check is complete
+    // This prevents race conditions when reopening the app
+    if (isAuthenticated && !authLoading) {
+      navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const validation = loginSchema.safeParse({ email, password });
@@ -44,7 +46,7 @@ const Login = () => {
           fieldErrors[err.path[0]] = err.message;
         });
         setErrors(fieldErrors);
-        setIsLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -69,7 +71,7 @@ const Login = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -186,9 +188,9 @@ const Login = () => {
                 variant="premium"
                 size="lg"
                 className="w-full mt-6"
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     Entrando...
