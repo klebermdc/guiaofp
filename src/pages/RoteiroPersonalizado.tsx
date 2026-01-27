@@ -39,6 +39,14 @@ export default function RoteiroPersonalizado() {
           is_first_trip: data.isFirstTrip,
           travel_style: data.travelStyle,
           parks_interest_level: data.parksInterestLevel,
+          preferences: {
+            airportTransfer: data.airportTransfer,
+            willRentCar: data.willRentCar,
+            stayingRegion: data.stayingRegion,
+            accommodationType: data.accommodationType,
+            selectedParks: data.selectedParks,
+            additionalActivities: data.additionalActivities,
+          },
           generation_status: "pending",
         })
         .select()
@@ -50,9 +58,9 @@ export default function RoteiroPersonalizado() {
         return;
       }
 
-      toast.success("Questionário salvo! Etapa 1 de 3 concluída.");
+      toast.success("Questionário completo! Gerando seu roteiro...");
       
-      // TODO: Navigate to next phase (questions 7-12) or generate itinerary
+      // TODO: Call AI to generate itinerary
       console.log("Saved itinerary:", itinerary);
       
     } catch (error) {
