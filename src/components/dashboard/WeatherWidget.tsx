@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Cloud, Droplets, Sun, Thermometer, Wind } from 'lucide-react';
 import { useWeatherForecast } from '@/hooks/useWeatherForecast';
@@ -11,7 +12,7 @@ interface WeatherWidgetProps {
   className?: string;
 }
 
-export const WeatherWidget = ({ arrivalDate, departureDate, className }: WeatherWidgetProps) => {
+const WeatherWidgetComponent = ({ arrivalDate, departureDate, className }: WeatherWidgetProps) => {
   const { current, daily, isLoading, error } = useWeatherForecast(7);
 
   // Filter forecasts for trip dates if provided
@@ -180,3 +181,5 @@ export const WeatherWidget = ({ arrivalDate, departureDate, className }: Weather
     </Card>
   );
 };
+
+export const WeatherWidget = memo(WeatherWidgetComponent);

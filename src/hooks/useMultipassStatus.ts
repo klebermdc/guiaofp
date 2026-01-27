@@ -48,17 +48,7 @@ export const useMultipassStatus = () => {
   }, [user]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const load = async () => {
-      await loadStatus();
-    };
-    
-    load();
-    
-    return () => {
-      isMounted = false;
-    };
+    loadStatus();
   }, [loadStatus]);
 
   const confirmPurchase = async (confirmedBy: 'client' | 'guide' = 'client') => {

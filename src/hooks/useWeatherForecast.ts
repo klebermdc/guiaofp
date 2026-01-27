@@ -95,6 +95,8 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
   });
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchWeather = async () => {
       try {
         // Open-Meteo API (free, no API key required)
@@ -107,6 +109,8 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
         }
 
         const result = await response.json();
+        
+        if (!isMounted) return;
         
         const currentWeatherInfo = getWeatherInfo(result.current.weather_code);
         
@@ -141,11 +145,13 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
         });
       } catch (error) {
         console.error('Weather fetch error:', error);
-        setData(prev => ({
-          ...prev,
-          isLoading: false,
-          error: 'Não foi possível carregar a previsão',
-        }));
+        if (isMounted) {
+          setData(prev => ({
+            ...prev,
+            isLoading: false,
+            error: 'Não foi possível carregar a previsão',
+          }));
+        }
       }
     };
 
@@ -153,7 +159,10 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
     
     // Refresh every 30 minutes
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [daysAhead]);
 
   return data;
