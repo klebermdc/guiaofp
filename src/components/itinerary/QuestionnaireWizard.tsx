@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CalendarIcon, ChevronLeft, ChevronRight, Users, Wallet, Compass, 
-  Plus, Minus, Car, Ticket, Loader2, Save
+  Plus, Minus, Car, Ticket, Loader2, Save, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,7 +29,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 
 const STORAGE_KEY = "roteiro-questionario-draft";
@@ -55,6 +54,22 @@ function normalizeDate(value: unknown): Date | undefined {
   if (!value) return undefined;
   const d = value instanceof Date ? value : new Date(String(value));
   return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+function SelectionIndicator({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex h-6 w-6 items-center justify-center rounded-md border transition-colors",
+        checked
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-transparent"
+      )}
+    >
+      {checked ? <Check className="h-4 w-4" /> : null}
+    </span>
+  );
 }
 
 const questionnaireSchema = z.object({
@@ -317,7 +332,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
     <Form {...form}>
       <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
         {/* Progress Header */}
-        <Card className="border-0 shadow-lg bg-card/80 backdrop-blur sticky top-4 z-10">
+        <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/80 sm:backdrop-blur sticky top-4 z-10">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -348,7 +363,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           >
             {/* Step 1: Dates */}
             {currentStep === 1 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-6">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Quando será sua viagem?</h2>
@@ -425,7 +440,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
 
             {/* Step 2: Group */}
             {currentStep === 2 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-6">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Quem vai viajar?</h2>
@@ -498,7 +513,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
 
             {/* Step 3: Budget & Profile */}
             {currentStep === 3 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-6">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Orçamento e Perfil</h2>
@@ -552,7 +567,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
 
             {/* Step 4: Travel Style */}
             {currentStep === 4 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-6">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Estilo de Viagem</h2>
@@ -603,7 +618,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
 
             {/* Step 5: Transportation & Accommodation */}
             {currentStep === 5 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-5">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Transporte e Hospedagem</h2>
@@ -693,7 +708,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
 
             {/* Step 6: Parks & Activities */}
             {currentStep === 6 && (
-              <Card className="border-0 shadow-lg bg-card/50 backdrop-blur">
+              <Card className="border-0 shadow sm:shadow-lg bg-card sm:bg-card/50 sm:backdrop-blur">
                 <CardContent className="pt-6 space-y-5">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Parques e Atividades</h2>
@@ -715,6 +730,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                                 <button
                                   key={opt.value}
                                   type="button"
+                                  aria-pressed={isChecked}
                                   onClick={() => {
                                     const base = normalizeStringArray(form.getValues("selectedParks"));
                                     const updated = base.includes(opt.value)
@@ -733,7 +749,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                                       : "border-border hover:border-primary/50"
                                   )}
                                 >
-                                  <Checkbox checked={isChecked} className="pointer-events-none" />
+                                  <SelectionIndicator checked={isChecked} />
                                   <span className="text-base">{opt.emoji}</span>
                                   <span className="text-xs font-medium">{opt.label}</span>
                                 </button>
@@ -771,6 +787,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                                 <button
                                   key={opt.value}
                                   type="button"
+                                  aria-pressed={isChecked}
                                   onClick={() => {
                                     const base = normalizeStringArray(form.getValues("additionalActivities"));
                                     const updated = base.includes(opt.value)
@@ -789,6 +806,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                                       : "border-border hover:border-primary/50"
                                   )}
                                 >
+                                  <SelectionIndicator checked={isChecked} />
                                   <span className="text-lg">{opt.emoji}</span>
                                   <span className="text-[10px] font-medium text-center">{opt.label}</span>
                                 </button>
