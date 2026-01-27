@@ -41,6 +41,7 @@ const NewPassword = lazy(() => import("./pages/NewPassword"));
 const Restaurants = lazy(() => import("./pages/Restaurants"));
 const RoteiroPersonalizado = lazy(() => import("./pages/RoteiroPersonalizado"));
 const RoteiroQuestionario = lazy(() => import("./pages/RoteiroQuestionario"));
+const RoteiroView = lazy(() => import("./pages/RoteiroView"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -111,6 +112,7 @@ const App = () => {
                     <Route path="/restaurantes" element={<Restaurants />} />
                     <Route path="/roteiro-personalizado" element={<RoteiroPersonalizado />} />
                     <Route path="/roteiro-personalizado/questionario" element={<RoteiroQuestionario />} />
+                    <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />
                     <Route path="/checkout/:planId" element={<Checkout />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/admin/cliente/:id" element={<ClientDetails />} />
