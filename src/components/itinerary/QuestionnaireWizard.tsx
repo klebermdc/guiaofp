@@ -645,14 +645,15 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                         <FormLabel>Parques que quer visitar</FormLabel>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {parksOptions.map((opt) => {
-                            const isChecked = watchedValues.selectedParks.includes(opt.value);
+                            const currentParks = watchedValues.selectedParks || [];
+                            const isChecked = currentParks.includes(opt.value);
                             return (
                               <button key={opt.value} type="button"
                                 onClick={() => {
                                   const updated = isChecked
-                                    ? watchedValues.selectedParks.filter((v) => v !== opt.value)
-                                    : [...watchedValues.selectedParks, opt.value];
-                                  form.setValue("selectedParks", updated);
+                                    ? currentParks.filter((v) => v !== opt.value)
+                                    : [...currentParks, opt.value];
+                                  form.setValue("selectedParks", updated, { shouldValidate: false });
                                 }}
                                 className={cn("flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left",
                                   isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
@@ -668,9 +669,9 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                     )}
                   />
 
-                  {watchedValues.selectedParks.length > 0 && (
+                  {(watchedValues.selectedParks || []).length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {watchedValues.selectedParks.map((p) => {
+                      {(watchedValues.selectedParks || []).map((p) => {
                         const info = parksOptions.find((x) => x.value === p);
                         return <Badge key={p} variant="secondary" className="text-xs">{info?.emoji} {info?.label}</Badge>;
                       })}
@@ -685,14 +686,15 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                         <FormLabel>Atividades extras (opcional)</FormLabel>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {additionalActivitiesOptions.map((opt) => {
-                            const isChecked = watchedValues.additionalActivities.includes(opt.value);
+                            const currentActivities = watchedValues.additionalActivities || [];
+                            const isChecked = currentActivities.includes(opt.value);
                             return (
                               <button key={opt.value} type="button"
                                 onClick={() => {
                                   const updated = isChecked
-                                    ? watchedValues.additionalActivities.filter((v) => v !== opt.value)
-                                    : [...watchedValues.additionalActivities, opt.value];
-                                  form.setValue("additionalActivities", updated);
+                                    ? currentActivities.filter((v) => v !== opt.value)
+                                    : [...currentActivities, opt.value];
+                                  form.setValue("additionalActivities", updated, { shouldValidate: false });
                                 }}
                                 className={cn("flex flex-col items-center p-2 rounded-lg border-2 transition-all",
                                   isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
