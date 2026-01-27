@@ -6,10 +6,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CalendarIcon, ChevronLeft, ChevronRight, Users, Wallet, Compass, 
-  Plus, Minus, Car, Ticket, Loader2, Save, Check, CreditCard
+  Plus, Minus, Car, Ticket, Loader2, Save, Check, CreditCard, Hotel
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TicketUploadSection } from "./TicketUploadSection";
+import { HotelSection } from "./HotelSection";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,13 @@ const questionnaireSchema = z.object({
   ticketDays: z.number().min(0).max(14),
   ticketStartDate: z.string(),
   ticketUploadedUrls: z.array(z.string()),
+  // Step 8: Hotel
+  hasHotel: z.boolean().nullable(),
+  hotelName: z.string(),
+  hotelAddress: z.string(),
+  hotelCheckIn: z.string(),
+  hotelCheckOut: z.string(),
+  hotelVoucherUrl: z.string(),
 });
 
 export type QuestionnaireFormData = z.infer<typeof questionnaireSchema>;
@@ -104,7 +112,7 @@ interface QuestionnaireWizardProps {
   isLoading?: boolean;
 }
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 
 const stepConfig = [
   { title: "Datas da Viagem", icon: CalendarIcon },
@@ -114,6 +122,7 @@ const stepConfig = [
   { title: "Transporte e Hospedagem", icon: Car },
   { title: "Parques e Atividades", icon: Ticket },
   { title: "Ingressos Disney", icon: CreditCard },
+  { title: "Hospedagem", icon: Hotel },
 ];
 
 const budgetOptions = [
@@ -234,6 +243,13 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           ticketDays: typeof (parsed as any).ticketDays === "number" ? (parsed as any).ticketDays : 0,
           ticketStartDate: typeof (parsed as any).ticketStartDate === "string" ? (parsed as any).ticketStartDate : "",
           ticketUploadedUrls: normalizeStringArray((parsed as any).ticketUploadedUrls),
+          // Step 8 fields
+          hasHotel: typeof (parsed as any).hasHotel === "boolean" ? (parsed as any).hasHotel : null,
+          hotelName: typeof (parsed as any).hotelName === "string" ? (parsed as any).hotelName : "",
+          hotelAddress: typeof (parsed as any).hotelAddress === "string" ? (parsed as any).hotelAddress : "",
+          hotelCheckIn: typeof (parsed as any).hotelCheckIn === "string" ? (parsed as any).hotelCheckIn : "",
+          hotelCheckOut: typeof (parsed as any).hotelCheckOut === "string" ? (parsed as any).hotelCheckOut : "",
+          hotelVoucherUrl: typeof (parsed as any).hotelVoucherUrl === "string" ? (parsed as any).hotelVoucherUrl : "",
         };
 
         // Persist sanitized draft so the user doesn't get stuck in a crash loop
@@ -276,12 +292,19 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
       ticketDays: 0,
       ticketStartDate: "",
       ticketUploadedUrls: [],
+      // Step 8 defaults
+      hasHotel: null,
+      hotelName: "",
+      hotelAddress: "",
+      hotelCheckIn: "",
+      hotelCheckOut: "",
+      hotelVoucherUrl: "",
     },
   });
 
   const watchedValues = form.watch();
 
-  // Build itinerary context for ticket suggestions
+  // Build itinerary context for ticket and hotel suggestions
   const itineraryContext = {
     selectedParks: watchedValues.selectedParks?.map(p => {
       const park = parksOptions.find(po => po.value === p);
@@ -296,6 +319,9 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
     childrenCount: watchedValues.childrenCount || 0,
     childrenAges: watchedValues.childrenAges || [],
     travelStyle: travelStyleOptions.find(t => t.value === watchedValues.travelStyle)?.label || "Equilibrado",
+    // Additional context for hotel suggestions
+    stayingRegion: stayingRegionOptions.find(r => r.value === watchedValues.stayingRegion)?.label || "International Drive",
+    accommodationType: accommodationTypeOptions.find(a => a.value === watchedValues.accommodationType)?.label || "Hotel Médio",
   };
 
   // Auto-save to localStorage
@@ -346,6 +372,10 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
         break;
       case 7:
         // Step 7 has no required validation - user can skip or complete tickets section
+        fieldsToValidate = [];
+        break;
+      case 8:
+        // Step 8 has no required validation - user can skip or complete hotel section
         fieldsToValidate = [];
         break;
     }
@@ -880,6 +910,33 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                       form.setValue("ticketDays", ticketData.parkDays);
                       form.setValue("ticketStartDate", ticketData.startDate);
                       form.setValue("ticketUploadedUrls", ticketData.uploadedUrls);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 8: Hospedagem */}
+            {currentStep === 8 && (
+              <Card className="border-none shadow-none bg-transparent">
+                <CardContent className="p-0 space-y-4">
+                  <HotelSection
+                    initialHasHotel={watchedValues.hasHotel}
+                    initialHotelData={{
+                      name: watchedValues.hotelName,
+                      address: watchedValues.hotelAddress,
+                      checkIn: watchedValues.hotelCheckIn,
+                      checkOut: watchedValues.hotelCheckOut,
+                      voucherUrl: watchedValues.hotelVoucherUrl,
+                    }}
+                    itineraryContext={itineraryContext}
+                    onUpdate={({ hasHotel, hotelData }) => {
+                      form.setValue("hasHotel", hasHotel);
+                      form.setValue("hotelName", hotelData.name);
+                      form.setValue("hotelAddress", hotelData.address);
+                      form.setValue("hotelCheckIn", hotelData.checkIn);
+                      form.setValue("hotelCheckOut", hotelData.checkOut);
+                      form.setValue("hotelVoucherUrl", hotelData.voucherUrl);
                     }}
                   />
                 </CardContent>
