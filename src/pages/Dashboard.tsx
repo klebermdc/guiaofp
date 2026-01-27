@@ -24,6 +24,7 @@ import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 import { TravelModeToggle } from '@/components/travel-mode/TravelModeToggle';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
+import { IOSNotificationCard } from '@/components/notifications/IOSNotificationCard';
 import { SEO, SEO_PAGES } from '@/components/SEO';
 import logo from '@/assets/logo.png';
 
@@ -146,6 +147,11 @@ const Dashboard = () => {
         {/* Travel Mode Toggle - Prominent position */}
         <motion.div variants={itemVariants}>
           <TravelModeToggle />
+        </motion.div>
+
+        {/* iOS Notification Card - Prominent for PWA users */}
+        <motion.div variants={itemVariants}>
+          <IOSNotificationCard />
         </motion.div>
 
         {/* Trip Countdown */}
