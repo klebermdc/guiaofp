@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useParallax, useElementInView } from '@/hooks/useParallax';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
 import {
   Crown,
   MapPin,
@@ -50,8 +53,37 @@ const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
 
 const Landing = () => {
   const { t } = useLanguage();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [showContent, setShowContent] = useState(false);
+  
   const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
   const floatParallax = useParallax({ speed: 0.15, direction: 'up' });
+  
+  // Safety timeout: if auth takes too long, show content anyway
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!showContent) {
+        setShowContent(true);
+      }
+    }, 3000);
+    
+    return () => clearTimeout(timeout);
+  }, [showContent]);
+  
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    } else if (!authLoading) {
+      setShowContent(true);
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+  
+  // Show loading only briefly while checking auth
+  if (authLoading && !showContent) {
+    return <AuthLoadingScreen />;
+  }
   
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
