@@ -10,6 +10,7 @@ import { TravelModeProvider } from "@/contexts/TravelModeContext";
 import { LoadingProvider } from "@/components/ui/loading-overlay";
 import { TravelModeQuickActions } from "@/components/travel-mode/TravelModeQuickActions";
 import { SplashScreen } from "@/components/SplashScreen";
+import { GlobalErrorListener } from "@/components/GlobalErrorListener";
 
 // Eager load critical pages
 import Landing from "./pages/Landing";
@@ -83,6 +84,7 @@ const App = () => {
                 )}
                 <Toaster />
                 <Sonner />
+                <GlobalErrorListener />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />
