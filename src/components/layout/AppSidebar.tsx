@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { 
@@ -76,15 +77,15 @@ const guideMenuItems = [
   { icon: Shield, label: 'Configurações', path: '/admin' },
 ];
 
-export const AppSidebar = () => {
+const AppSidebarComponent = () => {
   const location = useLocation();
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
   const { pageAccess, isLoading } = usePlanPageAccess();
   const { t } = useLanguage();
 
-  // Build dynamic menu based on plan_page_access table
-  const dynamicMenuItems = pageAccess
+  // Build dynamic menu based on plan_page_access table - memoized to prevent recalculations
+  const dynamicMenuItems = useMemo(() => pageAccess
     .filter((page) => {
       // Guides see everything
       if (isGuide) return true;
@@ -101,11 +102,13 @@ export const AppSidebar = () => {
         path: config?.path || `/${page.page_key}`,
         pageKey: page.page_key,
       };
-    });
+    }), [pageAccess, isGuide, planTier]);
 
   // Combine dynamic items with static items
-  const menuItems = [...dynamicMenuItems, ...staticMenuItems];
-  const allMenuItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
+  const allMenuItems = useMemo(() => {
+    const menuItems = [...dynamicMenuItems, ...staticMenuItems];
+    return isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
+  }, [dynamicMenuItems, isGuide]);
 
   return (
     <>
@@ -185,3 +188,5 @@ export const AppSidebar = () => {
     </>
   );
 };
+
+export const AppSidebar = memo(AppSidebarComponent);

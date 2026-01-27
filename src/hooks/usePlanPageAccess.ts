@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PageAccess {
@@ -14,6 +14,7 @@ export interface PageAccess {
 export function usePlanPageAccess() {
   const [pageAccess, setPageAccess] = useState<PageAccess[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isFetched = useRef(false);
 
   const fetchPageAccess = useCallback(async () => {
     setIsLoading(true);
@@ -34,7 +35,11 @@ export function usePlanPageAccess() {
   }, []);
 
   useEffect(() => {
-    fetchPageAccess();
+    // Only fetch once on mount to avoid duplicate calls
+    if (!isFetched.current) {
+      isFetched.current = true;
+      fetchPageAccess();
+    }
   }, [fetchPageAccess]);
 
   const updatePageAccess = async (

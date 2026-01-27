@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, MapPin, Power } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTravelMode } from '@/contexts/TravelModeContext';
 
-export const TravelModeToggle = () => {
+const TravelModeToggleComponent = () => {
   const { isTravelMode, toggleTravelMode } = useTravelMode();
 
   return (
@@ -137,3 +138,5 @@ export const TravelModeToggle = () => {
     </motion.div>
   );
 };
+
+export const TravelModeToggle = memo(TravelModeToggleComponent);

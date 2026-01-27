@@ -1,3 +1,4 @@
+import { memo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { motion } from 'framer-motion';
@@ -9,7 +10,6 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import { MobileNavSheet } from './MobileNavSheet';
 
 // These are the main nav items for clients - guides will be redirected from /dashboard
@@ -20,7 +20,7 @@ const mainNavItems = [
   { icon: Calendar, label: 'Agenda', path: '/agenda' },
 ];
 
-export const MobileBottomNav = () => {
+const MobileBottomNavComponent = () => {
   const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -87,3 +87,5 @@ export const MobileBottomNav = () => {
     </>
   );
 };
+
+export const MobileBottomNav = memo(MobileBottomNavComponent);

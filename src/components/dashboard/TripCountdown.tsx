@@ -2,7 +2,7 @@ import { differenceInDays, differenceInHours, differenceInMinutes, parseISO, for
 import { ptBR } from 'date-fns/locale';
 import { Plane, Calendar, Users, MapPin, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 
 interface TripCountdownProps {
   arrivalDate: string;
@@ -11,7 +11,7 @@ interface TripCountdownProps {
   parks?: string[];
 }
 
-export const TripCountdown = ({ arrivalDate, departureDate, groupSize, parks }: TripCountdownProps) => {
+const TripCountdownComponent = ({ arrivalDate, departureDate, groupSize, parks }: TripCountdownProps) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -142,3 +142,5 @@ export const TripCountdown = ({ arrivalDate, departureDate, groupSize, parks }: 
     </Card>
   );
 };
+
+export const TripCountdown = memo(TripCountdownComponent);

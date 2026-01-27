@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +14,7 @@ type Message = {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orlando-assistant`;
 
-export function OrlandoAssistant() {
+const OrlandoAssistantComponent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -287,4 +287,6 @@ export function OrlandoAssistant() {
       </div>
     </>
   );
-}
+};
+
+export const OrlandoAssistant = memo(OrlandoAssistantComponent);
