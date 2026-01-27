@@ -208,19 +208,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [travelProfile, setTravelProfile] = useState<TravelProfile>(defaultTravelProfile);
 
-  // Use refs to track loading states for timeout callbacks (avoid stale closures)
-  const isLoadingRef = React.useRef(true);
-  const isProfileLoadingRef = React.useRef(false);
-
-  // Keep refs in sync with state
-  React.useEffect(() => {
-    isLoadingRef.current = isLoading;
-  }, [isLoading]);
-
-  React.useEffect(() => {
-    isProfileLoadingRef.current = isProfileLoading;
-  }, [isProfileLoading]);
-
   const calculateCompletionPercentage = (profile: TravelProfile): number => {
     const requiredFields = [
       profile.responsibleName,
@@ -237,21 +224,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const completedFields = requiredFields.filter(Boolean).length;
     return Math.round((completedFields / requiredFields.length) * 100);
   };
-  const loadProfileForUser = async (userId: string) => {
+
+  const loadProfileForUser = async (userId: string): Promise<TravelProfile> => {
     try {
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
+      // Use Promise.race with a timeout to prevent hanging
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
       
-      // Fetch contract data (created by edge function)
-      const { data: contractData, error: contractError } = await supabase
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+      );
+      
+      const { data: profileData, error: profileError } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as Awaited<typeof profilePromise>;
+      
+      // Contract fetch with timeout
+      const contractPromise = supabase
         .from('contracts')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
+      
+      let contractData = null;
+      try {
+        const result = await Promise.race([
+          contractPromise,
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Contract fetch timeout')), 3000)
+          )
+        ]) as Awaited<typeof contractPromise>;
+        contractData = result.data;
+      } catch {
+        // Contract is optional, continue without it
+      }
       
       let profile = defaultTravelProfile;
       
@@ -259,9 +269,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile = dbToFrontend(profileData);
       }
       
-      // Merge contract data if available and profile is missing this data
-      if (contractData && !contractError) {
-        // Only use contract data if profile doesn't have it
+      // Merge contract data if available
+      if (contractData) {
         if (!profile.guideName && contractData.guide_name) {
           profile.guideName = contractData.guide_name;
         }
@@ -278,7 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return profile;
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('[Auth] Error loading profile:', error);
       return defaultTravelProfile;
     }
   };
@@ -296,98 +305,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Reset auth state completely (for error recovery)
-  const resetAuth = React.useCallback(() => {
-    console.warn('[Auth] Resetting auth state');
-    setUser(null);
-    setSession(null);
-    setTravelProfile(defaultTravelProfile);
-    setIsLoading(false);
-    setIsProfileLoading(false);
-  }, []);
-
   useEffect(() => {
     let isMounted = true;
     let initCompleted = false;
-    let authTimeout: NodeJS.Timeout | null = null;
-    let profileTimeout: NodeJS.Timeout | null = null;
+    
+    // CRITICAL: Absolute safety timeout - ALWAYS fires after 8 seconds
+    // This ensures the app NEVER gets stuck in loading state
+    const absoluteTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('[Auth] Absolute safety timeout triggered');
+        setIsLoading(false);
+        setIsProfileLoading(false);
+        initCompleted = true;
+      }
+    }, 8000);
 
-    // Safety timeout - use shorter timeout for mobile (5s auth, 5s profile)
-    const AUTH_TIMEOUT = 5000;
-    const PROFILE_TIMEOUT = 5000;
-
-    // INITIAL load - this controls isLoading
     const initializeAuth = async () => {
-      // Start auth timeout
-      authTimeout = setTimeout(() => {
-        if (isMounted && isLoadingRef.current) {
-          console.warn('[Auth] Auth initialization timed out after 5s');
-          setIsLoading(false);
-          setIsProfileLoading(false);
-          initCompleted = true;
-        }
-      }, AUTH_TIMEOUT);
-
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Fast session check with 4s timeout
+        const sessionPromise = supabase.auth.getSession();
+        const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null }, error: new Error('Session timeout') }), 4000)
+        );
         
-        // Clear auth timeout since we got a response
-        if (authTimeout) clearTimeout(authTimeout);
+        const { data: { session: currentSession }, error } = await Promise.race([
+          sessionPromise,
+          sessionTimeout
+        ]);
         
         if (!isMounted) return;
         
         if (error) {
-          console.error('[Auth] Error getting session:', error);
-          resetAuth();
+          console.warn('[Auth] Session check failed:', error.message);
+          setIsLoading(false);
           initCompleted = true;
           return;
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         
-        if (session?.user) {
+        if (currentSession?.user) {
           setIsProfileLoading(true);
           
-          // Start profile timeout
-          profileTimeout = setTimeout(() => {
-            if (isMounted && isProfileLoadingRef.current) {
-              console.warn('[Auth] Profile loading timed out after 5s');
-              setIsProfileLoading(false);
-            }
-          }, PROFILE_TIMEOUT);
-          
           try {
-            const profile = await loadProfileForUser(session.user.id);
-            if (profileTimeout) clearTimeout(profileTimeout);
+            const profile = await loadProfileForUser(currentSession.user.id);
             if (isMounted) {
               setTravelProfile(profile);
             }
           } catch (profileError) {
-            console.error('[Auth] Error loading profile:', profileError);
-            // Continue with default profile on error
+            console.error('[Auth] Profile error:', profileError);
+          } finally {
+            if (isMounted) {
+              setIsProfileLoading(false);
+            }
           }
         }
       } catch (error) {
-        console.error('[Auth] Error initializing auth:', error);
-        if (isMounted) {
-          resetAuth();
-        }
+        console.error('[Auth] Init error:', error);
       } finally {
         if (isMounted) {
           setIsLoading(false);
-          setIsProfileLoading(false);
           initCompleted = true;
         }
       }
     };
 
-    // Set up auth state listener for ONGOING changes (does NOT control isLoading initially)
+    // Set up auth state listener for ONGOING changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
         
-        // Skip if this is during initial load - initializeAuth handles it
+        // Skip during initial load
         if (!initCompleted && event === 'INITIAL_SESSION') {
           return;
         }
@@ -405,7 +394,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setTravelProfile(profile);
               }
             } catch (error) {
-              console.error('[Auth] Error loading profile on auth change:', error);
+              console.error('[Auth] Profile load error:', error);
             } finally {
               if (isMounted) {
                 setIsProfileLoading(false);
@@ -423,11 +412,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
-      if (authTimeout) clearTimeout(authTimeout);
-      if (profileTimeout) clearTimeout(profileTimeout);
+      clearTimeout(absoluteTimeout);
       subscription.unsubscribe();
     };
-  }, [resetAuth]);
+  }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const { error } = await supabase.auth.signInWithPassword({
