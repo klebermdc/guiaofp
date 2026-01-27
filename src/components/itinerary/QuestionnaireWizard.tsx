@@ -34,6 +34,29 @@ import { Progress } from "@/components/ui/progress";
 
 const STORAGE_KEY = "roteiro-questionario-draft";
 
+function normalizeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string");
+  }
+  if (typeof value === "string") {
+    return value ? [value] : [];
+  }
+  return [];
+}
+
+function normalizeNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((v) => (typeof v === "number" ? v : Number(v)))
+    .filter((v) => Number.isFinite(v));
+}
+
+function normalizeDate(value: unknown): Date | undefined {
+  if (!value) return undefined;
+  const d = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
 const questionnaireSchema = z.object({
   startDate: z.date({ required_error: "Selecione a data de ida" }),
   endDate: z.date({ required_error: "Selecione a data de volta" }),
@@ -163,9 +186,34 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.startDate) parsed.startDate = new Date(parsed.startDate);
-        if (parsed.endDate) parsed.endDate = new Date(parsed.endDate);
-        return parsed;
+        if (!parsed || typeof parsed !== "object") return null;
+
+        // Normalize (defensive) to avoid crashes from older/corrupted drafts
+        const draft = {
+          ...parsed,
+          startDate: normalizeDate((parsed as any).startDate),
+          endDate: normalizeDate((parsed as any).endDate),
+          adultsCount:
+            typeof (parsed as any).adultsCount === "number"
+              ? (parsed as any).adultsCount
+              : Number((parsed as any).adultsCount) || 2,
+          childrenCount:
+            typeof (parsed as any).childrenCount === "number"
+              ? (parsed as any).childrenCount
+              : Number((parsed as any).childrenCount) || 0,
+          childrenAges: normalizeNumberArray((parsed as any).childrenAges),
+          selectedParks: normalizeStringArray((parsed as any).selectedParks),
+          additionalActivities: normalizeStringArray((parsed as any).additionalActivities),
+        };
+
+        // Persist sanitized draft so the user doesn't get stuck in a crash loop
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+        } catch {
+          // ignore
+        }
+
+        return draft;
       }
     } catch (e) {
       console.error("Error loading draft:", e);
@@ -645,15 +693,20 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                         <FormLabel>Parques que quer visitar</FormLabel>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                           {parksOptions.map((opt) => {
-                            const currentParks = watchedValues.selectedParks || [];
+                            const currentParks = normalizeStringArray(watchedValues.selectedParks);
                             const isChecked = currentParks.includes(opt.value);
                             return (
                               <button key={opt.value} type="button"
                                 onClick={() => {
-                                  const updated = isChecked
-                                    ? currentParks.filter((v) => v !== opt.value)
-                                    : [...currentParks, opt.value];
-                                  form.setValue("selectedParks", updated, { shouldValidate: false });
+                                  const base = normalizeStringArray(form.getValues("selectedParks"));
+                                  const updated = base.includes(opt.value)
+                                    ? base.filter((v) => v !== opt.value)
+                                    : [...base, opt.value];
+                                  form.setValue("selectedParks", updated, {
+                                    shouldValidate: false,
+                                    shouldDirty: true,
+                                    shouldTouch: true,
+                                  });
                                 }}
                                 className={cn("flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left",
                                   isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
@@ -669,9 +722,9 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                     )}
                   />
 
-                  {(watchedValues.selectedParks || []).length > 0 && (
+                  {normalizeStringArray(watchedValues.selectedParks).length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {(watchedValues.selectedParks || []).map((p) => {
+                      {normalizeStringArray(watchedValues.selectedParks).map((p) => {
                         const info = parksOptions.find((x) => x.value === p);
                         return <Badge key={p} variant="secondary" className="text-xs">{info?.emoji} {info?.label}</Badge>;
                       })}
@@ -686,15 +739,20 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                         <FormLabel>Atividades extras (opcional)</FormLabel>
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {additionalActivitiesOptions.map((opt) => {
-                            const currentActivities = watchedValues.additionalActivities || [];
+                            const currentActivities = normalizeStringArray(watchedValues.additionalActivities);
                             const isChecked = currentActivities.includes(opt.value);
                             return (
                               <button key={opt.value} type="button"
                                 onClick={() => {
-                                  const updated = isChecked
-                                    ? currentActivities.filter((v) => v !== opt.value)
-                                    : [...currentActivities, opt.value];
-                                  form.setValue("additionalActivities", updated, { shouldValidate: false });
+                                  const base = normalizeStringArray(form.getValues("additionalActivities"));
+                                  const updated = base.includes(opt.value)
+                                    ? base.filter((v) => v !== opt.value)
+                                    : [...base, opt.value];
+                                  form.setValue("additionalActivities", updated, {
+                                    shouldValidate: false,
+                                    shouldDirty: true,
+                                    shouldTouch: true,
+                                  });
                                 }}
                                 className={cn("flex flex-col items-center p-2 rounded-lg border-2 transition-all",
                                   isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
