@@ -800,15 +800,14 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                                     });
                                   }}
                                   className={cn(
-                                    "flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+                                    "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
                                     isChecked
                                       ? "border-primary bg-primary/5"
                                       : "border-border hover:border-primary/50"
                                   )}
                                 >
-                                  <SelectionIndicator checked={isChecked} />
-                                  <span className="text-lg">{opt.emoji}</span>
-                                  <span className="text-[10px] font-medium text-center">{opt.label}</span>
+                                  <span className="text-2xl">{opt.emoji}</span>
+                                  <span className="text-[10px] font-medium text-center mt-1">{opt.label}</span>
                                 </button>
                               );
                             })}
