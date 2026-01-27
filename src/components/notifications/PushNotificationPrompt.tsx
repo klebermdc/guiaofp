@@ -19,6 +19,7 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
   } = usePushNotifications();
   
   const { isIOS, needsInstallation, canReceivePush } = useIOSPushSupport();
+  const effectivelySupported = isIOS ? canReceivePush : isSupported;
   
   const [isDismissed, setIsDismissed] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -39,6 +40,12 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
       }
     }
 
+    // Permission already blocked → don't keep showing an "activate" prompt.
+    if (permission === 'denied') {
+      setShowPrompt(false);
+      return;
+    }
+
     // iOS users who need to install the PWA first
     if (isIOS && needsInstallation && !isSubscribed) {
       setShowIOSPrompt(true);
@@ -46,9 +53,6 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
     }
 
     // Show prompt if supported and not subscribed
-    // For iOS in standalone mode, canReceivePush should be true
-    const effectivelySupported = isIOS ? canReceivePush : isSupported;
-    
     console.log('[Push Prompt] Check:', { 
       isIOS, 
       canReceivePush, 
@@ -61,7 +65,7 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
     if (effectivelySupported && permission === 'default' && !isSubscribed) {
       setShowPrompt(true);
     }
-  }, [isSupported, permission, isSubscribed, isIOS, needsInstallation, canReceivePush]);
+  }, [isSupported, permission, isSubscribed, isIOS, needsInstallation, canReceivePush, effectivelySupported]);
 
   const handleSubscribe = async () => {
     const result = await subscribe();
@@ -69,6 +73,16 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
       toast.success('Notificações ativadas! Você receberá alertas importantes.');
       setShowPrompt(false);
     } else {
+      const err = result.error || '';
+      if (err.includes('Notification permission denied')) {
+        toast.error(
+          isIOS
+            ? 'Notificações bloqueadas no iPhone. Vá em Ajustes → Notificações → guiaofp e ative.'
+            : 'Notificações bloqueadas. Ative nas configurações do navegador.'
+        );
+        setShowPrompt(false);
+        return;
+      }
       toast.error(result.error || 'Erro ao ativar notificações');
     }
   };
@@ -102,7 +116,7 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
     );
   }
 
-  if (!isSupported || isDismissed || !showPrompt) {
+  if (!effectivelySupported || isDismissed || !showPrompt) {
     return null;
   }
 
