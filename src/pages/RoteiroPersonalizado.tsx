@@ -40,7 +40,7 @@ export default function RoteiroPersonalizado() {
 
   const handleCreateNew = () => {
     setIsCreating(true);
-    navigate("/roteiro-personalizado/criar");
+    navigate("/roteiro-personalizado/questionario");
   };
 
   return (
