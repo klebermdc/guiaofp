@@ -18,7 +18,9 @@ import {
   User,
   Zap,
   Map,
-  FileText
+  FileText,
+  Route,
+  UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -51,6 +53,8 @@ const iconMap: Record<string, React.ElementType> = {
   Sparkles,
   CreditCard,
   Headphones,
+  Route,
+  UtensilsCrossed,
 };
 
 // Page key to path and label mapping
@@ -64,6 +68,8 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   multipass: { path: '/multipass', label: 'Multi Pass', defaultIcon: Zap },
   guia: { path: '/guia', label: 'Guia de Viagem', defaultIcon: BookOpen },
   checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
+  restaurantes: { path: '/restaurantes', label: 'Restaurantes', defaultIcon: UtensilsCrossed },
+  roteiro_personalizado: { path: '/roteiro-personalizado', label: 'Roteiro Personalizado', defaultIcon: Route },
   conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
   contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
 };
