@@ -208,6 +208,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [travelProfile, setTravelProfile] = useState<TravelProfile>(defaultTravelProfile);
 
+  // Use refs to track loading states for timeout callbacks (avoid stale closures)
+  const isLoadingRef = React.useRef(true);
+  const isProfileLoadingRef = React.useRef(false);
+
+  // Keep refs in sync with state
+  React.useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  React.useEffect(() => {
+    isProfileLoadingRef.current = isProfileLoading;
+  }, [isProfileLoading]);
+
   const calculateCompletionPercentage = (profile: TravelProfile): number => {
     const requiredFields = [
       profile.responsibleName,
@@ -283,29 +296,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Reset auth state completely (for error recovery)
+  const resetAuth = React.useCallback(() => {
+    console.warn('[Auth] Resetting auth state');
+    setUser(null);
+    setSession(null);
+    setTravelProfile(defaultTravelProfile);
+    setIsLoading(false);
+    setIsProfileLoading(false);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     let initCompleted = false;
+    let authTimeout: NodeJS.Timeout | null = null;
+    let profileTimeout: NodeJS.Timeout | null = null;
 
-    // Safety timeout to NEVER get stuck in loading state (max 10s)
-    const safetyTimeout = setTimeout(() => {
-      if (isMounted && (isLoading || isProfileLoading)) {
-        console.warn('[Auth] Safety timeout triggered - forcing loading to complete');
-        setIsLoading(false);
-        setIsProfileLoading(false);
-      }
-    }, 10000);
+    // Safety timeout - use shorter timeout for mobile (5s auth, 5s profile)
+    const AUTH_TIMEOUT = 5000;
+    const PROFILE_TIMEOUT = 5000;
 
     // INITIAL load - this controls isLoading
     const initializeAuth = async () => {
+      // Start auth timeout
+      authTimeout = setTimeout(() => {
+        if (isMounted && isLoadingRef.current) {
+          console.warn('[Auth] Auth initialization timed out after 5s');
+          setIsLoading(false);
+          setIsProfileLoading(false);
+          initCompleted = true;
+        }
+      }, AUTH_TIMEOUT);
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // Clear auth timeout since we got a response
+        if (authTimeout) clearTimeout(authTimeout);
+        
         if (!isMounted) return;
         
         if (error) {
-          console.error('Error getting session:', error);
-          setSession(null);
-          setUser(null);
+          console.error('[Auth] Error getting session:', error);
+          resetAuth();
+          initCompleted = true;
           return;
         }
         
@@ -314,13 +348,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           setIsProfileLoading(true);
-          const profile = await loadProfileForUser(session.user.id);
-          if (isMounted) {
-            setTravelProfile(profile);
+          
+          // Start profile timeout
+          profileTimeout = setTimeout(() => {
+            if (isMounted && isProfileLoadingRef.current) {
+              console.warn('[Auth] Profile loading timed out after 5s');
+              setIsProfileLoading(false);
+            }
+          }, PROFILE_TIMEOUT);
+          
+          try {
+            const profile = await loadProfileForUser(session.user.id);
+            if (profileTimeout) clearTimeout(profileTimeout);
+            if (isMounted) {
+              setTravelProfile(profile);
+            }
+          } catch (profileError) {
+            console.error('[Auth] Error loading profile:', profileError);
+            // Continue with default profile on error
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('[Auth] Error initializing auth:', error);
+        if (isMounted) {
+          resetAuth();
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -347,10 +399,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (initCompleted) {
           if (newSession?.user) {
             setIsProfileLoading(true);
-            const profile = await loadProfileForUser(newSession.user.id);
-            if (isMounted) {
-              setTravelProfile(profile);
-              setIsProfileLoading(false);
+            try {
+              const profile = await loadProfileForUser(newSession.user.id);
+              if (isMounted) {
+                setTravelProfile(profile);
+              }
+            } catch (error) {
+              console.error('[Auth] Error loading profile on auth change:', error);
+            } finally {
+              if (isMounted) {
+                setIsProfileLoading(false);
+              }
             }
           } else {
             setTravelProfile(defaultTravelProfile);
@@ -364,10 +423,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
-      clearTimeout(safetyTimeout);
+      if (authTimeout) clearTimeout(authTimeout);
+      if (profileTimeout) clearTimeout(profileTimeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [resetAuth]);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const { error } = await supabase.auth.signInWithPassword({
