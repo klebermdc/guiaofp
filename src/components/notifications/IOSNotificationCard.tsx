@@ -1,14 +1,13 @@
-import { Bell, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Bell, BellOff, Smartphone, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useIOSPushSupport } from '@/hooks/useIOSPushSupport';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 export function IOSNotificationCard() {
-  const { isSubscribed, subscribe, isLoading } = usePushNotifications();
+  const { isSubscribed, subscribe, isLoading, permission } = usePushNotifications();
   const { isIOS, isStandalone, canReceivePush } = useIOSPushSupport();
   const [isActivating, setIsActivating] = useState(false);
 
@@ -24,6 +23,11 @@ export function IOSNotificationCard() {
       if (result.success) {
         toast.success('🎉 Notificações ativadas! Você receberá alertas importantes sobre sua viagem.');
       } else {
+        const err = result.error || '';
+        if (err.includes('Notification permission denied')) {
+          toast.error('Notificações bloqueadas no iPhone. Vá em Ajustes → Notificações → guiaofp e ative.');
+          return;
+        }
         toast.error(result.error || 'Erro ao ativar notificações. Tente novamente.');
       }
     } catch (error) {
@@ -35,11 +39,15 @@ export function IOSNotificationCard() {
   };
 
   return (
-    <Card className="border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+    <Card className="border-primary/20 bg-gradient-to-r from-primary/10 to-accent/10">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-            <Bell className="w-6 h-6 text-blue-500" />
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            {permission === 'denied' ? (
+              <BellOff className="w-6 h-6 text-primary" />
+            ) : (
+              <Bell className="w-6 h-6 text-primary" />
+            )}
           </div>
           
           <div className="flex-1 min-w-0">
@@ -47,25 +55,31 @@ export function IOSNotificationCard() {
               <Smartphone className="w-4 h-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground font-medium">iPhone/iPad</span>
             </div>
-            <h4 className="font-semibold text-foreground">Ative as Notificações</h4>
+            <h4 className="font-semibold text-foreground">
+              {permission === 'denied' ? 'Notificações bloqueadas' : 'Ative as Notificações'}
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Receba lembretes do MultiPass e alertas importantes da sua viagem
+              {permission === 'denied'
+                ? 'Abra Ajustes → Notificações → guiaofp e habilite “Permitir Notificações”.'
+                : 'Receba lembretes do MultiPass e alertas importantes da sua viagem'}
             </p>
           </div>
           
-          <Button 
-            onClick={handleActivate}
-            disabled={isLoading || isActivating}
-            className="shrink-0 gap-2"
-            size="sm"
-          >
-            {isLoading || isActivating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Bell className="w-4 h-4" />
-            )}
-            Ativar
-          </Button>
+          {permission !== 'denied' && (
+            <Button 
+              onClick={handleActivate}
+              disabled={isLoading || isActivating}
+              className="shrink-0 gap-2"
+              size="sm"
+            >
+              {isLoading || isActivating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Bell className="w-4 h-4" />
+              )}
+              Ativar
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -31,10 +31,10 @@ export function useIOSPushSupport(): IOSPushSupport {
     
     // Check if running as standalone PWA (added to home screen)
     // On iOS, window.navigator.standalone is the most reliable check
-    const isStandalone = 
-      (window.navigator as any).standalone === true || // iOS Safari PWA
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.matchMedia('(display-mode: fullscreen)').matches;
+    // NOTE: Avoid '(display-mode: fullscreen)' here — it can produce false positives in iOS Safari.
+    const isStandalone =
+      (window.navigator as any).standalone === true || // iOS PWA
+      window.matchMedia('(display-mode: standalone)').matches;
     
     // Get Safari/WebKit version from iOS
     let safariVersion: number | null = null;
