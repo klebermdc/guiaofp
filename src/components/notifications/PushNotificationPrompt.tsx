@@ -25,11 +25,18 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
   const [showIOSPrompt, setShowIOSPrompt] = useState(false);
 
   useEffect(() => {
-    // Check if user has dismissed before
-    const dismissed = localStorage.getItem('push-prompt-dismissed');
-    if (dismissed) {
-      setIsDismissed(true);
-      return;
+    // Check if user has dismissed before - but only for 7 days
+    const dismissedAt = localStorage.getItem('push-prompt-dismissed-at');
+    if (dismissedAt) {
+      const dismissedTime = parseInt(dismissedAt, 10);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - dismissedTime < sevenDaysMs) {
+        setIsDismissed(true);
+        return;
+      } else {
+        // Expired, remove the flag
+        localStorage.removeItem('push-prompt-dismissed-at');
+      }
     }
 
     // iOS users who need to install the PWA first
@@ -39,7 +46,18 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
     }
 
     // Show prompt if supported and not subscribed
+    // For iOS in standalone mode, canReceivePush should be true
     const effectivelySupported = isIOS ? canReceivePush : isSupported;
+    
+    console.log('[Push Prompt] Check:', { 
+      isIOS, 
+      canReceivePush, 
+      isSupported, 
+      effectivelySupported,
+      permission, 
+      isSubscribed 
+    });
+    
     if (effectivelySupported && permission === 'default' && !isSubscribed) {
       setShowPrompt(true);
     }
@@ -58,7 +76,8 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
   const handleDismiss = () => {
     setIsDismissed(true);
     setShowPrompt(false);
-    localStorage.setItem('push-prompt-dismissed', 'true');
+    // Store timestamp instead of boolean - prompt will reappear after 7 days
+    localStorage.setItem('push-prompt-dismissed-at', Date.now().toString());
   };
 
   const handleUnsubscribe = async () => {
@@ -77,7 +96,7 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
         onDismiss={() => {
           setShowIOSPrompt(false);
           setIsDismissed(true);
-          localStorage.setItem('push-prompt-dismissed', 'true');
+          localStorage.setItem('push-prompt-dismissed-at', Date.now().toString());
         }} 
       />
     );

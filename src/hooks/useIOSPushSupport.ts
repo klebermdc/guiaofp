@@ -26,31 +26,57 @@ export function useIOSPushSupport(): IOSPushSupport {
     const isIOS = /iPad|iPhone|iPod/.test(ua) || 
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
-    // Detect Safari
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    // Detect Safari (not Chrome, not Firefox, etc.)
+    const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
     
     // Check if running as standalone PWA (added to home screen)
+    // On iOS, window.navigator.standalone is the most reliable check
     const isStandalone = 
-      (window.navigator as any).standalone === true || // iOS Safari
-      window.matchMedia('(display-mode: standalone)').matches;
+      (window.navigator as any).standalone === true || // iOS Safari PWA
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches;
     
-    // Get Safari version
+    // Get Safari/WebKit version from iOS
     let safariVersion: number | null = null;
-    const versionMatch = ua.match(/Version\/(\d+)/);
+    const versionMatch = ua.match(/Version\/(\d+)\.(\d+)/);
     if (versionMatch) {
-      safariVersion = parseInt(versionMatch[1], 10);
+      const major = parseInt(versionMatch[1], 10);
+      const minor = parseInt(versionMatch[2], 10);
+      // Safari 16.4 is the minimum for Web Push
+      safariVersion = major + (minor / 10);
     }
     
-    // iOS Safari 16.4+ supports Web Push, but ONLY when installed as PWA
+    // Check if browser supports Web Push API
     const supportsWebPush = 'PushManager' in window && 'serviceWorker' in navigator;
     
-    // On iOS: can receive push only if Safari 16.4+ AND running as standalone PWA
+    // On iOS:
+    // - Safari 16.4+ (iOS 16.4+) supports Web Push
+    // - BUT it only works when the app is installed as a PWA (standalone mode)
+    // - In regular Safari browser, PushManager may exist but won't work
+    
+    const meetsVersionRequirement = safariVersion !== null && safariVersion >= 16.4;
+    
+    // Can receive push if:
+    // - Not iOS: just needs PushManager support
+    // - iOS: needs Safari 16.4+, running as standalone PWA, and PushManager support
     const canReceivePush = isIOS 
-      ? (supportsWebPush && isStandalone && safariVersion !== null && safariVersion >= 16)
+      ? (supportsWebPush && isStandalone && meetsVersionRequirement)
       : supportsWebPush;
     
-    // Needs installation: iOS device that supports push but not installed as PWA
-    const needsInstallation = isIOS && supportsWebPush && !isStandalone;
+    // Needs installation: iOS device with compatible Safari version but not installed as PWA
+    // We show this even if PushManager isn't available yet (it becomes available in standalone mode)
+    const needsInstallation = isIOS && !isStandalone && meetsVersionRequirement;
+    
+    // Debug log for troubleshooting
+    console.log('[iOS Push Support]', {
+      isIOS,
+      isSafari,
+      isStandalone,
+      safariVersion,
+      supportsWebPush,
+      canReceivePush,
+      needsInstallation,
+    });
     
     setSupport({
       isIOS,
