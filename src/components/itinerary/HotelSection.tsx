@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Upload, FileCheck, Hotel, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { HotelSuggestions } from './HotelSuggestions';
 
 interface HotelData {
   name: string;
@@ -13,16 +14,29 @@ interface HotelData {
   voucherUrl: string;
 }
 
+interface ItineraryContext {
+  budget: string;
+  accommodationType: string;
+  selectedParks: string[];
+  duration: number;
+  stayingRegion?: string;
+  adultsCount?: number;
+  childrenCount?: number;
+  travelStyle?: string;
+}
+
 interface HotelSectionProps {
   onUpdate: (data: { hasHotel: boolean | null; hotelData: HotelData }) => void;
   initialHasHotel?: boolean | null;
   initialHotelData?: Partial<HotelData>;
+  itineraryContext?: ItineraryContext;
 }
 
 export const HotelSection = ({ 
   onUpdate, 
   initialHasHotel = null,
-  initialHotelData 
+  initialHotelData,
+  itineraryContext
 }: HotelSectionProps) => {
   const [hasHotel, setHasHotel] = useState<boolean | null>(initialHasHotel);
   const [isUploading, setIsUploading] = useState(false);
@@ -253,8 +267,13 @@ export const HotelSection = ({
         </div>
       )}
 
-      {/* Se NÃO TEM hotel */}
-      {hasHotel === false && (
+      {/* Se NÃO TEM hotel - Mostrar sugestões */}
+      {hasHotel === false && itineraryContext && (
+        <HotelSuggestions itineraryData={itineraryContext} />
+      )}
+
+      {/* Fallback se não tem contexto */}
+      {hasHotel === false && !itineraryContext && (
         <div className="bg-muted/50 p-5 rounded-xl border border-border">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
