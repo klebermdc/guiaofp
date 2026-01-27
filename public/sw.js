@@ -1,5 +1,6 @@
 // Service Worker for Push Notifications & Asset Caching
-const CACHE_VERSION = 'v1';
+// NOTE: Bump CACHE_VERSION when changing caching logic to force clients to refresh.
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
@@ -9,16 +10,17 @@ const PRECACHE_ASSETS = [
   '/logo-192.png',
   '/logo-512.png',
   '/apple-touch-icon.png',
-  '/manifest.json'
+  // '/manifest.json' // avoid precaching manifest in preview environments (can be blocked by auth/CORS)
 ];
 
 // Install event - precache critical assets
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    // Don't fail the entire install if a single asset can't be fetched.
+    await Promise.allSettled(PRECACHE_ASSETS.map((asset) => cache.add(asset)));
+    await self.skipWaiting();
+  })());
 });
 
 // Activate event - clean old caches
