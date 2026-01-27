@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -180,6 +180,7 @@ const additionalActivitiesOptions = [
 
 export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const saveTimeoutRef = useRef<number | undefined>(undefined);
 
   const loadSavedDraft = () => {
     try {
@@ -221,7 +222,8 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
     return null;
   };
 
-  const savedDraft = loadSavedDraft();
+  // Load draft only once (avoid heavy localStorage I/O on every render)
+  const [savedDraft] = useState(() => loadSavedDraft());
 
   const form = useForm<QuestionnaireFormData>({
     resolver: zodResolver(questionnaireSchema),
@@ -247,13 +249,25 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
   // Auto-save to localStorage
   useEffect(() => {
     const subscription = form.watch((value) => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-      } catch (e) {
-        console.error("Error saving draft:", e);
+      // Debounce localStorage writes to avoid UI jank on mobile
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
       }
+
+      saveTimeoutRef.current = window.setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        } catch (e) {
+          console.error("Error saving draft:", e);
+        }
+      }, 250);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [form]);
 
   const handleNext = async () => {
@@ -688,38 +702,48 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                   <FormField
                     control={form.control}
                     name="selectedParks"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Parques que quer visitar</FormLabel>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {parksOptions.map((opt) => {
-                            const currentParks = normalizeStringArray(watchedValues.selectedParks);
-                            const isChecked = currentParks.includes(opt.value);
-                            return (
-                              <button key={opt.value} type="button"
-                                onClick={() => {
-                                  const base = normalizeStringArray(form.getValues("selectedParks"));
-                                  const updated = base.includes(opt.value)
-                                    ? base.filter((v) => v !== opt.value)
-                                    : [...base, opt.value];
-                                  form.setValue("selectedParks", updated, {
-                                    shouldValidate: false,
-                                    shouldDirty: true,
-                                    shouldTouch: true,
-                                  });
-                                }}
-                                className={cn("flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left",
-                                  isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
-                                <Checkbox checked={isChecked} className="pointer-events-none" />
-                                <span className="text-base">{opt.emoji}</span>
-                                <span className="text-xs font-medium">{opt.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={() => {
+                      const currentParks = normalizeStringArray(watchedValues.selectedParks);
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Parques que quer visitar</FormLabel>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {parksOptions.map((opt) => {
+                              const isChecked = currentParks.includes(opt.value);
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    const base = normalizeStringArray(form.getValues("selectedParks"));
+                                    const updated = base.includes(opt.value)
+                                      ? base.filter((v) => v !== opt.value)
+                                      : [...base, opt.value];
+                                    form.setValue("selectedParks", updated, {
+                                      shouldValidate: false,
+                                      shouldDirty: true,
+                                      shouldTouch: true,
+                                    });
+                                  }}
+                                  className={cn(
+                                    "flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left",
+                                    isChecked
+                                      ? "border-primary bg-primary/5"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <Checkbox checked={isChecked} className="pointer-events-none" />
+                                  <span className="text-base">{opt.emoji}</span>
+                                  <span className="text-xs font-medium">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   {normalizeStringArray(watchedValues.selectedParks).length > 0 && (
@@ -734,36 +758,46 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                   <FormField
                     control={form.control}
                     name="additionalActivities"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Atividades extras (opcional)</FormLabel>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {additionalActivitiesOptions.map((opt) => {
-                            const currentActivities = normalizeStringArray(watchedValues.additionalActivities);
-                            const isChecked = currentActivities.includes(opt.value);
-                            return (
-                              <button key={opt.value} type="button"
-                                onClick={() => {
-                                  const base = normalizeStringArray(form.getValues("additionalActivities"));
-                                  const updated = base.includes(opt.value)
-                                    ? base.filter((v) => v !== opt.value)
-                                    : [...base, opt.value];
-                                  form.setValue("additionalActivities", updated, {
-                                    shouldValidate: false,
-                                    shouldDirty: true,
-                                    shouldTouch: true,
-                                  });
-                                }}
-                                className={cn("flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-                                  isChecked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")}>
-                                <span className="text-lg">{opt.emoji}</span>
-                                <span className="text-[10px] font-medium text-center">{opt.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </FormItem>
-                    )}
+                    render={() => {
+                      const currentActivities = normalizeStringArray(watchedValues.additionalActivities);
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Atividades extras (opcional)</FormLabel>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                            {additionalActivitiesOptions.map((opt) => {
+                              const isChecked = currentActivities.includes(opt.value);
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    const base = normalizeStringArray(form.getValues("additionalActivities"));
+                                    const updated = base.includes(opt.value)
+                                      ? base.filter((v) => v !== opt.value)
+                                      : [...base, opt.value];
+                                    form.setValue("additionalActivities", updated, {
+                                      shouldValidate: false,
+                                      shouldDirty: true,
+                                      shouldTouch: true,
+                                    });
+                                  }}
+                                  className={cn(
+                                    "flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+                                    isChecked
+                                      ? "border-primary bg-primary/5"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <span className="text-lg">{opt.emoji}</span>
+                                  <span className="text-[10px] font-medium text-center">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </FormItem>
+                      );
+                    }}
                   />
                 </CardContent>
               </Card>
