@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { format, addDays, eachDayOfInterval } from 'date-fns';
+import { format, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Check, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Check, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AttractionsModal } from './AttractionsModal';
 
 interface PlannerItem {
   id: string;
@@ -297,62 +298,94 @@ interface PlannerItemCardProps {
 }
 
 const PlannerItemCard = ({ item, onRemove, onToggleComplete }: PlannerItemCardProps) => {
-  return (
-    <div
-      className={cn(
-        'group p-2 rounded-lg border transition-all',
-        item.completed 
-          ? 'bg-muted/50 border-muted opacity-60' 
-          : 'bg-background border-border hover:shadow-sm'
-      )}
-      style={{ borderLeftColor: item.color, borderLeftWidth: 3 }}
-    >
-      <div className="flex items-start gap-2">
-        <button
-          onClick={onToggleComplete}
-          className={cn(
-            'mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0',
-            item.completed
-              ? 'bg-success border-success text-success-foreground'
-              : 'border-muted-foreground/30 hover:border-primary'
-          )}
-        >
-          {item.completed && <Check className="w-2.5 h-2.5" />}
-        </button>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1">
-            <span className="text-sm">{item.icon || '📍'}</span>
-            <span className={cn(
-              'text-sm font-medium truncate',
-              item.completed && 'line-through'
-            )}>
-              {item.item_name}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2 mt-0.5">
-            {item.start_time && (
-              <span className="text-[10px] text-muted-foreground">
-                ⏰ {item.start_time}
-              </span>
-            )}
-            {item.duration && (
-              <span className="text-[10px] text-muted-foreground">
-                ⏱️ {item.duration}min
-              </span>
-            )}
-          </div>
-        </div>
+  const [attractionsModalOpen, setAttractionsModalOpen] = useState(false);
+  
+  // Check if this is a park item
+  const isPark = item.item_type === 'park';
 
-        <button
-          onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-destructive transition-opacity"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+  return (
+    <>
+      <div
+        className={cn(
+          'group p-2 rounded-lg border transition-all',
+          item.completed 
+            ? 'bg-muted/50 border-muted opacity-60' 
+            : 'bg-background border-border hover:shadow-sm'
+        )}
+        style={{ borderLeftColor: item.color, borderLeftWidth: 3 }}
+      >
+        <div className="flex items-start gap-2">
+          <button
+            onClick={onToggleComplete}
+            className={cn(
+              'mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0',
+              item.completed
+                ? 'bg-success border-success text-success-foreground'
+                : 'border-muted-foreground/30 hover:border-primary'
+            )}
+          >
+            {item.completed && <Check className="w-2.5 h-2.5" />}
+          </button>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <span className="text-sm">{item.icon || '📍'}</span>
+              <span className={cn(
+                'text-sm font-medium truncate',
+                item.completed && 'line-through'
+              )}>
+                {item.item_name}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-0.5">
+              {item.start_time && (
+                <span className="text-[10px] text-muted-foreground">
+                  ⏰ {item.start_time}
+                </span>
+              )}
+              {item.duration && (
+                <span className="text-[10px] text-muted-foreground">
+                  ⏱️ {item.duration}min
+                </span>
+              )}
+            </div>
+            
+            {/* Button to select attractions for park items */}
+            {isPark && !item.completed && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 h-7 text-xs w-full gap-1 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAttractionsModalOpen(true);
+                }}
+              >
+                <Star className="h-3 w-3" />
+                Escolher Atrações
+              </Button>
+            )}
+          </div>
+
+          <button
+            onClick={onRemove}
+            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-destructive transition-opacity"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
-    </div>
+      
+      {/* Attractions Modal */}
+      {isPark && (
+        <AttractionsModal
+          open={attractionsModalOpen}
+          onOpenChange={setAttractionsModalOpen}
+          parkName={item.item_name}
+        />
+      )}
+    </>
   );
 };
 
