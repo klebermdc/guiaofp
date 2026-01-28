@@ -29,6 +29,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRestaurantWithDetails } from '@/hooks/useRestaurants';
+import { useFavoriteSlugs, useToggleFavorite } from '@/hooks/useRestaurantFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 
@@ -65,10 +67,15 @@ interface RestaurantData {
 const RestaurantDetails = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [restaurant, setRestaurant] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
+
+  const { data: favoriteSlugs } = useFavoriteSlugs();
+  const toggleFavorite = useToggleFavorite();
+  
+  const isFavorite = slug ? (favoriteSlugs?.has(slug) || false) : false;
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -236,10 +243,27 @@ const RestaurantDetails = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm"
-              onClick={() => setIsFavorite(!isFavorite)}
+              className={`backdrop-blur-sm ${
+                isFavorite 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-black/30 hover:bg-black/50 text-white'
+              }`}
+              disabled={toggleFavorite.isPending}
+              onClick={() => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                if (restaurant) {
+                  toggleFavorite.mutate({
+                    restaurantId: restaurant.id,
+                    restaurantSlug: restaurant.slug,
+                    isFavorite,
+                  });
+                }
+              }}
             >
-              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} />
             </Button>
             <Button
               variant="ghost"
