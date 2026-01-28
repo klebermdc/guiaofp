@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const GUIDE_WHATSAPP: Record<string, string> = {
   'rafael': 'https://wa.me/5511966144493',
-  'kleber': 'https://api.whatsapp.com/send?phone=5511966144493', // Fallback to Rafael's number - update with Kleber's actual number
+  'kleber': 'https://wa.me/551151944192',
 };
 
 // Default WhatsApp for when no specific guide is assigned
