@@ -55,6 +55,7 @@ const Login = () => {
         toast({
           title: "Bem-vindo(a)! ✨",
           description: "Sua área de guiamento está pronta para você.",
+          duration: 2000,
         });
         navigate('/dashboard');
       } else {
