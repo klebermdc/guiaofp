@@ -760,6 +760,7 @@ export type Database = {
           has_my_disney_experience: boolean | null
           has_transport: boolean | null
           hotel: string | null
+          hotel_address: string | null
           hotel_type: string | null
           id: string
           is_access_enabled: boolean | null
@@ -799,6 +800,7 @@ export type Database = {
           has_my_disney_experience?: boolean | null
           has_transport?: boolean | null
           hotel?: string | null
+          hotel_address?: string | null
           hotel_type?: string | null
           id?: string
           is_access_enabled?: boolean | null
@@ -838,6 +840,7 @@ export type Database = {
           has_my_disney_experience?: boolean | null
           has_transport?: boolean | null
           hotel?: string | null
+          hotel_address?: string | null
           hotel_type?: string | null
           id?: string
           is_access_enabled?: boolean | null
@@ -1098,6 +1101,39 @@ export type Database = {
           plan_key?: string
           status?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          file_size: number | null
+          file_url: string
+          id: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          uploaded_at?: string
           user_id?: string
         }
         Relationships: []

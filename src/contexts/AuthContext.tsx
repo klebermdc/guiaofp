@@ -28,6 +28,7 @@ interface TravelProfile {
   
   // Section 4 - Accommodation
   hotel: string;
+  hotelAddress: string;
   hotelType: string;
   hasTransport: boolean;
   
@@ -97,6 +98,7 @@ const defaultTravelProfile: TravelProfile = {
   parkDates: [],
   guideName: '',
   hotel: '',
+  hotelAddress: '',
   hotelType: '',
   hasTransport: false,
   preferredLanguage: 'pt-BR',
@@ -138,6 +140,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
   parkDates: dbProfile.park_dates || [],
   guideName: dbProfile.guide_name || '',
   hotel: dbProfile.hotel || '',
+  hotelAddress: dbProfile.hotel_address || '',
   hotelType: dbProfile.hotel_type || '',
   hasTransport: dbProfile.has_transport || false,
   preferredLanguage: dbProfile.preferred_language || 'pt-BR',
@@ -177,6 +180,7 @@ const frontendToDb = (profile: Partial<TravelProfile>) => {
   if (profile.parkDates !== undefined) dbProfile.park_dates = profile.parkDates;
   if (profile.guideName !== undefined) dbProfile.guide_name = profile.guideName;
   if (profile.hotel !== undefined) dbProfile.hotel = profile.hotel;
+  if (profile.hotelAddress !== undefined) dbProfile.hotel_address = profile.hotelAddress;
   if (profile.hotelType !== undefined) dbProfile.hotel_type = profile.hotelType;
   if (profile.hasTransport !== undefined) dbProfile.has_transport = profile.hasTransport;
   if (profile.preferredLanguage !== undefined) dbProfile.preferred_language = profile.preferredLanguage;

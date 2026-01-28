@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
+import { DocumentWallet } from '@/components/dashboard/DocumentWallet';
 import { TravelModeToggle } from '@/components/travel-mode/TravelModeToggle';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
@@ -177,6 +178,11 @@ const Dashboard = () => {
         {/* MultiPass Status Card (for premium clients) */}
         <motion.div variants={itemVariants}>
           <MultipassStatusCard />
+        </motion.div>
+
+        {/* Document Wallet */}
+        <motion.div variants={itemVariants}>
+          <DocumentWallet />
         </motion.div>
         
         <motion.div 

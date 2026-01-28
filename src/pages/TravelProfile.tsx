@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { 
   User, Users, Plane, Hotel, Heart, Smartphone, 
   Accessibility, PartyPopper, Star, ChevronDown, ChevronUp,
-  Check, AlertCircle, Loader2
+  Check, AlertCircle, Loader2, Upload, FileText, Trash2
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -425,56 +426,10 @@ const TravelProfile = () => {
 
                     {/* Section 4: Accommodation */}
                     {section.id === 'accommodation' && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Hotel onde ficará hospedado</Label>
-                          <Input
-                            placeholder="Nome do hotel"
-                            value={travelProfile.hotel}
-                            onChange={(e) => handleFieldChange({ hotel: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Tipo de hotel</Label>
-                          <RadioGroup
-                            value={travelProfile.hotelType}
-                            onValueChange={(value) => handleFieldChange({ hotelType: value })}
-                          >
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="disney" id="disney" />
-                                <Label htmlFor="disney">Hotel Disney</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="universal" id="universal" />
-                                <Label htmlFor="universal">Hotel Universal</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="outside" id="outside" />
-                                <Label htmlFor="outside">Fora dos parques</Label>
-                              </div>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Já possui transporte?</Label>
-                          <RadioGroup
-                            value={travelProfile.hasTransport ? 'yes' : 'no'}
-                            onValueChange={(value) => handleFieldChange({ hasTransport: value === 'yes' })}
-                          >
-                            <div className="flex gap-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="yes" id="transport-yes" />
-                                <Label htmlFor="transport-yes">Sim</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="no" id="transport-no" />
-                                <Label htmlFor="transport-no">Não</Label>
-                              </div>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                      </>
+                      <AccommodationSection 
+                        travelProfile={travelProfile} 
+                        handleFieldChange={handleFieldChange} 
+                      />
                     )}
 
                     {/* Section 5: Group Profile */}
@@ -710,5 +665,213 @@ const TravelProfile = () => {
     </AppLayout>
   );
 };
+
+// Accommodation Section Component
+interface AccommodationSectionProps {
+  travelProfile: any;
+  handleFieldChange: (data: any) => void;
+}
+
+function AccommodationSection({ travelProfile, handleFieldChange }: AccommodationSectionProps) {
+  const { user } = useAuth();
+  const [hotelVoucher, setHotelVoucher] = useState<{ name: string; url: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    loadHotelVoucher();
+  }, [user]);
+
+  const loadHotelVoucher = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('user_documents')
+      .select('document_name, file_url')
+      .eq('user_id', user.id)
+      .eq('document_type', 'hotel_voucher')
+      .order('uploaded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      setHotelVoucher({ name: data.document_name, url: data.file_url });
+    }
+  };
+
+  const handleVoucherUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-hotel_voucher.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('user-documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('user-documents')
+        .getPublicUrl(fileName);
+
+      await supabase
+        .from('user_documents')
+        .insert({
+          user_id: user.id,
+          document_type: 'hotel_voucher',
+          document_name: file.name,
+          file_url: urlData.publicUrl,
+          file_size: file.size,
+        });
+
+      setHotelVoucher({ name: file.name, url: urlData.publicUrl });
+    } catch (error) {
+      console.error('Error uploading voucher:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveVoucher = async () => {
+    if (!user || !hotelVoucher) return;
+
+    try {
+      const urlParts = hotelVoucher.url.split('/user-documents/');
+      const filePath = urlParts[1];
+
+      if (filePath) {
+        await supabase.storage.from('user-documents').remove([filePath]);
+      }
+
+      await supabase
+        .from('user_documents')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('document_type', 'hotel_voucher');
+
+      setHotelVoucher(null);
+    } catch (error) {
+      console.error('Error removing voucher:', error);
+    }
+  };
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Label>Hotel onde ficará hospedado</Label>
+        <Input
+          placeholder="Nome do hotel"
+          value={travelProfile.hotel}
+          onChange={(e) => handleFieldChange({ hotel: e.target.value })}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label>Endereço do hotel</Label>
+        <Input
+          placeholder="Endereço completo do hotel"
+          value={travelProfile.hotelAddress || ''}
+          onChange={(e) => handleFieldChange({ hotelAddress: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tipo de hotel</Label>
+        <RadioGroup
+          value={travelProfile.hotelType}
+          onValueChange={(value) => handleFieldChange({ hotelType: value })}
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="disney" id="disney" />
+              <Label htmlFor="disney">Hotel Disney</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="universal" id="universal" />
+              <Label htmlFor="universal">Hotel Universal</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="outside" id="outside" />
+              <Label htmlFor="outside">Fora dos parques</Label>
+            </div>
+          </div>
+        </RadioGroup>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Voucher do Hotel</Label>
+        {hotelVoucher ? (
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+            <FileText className="w-5 h-5 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{hotelVoucher.name}</p>
+            </div>
+            <a 
+              href={hotelVoucher.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              Ver
+            </a>
+            <button
+              onClick={handleRemoveVoucher}
+              className="p-1.5 text-destructive hover:bg-destructive/10 rounded"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+            {isUploading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                <Upload className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Clique para enviar voucher
+                </span>
+              </>
+            )}
+            <input
+              type="file"
+              className="hidden"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              onChange={handleVoucherUpload}
+              disabled={isUploading}
+            />
+          </label>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Já possui transporte?</Label>
+        <RadioGroup
+          value={travelProfile.hasTransport ? 'yes' : 'no'}
+          onValueChange={(value) => handleFieldChange({ hasTransport: value === 'yes' })}
+        >
+          <div className="flex gap-4">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="yes" id="transport-yes" />
+              <Label htmlFor="transport-yes">Sim</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="no" id="transport-no" />
+              <Label htmlFor="transport-no">Não</Label>
+            </div>
+          </div>
+        </RadioGroup>
+      </div>
+    </>
+  );
+}
 
 export default TravelProfile;
