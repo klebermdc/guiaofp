@@ -492,17 +492,17 @@ const MultiPass = () => {
           </h2>
 
           <Tabs value={selectedPark} onValueChange={(v) => setSelectedPark(v as keyof typeof parkData)}>
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto gap-2 bg-transparent p-1">
               {Object.entries(parkData).map(([key, park]) => {
                 const Icon = park.icon;
                 return (
                   <TabsTrigger 
                     key={key} 
                     value={key}
-                    className={`flex flex-col gap-1 py-3 data-[state=active]:${park.bgColor}`}
+                    className={`flex flex-col gap-1.5 py-3 px-4 rounded-lg border-2 border-border/50 bg-card/50 hover:bg-card hover:border-primary/30 transition-all data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:shadow-md`}
                   >
                     <Icon className={`h-5 w-5 ${park.color}`} />
-                    <span className="text-xs">{park.name}</span>
+                    <span className="text-xs font-medium">{park.name}</span>
                   </TabsTrigger>
                 );
               })}
