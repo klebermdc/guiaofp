@@ -70,6 +70,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
   restaurantes: { path: '/restaurantes', label: 'Restaurantes', defaultIcon: UtensilsCrossed },
   roteiro_personalizado: { path: '/roteiro-personalizado', label: 'Roteiro Personalizado', defaultIcon: Route },
+  planner_manual: { path: '/planner-manual', label: 'Planejador Manual', defaultIcon: Calendar },
   conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
   contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
 };
