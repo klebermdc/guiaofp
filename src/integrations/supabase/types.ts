@@ -1028,6 +1028,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_planners: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          is_favorite: boolean | null
+          notes: string | null
+          start_date: string
+          title: string
+          total_days: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_favorite?: boolean | null
+          notes?: string | null
+          start_date: string
+          title: string
+          total_days: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_favorite?: boolean | null
+          notes?: string | null
+          start_date?: string
+          title?: string
+          total_days?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
