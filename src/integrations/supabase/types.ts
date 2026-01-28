@@ -750,6 +750,92 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurants: {
+        Row: {
+          address: string | null
+          area: string | null
+          average_cost_per_person: number | null
+          category: string | null
+          character_dining: boolean | null
+          color: string | null
+          created_at: string | null
+          cuisine: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          menu_url: string | null
+          must_try: string | null
+          name: string
+          operating_hours: Json | null
+          park_id: string | null
+          reservation_required: boolean | null
+          slug: string
+          tips: string | null
+          type: string | null
+        }
+        Insert: {
+          address?: string | null
+          area?: string | null
+          average_cost_per_person?: number | null
+          category?: string | null
+          character_dining?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          cuisine?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          menu_url?: string | null
+          must_try?: string | null
+          name: string
+          operating_hours?: Json | null
+          park_id?: string | null
+          reservation_required?: boolean | null
+          slug: string
+          tips?: string | null
+          type?: string | null
+        }
+        Update: {
+          address?: string | null
+          area?: string | null
+          average_cost_per_person?: number | null
+          category?: string | null
+          character_dining?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          cuisine?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          menu_url?: string | null
+          must_try?: string | null
+          name?: string
+          operating_hours?: Json | null
+          park_id?: string | null
+          reservation_required?: boolean | null
+          slug?: string
+          tips?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_park_id_fkey"
+            columns: ["park_id"]
+            isOneToOne: false
+            referencedRelation: "parks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount_cents: number
