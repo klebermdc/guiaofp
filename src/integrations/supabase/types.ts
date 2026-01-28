@@ -47,6 +47,83 @@ export type Database = {
         }
         Relationships: []
       }
+      attractions: {
+        Row: {
+          area: string | null
+          average_wait_time: number | null
+          best_time_to_visit: string | null
+          created_at: string | null
+          description: string | null
+          duration: number | null
+          height_requirement: number | null
+          icon: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          lightning_lane: boolean | null
+          longitude: number | null
+          name: string
+          park_id: string | null
+          popularity_score: number | null
+          slug: string
+          thrill_level: string | null
+          tips: string | null
+          type: string | null
+        }
+        Insert: {
+          area?: string | null
+          average_wait_time?: number | null
+          best_time_to_visit?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          height_requirement?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          lightning_lane?: boolean | null
+          longitude?: number | null
+          name: string
+          park_id?: string | null
+          popularity_score?: number | null
+          slug: string
+          thrill_level?: string | null
+          tips?: string | null
+          type?: string | null
+        }
+        Update: {
+          area?: string | null
+          average_wait_time?: number | null
+          best_time_to_visit?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          height_requirement?: number | null
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          lightning_lane?: boolean | null
+          longitude?: number | null
+          name?: string
+          park_id?: string | null
+          popularity_score?: number | null
+          slug?: string
+          thrill_level?: string | null
+          tips?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attractions_park_id_fkey"
+            columns: ["park_id"]
+            isOneToOne: false
+            referencedRelation: "parks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_categories: {
         Row: {
           color: string | null
