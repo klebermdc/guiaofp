@@ -43,7 +43,10 @@ import {
   Smartphone,
   Loader2,
   ExternalLink,
-  GripVertical
+  GripVertical,
+  MapPin,
+  Filter,
+  X
 } from 'lucide-react';
 
 interface ContentItem {
@@ -75,19 +78,28 @@ interface Category {
   color: string;
 }
 
-// Park category IDs for showing attraction fields
+// Park category names for showing attraction fields
 const PARK_CATEGORY_NAMES = [
   'Magic Kingdom',
-  'Epcot',
+  'EPCOT',
   'Hollywood Studios',
   'Animal Kingdom',
-  'Island of Adventure',
   'Universal Studios',
+  'Islands of Adventure',
   'Epic Universe',
+  'Volcano Bay',
+  'SeaWorld',
+  'Busch Gardens',
+  'Aquatica',
+  'Discovery Cove',
+  'LEGOLAND',
+  'Typhoon Lagoon',
+  'Blizzard Beach',
 ];
 
 const CONTENT_TYPES = [
   { value: 'video', label: 'Vídeo', icon: FileVideo },
+  { value: 'poi', label: 'POI', icon: MapPin },
   { value: 'pdf', label: 'PDF', icon: FileText },
   { value: 'image', label: 'Imagem', icon: ImageIcon },
   { value: 'checklist', label: 'Checklist', icon: CheckSquare },
@@ -109,6 +121,10 @@ export function ContentManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [editingContent, setEditingContent] = useState<ContentItem | null>(null);
+  
+  // Filters
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -132,6 +148,20 @@ export function ContentManager() {
   const isParkCategory = () => {
     const selectedCategory = categories.find(c => c.id === formData.category_id);
     return selectedCategory ? PARK_CATEGORY_NAMES.includes(selectedCategory.name) : false;
+  };
+
+  // Filter contents
+  const filteredContents = contents.filter(content => {
+    const matchesCategory = filterCategory === 'all' || content.category_id === filterCategory;
+    const matchesType = filterType === 'all' || content.type === filterType;
+    return matchesCategory && matchesType;
+  });
+
+  const hasActiveFilters = filterCategory !== 'all' || filterType !== 'all';
+
+  const clearFilters = () => {
+    setFilterCategory('all');
+    setFilterType('all');
   };
 
   useEffect(() => {
@@ -353,18 +383,76 @@ export function ContentManager() {
         </Button>
       </CardHeader>
       <CardContent>
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-muted/30 rounded-lg border border-border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            <span>Filtros:</span>
+          </div>
+          
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Parque/Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Parques</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Tipos</SelectItem>
+              {CONTENT_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  <div className="flex items-center gap-2">
+                    <type.icon className="h-4 w-4" />
+                    {type.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+              <X className="h-4 w-4 mr-1" />
+              Limpar
+            </Button>
+          )}
+
+          <div className="ml-auto text-sm text-muted-foreground">
+            {filteredContents.length} de {contents.length} itens
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : contents.length === 0 ? (
+        ) : filteredContents.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FileVideo className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum conteúdo cadastrado ainda.</p>
-            <Button variant="outline" className="mt-4" onClick={openNewDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar primeiro conteúdo
-            </Button>
+            <p>{contents.length === 0 ? 'Nenhum conteúdo cadastrado ainda.' : 'Nenhum conteúdo encontrado com os filtros atuais.'}</p>
+            {contents.length === 0 && (
+              <Button variant="outline" className="mt-4" onClick={openNewDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar primeiro conteúdo
+              </Button>
+            )}
+            {hasActiveFilters && (
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-2" />
+                Limpar filtros
+              </Button>
+            )}
           </div>
         ) : (
           <Table>
@@ -380,7 +468,7 @@ export function ContentManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contents.map((content) => {
+              {filteredContents.map((content) => {
                 const TypeIcon = getTypeIcon(content.type);
                 return (
                   <TableRow key={content.id}>
