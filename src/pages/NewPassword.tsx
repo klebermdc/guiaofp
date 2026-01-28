@@ -62,18 +62,22 @@ const NewPassword = () => {
         throw error;
       }
 
+      // Success - stop loading and show success state
+      setIsLoading(false);
       setIsSuccess(true);
       toast.success('Senha alterada com sucesso!');
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate('/dashboard');
+        // Sign out to force fresh login with new password
+        supabase.auth.signOut().then(() => {
+          navigate('/login', { replace: true });
+        });
       }, 2000);
     } catch (err: any) {
       console.error('Update password error:', err);
-      toast.error(err.message || 'Erro ao alterar senha. Tente novamente.');
-    } finally {
       setIsLoading(false);
+      toast.error(err.message || 'Erro ao alterar senha. Tente novamente.');
     }
   };
 
