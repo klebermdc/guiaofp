@@ -27,6 +27,7 @@ export interface LibraryItem {
   cuisine?: string;
   mustTry?: string;
   tip?: string;
+  restaurantType?: string;
 }
 
 interface ActivityLibraryProps {
@@ -168,10 +169,19 @@ const getItemIcon = (item: any, type: string) => {
   }
 };
 
+// Restaurant type configuration
+const RESTAURANT_TYPES = [
+  { id: 'all', label: 'Todos', icon: '🍽️' },
+  { id: 'quick-service', label: 'Quick Service', icon: '🍔' },
+  { id: 'table-service', label: 'Mesa', icon: '🍷' },
+  { id: 'signature', label: 'Signature', icon: '⭐' },
+] as const;
+
 export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const [selectedTab, setSelectedTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPark, setSelectedPark] = useState<string>('all');
+  const [selectedRestaurantType, setSelectedRestaurantType] = useState<string>('all');
 
   // Fetch data
   const { data: parks = [], isLoading: loadingParks } = useQuery({ 
@@ -251,6 +261,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         cuisine: rest.cuisine || undefined,
         mustTry: rest.must_try || undefined,
         tip: rest.tips || undefined,
+        restaurantType: rest.type || undefined,
       };
     });
 
@@ -332,8 +343,13 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       items = items.filter(item => item.park_id === selectedPark);
     }
 
+    // Filter by restaurant type (only for restaurants tab)
+    if (selectedTab === 'restaurants' && selectedRestaurantType && selectedRestaurantType !== 'all') {
+      items = items.filter(item => item.restaurantType === selectedRestaurantType);
+    }
+
     return items;
-  }, [selectedTab, searchQuery, selectedPark, transformedItems]);
+  }, [selectedTab, searchQuery, selectedPark, selectedRestaurantType, transformedItems]);
 
   // Tab counts
   const tabCounts = useMemo(() => ({
@@ -346,6 +362,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   }), [transformedItems]);
 
   const showParkFilter = selectedTab === 'attractions';
+  const showRestaurantTypeFilter = selectedTab === 'restaurants';
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm sticky top-4 max-h-[calc(100vh-120px)] flex flex-col overflow-hidden">
@@ -406,6 +423,29 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {/* Restaurant Type Filter (only for restaurants) */}
+      {showRestaurantTypeFilter && (
+        <div className="px-3 py-2 border-b border-border bg-orange-50/50 dark:bg-orange-950/20">
+          <div className="flex flex-wrap gap-1.5">
+            {RESTAURANT_TYPES.map(type => (
+              <button
+                key={type.id}
+                onClick={() => setSelectedRestaurantType(type.id)}
+                className={cn(
+                  "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all",
+                  selectedRestaurantType === type.id
+                    ? "bg-orange-500 text-white shadow-sm"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                <span>{type.icon}</span>
+                <span>{type.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
