@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Search } from 'lucide-react';
+import { Search, GripVertical, Clock, MapPin, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 export interface LibraryItem {
   id: string;
@@ -25,6 +27,31 @@ export interface LibraryItem {
 interface ActivityLibraryProps {
   onDragStart?: (item: LibraryItem) => void;
 }
+
+// Tab configuration
+const TABS = [
+  { id: 'all', label: 'Todos', icon: '📋' },
+  { id: 'attractions', label: 'Atrações', icon: '🎢' },
+  { id: 'restaurants', label: 'Restaurantes', icon: '🍽️' },
+  { id: 'shopping', label: 'Compras', icon: '🛍️' },
+  { id: 'activities', label: 'Outras', icon: '🌴' },
+] as const;
+
+// Category color mapping
+const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  disney: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  universal: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+  seaworld: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+  outlet: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+  mall: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+  supermarket: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+  restaurante: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+  atividade: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+};
+
+const getCategoryStyle = (category: string) => {
+  return CATEGORY_STYLES[category.toLowerCase()] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
+};
 
 // Fetch functions
 const fetchParks = async () => {
@@ -72,7 +99,7 @@ const fetchActivities = async () => {
   return data;
 };
 
-// Helper to get category and color
+// Helper to determine category info
 const getCategoryInfo = (item: any, type: string, parks: any[]) => {
   if (type === 'park') {
     const isDisney = item.slug?.includes('disney') || item.slug?.includes('magic-kingdom') || 
@@ -100,17 +127,18 @@ const getCategoryInfo = (item: any, type: string, parks: any[]) => {
 
   if (type === 'shopping') {
     if (item.category === 'outlet') return { category: 'outlet', color: '#A855F7' };
-    if (item.category === 'walmart' || item.category === 'supermercado') return { category: 'walmart', color: '#0066CC' };
-    if (item.category === 'target') return { category: 'target', color: '#CC0000' };
+    if (item.category === 'walmart' || item.category === 'supermercado') return { category: 'supermarket', color: '#0066CC' };
+    if (item.category === 'target') return { category: 'supermarket', color: '#CC0000' };
+    if (item.category === 'mall') return { category: 'mall', color: '#EC4899' };
     return { category: 'shopping', color: item.color || '#10B981' };
   }
 
   if (type === 'activity') {
-    return { category: item.category || 'atividade', color: item.color || '#F59E0B' };
+    return { category: 'atividade', color: item.color || '#14B8A6' };
   }
 
   if (type === 'restaurant') {
-    return { category: 'restaurante', color: item.color || '#EF4444' };
+    return { category: 'restaurante', color: item.color || '#F97316' };
   }
 
   return { category: 'outro', color: '#6B7280' };
@@ -127,7 +155,8 @@ const getItemIcon = (item: any, type: string) => {
     case 'shopping': {
       if (item.category === 'outlet') return '🛍️';
       if (item.category === 'walmart' || item.category === 'supermercado') return '🛒';
-      return '🏬';
+      if (item.category === 'mall') return '🏬';
+      return '🛒';
     }
     case 'activity': return '🌴';
     default: return '📍';
@@ -135,32 +164,41 @@ const getItemIcon = (item: any, type: string) => {
 };
 
 export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
-  const [selectedTab, setSelectedTab] = useState('parks');
+  const [selectedTab, setSelectedTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPark, setSelectedPark] = useState<string>('all');
 
   // Fetch data
-  const { data: parks = [] } = useQuery({ queryKey: ['parks'], queryFn: fetchParks });
-  const { data: attractions = [] } = useQuery({ queryKey: ['attractions'], queryFn: fetchAttractions });
-  const { data: restaurants = [] } = useQuery({ queryKey: ['restaurants'], queryFn: fetchRestaurants });
-  const { data: shopping = [] } = useQuery({ queryKey: ['shopping'], queryFn: fetchShopping });
-  const { data: activities = [] } = useQuery({ queryKey: ['activities'], queryFn: fetchActivities });
+  const { data: parks = [], isLoading: loadingParks } = useQuery({ 
+    queryKey: ['parks'], 
+    queryFn: fetchParks,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: attractions = [], isLoading: loadingAttractions } = useQuery({ 
+    queryKey: ['attractions'], 
+    queryFn: fetchAttractions,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: restaurants = [], isLoading: loadingRestaurants } = useQuery({ 
+    queryKey: ['restaurants'], 
+    queryFn: fetchRestaurants,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: shopping = [], isLoading: loadingShopping } = useQuery({ 
+    queryKey: ['shopping'], 
+    queryFn: fetchShopping,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: activities = [], isLoading: loadingActivities } = useQuery({ 
+    queryKey: ['activities'], 
+    queryFn: fetchActivities,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading = loadingParks || loadingAttractions || loadingRestaurants || loadingShopping || loadingActivities;
 
   // Transform data to LibraryItem format
   const transformedItems = useMemo(() => {
-    const parkItems: LibraryItem[] = parks.map(park => {
-      const info = getCategoryInfo(park, 'park', parks);
-      return {
-        id: park.id,
-        name: park.name,
-        type: 'park' as const,
-        category: info.category,
-        color: info.color,
-        icon: getItemIcon(park, 'park'),
-        duration: park.typical_visit_duration,
-      };
-    });
-
     const attractionItems: LibraryItem[] = attractions.map(attr => {
       const info = getCategoryInfo(attr, 'attraction', parks);
       return {
@@ -170,7 +208,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         category: info.category,
         color: info.color,
         icon: getItemIcon(attr, 'attraction'),
-        duration: attr.duration,
+        duration: attr.duration || undefined,
         area: attr.area || undefined,
         park_id: attr.park_id || undefined,
         parkName: info.parkName,
@@ -183,7 +221,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         id: rest.id,
         name: rest.name,
         type: 'restaurant' as const,
-        category: info.category,
+        category: info.category || 'restaurante',
         color: info.color,
         icon: getItemIcon(rest, 'restaurant'),
         area: rest.area || undefined,
@@ -219,7 +257,6 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     });
 
     return {
-      parks: parkItems,
       attractions: attractionItems,
       restaurants: restaurantItems,
       shopping: shoppingItems,
@@ -227,14 +264,11 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     };
   }, [parks, attractions, restaurants, shopping, activities]);
 
-  // Filter items
+  // Filter items based on tab, search, and park
   const filteredItems = useMemo(() => {
     let items: LibraryItem[] = [];
 
     switch (selectedTab) {
-      case 'parks':
-        items = transformedItems.parks;
-        break;
       case 'attractions':
         items = transformedItems.attractions;
         break;
@@ -245,9 +279,10 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         items = transformedItems.shopping;
         break;
       case 'activities':
-        items = transformedItems.activities;
+        items = [...transformedItems.activities, ...transformedItems.shopping];
         break;
       case 'all':
+      default:
         items = [
           ...transformedItems.attractions,
           ...transformedItems.restaurants,
@@ -257,71 +292,92 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         break;
     }
 
-    // Filter by search
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       items = items.filter(item =>
         item.name.toLowerCase().includes(query) ||
         item.category.toLowerCase().includes(query) ||
-        item.parkName?.toLowerCase().includes(query)
+        item.parkName?.toLowerCase().includes(query) ||
+        item.area?.toLowerCase().includes(query)
       );
     }
 
-    // Filter by park
-    if (selectedPark && selectedPark !== 'all') {
+    // Filter by park (only for attractions tab)
+    if (selectedTab === 'attractions' && selectedPark && selectedPark !== 'all') {
       items = items.filter(item => item.park_id === selectedPark);
     }
 
     return items;
   }, [selectedTab, searchQuery, selectedPark, transformedItems]);
 
-  const showParkFilter = selectedTab === 'attractions' || selectedTab === 'restaurants';
+  // Tab counts
+  const tabCounts = useMemo(() => ({
+    all: transformedItems.attractions.length + transformedItems.restaurants.length + 
+         transformedItems.shopping.length + transformedItems.activities.length,
+    attractions: transformedItems.attractions.length,
+    restaurants: transformedItems.restaurants.length,
+    shopping: transformedItems.shopping.length,
+    activities: transformedItems.activities.length + transformedItems.shopping.length,
+  }), [transformedItems]);
+
+  const showParkFilter = selectedTab === 'attractions';
 
   return (
-    <div className="bg-card rounded-xl border border-border sticky top-4 max-h-[calc(100vh-100px)] flex flex-col">
+    <div className="bg-white rounded-xl border border-border shadow-sm sticky top-4 max-h-[calc(100vh-120px)] flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold text-foreground mb-3">
+      <div className="p-4 border-b border-border bg-gradient-to-b from-muted/30 to-transparent">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+          <span className="text-lg">📚</span>
           Biblioteca de Atividades
         </h2>
         
         {/* Search */}
-        <div className="relative mb-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar atividade..."
-            className="pl-9"
+            placeholder="Buscar por nome, área..."
+            className="pl-9 h-9 text-sm bg-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+      </div>
 
-        {/* Tabs */}
+      {/* Tabs */}
+      <div className="px-3 py-2 border-b border-border bg-muted/20">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid grid-cols-6 w-full">
-            <TabsTrigger value="parks" className="text-xs px-1">🏰</TabsTrigger>
-            <TabsTrigger value="attractions" className="text-xs px-1">🎢</TabsTrigger>
-            <TabsTrigger value="restaurants" className="text-xs px-1">🍽️</TabsTrigger>
-            <TabsTrigger value="shopping" className="text-xs px-1">🛍️</TabsTrigger>
-            <TabsTrigger value="activities" className="text-xs px-1">🌴</TabsTrigger>
-            <TabsTrigger value="all" className="text-xs px-1">📋</TabsTrigger>
+          <TabsList className="w-full h-auto p-1 bg-muted/50 grid grid-cols-5 gap-1">
+            {TABS.map(tab => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex flex-col items-center gap-0.5 py-1.5 px-1 text-[10px] data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <span className="text-base">{tab.icon}</span>
+                <span className="leading-none truncate w-full text-center">{tab.label}</span>
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 min-w-[20px]">
+                  {tabCounts[tab.id as keyof typeof tabCounts]}
+                </Badge>
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Park Filter */}
+      {/* Park Filter (only for attractions) */}
       {showParkFilter && (
-        <div className="p-3 border-b border-border bg-muted/50">
+        <div className="px-3 py-2 border-b border-border bg-blue-50/50">
           <Select value={selectedPark} onValueChange={setSelectedPark}>
-            <SelectTrigger className="w-full text-sm">
-              <SelectValue placeholder="Todos os Parques" />
+            <SelectTrigger className="w-full h-8 text-xs bg-white">
+              <SelectValue placeholder="Filtrar por parque" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Parques</SelectItem>
+              <SelectItem value="all">🏰 Todos os Parques</SelectItem>
               {parks.map(park => (
                 <SelectItem key={park.id} value={park.id}>
-                  {park.name}
+                  {park.slug?.includes('disney') ? '🏰' : '⚡'} {park.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -332,10 +388,25 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       {/* Items List */}
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-2">
-          {filteredItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum resultado encontrado
-            </p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="text-4xl mb-2 block">🔍</span>
+              <p className="text-sm text-muted-foreground">
+                Nenhum resultado encontrado
+              </p>
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs text-primary hover:underline mt-2"
+                >
+                  Limpar busca
+                </button>
+              )}
+            </div>
           ) : (
             filteredItems.map(item => (
               <DraggableActivityItem
@@ -348,9 +419,11 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-border bg-muted/50 text-xs text-muted-foreground">
-        <p>💡 <strong>Dica:</strong> Arraste as atividades para os dias do calendário</p>
+      {/* Footer Tip */}
+      <div className="p-3 border-t border-border bg-gradient-to-t from-muted/30 to-transparent">
+        <p className="text-[11px] text-muted-foreground text-center">
+          <span className="font-medium">💡 Dica:</span> Arraste itens para os slots do calendário
+        </p>
       </div>
     </div>
   );
@@ -370,8 +443,9 @@ const DraggableActivityItem = ({ item, onDragStart }: DraggableActivityItemProps
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
   };
+
+  const categoryStyle = getCategoryStyle(item.category);
 
   return (
     <div
@@ -379,37 +453,67 @@ const DraggableActivityItem = ({ item, onDragStart }: DraggableActivityItemProps
       style={style}
       {...listeners}
       {...attributes}
-      className={`p-3 border rounded-lg cursor-grab active:cursor-grabbing hover:shadow-md transition-all touch-none ${
-        isDragging ? 'shadow-lg scale-105' : ''
-      }`}
+      className={cn(
+        "p-2.5 border rounded-lg cursor-grab active:cursor-grabbing transition-all touch-none group",
+        "bg-white hover:shadow-md hover:border-primary/30",
+        isDragging && "shadow-xl scale-105 opacity-80 ring-2 ring-primary z-50",
+        categoryStyle.border
+      )}
       onDragStart={() => onDragStart?.(item)}
     >
       <div className="flex items-start gap-2">
-        <span className="text-xl flex-shrink-0">{item.icon}</span>
+        {/* Drag Handle */}
+        <div className="mt-0.5 opacity-40 group-hover:opacity-100 transition-opacity">
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+        </div>
+
+        {/* Icon */}
+        <span className="text-lg flex-shrink-0">{item.icon}</span>
+
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-          {item.area && (
-            <p className="text-xs text-muted-foreground truncate">{item.area}</p>
+          <p className="text-sm font-medium text-foreground truncate leading-tight">
+            {item.name}
+          </p>
+          
+          {/* Location/Area */}
+          {(item.area || item.parkName) && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <MapPin className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
+              <p className="text-[10px] text-muted-foreground truncate">
+                {item.area || item.parkName}
+              </p>
+            </div>
           )}
-          {item.parkName && (
-            <p className="text-xs text-muted-foreground truncate">{item.parkName}</p>
-          )}
+
+          {/* Duration */}
           {item.duration && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              ⏱️ {item.duration} min
-            </p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <Clock className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
+              <p className="text-[10px] text-muted-foreground">
+                {item.duration} min
+              </p>
+            </div>
           )}
         </div>
       </div>
       
       {/* Category Tag */}
-      <div className="mt-2">
+      <div className="mt-2 flex items-center gap-1.5">
         <span
-          className="inline-block px-2 py-0.5 rounded text-[10px] font-medium uppercase"
-          style={{ backgroundColor: `${item.color}20`, color: item.color }}
+          className={cn(
+            "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wide",
+            categoryStyle.bg,
+            categoryStyle.text
+          )}
         >
           {item.category}
         </span>
+        {item.type === 'attraction' && item.parkName && (
+          <span className="text-[9px] text-muted-foreground truncate">
+            {item.parkName}
+          </span>
+        )}
       </div>
     </div>
   );
