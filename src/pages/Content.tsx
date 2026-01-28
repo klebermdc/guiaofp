@@ -462,7 +462,6 @@ const Content = () => {
                         </Badge>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-start justify-end p-3">
-                        <span className="text-2xl mb-1 drop-shadow-md">{park.emoji}</span>
                         <h3 className="font-display text-sm sm:text-base font-bold text-white line-clamp-2" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.9)' }}>
                           {park.name}
                         </h3>
