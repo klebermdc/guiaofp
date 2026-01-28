@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -17,8 +17,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
 import { format, eachDayOfInterval, parseISO, isWeekend } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Check, Clock, MapPin } from 'lucide-react';
+import { Trash2, Check, Clock, MapPin, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export interface PlannerItem {
   id: string;
@@ -50,6 +51,16 @@ interface PlannerCalendarProps {
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
   onToggleComplete?: (itemId: string) => void;
 }
+
+// Track recently added items for highlight animation
+const recentlyAddedItems = new Set<string>();
+
+const addRecentItem = (itemId: string) => {
+  recentlyAddedItems.add(itemId);
+  setTimeout(() => {
+    recentlyAddedItems.delete(itemId);
+  }, 2000);
+};
 
 // Time slots configuration
 const TIME_SLOTS = [
@@ -98,9 +109,31 @@ export const PlannerCalendar = ({
     return eachDayOfInterval({ start, end }).map(date => format(date, 'yyyy-MM-dd'));
   }, [startDate, endDate]);
 
+  const [highlightedSlot, setHighlightedSlot] = useState<string | null>(null);
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
+
+  // Show success feedback when item is dropped
+  const showDropFeedback = useCallback((itemName: string, slotLabel: string, dateStr: string) => {
+    const formattedDate = format(parseISO(dateStr), "d 'de' MMM", { locale: ptBR });
+    toast.success(
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <div>
+          <p className="font-medium">{itemName}</p>
+          <p className="text-xs text-muted-foreground">
+            Adicionado: {slotLabel} • {formattedDate}
+          </p>
+        </div>
+      </div>,
+      {
+        duration: 2500,
+        className: 'border-primary/20',
+      }
+    );
+  }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -117,6 +150,17 @@ export const PlannerCalendar = ({
       
       const draggedItem = items.find(item => item.id === active.id);
       if (draggedItem && (draggedItem.date !== dateStr || draggedItem.time_slot !== slot)) {
+        // Highlight the slot temporarily
+        setHighlightedSlot(`date-${dateStr}-slot-${slot}`);
+        setTimeout(() => setHighlightedSlot(null), 1500);
+        
+        // Show success feedback
+        const slotInfo = TIME_SLOTS.find(s => s.id === slot);
+        showDropFeedback(draggedItem.item_name, slotInfo?.label || slot, dateStr);
+        
+        // Track for item highlight animation
+        addRecentItem(draggedItem.id);
+        
         onDrop(draggedItem, dateStr, slot);
       }
     }
@@ -160,6 +204,7 @@ export const PlannerCalendar = ({
             items={items.filter(item => item.date === date)}
             onRemove={onRemove}
             onToggleComplete={onToggleComplete}
+            highlightedSlot={highlightedSlot}
           />
         ))}
       </div>
@@ -177,10 +222,11 @@ interface DayRowProps {
   dayNumber: number;
   items: PlannerItem[];
   onRemove: (itemId: string) => void;
+  highlightedSlot: string | null;
   onToggleComplete?: (itemId: string) => void;
 }
 
-const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete }: DayRowProps) => {
+const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, highlightedSlot }: DayRowProps) => {
   const parsedDate = parseISO(date);
   const isWeekendDay = isWeekend(parsedDate);
   const dayOfWeek = format(parsedDate, 'EEEE', { locale: ptBR });
@@ -228,6 +274,7 @@ const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete }: DayRowPr
             items={items.filter(i => i.time_slot === slot.id)}
             onRemove={onRemove}
             onToggleComplete={onToggleComplete}
+            isHighlighted={highlightedSlot === `date-${date}-slot-${slot.id}`}
           />
         ))}
       </div>
@@ -242,9 +289,10 @@ interface TimeSlotDropZoneProps {
   items: PlannerItem[];
   onRemove: (itemId: string) => void;
   onToggleComplete?: (itemId: string) => void;
+  isHighlighted?: boolean;
 }
 
-const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete }: TimeSlotDropZoneProps) => {
+const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, isHighlighted }: TimeSlotDropZoneProps) => {
   // Format: date-YYYY-MM-DD-slot-slotId (matching PlannerManual's expected format)
   const dropId = `date-${date}-slot-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -258,10 +306,11 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete }: Tim
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[120px] border-2 border-dashed rounded-lg p-2 transition-all duration-200",
+        "min-h-[120px] border-2 border-dashed rounded-lg p-2 transition-all duration-300",
         isOver 
           ? "border-primary bg-primary/20 scale-[1.02] shadow-md" 
-          : "border-border/40 hover:border-border/80 bg-background/50"
+          : "border-border/40 hover:border-border/80 bg-background/50",
+        isHighlighted && "border-success bg-success/10 animate-pulse ring-2 ring-success/50"
       )}
     >
       {/* Slot Header */}
@@ -352,6 +401,16 @@ interface ActivityCardProps {
 const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete }: ActivityCardProps) => {
   const categoryStyle = getCategoryStyle(item.category);
   const icon = item.icon || getDefaultIcon(item.item_type, item.category);
+  const [isNewlyAdded, setIsNewlyAdded] = useState(false);
+
+  // Check if this item was recently added
+  useEffect(() => {
+    if (recentlyAddedItems.has(item.id)) {
+      setIsNewlyAdded(true);
+      const timer = setTimeout(() => setIsNewlyAdded(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [item.id]);
   
   return (
     <div
@@ -360,7 +419,8 @@ const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete }: Activity
         isDragging ? "shadow-xl scale-105 ring-2 ring-primary" : "shadow-sm hover:shadow-md",
         item.completed ? "opacity-60" : "",
         categoryStyle.bg,
-        categoryStyle.border
+        categoryStyle.border,
+        isNewlyAdded && "animate-[success-pop_0.4s_ease-out] ring-2 ring-success/60 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
       )}
     >
       <div className="flex items-start justify-between gap-1">
