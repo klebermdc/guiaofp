@@ -4,7 +4,6 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, ExternalLink, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -450,39 +449,37 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       )}
 
       {/* Items List */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-3 space-y-2">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="text-center py-12">
-                <span className="text-4xl mb-2 block">🔍</span>
-                <p className="text-sm text-muted-foreground">
-                  Nenhum resultado encontrado
-                </p>
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="text-xs text-primary hover:underline mt-2"
-                  >
-                    Limpar busca
-                  </button>
-                )}
-              </div>
-            ) : (
-              filteredItems.map(item => (
-                <DraggableActivityItem
-                  key={`${item.type}-${item.id}`}
-                  item={item}
-                  onDragStart={onDragStart}
-                />
-              ))
-            )}
-          </div>
-        </ScrollArea>
+      <div className="flex-1 min-h-0 overflow-auto">
+        <div className="p-3 space-y-2 pb-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="text-4xl mb-2 block">🔍</span>
+              <p className="text-sm text-muted-foreground">
+                Nenhum resultado encontrado
+              </p>
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs text-primary hover:underline mt-2"
+                >
+                  Limpar busca
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredItems.map(item => (
+              <DraggableActivityItem
+                key={`${item.type}-${item.id}`}
+                item={item}
+                onDragStart={onDragStart}
+              />
+            ))
+          )}
+        </div>
       </div>
 
       {/* Footer Tip */}
