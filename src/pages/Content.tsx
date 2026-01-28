@@ -454,15 +454,16 @@ const Content = () => {
                         alt={park.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <div className={`absolute inset-0 bg-gradient-to-t ${park.color} opacity-60`} />
+                      {/* Dark gradient overlay for text legibility */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute top-2 left-2">
                         <Badge variant="secondary" className="text-xs bg-white/90 text-foreground">
                           {park.categoryLabel}
                         </Badge>
                       </div>
                       <div className="absolute inset-0 flex flex-col items-start justify-end p-3">
-                        <span className="text-2xl mb-1">{park.emoji}</span>
-                        <h3 className="font-display text-sm sm:text-base font-bold text-white drop-shadow-lg line-clamp-2">
+                        <span className="text-2xl mb-1 drop-shadow-md">{park.emoji}</span>
+                        <h3 className="font-display text-sm sm:text-base font-bold text-white line-clamp-2" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.9)' }}>
                           {park.name}
                         </h3>
                       </div>
