@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Search, GripVertical, Clock, MapPin, Loader2 } from 'lucide-react';
+import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, ExternalLink, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +22,11 @@ export interface LibraryItem {
   area?: string;
   park_id?: string;
   parkName?: string;
+  description?: string;
+  menuUrl?: string;
+  cuisine?: string;
+  mustTry?: string;
+  tip?: string;
 }
 
 interface ActivityLibraryProps {
@@ -75,7 +80,7 @@ const fetchAttractions = async () => {
 const fetchRestaurants = async () => {
   const { data, error } = await supabase
     .from('restaurants')
-    .select('id, name, color, area, park_id, cuisine, parks(name, slug, color)')
+    .select('id, name, color, area, park_id, cuisine, description, menu_url, must_try, tips, type, parks(name, slug, color)')
     .order('name');
   if (error) throw error;
   return data;
@@ -217,6 +222,20 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
 
     const restaurantItems: LibraryItem[] = restaurants.map(rest => {
       const info = getCategoryInfo(rest, 'restaurant', parks);
+      // Build a short description from available data
+      let shortDesc = rest.description || '';
+      if (!shortDesc && rest.cuisine) {
+        shortDesc = `Culinária ${rest.cuisine}`;
+      }
+      if (!shortDesc && rest.type) {
+        const typeLabels: Record<string, string> = {
+          'quick-service': 'Restaurante Quick Service',
+          'table-service': 'Restaurante com serviço de mesa',
+          'signature': 'Restaurante Signature (premium)',
+        };
+        shortDesc = typeLabels[rest.type] || 'Restaurante';
+      }
+      
       return {
         id: rest.id,
         name: rest.name,
@@ -227,6 +246,11 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
         area: rest.area || undefined,
         park_id: rest.park_id || undefined,
         parkName: info.parkName,
+        description: shortDesc || undefined,
+        menuUrl: rest.menu_url || undefined,
+        cuisine: rest.cuisine || undefined,
+        mustTry: rest.must_try || undefined,
+        tip: rest.tips || undefined,
       };
     });
 
@@ -495,6 +519,53 @@ const DraggableActivityItem = ({ item, onDragStart }: DraggableActivityItemProps
               <p className="text-[10px] text-muted-foreground">
                 {item.duration} min
               </p>
+            </div>
+          )}
+
+          {/* Restaurant-specific info */}
+          {item.type === 'restaurant' && (
+            <div className="mt-1.5 space-y-1">
+              {/* Cuisine type */}
+              {item.cuisine && (
+                <div className="flex items-center gap-1">
+                  <UtensilsCrossed className="w-2.5 h-2.5 text-orange-400 flex-shrink-0" />
+                  <p className="text-[10px] text-orange-400 font-medium truncate">
+                    {item.cuisine}
+                  </p>
+                </div>
+              )}
+              
+              {/* Description */}
+              {item.description && (
+                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
+                  {item.description}
+                </p>
+              )}
+              
+              {/* Must try */}
+              {item.mustTry && (
+                <div className="flex items-start gap-1 bg-amber-500/10 rounded px-1.5 py-1">
+                  <Sparkles className="w-2.5 h-2.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-500 line-clamp-1">
+                    <span className="font-medium">Peça:</span> {item.mustTry}
+                  </p>
+                </div>
+              )}
+              
+              {/* Menu link */}
+              {item.menuUrl && (
+                <a
+                  href={item.menuUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline mt-0.5"
+                >
+                  <ExternalLink className="w-2.5 h-2.5" />
+                  Ver cardápio
+                </a>
+              )}
             </div>
           )}
         </div>
