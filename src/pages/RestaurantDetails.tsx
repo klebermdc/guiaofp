@@ -21,18 +21,22 @@ import {
   Info,
   Heart,
   Share2,
-  Bookmark
+  Bookmark,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRestaurantWithDetails } from '@/hooks/useRestaurants';
 import { useFavoriteSlugs, useToggleFavorite } from '@/hooks/useRestaurantFavorites';
+import { useRestaurantAverageRating } from '@/hooks/useRestaurantReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
+import { ReviewSection } from '@/components/restaurants/ReviewSection';
 
 interface RestaurantData {
   id: string;
@@ -74,6 +78,7 @@ const RestaurantDetails = () => {
 
   const { data: favoriteSlugs } = useFavoriteSlugs();
   const toggleFavorite = useToggleFavorite();
+  const { data: avgRating } = useRestaurantAverageRating(restaurant?.id || null);
   
   const isFavorite = slug ? (favoriteSlugs?.has(slug) || false) : false;
 
@@ -337,13 +342,22 @@ const RestaurantDetails = () => {
                 )}
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">{restaurant.name}</h1>
-              {restaurant.location && (
-                <p className="text-white/80 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  {restaurant.location}
-                  {restaurant.area && ` • ${restaurant.area}`}
-                </p>
-              )}
+              <div className="flex flex-wrap items-center gap-4">
+                {restaurant.location && (
+                  <p className="text-white/80 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {restaurant.location}
+                    {restaurant.area && ` • ${restaurant.area}`}
+                  </p>
+                )}
+                {avgRating && avgRating.count > 0 && (
+                  <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold">{avgRating.average.toFixed(1)}</span>
+                    <span className="text-white/70 text-sm">({avgRating.count})</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -577,6 +591,12 @@ const RestaurantDetails = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Reviews Section */}
+          <ReviewSection 
+            restaurantId={restaurant.id} 
+            restaurantName={restaurant.name} 
+          />
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
