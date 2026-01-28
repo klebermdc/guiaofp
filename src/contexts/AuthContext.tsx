@@ -305,18 +305,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Use refs to track initialization state across re-renders
+  const initCompletedRef = React.useRef(false);
+  const isInitializingRef = React.useRef(false);
+
   useEffect(() => {
     let isMounted = true;
-    let initCompleted = false;
+    
+    // CRITICAL: Skip re-initialization if already completed
+    // This prevents re-auth when switching tabs
+    if (initCompletedRef.current) {
+      console.log('[Auth] Already initialized, skipping');
+      return;
+    }
+    
+    // Prevent concurrent initialization
+    if (isInitializingRef.current) {
+      console.log('[Auth] Already initializing, skipping');
+      return;
+    }
+    
+    isInitializingRef.current = true;
     
     // CRITICAL: Absolute safety timeout - ALWAYS fires after 8 seconds
     // This ensures the app NEVER gets stuck in loading state
     const absoluteTimeout = setTimeout(() => {
-      if (isMounted) {
+      if (isMounted && !initCompletedRef.current) {
         console.warn('[Auth] Absolute safety timeout triggered');
         setIsLoading(false);
         setIsProfileLoading(false);
-        initCompleted = true;
+        initCompletedRef.current = true;
       }
     }, 8000);
 
@@ -338,7 +356,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error) {
           console.warn('[Auth] Session check failed:', error.message);
           setIsLoading(false);
-          initCompleted = true;
+          initCompletedRef.current = true;
           return;
         }
         
@@ -366,7 +384,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         if (isMounted) {
           setIsLoading(false);
-          initCompleted = true;
+          initCompletedRef.current = true;
         }
       }
     };
@@ -377,15 +395,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!isMounted) return;
         
         // Skip during initial load
-        if (!initCompleted && event === 'INITIAL_SESSION') {
+        if (!initCompletedRef.current && event === 'INITIAL_SESSION') {
+          return;
+        }
+        
+        // Skip TOKEN_REFRESHED events to prevent unnecessary reloads
+        if (event === 'TOKEN_REFRESHED') {
+          // Just update session silently without reloading profile
+          setSession(newSession);
           return;
         }
         
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Only update profile for genuine auth changes after init
-        if (initCompleted) {
+        // Only update profile for genuine auth changes (SIGNED_IN, SIGNED_OUT)
+        if (initCompletedRef.current && (event === 'SIGNED_IN' || event === 'SIGNED_OUT')) {
           if (newSession?.user) {
             setIsProfileLoading(true);
             try {

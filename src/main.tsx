@@ -12,22 +12,36 @@ if ('serviceWorker' in navigator) {
         .then((registration) => {
           console.log('SW registered:', registration.scope);
 
-          // Auto-reload once when a new SW takes control (prevents users being stuck on stale JS on iOS/PWA).
+          // Only reload on SW update if the page is actively being viewed
+          // This prevents reload when switching back to the tab
           const RELOAD_FLAG = 'sw-reloaded';
           let reloading = false;
+          
           const safeReload = () => {
+            // Don't reload if already reloading or already reloaded this session
             if (reloading) return;
             if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
+            
+            // Only reload if document is visible - prevents reload on tab switch
+            if (document.visibilityState !== 'visible') {
+              console.log('[SW] Skipping reload - tab not visible');
+              return;
+            }
+            
             reloading = true;
             sessionStorage.setItem(RELOAD_FLAG, '1');
             window.location.reload();
           };
 
-          navigator.serviceWorker.addEventListener('controllerchange', safeReload);
+          // Only listen for genuine SW updates, not every controller change
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // Small delay to ensure this is a real update, not a tab switch
+            setTimeout(safeReload, 100);
+          });
 
           navigator.serviceWorker.addEventListener('message', (event) => {
             if (event.data?.type === 'SW_ACTIVATED') {
-              safeReload();
+              setTimeout(safeReload, 100);
             }
           });
         })
