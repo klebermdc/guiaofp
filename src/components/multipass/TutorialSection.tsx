@@ -491,16 +491,16 @@ const TutorialViewer = ({ tutorial }: { tutorial: Tutorial }) => {
       {/* Quick Navigation */}
       <div className="text-center">
         <p className="text-xs text-muted-foreground mb-2">Ir para o passo:</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {tutorial.steps.map((s, index) => (
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {tutorial.steps.map((_, index) => (
             <Button
               key={index}
-              variant={index === currentStep ? "default" : "ghost"}
+              variant={index === currentStep ? "default" : "outline"}
               size="sm"
               onClick={() => setCurrentStep(index)}
-              className="h-8 px-3 text-xs"
+              className="h-8 w-8 p-0 text-xs font-medium"
             >
-              {index + 1}. {s.title.split(' ').slice(0, 2).join(' ')}
+              {index + 1}
             </Button>
           ))}
         </div>
