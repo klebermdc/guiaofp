@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, Star, Play, Check, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VideoModal } from '@/components/map/VideoModal';
 interface Attraction {
   name: string;
   description: string;
@@ -166,7 +166,9 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
   const [selectedAttractions, setSelectedAttractions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [contentItems, setContentItems] = useState<Array<{ id: string; title: string | null; attraction_name: string | null }>>([]);
+  const [contentItems, setContentItems] = useState<Array<{ id: string; title: string | null; attraction_name: string | null; file_url: string | null }>>([]);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState<{ url: string; title: string }>({ url: '', title: '' });
 
   // Find the park data
   const parkId = parkNameToId[parkName] || parkName.toLowerCase().replace(/\s+/g, '-');
@@ -184,7 +186,7 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
     try {
       const { data } = await supabase
         .from('content_items')
-        .select('id, title, attraction_name')
+        .select('id, title, attraction_name, file_url')
         .eq('type', 'video')
         .eq('is_published', true);
       
@@ -206,14 +208,19 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
       .trim();
   };
 
-  const getContentId = (attractionName: string) => {
+  const getContentData = (attractionName: string) => {
     const normalizedAttractionName = normalizeString(attractionName);
     const content = contentItems.find(
       item => 
         normalizeString(item.title || '') === normalizedAttractionName ||
         normalizeString(item.attraction_name || '') === normalizedAttractionName
     );
-    return content?.id || null;
+    return content ? { id: content.id, url: content.file_url } : null;
+  };
+
+  const handlePlayVideo = (url: string, title: string) => {
+    setCurrentVideo({ url, title });
+    setVideoModalOpen(true);
   };
 
   const loadPreferences = async () => {
@@ -306,6 +313,7 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
   }
 
   return (
+  <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
         <DialogHeader className={cn("p-4 bg-gradient-to-r text-white rounded-t-lg", park.color)}>
@@ -334,7 +342,7 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
             <div className="p-4 space-y-2">
               {park.attractions.map((attraction) => {
                 const isSelected = selectedAttractions.has(attraction.name);
-                const contentId = getContentId(attraction.name);
+                const contentData = getContentData(attraction.name);
                 return (
                   <Card
                     key={attraction.name}
@@ -370,15 +378,17 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
                               <Zap className="h-2.5 w-2.5 mr-0.5" />
                               {attraction.type === 'ride' ? 'Atração' : attraction.type === 'show' ? 'Show' : 'Experiência'}
                             </Badge>
-                            {contentId && (
-                              <Link
-                                to={`/conteudos?video=${contentId}`}
-                                onClick={(e) => e.stopPropagation()}
+                            {contentData?.url && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayVideo(contentData.url!, attraction.name);
+                                }}
                                 className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                               >
                                 <Play className="h-3 w-3" />
                                 Assistir vídeo
-                              </Link>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -401,6 +411,14 @@ export const AttractionsModal = ({ open, onOpenChange, parkName }: AttractionsMo
         </div>
       </DialogContent>
     </Dialog>
+
+    <VideoModal
+      isOpen={videoModalOpen}
+      onClose={() => setVideoModalOpen(false)}
+      videoUrl={currentVideo.url}
+      title={currentVideo.title}
+    />
+  </>
   );
 };
 
