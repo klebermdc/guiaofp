@@ -101,25 +101,6 @@ const TravelGuide = () => {
 
         {/* Main Content - Modern Accordion */}
         <div className="space-y-4">
-          {/* LINK PARA CHECKLISTS */}
-          <div data-section="checklist" className="group">
-            <a href="/checklists" className="block">
-              <Card className="border-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-xl overflow-hidden hover:scale-[1.02] transition-transform cursor-pointer">
-                <CardContent className="p-4 sm:p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-lg sm:text-xl text-white">Checklists de Viagem</h3>
-                    <p className="text-sm text-white/80">Acesse todos os checklists em uma página dedicada</p>
-                  </div>
-                  <ChevronRight className="w-6 h-6 text-white/80 flex-shrink-0" />
-                </CardContent>
-              </Card>
-            </a>
-          </div>
-
-
           {/* LOCOMOÇÃO */}
           <div data-section="locomocao" className="group">
             <Accordion type="single" collapsible className="w-full">
