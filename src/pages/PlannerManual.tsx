@@ -141,8 +141,8 @@ const PlannerManual = () => {
     const dragId = active.id as string;
     const dropTarget = over.id as string;
     
-    // Parse drop target - format: "YYYY-MM-DD-slotId"
-    const match = dropTarget.match(/^(\d{4}-\d{2}-\d{2})-(\w+)$/);
+    // Parse drop target - format: "date-YYYY-MM-DD-slot-slotId"
+    const match = dropTarget.match(/^date-(\d{4}-\d{2}-\d{2})-slot-(\w+)$/);
     if (!match) {
       // Maybe dropped on another item for reordering - handled by PlannerCalendar
       return;
