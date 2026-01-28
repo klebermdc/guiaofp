@@ -140,6 +140,8 @@ const Landing = () => {
             src={heroCastle} 
             alt="Magical castle with fireworks" 
             className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
@@ -271,6 +273,7 @@ const Landing = () => {
                       src={familyPark} 
                       alt="Família no parque" 
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-l from-transparent to-card md:bg-gradient-to-r" />
                   </div>
@@ -305,6 +308,7 @@ const Landing = () => {
                   src={featureCoaster} 
                   alt="Montanha-russa" 
                   className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700"
+                  loading="lazy"
                 />
                 <CardContent className="p-8 flex flex-col h-full min-h-[280px] relative">
                   <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
