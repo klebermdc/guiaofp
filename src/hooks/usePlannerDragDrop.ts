@@ -138,8 +138,8 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
     draggedItem: LibraryItem | any,
     date: string,
     timeSlot: string
-  ) => {
-    if (!plannerId) return;
+  ): Promise<PlannerItem | null> => {
+    if (!plannerId) return null;
 
     setIsSaving(true);
     try {
@@ -195,9 +195,12 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
       });
 
       toast.success(`${draggedItem.name} adicionado ao roteiro`);
+
+      return transformedItem;
     } catch (error) {
       console.error('Error adding item:', error);
       toast.error('Erro ao adicionar item ao roteiro');
+      return null;
     } finally {
       setIsSaving(false);
     }
