@@ -13,7 +13,8 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Share2, Download, Plus, Loader2, Calendar } from 'lucide-react';
+import { Share2, Download, Plus, Loader2, Calendar, FileText } from 'lucide-react';
+import { exportPlannerToPDF } from '@/utils/exportPlannerPDF';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -192,8 +193,8 @@ const PlannerManual = () => {
     }
   }, [handleDrop, handleMoveToSlot]);
 
-  // Export planner
-  const handleExport = useCallback(() => {
+  // Export planner as text (copy to clipboard)
+  const handleExportText = useCallback(() => {
     if (!planner || !plannerItems.length) {
       toast({
         title: 'Nada para exportar',
@@ -242,6 +243,33 @@ const PlannerManual = () => {
       title: 'Roteiro copiado!',
       description: 'O roteiro foi copiado para a área de transferência.',
     });
+  }, [planner, plannerItems, toast]);
+
+  // Export planner as PDF
+  const handleExportPDF = useCallback(() => {
+    if (!planner || !plannerItems.length) {
+      toast({
+        title: 'Nada para exportar',
+        description: 'Adicione itens ao seu roteiro primeiro.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const fileName = exportPlannerToPDF(planner, plannerItems);
+      toast({
+        title: 'PDF gerado!',
+        description: `Arquivo ${fileName} baixado com sucesso.`,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Erro ao gerar PDF',
+        description: 'Não foi possível gerar o arquivo.',
+        variant: 'destructive'
+      });
+    }
   }, [planner, plannerItems, toast]);
 
   // Share planner
@@ -328,9 +356,13 @@ const PlannerManual = () => {
                   {showLibrary ? 'Calendário' : 'Adicionar'}
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={handleExport}>
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                <FileText className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">PDF</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportText}>
                 <Download className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Exportar</span>
+                <span className="hidden sm:inline">Copiar</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleShare}>
                 <Share2 className="h-4 w-4 mr-1" />
