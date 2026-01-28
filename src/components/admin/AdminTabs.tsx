@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Navigation, Palette } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Navigation, Palette, UtensilsCrossed } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -12,6 +12,7 @@ import { CouponsManager } from './CouponsManager';
 import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
 import { POIEditor } from './POIEditor';
 import { MarkerIconManager } from './MarkerIconManager';
+import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 
 export function AdminTabs() {
   return (
@@ -65,6 +66,10 @@ export function AdminTabs() {
           <Palette className="h-4 w-4" />
           <span className="hidden sm:inline">Ícones</span>
         </TabsTrigger>
+        <TabsTrigger value="restaurants" className="flex items-center gap-2">
+          <UtensilsCrossed className="h-4 w-4" />
+          <span className="hidden sm:inline">Restaurantes</span>
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="clients">
@@ -113,6 +118,10 @@ export function AdminTabs() {
 
       <TabsContent value="markers">
         <MarkerIconManager />
+      </TabsContent>
+
+      <TabsContent value="restaurants">
+        <AdminRestaurantsPanel />
       </TabsContent>
     </Tabs>
   );

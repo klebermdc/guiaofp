@@ -69,7 +69,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   multipass: { path: '/multipass', label: 'Multi Pass', defaultIcon: Zap },
   guia: { path: '/guia', label: 'Guia de Viagem', defaultIcon: BookOpen },
   checklists: { path: '/checklists', label: 'Checklists', defaultIcon: CheckCircle2 },
-  restaurantes: { path: '/restaurantes', label: 'Restaurantes', defaultIcon: UtensilsCrossed },
+  restaurantes: { path: '/guia-restaurantes', label: 'Guia de Restaurantes', defaultIcon: UtensilsCrossed },
   roteiro_personalizado: { path: '/roteiro-personalizado', label: 'Roteiro Personalizado', defaultIcon: Route },
   planner_manual: { path: '/planner-manual', label: 'Planejador Manual', defaultIcon: Calendar },
   conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
