@@ -29,9 +29,12 @@ const determineColor = (item: LibraryItem | any): string => {
   const colors: Record<string, string> = {
     disney: '#1E40AF',
     universal: '#7C3AED',
+    seaworld: '#0891B2',
     outlet: '#A855F7',
-    walmart: '#0066CC',
-    target: '#CC0000',
+    mall: '#EC4899',
+    supermarket: '#0066CC',
+    restaurante: '#F97316',
+    atividade: '#14B8A6',
     shopping: '#10B981',
     restaurant: '#EF4444',
     activity: '#F59E0B',
@@ -45,14 +48,25 @@ const determineIcon = (item: LibraryItem | any): string => {
   if (item.icon) return item.icon;
   
   const type = determineItemType(item);
+  const category = determineCategory(item);
+  
+  // Category-specific icons
+  if (category === 'disney') return '🏰';
+  if (category === 'universal') return '⚡';
+  if (category === 'seaworld') return '🐬';
+  if (category === 'outlet') return '🛍️';
+  if (category === 'supermarket') return '🛒';
+  if (category === 'mall') return '🏬';
+  
+  // Type-specific icons
   const icons: Record<string, string> = {
-    park: '🏰',
-    attraction: '🎢',
+    park: '🎢',
+    attraction: '🎠',
     restaurant: '🍽️',
-    shopping: '🛍️',
+    shopping: '🛒',
     activity: '🌴',
     hotel: '🏨',
-    custom: '📌',
+    custom: '📍',
   };
   
   return icons[type] || icons.custom;
