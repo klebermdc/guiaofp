@@ -340,19 +340,6 @@ const RestaurantsGuide = () => {
             </div>
           </div>
 
-          {/* Michelin Toggle */}
-          <div className="mt-4 flex items-center space-x-2">
-            <Checkbox
-              id="michelin-filter"
-              checked={showMichelinOnly}
-              onCheckedChange={(checked) => setShowMichelinOnly(checked as boolean)}
-            />
-            <label htmlFor="michelin-filter" className="flex items-center text-foreground font-medium cursor-pointer">
-              <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mr-1" />
-              Apenas restaurantes com Estrela Michelin
-            </label>
-          </div>
-
           {/* Results Counter */}
           <div className="mt-4 text-center text-muted-foreground">
             <span className="font-semibold text-orange-600">{filteredRestaurants.length}</span> restaurante(s) encontrado(s)
