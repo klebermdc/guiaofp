@@ -10,7 +10,8 @@ import {
   UtensilsCrossed,
   Award,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Navigation
 } from 'lucide-react';
 import { type Restaurant } from '@/data/restaurantsData';
 import { Button } from '@/components/ui/button';
@@ -128,11 +129,36 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
           </span>
         </div>
 
-        {/* Localização */}
-        <div className="flex items-start text-muted-foreground mb-3 text-sm">
-          <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-orange-500" />
-          <span className="line-clamp-2">{restaurant.address}</span>
-        </div>
+        {/* Localização com GPS */}
+        {restaurant.address && (
+          <div className="mb-3">
+            <div className="flex items-start text-muted-foreground text-sm mb-2">
+              <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-orange-500" />
+              <span className="line-clamp-2">{restaurant.address}</span>
+            </div>
+            {/* Botões de Navegação GPS */}
+            <div className="flex gap-2 ml-6">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors text-xs font-medium border border-blue-500/30"
+              >
+                <Navigation className="w-3 h-3" />
+                Google Maps
+              </a>
+              <a
+                href={`https://waze.com/ul?q=${encodeURIComponent(restaurant.address)}&navigate=yes`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 transition-colors text-xs font-medium border border-cyan-500/30"
+              >
+                <Navigation className="w-3 h-3" />
+                Waze
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Telefone */}
         {restaurant.phone && (
