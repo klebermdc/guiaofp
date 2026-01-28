@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle } from 'lucide-react';
+import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
@@ -17,9 +17,11 @@ import { AttractionPopup } from '@/components/map/AttractionPopup';
 import { POIPopup } from '@/components/map/POIPopup';
 import { MenuModal } from '@/components/map/MenuModal';
 import { RestaurantSidebarCard } from '@/components/map/RestaurantSidebarCard';
+import { LiveShowCard } from '@/components/map/LiveShowCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useLiveShows, type LiveShow } from '@/hooks/useLiveShows';
 import { 
   PARKS, 
   POI_CONFIG, 
@@ -123,13 +125,16 @@ export default function ParkMap() {
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
-  const [sidebarTab, setSidebarTab] = useState<'attractions' | POIType>('attractions');
+  const [sidebarTab, setSidebarTab] = useState<'attractions' | 'live-shows' | POIType>('attractions');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
   const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
   const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
+  
+  // Live shows and characters from API
+  const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastHeadingRef = useRef<number>(0);
   
@@ -1730,6 +1735,19 @@ export default function ParkMap() {
                     {attractionsWithWaitTimes.length}
                   </Badge>
                 </Button>
+                {/* Live Shows/Characters Tab */}
+                <Button
+                  variant={sidebarTab === 'live-shows' ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 px-2 text-xs shrink-0 gap-1"
+                  onClick={() => setSidebarTab('live-shows')}
+                  style={sidebarTab === 'live-shows' ? { backgroundColor: '#EC4899' } : {}}
+                >
+                  🎭 Ao Vivo
+                  <Badge variant="secondary" className="text-[10px] px-1 h-4 ml-0.5">
+                    {liveShows.length}
+                  </Badge>
+                </Button>
                 {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
                   const config = POI_CONFIG[type];
                   const count = currentParkPOIs.filter(p => p.type === type).length;
@@ -1798,7 +1816,20 @@ export default function ParkMap() {
                 </>
               )}
 
-              {sidebarTab !== 'attractions' && (
+              {/* Live Shows Header */}
+              {sidebarTab === 'live-shows' && (
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm bg-pink-500">
+                    🎭
+                  </div>
+                  <span className="font-medium text-sm">Shows e Personagens</span>
+                  <Badge variant="secondary" className="text-xs ml-auto">
+                    {liveShows.length} ao vivo
+                  </Badge>
+                </div>
+              )}
+
+              {sidebarTab !== 'attractions' && sidebarTab !== 'live-shows' && (
                 <div className="flex items-center gap-2">
                   <div 
                     className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
@@ -1865,7 +1896,51 @@ export default function ParkMap() {
                 </>
               )}
 
-              {sidebarTab !== 'attractions' && (
+              {/* Live Shows Tab Content */}
+              {sidebarTab === 'live-shows' && (
+                <>
+                  {isLoadingLiveShows ? (
+                    <div className="p-8 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : liveShows.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhum show ou personagem disponível</p>
+                      <p className="text-xs mt-1">Os dados são atualizados em tempo real</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {/* Shows first, then characters */}
+                      {liveShows
+                        .sort((a, b) => {
+                          // Shows before characters
+                          if (a.entityType !== b.entityType) {
+                            return a.entityType === 'SHOW' ? -1 : 1;
+                          }
+                          // Operating before closed
+                          if (a.status !== b.status) {
+                            return a.status === 'OPERATING' ? -1 : 1;
+                          }
+                          // Alphabetical
+                          return a.name.localeCompare(b.name);
+                        })
+                        .map((show) => (
+                          <LiveShowCard key={show.id} show={show} />
+                        ))}
+                    </div>
+                  )}
+                  {lastShowsUpdate && (
+                    <div className="p-2 border-t text-center">
+                      <p className="text-[10px] text-muted-foreground">
+                        Atualizado: {lastShowsUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {sidebarTab !== 'attractions' && sidebarTab !== 'live-shows' && (
                 <>
                   {isLoadingPOIs ? (
                     <div className="p-8 flex items-center justify-center">

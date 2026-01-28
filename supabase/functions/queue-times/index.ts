@@ -36,8 +36,18 @@ interface FormattedRide {
   source: 'themeparks' | 'queuetimes';
 }
 
+interface FormattedShow {
+  id: string;
+  name: string;
+  entityType: 'SHOW' | 'CHARACTER';
+  status: string;
+  showtimes: string[];
+  nextShowtime?: string;
+  lastUpdated: string;
+}
+
 // Fetch from ThemeParks.wiki API
-async function fetchFromThemeParks(parkSlug: string): Promise<FormattedRide[] | null> {
+async function fetchFromThemeParks(parkSlug: string): Promise<{ rides: FormattedRide[]; shows: FormattedShow[] } | null> {
   try {
     console.log(`Trying ThemeParks.wiki for: ${parkSlug}`);
     
@@ -85,6 +95,8 @@ async function fetchFromThemeParks(parkSlug: string): Promise<FormattedRide[] | 
     const liveData = await liveRes.json();
     
     const rides: FormattedRide[] = [];
+    const shows: FormattedShow[] = [];
+    
     if (liveData.liveData) {
       for (const item of liveData.liveData) {
         if (item.entityType === 'ATTRACTION') {
@@ -96,12 +108,59 @@ async function fetchFromThemeParks(parkSlug: string): Promise<FormattedRide[] | 
             lastUpdated: item.lastUpdated || new Date().toISOString(),
             source: 'themeparks',
           });
+        } else if (item.entityType === 'SHOW' || item.entityType === 'CHARACTER') {
+          // Extract showtimes from the API response
+          const showtimes: string[] = [];
+          
+          if (item.showtimes && Array.isArray(item.showtimes)) {
+            for (const showtime of item.showtimes) {
+              if (showtime.startTime) {
+                // Convert to local time string (HH:MM format)
+                const date = new Date(showtime.startTime);
+                const timeStr = date.toLocaleTimeString('pt-BR', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  timeZone: 'America/New_York' // Orlando timezone
+                });
+                showtimes.push(timeStr);
+              }
+            }
+          }
+          
+          // Find next showtime
+          let nextShowtime: string | undefined;
+          const now = new Date();
+          if (item.showtimes && Array.isArray(item.showtimes)) {
+            for (const showtime of item.showtimes) {
+              if (showtime.startTime) {
+                const showDate = new Date(showtime.startTime);
+                if (showDate > now) {
+                  nextShowtime = showDate.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    timeZone: 'America/New_York'
+                  });
+                  break;
+                }
+              }
+            }
+          }
+          
+          shows.push({
+            id: item.id,
+            name: item.name,
+            entityType: item.entityType,
+            status: item.status || 'UNKNOWN',
+            showtimes: showtimes,
+            nextShowtime: nextShowtime,
+            lastUpdated: item.lastUpdated || new Date().toISOString(),
+          });
         }
       }
     }
     
-    console.log(`ThemeParks.wiki returned ${rides.length} rides`);
-    return rides.length > 0 ? rides : null;
+    console.log(`ThemeParks.wiki returned ${rides.length} rides and ${shows.length} shows/characters`);
+    return { rides, shows };
     
   } catch (error) {
     console.error('ThemeParks.wiki error:', error);
@@ -109,7 +168,7 @@ async function fetchFromThemeParks(parkSlug: string): Promise<FormattedRide[] | 
   }
 }
 
-// Fetch from Queue-Times.com API (fallback)
+// Fetch from Queue-Times.com API (fallback - rides only)
 async function fetchFromQueueTimes(queueTimesParkId: number): Promise<FormattedRide[] | null> {
   try {
     console.log(`Trying Queue-Times.com for park ID: ${queueTimesParkId}`);
@@ -152,7 +211,7 @@ async function fetchFromQueueTimes(queueTimesParkId: number): Promise<FormattedR
     }));
 
     console.log(`Queue-Times.com returned ${rides.length} rides`);
-    return rides.length > 0 ? rides : null;
+    return rides;
     
   } catch (error) {
     console.error('Queue-Times error:', error);
@@ -180,21 +239,26 @@ serve(async (req) => {
     
     if (!themeParksSlug && !queueTimesParkId) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Park not supported', data: [] }),
+        JSON.stringify({ success: false, error: 'Park not supported', data: [], shows: [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     let rides: FormattedRide[] | null = null;
+    let shows: FormattedShow[] = [];
     let source = 'unknown';
 
-    // Try ThemeParks.wiki first (more real-time)
+    // Try ThemeParks.wiki first (more real-time, has shows/characters)
     if (themeParksSlug) {
-      rides = await fetchFromThemeParks(themeParksSlug);
-      if (rides) source = 'themeparks.wiki';
+      const result = await fetchFromThemeParks(themeParksSlug);
+      if (result) {
+        rides = result.rides;
+        shows = result.shows;
+        source = 'themeparks.wiki';
+      }
     }
 
-    // Fallback to Queue-Times.com
+    // Fallback to Queue-Times.com for rides only
     if (!rides && queueTimesParkId) {
       rides = await fetchFromQueueTimes(queueTimesParkId);
       if (rides) source = 'queue-times.com';
@@ -202,17 +266,18 @@ serve(async (req) => {
 
     if (!rides || rides.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, error: 'No wait time data available', data: [] }),
+        JSON.stringify({ success: false, error: 'No wait time data available', data: [], shows: [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Successfully fetched ${rides.length} rides from ${source}`);
+    console.log(`Successfully fetched ${rides.length} rides and ${shows.length} shows from ${source}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         data: rides,
+        shows: shows,
         source,
         lastFetched: new Date().toISOString(),
       }),
@@ -222,7 +287,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error fetching queue times:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Internal server error', data: [] }),
+      JSON.stringify({ success: false, error: 'Internal server error', data: [], shows: [] }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
