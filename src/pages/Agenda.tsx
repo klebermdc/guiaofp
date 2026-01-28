@@ -14,7 +14,9 @@ const Agenda = () => {
   const agendaItems = travelProfile.parkDates || [];
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse date as local time to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     const locale = language === 'pt' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US';
     return date.toLocaleDateString(locale, { 
       day: 'numeric', 
