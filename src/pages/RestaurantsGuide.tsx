@@ -39,6 +39,7 @@ const RestaurantsGuide = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   const [selectedPark, setSelectedPark] = useState<string>('all');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [showMichelinOnly, setShowMichelinOnly] = useState(false);
   const [priceFilter, setPriceFilter] = useState<string>('all');
 
@@ -58,11 +59,39 @@ const RestaurantsGuide = () => {
   const universalRestaurants = restaurantsData.filter(r => r.category === 'universal');
   const outsideRestaurants = restaurantsData.filter(r => r.category === 'fora-parques');
 
-  // Get unique parks
-  const disneyParks = [...new Set(disneyRestaurants.map(r => r.park).filter(Boolean))];
-  const universalParks = [...new Set(universalRestaurants.map(r => r.park).filter(Boolean))];
+  // Lista fixa de parques Disney (não usar áreas internas)
+  const disneyParks = [
+    'Magic Kingdom',
+    'EPCOT', 
+    'Hollywood Studios',
+    'Animal Kingdom',
+    'Disney Springs',
+    'Typhoon Lagoon',
+    'Blizzard Beach'
+  ];
 
-  // Get unique subcategories
+  // Lista fixa de parques Universal
+  const universalParks = [
+    'Universal Studios Florida',
+    'Islands of Adventure',
+    'Epic Universe',
+    'Volcano Bay',
+    'CityWalk'
+  ];
+
+  // Regiões de Orlando para restaurantes fora dos parques
+  const orlandoRegions = [
+    'International Drive',
+    'Kissimmee',
+    'Lake Buena Vista',
+    'Downtown Orlando',
+    'Winter Park',
+    'Dr. Phillips',
+    'Sand Lake Road',
+    'Celebration'
+  ];
+
+  // Get unique subcategories (tipos de culinária)
   const subcategories = [...new Set(outsideRestaurants.map(r => r.subcategory).filter(Boolean))];
 
   // Filter restaurants
@@ -83,9 +112,17 @@ const RestaurantsGuide = () => {
       filtered = filtered.filter(r => r.category === selectedCategory);
     }
 
-    // Park filter
+    // Park filter - usa o campo park que vem do location do Supabase
     if (selectedPark !== 'all') {
       filtered = filtered.filter(r => r.park === selectedPark);
+    }
+
+    // Region filter (para fora dos parques)
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(r => 
+        r.address?.toLowerCase().includes(selectedRegion.toLowerCase()) ||
+        r.park === selectedRegion
+      );
     }
 
     // Subcategory filter
@@ -104,7 +141,7 @@ const RestaurantsGuide = () => {
     }
 
     return filtered;
-  }, [restaurantsData, searchTerm, selectedCategory, selectedPark, selectedSubcategory, showMichelinOnly, priceFilter]);
+  }, [restaurantsData, searchTerm, selectedCategory, selectedPark, selectedRegion, selectedSubcategory, showMichelinOnly, priceFilter]);
 
   // Organize filtered restaurants
   const organizedRestaurants = useMemo(() => {
@@ -196,6 +233,7 @@ const RestaurantsGuide = () => {
                 onChange={(e) => {
                   setSelectedCategory(e.target.value);
                   setSelectedPark('all');
+                  setSelectedRegion('all');
                   setSelectedSubcategory('all');
                 }}
                 className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background focus:border-primary focus:outline-none"
@@ -207,30 +245,65 @@ const RestaurantsGuide = () => {
               </select>
             </div>
 
-            {/* Park (Disney/Universal) */}
-            {(selectedCategory === 'disney' || selectedCategory === 'universal') && (
+            {/* Park (Disney) - mostrado quando Disney selecionado */}
+            {selectedCategory === 'disney' && (
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
-                  Parque
+                  Parque Disney
                 </label>
                 <select
                   value={selectedPark}
                   onChange={(e) => setSelectedPark(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background focus:border-primary focus:outline-none"
                 >
-                  <option value="all">Todos</option>
-                  {selectedCategory === 'disney' && disneyParks.map(park => (
-                    <option key={park} value={park}>{park}</option>
-                  ))}
-                  {selectedCategory === 'universal' && universalParks.map(park => (
+                  <option value="all">Todos os Parques</option>
+                  {disneyParks.map(park => (
                     <option key={park} value={park}>{park}</option>
                   ))}
                 </select>
               </div>
             )}
 
-            {/* Cuisine Type (Outside Parks) */}
-            {(selectedCategory === 'fora-parques' || selectedCategory === 'all') && (
+            {/* Park (Universal) - mostrado quando Universal selecionado */}
+            {selectedCategory === 'universal' && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Parque Universal
+                </label>
+                <select
+                  value={selectedPark}
+                  onChange={(e) => setSelectedPark(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background focus:border-primary focus:outline-none"
+                >
+                  <option value="all">Todos os Parques</option>
+                  {universalParks.map(park => (
+                    <option key={park} value={park}>{park}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Região Orlando (Fora dos Parques) - mostrado quando fora-parques selecionado */}
+            {selectedCategory === 'fora-parques' && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Região de Orlando
+                </label>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background focus:border-primary focus:outline-none"
+                >
+                  <option value="all">Todas as Regiões</option>
+                  {orlandoRegions.map(region => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Cuisine Type (Outside Parks) - apenas quando fora-parques */}
+            {selectedCategory === 'fora-parques' && (
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
                   Tipo de Culinária
