@@ -1,27 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket, Heart, Check } from 'lucide-react';
+import { 
+  Play, Sparkles, Loader2, ArrowLeft, MapPin, Ruler, Flame, Ticket, Heart, Check, 
+  Clock, DollarSign, Info, AlertTriangle, Lightbulb, Timer, ChevronRight, ExternalLink,
+  Star, Users, Filter, X, Search
+} from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-// Import park images
-import magicKingdomImg from '@/assets/parks/magic-kingdom.jpg';
-import epcotImg from '@/assets/parks/epcot.jpg';
-import hollywoodStudiosImg from '@/assets/parks/hollywood-studios.jpg';
-import animalKingdomImg from '@/assets/parks/animal-kingdom.jpg';
-import islandsOfAdventureImg from '@/assets/parks/islands-of-adventure.jpg';
-import universalStudiosImg from '@/assets/parks/universal-studios.jpg';
-import epicUniverseImg from '@/assets/parks/epic-universe.jpg';
+import { 
+  PARK_INFO, 
+  ParkInfo, 
+  ParkCategory, 
+  getCategories, 
+  getParksByCategory,
+  getParkById 
+} from '@/data/parkInfo';
 
 // Import attraction thumbnails
 import stardustRacersImg from '@/assets/attractions/stardust-racers.jpg';
@@ -67,51 +74,19 @@ interface Category {
   color: string;
 }
 
-// Parks data with their images
-const PARKS = [
-  {
-    id: 'magic-kingdom',
-    name: 'Magic Kingdom',
-    image: magicKingdomImg,
-    color: 'from-blue-500 to-purple-600',
-  },
-  {
-    id: 'epcot',
-    name: 'EPCOT',
-    image: epcotImg,
-    color: 'from-teal-500 to-blue-600',
-  },
-  {
-    id: 'hollywood-studios',
-    name: 'Hollywood Studios',
-    image: hollywoodStudiosImg,
-    color: 'from-red-500 to-pink-600',
-  },
-  {
-    id: 'animal-kingdom',
-    name: 'Animal Kingdom',
-    image: animalKingdomImg,
-    color: 'from-green-500 to-emerald-600',
-  },
-  {
-    id: 'islands-of-adventure',
-    name: 'Islands of Adventure',
-    image: islandsOfAdventureImg,
-    color: 'from-orange-500 to-red-600',
-  },
-  {
-    id: 'universal-studios',
-    name: 'Universal Studios',
-    image: universalStudiosImg,
-    color: 'from-yellow-500 to-orange-600',
-  },
-  {
-    id: 'epic-universe',
-    name: 'Epic Universe',
-    image: epicUniverseImg,
-    color: 'from-indigo-500 to-purple-600',
-  },
-];
+const TIP_ICONS: Record<string, React.ReactNode> = {
+  'tempo': <Timer className="h-4 w-4" />,
+  'dica': <Lightbulb className="h-4 w-4" />,
+  'alerta': <AlertTriangle className="h-4 w-4" />,
+  'economia': <DollarSign className="h-4 w-4" />,
+};
+
+const TIP_COLORS: Record<string, string> = {
+  'tempo': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  'dica': 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  'alerta': 'bg-red-500/10 text-red-600 border-red-500/20',
+  'economia': 'bg-green-500/10 text-green-600 border-green-500/20',
+};
 
 const Content = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -120,12 +95,17 @@ const Content = () => {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPark, setSelectedPark] = useState<typeof PARKS[0] | null>(null);
+  const [selectedPark, setSelectedPark] = useState<ParkInfo | null>(null);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [cameFromAttractions, setCameFromAttractions] = useState(false);
   const [userPreferences, setUserPreferences] = useState<{ park_name: string; attraction_name: string }[]>([]);
   const [savingPreference, setSavingPreference] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<ParkCategory | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'info' | 'videos'>('info');
+
+  const parkCategories = getCategories();
 
   useEffect(() => {
     fetchData();
@@ -152,7 +132,6 @@ const Content = () => {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          // Reload preferences when any change happens
           loadUserPreferences();
         }
       )
@@ -172,7 +151,6 @@ const Content = () => {
         setSelectedContent(content);
         setIsDialogOpen(true);
         setCameFromAttractions(true);
-        // Clear the URL parameter after opening
         setSearchParams({}, { replace: true });
       }
     }
@@ -199,7 +177,6 @@ const Content = () => {
     return userPreferences.some(p => p.attraction_name === attractionName);
   };
 
-  // Map category names to canonical park names used in Attractions page
   const categoryToParkMap: Record<string, string> = {
     'Magic Kingdom': 'Magic Kingdom',
     'EPCOT': 'EPCOT',
@@ -208,15 +185,21 @@ const Content = () => {
     'Animal Kingdom': 'Animal Kingdom',
     'Universal Studios': 'Universal Studios',
     'Islands of Adventure': 'Islands of Adventure',
-    // common variation
     'Island of Adventure': 'Islands of Adventure',
     'Epic Universe': 'Epic Universe',
+    'SeaWorld': 'SeaWorld Orlando',
+    'Busch Gardens': 'Busch Gardens Tampa',
+    'LEGOLAND': 'LEGOLAND Florida',
+    'Aquatica': 'Aquatica Orlando',
+    'Discovery Cove': 'Discovery Cove',
+    'Blizzard Beach': "Disney's Blizzard Beach",
+    'Typhoon Lagoon': "Disney's Typhoon Lagoon",
+    'Volcano Bay': "Universal's Volcano Bay",
   };
 
   const getParkNameForAttraction = (content: ContentItem) => {
     const category = categories.find(c => c.id === content.category_id);
     if (category) {
-      // Return mapped park name or category name as fallback
       return categoryToParkMap[category.name] || category.name;
     }
     return 'Desconhecido';
@@ -231,7 +214,6 @@ const Content = () => {
     
     try {
       if (isAttractionInPreferences(attractionName)) {
-        // Remove from preferences
         await supabase
           .from('attraction_preferences')
           .delete()
@@ -241,7 +223,6 @@ const Content = () => {
         setUserPreferences(prev => prev.filter(p => p.attraction_name !== attractionName));
         toast.success('Atração removida das desejadas');
       } else {
-        // Add to preferences
         await supabase
           .from('attraction_preferences')
           .insert({
@@ -264,9 +245,6 @@ const Content = () => {
 
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
-    if (!open && cameFromAttractions) {
-      // Show back button state persists after modal closes
-    }
   };
 
   const handleBackToAttractions = () => {
@@ -314,10 +292,10 @@ const Content = () => {
   const getParkContents = () => {
     if (!selectedPark) return [];
     
-    // Find category that matches park name
     const parkCategory = categories.find(cat => 
       cat.name.toLowerCase().includes(selectedPark.name.toLowerCase()) ||
-      selectedPark.name.toLowerCase().includes(cat.name.toLowerCase())
+      selectedPark.name.toLowerCase().includes(cat.name.toLowerCase()) ||
+      cat.name.toLowerCase().includes(selectedPark.shortName.toLowerCase())
     );
     
     if (parkCategory) {
@@ -327,22 +305,68 @@ const Content = () => {
     return [];
   };
 
+  // Filter parks by category and search
+  const filteredParks = useMemo(() => {
+    let parks = activeCategory === 'all' 
+      ? PARK_INFO 
+      : getParksByCategory(activeCategory);
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      parks = parks.filter(park => 
+        park.name.toLowerCase().includes(query) ||
+        park.description.toLowerCase().includes(query) ||
+        park.categoryLabel.toLowerCase().includes(query)
+      );
+    }
+    
+    return parks;
+  }, [activeCategory, searchQuery]);
+
+  const handleParkSelect = (park: ParkInfo) => {
+    setSelectedPark(park);
+    setActiveTab('info');
+  };
+
+  const renderThrillLevel = (level: number) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((l) => (
+          <div
+            key={l}
+            className={`w-2 h-2 rounded-full ${
+              l <= level
+                ? l <= 2
+                  ? 'bg-green-500'
+                  : l <= 3
+                  ? 'bg-yellow-500'
+                  : l <= 4
+                  ? 'bg-orange-500'
+                  : 'bg-red-500'
+                : 'bg-muted-foreground/20'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="relative overflow-hidden rounded-2xl gradient-gold p-8 text-secondary-foreground">
+        <div className="relative overflow-hidden rounded-2xl gradient-gold p-6 sm:p-8 text-secondary-foreground">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5" />
               <span className="text-sm font-medium">Exclusivo para membros</span>
             </div>
-            <h1 className="font-display text-3xl font-bold mb-2">
-              🎢 Parques
+            <h1 className="font-display text-2xl sm:text-3xl font-bold mb-2">
+              🎢 Guia Completo dos Parques
             </h1>
             <p className="text-secondary-foreground/80">
-              Explore os vídeos das atrações de cada parque
+              Informações, dicas e vídeos de todos os parques de Orlando
             </p>
           </div>
         </div>
@@ -352,158 +376,433 @@ const Content = () => {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : !selectedPark ? (
-          // Parks Grid
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-              <MapPin className="h-6 w-6 text-primary" />
-              Escolha um Parque
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {PARKS.map((park) => (
-                <Card 
-                  key={park.id}
-                  className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                  onClick={() => setSelectedPark(park)}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img 
-                      src={park.image} 
-                      alt={park.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${park.color} opacity-60`} />
-                    <div className="absolute inset-0 flex items-end p-4">
-                      <h3 className="font-display text-lg font-bold text-white drop-shadow-lg">
-                        {park.name}
-                      </h3>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ) : (
-          // Park Videos
+          // Parks Grid with Categories
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setSelectedPark(null)}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-              </Button>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 bg-gradient-to-br ${selectedPark.color} rounded-lg flex items-center justify-center text-white shadow-lg`}>
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <h2 className="font-display text-2xl font-bold text-foreground">
-                  {selectedPark.name}
-                </h2>
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar parques..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            {getParkContents().length === 0 ? (
+            {/* Category Tabs */}
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={activeCategory === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer px-3 py-1.5 text-sm"
+                onClick={() => setActiveCategory('all')}
+              >
+                Todos ({PARK_INFO.length})
+              </Badge>
+              {parkCategories.map((cat) => (
+                <Badge
+                  key={cat.id}
+                  variant={activeCategory === cat.id ? 'default' : 'outline'}
+                  className="cursor-pointer px-3 py-1.5 text-sm"
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  {cat.label} ({cat.count})
+                </Badge>
+              ))}
+            </div>
+
+            {/* Parks Grid */}
+            {filteredParks.length === 0 ? (
               <Card className="text-center p-12 border-dashed border-2">
-                <Sparkles className="w-12 h-12 mx-auto text-accent mb-4" />
+                <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                  Vídeos em breve!
+                  Nenhum parque encontrado
                 </h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Estamos preparando vídeos incríveis das atrações deste parque para você.
+                  Tente ajustar sua busca ou filtro.
                 </p>
                 <Button 
                   variant="outline" 
                   className="mt-4"
-                  onClick={() => setSelectedPark(null)}
+                  onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
                 >
-                  Ver outros parques
+                  Limpar filtros
                 </Button>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getParkContents().map((item) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredParks.map((park) => (
                   <Card 
-                    key={item.id} 
-                    className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group hover:-translate-y-1"
-                    onClick={() => handleOpenContent(item)}
+                    key={park.id}
+                    className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    onClick={() => handleParkSelect(park)}
                   >
-                    <div className="relative aspect-video overflow-hidden bg-muted">
-                      {(item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]) ? (
-                        <img 
-                          src={item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]} 
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${selectedPark.color} flex items-center justify-center`}>
-                          <Play className="h-12 w-12 text-white/80" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl">
-                          <Play className="h-8 w-8 text-primary ml-1" />
-                        </div>
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <img 
+                        src={park.image} 
+                        alt={park.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className={`absolute inset-0 bg-gradient-to-t ${park.color} opacity-60`} />
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="text-xs bg-white/90 text-foreground">
+                          {park.categoryLabel}
+                        </Badge>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-start justify-end p-3">
+                        <span className="text-2xl mb-1">{park.emoji}</span>
+                        <h3 className="font-display text-sm sm:text-base font-bold text-white drop-shadow-lg line-clamp-2">
+                          {park.name}
+                        </h3>
                       </div>
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                        {item.title}
-                      </h3>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {item.description}
-                        </p>
-                      )}
-                      
-                      {/* Ficha Técnica no Card */}
-                      {(item.attraction_name || item.min_height || item.thrill_level) && (
-                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                          {item.attraction_name && (
-                            <p className="text-xs font-medium text-primary truncate">
-                              {item.attraction_name}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            {item.min_height && (
-                              <div className="flex items-center gap-1">
-                                <Ruler className="h-3 w-3" />
-                                <span>{item.min_height}</span>
-                              </div>
-                            )}
-                            {item.thrill_level && (
-                              <div className="flex items-center gap-1">
-                                <Flame className="h-3 w-3" />
-                                <div className="flex gap-0.5">
-                                  {[1, 2, 3, 4, 5].map((level) => (
-                                    <div
-                                      key={level}
-                                      className={`w-2 h-2 rounded-full ${
-                                        level <= item.thrill_level!
-                                          ? level <= 2
-                                            ? 'bg-green-500'
-                                            : level <= 3
-                                            ? 'bg-yellow-500'
-                                            : level <= 4
-                                            ? 'bg-orange-500'
-                                            : 'bg-red-500'
-                                          : 'bg-muted-foreground/20'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
                   </Card>
                 ))}
               </div>
             )}
+          </div>
+        ) : (
+          // Park Detail View
+          <div className="space-y-6">
+            {/* Back Button and Park Header */}
+            <div className="flex items-start gap-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSelectedPark(null)}
+                className="gap-2 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className={`w-12 h-12 bg-gradient-to-br ${selectedPark.color} rounded-xl flex items-center justify-center text-white text-2xl shadow-lg shrink-0`}>
+                  {selectedPark.emoji}
+                </div>
+                <div className="min-w-0">
+                  <Badge variant="secondary" className="text-xs mb-1">
+                    {selectedPark.categoryLabel}
+                  </Badge>
+                  <h2 className="font-display text-xl sm:text-2xl font-bold text-foreground truncate">
+                    {selectedPark.name}
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs: Info vs Videos */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'info' | 'videos')}>
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="info" className="gap-2">
+                  <Info className="h-4 w-4" />
+                  Informações
+                </TabsTrigger>
+                <TabsTrigger value="videos" className="gap-2">
+                  <Play className="h-4 w-4" />
+                  Vídeos ({getParkContents().length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Info Tab */}
+              <TabsContent value="info" className="space-y-6 mt-6">
+                {/* Park Hero Card */}
+                <Card className="overflow-hidden">
+                  <div className="relative h-48 sm:h-64">
+                    <img 
+                      src={selectedPark.image} 
+                      alt={selectedPark.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t ${selectedPark.color} opacity-40`} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <p className="text-white/90 text-sm sm:text-base max-w-2xl">
+                        {selectedPark.fullDescription}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Quick Info Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-xs">Horário</span>
+                    </div>
+                    <p className="text-sm font-medium">{selectedPark.operatingHours}</p>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Timer className="h-4 w-4" />
+                      <span className="text-xs">Tempo de Visita</span>
+                    </div>
+                    <p className="text-sm font-medium">{selectedPark.averageVisitTime}</p>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="text-xs">Estacionamento</span>
+                    </div>
+                    <p className="text-sm font-medium">{selectedPark.parkingCost}</p>
+                  </Card>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <Star className="h-4 w-4" />
+                      <span className="text-xs">Melhor Dia</span>
+                    </div>
+                    <p className="text-xs font-medium line-clamp-2">{selectedPark.bestTimeToVisit}</p>
+                  </Card>
+                </div>
+
+                {/* Highlights */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Star className="h-5 w-5 text-amber-500" />
+                      Destaques do Parque
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedPark.highlights.map((highlight, idx) => (
+                        <Badge key={idx} variant="secondary" className="px-3 py-1">
+                          {highlight}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tips Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-amber-500" />
+                      Dicas do Parque
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {selectedPark.tips.map((tip, idx) => (
+                        <div 
+                          key={idx}
+                          className={`p-4 rounded-xl border ${TIP_COLORS[tip.type]}`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">{tip.icon}</span>
+                            <span className="font-semibold text-sm">{tip.title}</span>
+                            {TIP_ICONS[tip.type]}
+                          </div>
+                          <p className="text-sm opacity-90">{tip.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Top Attractions */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Flame className="h-5 w-5 text-orange-500" />
+                      Atrações Imperdíveis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedPark.topAttractions.map((attraction, idx) => (
+                        <div 
+                          key={idx}
+                          className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm">{attraction.name}</span>
+                              {attraction.mustDo && (
+                                <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                                  Must-Do
+                                </Badge>
+                              )}
+                              {attraction.lightningLane && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  ⚡ LL
+                                </Badge>
+                              )}
+                            </div>
+                            {attraction.tip && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{attraction.tip}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {attraction.heightRequired && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Ruler className="h-3 w-3" />
+                                {attraction.heightRequired}
+                              </div>
+                            )}
+                            {renderThrillLevel(attraction.thrillLevel)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Areas */}
+                {selectedPark.areas && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        Áreas do Parque
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedPark.areas.map((area, idx) => (
+                          <Badge key={idx} variant="outline" className="px-3 py-1">
+                            {area}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Dining Tips */}
+                {selectedPark.diningTips && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        🍽️ Onde Comer
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedPark.diningTips.map((tip, idx) => (
+                          <Badge key={idx} variant="secondary" className="px-3 py-1.5">
+                            {tip}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Website Link */}
+                <Card className="p-4">
+                  <a 
+                    href={selectedPark.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between hover:text-primary transition-colors"
+                  >
+                    <span className="font-medium">Site Oficial</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Card>
+              </TabsContent>
+
+              {/* Videos Tab */}
+              <TabsContent value="videos" className="space-y-4 mt-6">
+                {getParkContents().length === 0 ? (
+                  <Card className="text-center p-12 border-dashed border-2">
+                    <Sparkles className="w-12 h-12 mx-auto text-accent mb-4" />
+                    <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                      Vídeos em breve!
+                    </h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Estamos preparando vídeos incríveis das atrações deste parque para você.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setActiveTab('info')}
+                    >
+                      Ver informações do parque
+                    </Button>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getParkContents().map((item) => (
+                      <Card 
+                        key={item.id} 
+                        className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+                        onClick={() => handleOpenContent(item)}
+                      >
+                        <div className="relative aspect-video overflow-hidden bg-muted">
+                          {(item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]) ? (
+                            <img 
+                              src={item.thumbnail_url || ATTRACTION_THUMBNAILS[item.title]} 
+                              alt={item.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className={`w-full h-full bg-gradient-to-br ${selectedPark.color} flex items-center justify-center`}>
+                              <Play className="h-12 w-12 text-white/80" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl">
+                              <Play className="h-8 w-8 text-primary ml-1" />
+                            </div>
+                          </div>
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                            {item.title}
+                          </h3>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+                          
+                          {(item.attraction_name || item.min_height || item.thrill_level) && (
+                            <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                              {item.attraction_name && (
+                                <p className="text-xs font-medium text-primary truncate">
+                                  {item.attraction_name}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                {item.min_height && (
+                                  <div className="flex items-center gap-1">
+                                    <Ruler className="h-3 w-3" />
+                                    <span>{item.min_height}</span>
+                                  </div>
+                                )}
+                                {item.thrill_level && (
+                                  <div className="flex items-center gap-1">
+                                    <Flame className="h-3 w-3" />
+                                    {renderThrillLevel(item.thrill_level)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </div>
@@ -516,7 +815,6 @@ const Content = () => {
           </DialogHeader>
           {selectedContent && (
             <div className="space-y-4">
-              {/* Ficha Técnica da Atração */}
               {(selectedContent.attraction_name || selectedContent.min_height || selectedContent.thrill_level) && (
                 <div className="bg-muted/50 rounded-lg p-4 border">
                   <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -554,22 +852,7 @@ const Content = () => {
                         <div>
                           <span className="text-xs text-muted-foreground uppercase tracking-wide">Radicalidade</span>
                           <div className="flex items-center gap-1 mt-0.5">
-                            {[1, 2, 3, 4, 5].map((level) => (
-                              <div
-                                key={level}
-                                className={`w-4 h-4 rounded-full ${
-                                  level <= selectedContent.thrill_level!
-                                    ? level <= 2
-                                      ? 'bg-green-500'
-                                      : level <= 3
-                                      ? 'bg-yellow-500'
-                                      : level <= 4
-                                      ? 'bg-orange-500'
-                                      : 'bg-red-500'
-                                    : 'bg-muted-foreground/20'
-                                }`}
-                              />
-                            ))}
+                            {renderThrillLevel(selectedContent.thrill_level)}
                           </div>
                         </div>
                       </div>
@@ -611,7 +894,7 @@ const Content = () => {
                   Este conteúdo ainda não possui um vídeo associado.
                 </p>
               )}
-              {/* Action buttons */}
+
               <div className="pt-4 border-t space-y-2">
                 {user && (
                   <Button
