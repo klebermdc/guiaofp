@@ -106,6 +106,7 @@ const PlannerManual = () => {
     handleRemove, 
     handleReorder,
     handleMoveToSlot,
+    handleUpdateItem,
     toggleCompleted,
     refetchItems
   } = usePlannerDragDrop({ plannerId: planner?.id || '' });
@@ -460,6 +461,7 @@ const PlannerManual = () => {
                   onRemove={handleRemove}
                   onReorder={handleReorder}
                   onToggleComplete={toggleCompleted}
+                  onUpdateItem={handleUpdateItem}
                 />
               ) : (
                 <Card className="p-8 text-center">
