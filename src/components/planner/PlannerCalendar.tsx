@@ -17,9 +17,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
 import { format, eachDayOfInterval, parseISO, isWeekend } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Check, Clock, MapPin, Sparkles } from 'lucide-react';
+import { Trash2, Check, Clock, Sparkles, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { EditPlannerItemModal } from './EditPlannerItemModal';
 
 export interface PlannerItem {
   id: string;
@@ -50,6 +51,7 @@ interface PlannerCalendarProps {
   onRemove: (itemId: string) => void;
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
   onToggleComplete?: (itemId: string) => void;
+  onUpdateItem?: (itemId: string, updates: Partial<PlannerItem>) => Promise<void>;
 }
 
 // Track recently added items for highlight animation
@@ -98,9 +100,12 @@ export const PlannerCalendar = ({
   onRemove,
   onReorder,
   onToggleComplete,
+  onUpdateItem,
 }: PlannerCalendarProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeItem = items.find(item => item.id === activeId);
+  const [editingItem, setEditingItem] = useState<PlannerItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Generate date range
   const dates = useMemo(() => {
@@ -189,30 +194,55 @@ export const PlannerCalendar = ({
     }
   };
 
-  return (
-    <DndContext
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="space-y-4">
-        {dates.map((date, index) => (
-          <DayRow
-            key={date}
-            date={date}
-            dayNumber={index + 1}
-            items={items.filter(item => item.date === date)}
-            onRemove={onRemove}
-            onToggleComplete={onToggleComplete}
-            highlightedSlot={highlightedSlot}
-          />
-        ))}
-      </div>
+  // Handle edit item
+  const handleEditItem = useCallback((item: PlannerItem) => {
+    setEditingItem(item);
+    setIsEditModalOpen(true);
+  }, []);
 
-      <DragOverlay>
-        {activeItem && <ActivityCard item={activeItem} isDragging />}
-      </DragOverlay>
-    </DndContext>
+  // Handle save edit
+  const handleSaveEdit = useCallback(async (itemId: string, updates: Partial<PlannerItem>) => {
+    if (onUpdateItem) {
+      await onUpdateItem(itemId, updates);
+      toast.success('Item atualizado com sucesso!');
+    }
+  }, [onUpdateItem]);
+
+  return (
+    <>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="space-y-4">
+          {dates.map((date, index) => (
+            <DayRow
+              key={date}
+              date={date}
+              dayNumber={index + 1}
+              items={items.filter(item => item.date === date)}
+              onRemove={onRemove}
+              onToggleComplete={onToggleComplete}
+              onEdit={handleEditItem}
+              highlightedSlot={highlightedSlot}
+            />
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeItem && <ActivityCard item={activeItem} isDragging />}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Edit Modal */}
+      <EditPlannerItemModal
+        item={editingItem}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        onSave={handleSaveEdit}
+      />
+    </>
   );
 };
 
@@ -224,9 +254,10 @@ interface DayRowProps {
   onRemove: (itemId: string) => void;
   highlightedSlot: string | null;
   onToggleComplete?: (itemId: string) => void;
+  onEdit?: (item: PlannerItem) => void;
 }
 
-const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, highlightedSlot }: DayRowProps) => {
+const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, onEdit, highlightedSlot }: DayRowProps) => {
   const parsedDate = parseISO(date);
   const isWeekendDay = isWeekend(parsedDate);
   const dayOfWeek = format(parsedDate, 'EEEE', { locale: ptBR });
@@ -274,6 +305,7 @@ const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, highlighte
             items={items.filter(i => i.time_slot === slot.id)}
             onRemove={onRemove}
             onToggleComplete={onToggleComplete}
+            onEdit={onEdit}
             isHighlighted={highlightedSlot === `date-${date}-slot-${slot.id}`}
           />
         ))}
@@ -289,10 +321,11 @@ interface TimeSlotDropZoneProps {
   items: PlannerItem[];
   onRemove: (itemId: string) => void;
   onToggleComplete?: (itemId: string) => void;
+  onEdit?: (item: PlannerItem) => void;
   isHighlighted?: boolean;
 }
 
-const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, isHighlighted }: TimeSlotDropZoneProps) => {
+const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdit, isHighlighted }: TimeSlotDropZoneProps) => {
   // Format: date-YYYY-MM-DD-slot-slotId (matching PlannerManual's expected format)
   const dropId = `date-${date}-slot-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -341,6 +374,7 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, isHig
                 item={item}
                 onRemove={() => onRemove(item.id)}
                 onToggleComplete={onToggleComplete ? () => onToggleComplete(item.id) : undefined}
+                onEdit={onEdit ? () => onEdit(item) : undefined}
               />
             ))
           )}
@@ -355,9 +389,10 @@ interface SortableActivityCardProps {
   item: PlannerItem;
   onRemove: () => void;
   onToggleComplete?: () => void;
+  onEdit?: () => void;
 }
 
-const SortableActivityCard = ({ item, onRemove, onToggleComplete }: SortableActivityCardProps) => {
+const SortableActivityCard = ({ item, onRemove, onToggleComplete, onEdit }: SortableActivityCardProps) => {
   const {
     attributes,
     listeners,
@@ -385,6 +420,7 @@ const SortableActivityCard = ({ item, onRemove, onToggleComplete }: SortableActi
         item={item} 
         onRemove={onRemove} 
         onToggleComplete={onToggleComplete}
+        onEdit={onEdit}
       />
     </div>
   );
@@ -396,9 +432,10 @@ interface ActivityCardProps {
   isDragging?: boolean;
   onRemove?: () => void;
   onToggleComplete?: () => void;
+  onEdit?: () => void;
 }
 
-const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete }: ActivityCardProps) => {
+const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete, onEdit }: ActivityCardProps) => {
   const categoryStyle = getCategoryStyle(item.category);
   const icon = item.icon || getDefaultIcon(item.item_type, item.category);
   const [isNewlyAdded, setIsNewlyAdded] = useState(false);
@@ -464,20 +501,38 @@ const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete }: Activity
           </div>
         </div>
         
-        {/* Remove button */}
-        {onRemove && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onRemove();
-            }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20 text-destructive flex-shrink-0"
-            aria-label="Remover item"
-          >
-            <Trash2 className="w-3 h-3" />
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          {/* Edit button */}
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onEdit();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-primary/20 text-primary"
+              aria-label="Editar item"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+          )}
+          
+          {/* Remove button */}
+          {onRemove && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onRemove();
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20 text-destructive"
+              aria-label="Remover item"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Metadata */}
