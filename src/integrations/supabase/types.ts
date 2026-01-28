@@ -836,6 +836,66 @@ export type Database = {
           },
         ]
       }
+      shopping: {
+        Row: {
+          address: string | null
+          average_visit_duration: number | null
+          brands: string[] | null
+          category: string | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          operating_hours: Json | null
+          slug: string
+          tips: string | null
+          type: string | null
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          average_visit_duration?: number | null
+          brands?: string[] | null
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          operating_hours?: Json | null
+          slug: string
+          tips?: string | null
+          type?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          average_visit_duration?: number | null
+          brands?: string[] | null
+          category?: string | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          operating_hours?: Json | null
+          slug?: string
+          tips?: string | null
+          type?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount_cents: number
