@@ -13,7 +13,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Share2, Download, Plus, Loader2, Calendar, FileText } from 'lucide-react';
+import { Share2, Download, Plus, Loader2, Calendar, FileText, FileStack } from 'lucide-react';
 import { exportPlannerToPDF } from '@/utils/exportPlannerPDF';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,6 +28,8 @@ import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SEO } from '@/components/SEO';
 import { cn } from '@/lib/utils';
+import { TemplateGalleryModal } from '@/components/planner/TemplateGalleryModal';
+import { PlannerTemplate } from '@/data/plannerTemplates';
 
 const PlannerManual = () => {
   const { user, travelProfile } = useAuth();
@@ -38,6 +40,7 @@ const PlannerManual = () => {
   const [activeItem, setActiveItem] = useState<LibraryItem | PlannerItem | null>(null);
   const [activeItemType, setActiveItemType] = useState<'library' | 'calendar' | null>(null);
   const [showLibrary, setShowLibrary] = useState(!isMobile);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   // Configure sensors for better mobile support
   const sensors = useSensors(
@@ -103,7 +106,8 @@ const PlannerManual = () => {
     handleRemove, 
     handleReorder,
     handleMoveToSlot,
-    toggleCompleted 
+    toggleCompleted,
+    refetchItems
   } = usePlannerDragDrop({ plannerId: planner?.id || '' });
 
   // Handle drag start - detect if from library or calendar
@@ -293,6 +297,60 @@ const PlannerManual = () => {
     }
   }, [planner, toast]);
 
+  // Import template items
+  const handleImportTemplate = useCallback(async (template: PlannerTemplate) => {
+    if (!planner?.id) return;
+
+    try {
+      const startDate = new Date(planner.start_date);
+      
+      // Prepare all items to insert
+      const itemsToInsert = template.days.flatMap(day => {
+        const dayDate = format(addDays(startDate, day.dayOffset), 'yyyy-MM-dd');
+        
+        return day.items.map((item, index) => ({
+          planner_id: planner.id,
+          date: dayDate,
+          time_slot: item.time_slot,
+          item_type: item.item_type,
+          item_name: item.item_name,
+          category: item.category,
+          color: item.color,
+          icon: item.icon,
+          duration: item.duration || null,
+          start_time: item.start_time || null,
+          notes: item.notes || null,
+          order_index: index,
+          completed: false,
+          reservation_confirmed: false,
+        }));
+      });
+
+      // Insert all items
+      const { error } = await supabase
+        .from('planner_items')
+        .insert(itemsToInsert);
+
+      if (error) throw error;
+
+      // Refresh planner items
+      await refetchItems();
+      
+      toast({
+        title: 'Template importado!',
+        description: `${itemsToInsert.length} atividades adicionadas ao seu roteiro.`,
+      });
+    } catch (error) {
+      console.error('Error importing template:', error);
+      toast({
+        title: 'Erro ao importar',
+        description: 'Não foi possível importar o template.',
+        variant: 'destructive'
+      });
+      throw error;
+    }
+  }, [planner, refetchItems, toast]);
+
   if (plannerLoading) {
     return (
       <AppLayout>
@@ -345,6 +403,15 @@ const PlannerManual = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => setShowTemplateModal(true)}
+                className="bg-primary/10 hover:bg-primary/20 text-primary"
+              >
+                <FileStack className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
               {isMobile && (
                 <Button
                   variant={showLibrary ? "default" : "outline"}
@@ -450,6 +517,17 @@ const PlannerManual = () => {
         </DragOverlay>
 
         <SavingIndicator isSaving={isSaving} />
+
+        {/* Template Gallery Modal */}
+        {planner && (
+          <TemplateGalleryModal
+            open={showTemplateModal}
+            onOpenChange={setShowTemplateModal}
+            startDate={planner.start_date}
+            plannerId={planner.id}
+            onImport={handleImportTemplate}
+          />
+        )}
       </DndContext>
     </AppLayout>
   );
