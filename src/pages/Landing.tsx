@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, useCallback, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,23 +31,33 @@ import familyPark from '@/assets/landing/family-park.jpg';
 import featureCoaster from '@/assets/landing/feature-coaster.jpg';
 import logo from '@/assets/logo.png';
 
-const AnimatedCard = ({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) => {
-  const { ref, isInView } = useElementInView(0.1);
-  
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${className}`}
-      style={{
-        opacity: isInView ? 1 : 0,
-        transform: isInView ? 'translateY(0)' : 'translateY(40px)',
-        transitionDelay: `${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+interface AnimatedCardProps {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}
+
+const AnimatedCard = memo(forwardRef<HTMLDivElement, AnimatedCardProps>(
+  ({ children, delay = 0, className = '' }, _ref) => {
+    const { ref, isInView } = useElementInView(0.1);
+    
+    return (
+      <div
+        ref={ref}
+        className={`transition-all duration-700 ${className}`}
+        style={{
+          opacity: isInView ? 1 : 0,
+          transform: isInView ? 'translateY(0)' : 'translateY(40px)',
+          transitionDelay: `${delay}ms`,
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+));
+
+AnimatedCard.displayName = 'AnimatedCard';
 
 const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
 
