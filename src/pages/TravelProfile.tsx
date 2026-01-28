@@ -502,48 +502,10 @@ const TravelProfile = () => {
 
                     {/* Section 6: Disney App Access */}
                     {section.id === 'disney' && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Possui conta no My Disney Experience?</Label>
-                          <RadioGroup
-                            value={travelProfile.hasMyDisneyExperience ? 'yes' : 'no'}
-                            onValueChange={(value) => handleFieldChange({ hasMyDisneyExperience: value === 'yes' })}
-                          >
-                            <div className="flex gap-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="yes" id="mde-yes" />
-                                <Label htmlFor="mde-yes">Sim</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="no" id="mde-no" />
-                                <Label htmlFor="mde-no">Não</Label>
-                              </div>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        {travelProfile.hasMyDisneyExperience && (
-                          <>
-                            <div className="space-y-2">
-                              <Label>E-mail de login do My Disney Experience</Label>
-                              {/* Disney email/password fields removed for security - credentials should never be stored */}
-                              <p className="text-sm text-muted-foreground italic">
-                                Por segurança, não armazenamos credenciais do My Disney Experience. 
-                                Configure o app diretamente no seu dispositivo.
-                              </p>
-                            </div>
-                            <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
-                              <Checkbox
-                                id="authorize"
-                                checked={travelProfile.authorizeGuideAccess}
-                                onCheckedChange={(checked) => handleFieldChange({ authorizeGuideAccess: !!checked })}
-                              />
-                              <Label htmlFor="authorize" className="cursor-pointer">
-                                Autorizo o guia a acessar e configurar o aplicativo em meu nome
-                              </Label>
-                            </div>
-                          </>
-                        )}
-                      </>
+                      <DisneyAppSection 
+                        travelProfile={travelProfile} 
+                        handleFieldChange={handleFieldChange} 
+                      />
                     )}
 
                     {/* Section 7: Special Needs */}
@@ -870,6 +832,139 @@ function AccommodationSection({ travelProfile, handleFieldChange }: Accommodatio
           </div>
         </RadioGroup>
       </div>
+    </>
+  );
+}
+
+// Disney App Section Component
+interface DisneyAppSectionProps {
+  travelProfile: any;
+  handleFieldChange: (data: any) => void;
+}
+
+function DisneyAppSection({ travelProfile, handleFieldChange }: DisneyAppSectionProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Detect if user is on mobile
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Label>Possui conta no My Disney Experience?</Label>
+        <RadioGroup
+          value={travelProfile.hasMyDisneyExperience ? 'yes' : 'no'}
+          onValueChange={(value) => handleFieldChange({ hasMyDisneyExperience: value === 'yes' })}
+        >
+          <div className="flex gap-4">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="yes" id="mde-yes" />
+              <Label htmlFor="mde-yes">Sim</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="no" id="mde-no" />
+              <Label htmlFor="mde-no">Não</Label>
+            </div>
+          </div>
+        </RadioGroup>
+      </div>
+
+      {!travelProfile.hasMyDisneyExperience && (
+        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg space-y-3">
+          <p className="text-sm font-medium">Baixe o app My Disney Experience:</p>
+          <div className="flex flex-wrap gap-2">
+            {isMobile ? (
+              <a
+                href={isIOS 
+                  ? "https://apps.apple.com/app/my-disney-experience/id547436543"
+                  : "https://play.google.com/store/apps/details?id=com.disney.wdw.android"
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                <Smartphone className="w-4 h-4" />
+                Baixar App
+              </a>
+            ) : (
+              <>
+                <a
+                  href="https://apps.apple.com/app/my-disney-experience/id547436543"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors"
+                >
+                  App Store (iOS)
+                </a>
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.disney.wdw.android"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors"
+                >
+                  Google Play (Android)
+                </a>
+                <a
+                  href="https://disneyworld.disney.go.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-sm transition-colors"
+                >
+                  Site Disney
+                </a>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {travelProfile.hasMyDisneyExperience && (
+        <>
+          <div className="space-y-2">
+            <Label>E-mail de login do My Disney Experience</Label>
+            <Input
+              type="email"
+              placeholder="seu-email@exemplo.com"
+              value={travelProfile.disneyEmail || ''}
+              onChange={(e) => handleFieldChange({ disneyEmail: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Senha do My Disney Experience</Label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={travelProfile.disneyPassword || ''}
+                onChange={(e) => handleFieldChange({ disneyPassword: e.target.value })}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Estas informações são compartilhadas apenas com seu guia autorizado para configuração do app.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
+            <Checkbox
+              id="authorize"
+              checked={travelProfile.authorizeGuideAccess}
+              onCheckedChange={(checked) => handleFieldChange({ authorizeGuideAccess: !!checked })}
+            />
+            <Label htmlFor="authorize" className="cursor-pointer">
+              Autorizo o guia a acessar e configurar o aplicativo em meu nome
+            </Label>
+          </div>
+        </>
+      )}
     </>
   );
 }
