@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -17,6 +17,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
 import { format, eachDayOfInterval, parseISO, isWeekend } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Trash2, Check, Clock, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface PlannerItem {
   id: string;
@@ -46,42 +48,33 @@ interface PlannerCalendarProps {
   onDrop: (item: any, date: string, timeSlot: string) => void;
   onRemove: (itemId: string) => void;
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
+  onToggleComplete?: (itemId: string) => void;
 }
 
-// Generate date range helper
-const generateDateRange = (startDate: string, endDate: string): string[] => {
-  const start = parseISO(startDate);
-  const end = parseISO(endDate);
-  return eachDayOfInterval({ start, end }).map(date => format(date, 'yyyy-MM-dd'));
+// Time slots configuration
+const TIME_SLOTS = [
+  { id: 'morning', label: 'Manhã', icon: '☀️', hours: '6h - 12h' },
+  { id: 'afternoon', label: 'Tarde', icon: '🌤️', hours: '12h - 18h' },
+  { id: 'evening', label: 'Noite', icon: '🌙', hours: '18h - 00h' },
+  { id: 'night', label: 'Madrugada', icon: '🌃', hours: '00h - 6h' },
+] as const;
+
+// Category colors
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  disney: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
+  universal: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
+  seaworld: { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-300' },
+  outlet: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
+  mall: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300' },
+  supermarket: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300' },
+  restaurant: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
+  activity: { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-300' },
+  hotel: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300' },
+  other: { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300' },
 };
 
-// Format date helper
-const formatDate = (dateStr: string): string => {
-  return format(parseISO(dateStr), "d 'de' MMMM", { locale: ptBR });
-};
-
-// Format day of week helper
-const formatDayOfWeek = (dateStr: string): string => {
-  return format(parseISO(dateStr), 'EEEE', { locale: ptBR });
-};
-
-// Get category icon
-const getCategoryIcon = (category: string, itemType: string): string => {
-  if (itemType === 'park') {
-    if (category === 'disney') return '🏰';
-    if (category === 'universal') return '⚡';
-    return '🎢';
-  }
-  if (itemType === 'attraction') return '🎠';
-  if (itemType === 'restaurant') return '🍽️';
-  if (itemType === 'shopping') {
-    if (category === 'outlet') return '🛍️';
-    if (category === 'walmart' || category === 'target') return '🛒';
-    return '🏬';
-  }
-  if (itemType === 'activity') return '🌴';
-  if (itemType === 'hotel') return '🏨';
-  return '📌';
+const getCategoryStyle = (category: string) => {
+  return CATEGORY_COLORS[category.toLowerCase()] || CATEGORY_COLORS.other;
 };
 
 export const PlannerCalendar = ({
@@ -91,10 +84,17 @@ export const PlannerCalendar = ({
   onDrop,
   onRemove,
   onReorder,
+  onToggleComplete,
 }: PlannerCalendarProps) => {
-  const dates = generateDateRange(startDate, endDate);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeItem = items.find(item => item.id === activeId);
+
+  // Generate date range
+  const dates = useMemo(() => {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    return eachDayOfInterval({ start, end }).map(date => format(date, 'yyyy-MM-dd'));
+  }, [startDate, endDate]);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -108,17 +108,16 @@ export const PlannerCalendar = ({
 
     const overId = over.id as string;
     
-    // Check if dropped on a time slot
+    // Check if dropped on a time slot (format: "YYYY-MM-DD-slotId")
     if (overId.includes('-')) {
-      const [date, timeSlot] = overId.split('-').slice(0, 2);
-      const dateStr = overId.substring(0, 10); // Extract yyyy-MM-dd
-      const slot = overId.substring(11); // Extract time slot
-      
-      const activeItem = items.find(item => item.id === active.id);
-      if (activeItem) {
-        // If moving to a different slot
-        if (activeItem.date !== dateStr || activeItem.time_slot !== slot) {
-          onDrop(activeItem, dateStr, slot);
+      const parts = overId.split('-');
+      if (parts.length >= 4) {
+        const dateStr = `${parts[0]}-${parts[1]}-${parts[2]}`;
+        const slot = parts[3];
+        
+        const draggedItem = items.find(item => item.id === active.id);
+        if (draggedItem && (draggedItem.date !== dateStr || draggedItem.time_slot !== slot)) {
+          onDrop(draggedItem, dateStr, slot);
         }
       }
     }
@@ -160,115 +159,97 @@ export const PlannerCalendar = ({
             date={date}
             dayNumber={index + 1}
             items={items.filter(item => item.date === date)}
-            onDrop={onDrop}
             onRemove={onRemove}
-            onReorder={onReorder}
+            onToggleComplete={onToggleComplete}
           />
         ))}
       </div>
 
       <DragOverlay>
-        {activeItem ? (
-          <ActivityCard item={activeItem} isDragging />
-        ) : null}
+        {activeItem && <ActivityCard item={activeItem} isDragging />}
       </DragOverlay>
     </DndContext>
   );
 };
 
-// Componente: DayRow
+// Day Row Component
 interface DayRowProps {
   date: string;
   dayNumber: number;
   items: PlannerItem[];
-  onDrop: (item: any, date: string, timeSlot: string) => void;
   onRemove: (itemId: string) => void;
-  onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
+  onToggleComplete?: (itemId: string) => void;
 }
 
-const DayRow = ({ date, dayNumber, items, onDrop, onRemove, onReorder }: DayRowProps) => {
-  const dayOfWeek = formatDayOfWeek(date);
-  const isWeekendDay = isWeekend(parseISO(date));
+const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete }: DayRowProps) => {
+  const parsedDate = parseISO(date);
+  const isWeekendDay = isWeekend(parsedDate);
+  const dayOfWeek = format(parsedDate, 'EEEE', { locale: ptBR });
+  const formattedDate = format(parsedDate, "d 'de' MMMM", { locale: ptBR });
 
   return (
-    <div className={`border rounded-xl p-4 transition-colors ${
+    <div className={cn(
+      "rounded-xl border transition-colors",
       isWeekendDay 
-        ? 'bg-primary/5 border-primary/20' 
-        : 'bg-card border-border'
-    }`}>
-      {/* Header do Dia */}
-      <div className="flex items-center justify-between mb-4">
+        ? "bg-blue-50/80 border-blue-200" 
+        : "bg-white border-border"
+    )}>
+      {/* Day Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border/50">
         <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Dia {dayNumber}
-          </span>
-          <h3 className="text-lg font-semibold text-foreground capitalize">
-            {formatDate(date)} — {dayOfWeek}
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded",
+              isWeekendDay ? "bg-blue-200 text-blue-700" : "bg-muted text-muted-foreground"
+            )}>
+              Dia {dayNumber}
+            </span>
+            {isWeekendDay && (
+              <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-600 border-blue-200">
+                Fim de semana
+              </Badge>
+            )}
+          </div>
+          <h3 className="text-base font-semibold text-foreground capitalize mt-1">
+            {formattedDate} — {dayOfWeek}
           </h3>
         </div>
-        <div className="flex gap-2">
-          <Badge variant="secondary" className="text-xs">
-            {items.length} {items.length === 1 ? 'atividade' : 'atividades'}
-          </Badge>
-        </div>
+        <Badge variant="outline" className="text-xs">
+          {items.length} {items.length === 1 ? 'atividade' : 'atividades'}
+        </Badge>
       </div>
 
-      {/* Time Slots */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <TimeSlotDropZone
-          date={date}
-          timeSlot="morning"
-          label="☀️ Manhã"
-          sublabel="6h - 12h"
-          items={items.filter(i => i.time_slot === 'morning')}
-          onRemove={onRemove}
-        />
-
-        <TimeSlotDropZone
-          date={date}
-          timeSlot="afternoon"
-          label="🌤️ Tarde"
-          sublabel="12h - 18h"
-          items={items.filter(i => i.time_slot === 'afternoon')}
-          onRemove={onRemove}
-        />
-
-        <TimeSlotDropZone
-          date={date}
-          timeSlot="evening"
-          label="🌙 Noite"
-          sublabel="18h - 00h"
-          items={items.filter(i => i.time_slot === 'evening')}
-          onRemove={onRemove}
-        />
-
-        <TimeSlotDropZone
-          date={date}
-          timeSlot="night"
-          label="🌃 Madrugada"
-          sublabel="00h - 6h"
-          items={items.filter(i => i.time_slot === 'night')}
-          onRemove={onRemove}
-        />
+      {/* Time Slots Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3">
+        {TIME_SLOTS.map(slot => (
+          <TimeSlotDropZone
+            key={`${date}-${slot.id}`}
+            date={date}
+            slot={slot}
+            items={items.filter(i => i.time_slot === slot.id)}
+            onRemove={onRemove}
+            onToggleComplete={onToggleComplete}
+          />
+        ))}
       </div>
     </div>
   );
 };
 
-// Componente: TimeSlotDropZone
+// Time Slot Drop Zone Component
 interface TimeSlotDropZoneProps {
   date: string;
-  timeSlot: string;
-  label: string;
-  sublabel: string;
+  slot: typeof TIME_SLOTS[number];
   items: PlannerItem[];
   onRemove: (itemId: string) => void;
+  onToggleComplete?: (itemId: string) => void;
 }
 
-const TimeSlotDropZone = ({ date, timeSlot, label, sublabel, items, onRemove }: TimeSlotDropZoneProps) => {
+const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete }: TimeSlotDropZoneProps) => {
+  const dropId = `${date}-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({
-    id: `${date}-${timeSlot}`,
-    data: { date, timeSlot },
+    id: dropId,
+    data: { date, timeSlot: slot.id },
   });
 
   const sortedItems = [...items].sort((a, b) => a.order_index - b.order_index);
@@ -276,26 +257,32 @@ const TimeSlotDropZone = ({ date, timeSlot, label, sublabel, items, onRemove }: 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[140px] border-2 border-dashed rounded-lg p-3 transition-all duration-200 ${
+      className={cn(
+        "min-h-[120px] border-2 border-dashed rounded-lg p-2 transition-all duration-200",
         isOver 
-          ? 'border-primary bg-primary/10 scale-[1.02]' 
-          : 'border-border/50 hover:border-border'
-      }`}
+          ? "border-primary bg-primary/10 scale-[1.02] shadow-md" 
+          : "border-border/40 hover:border-border/80 bg-white/50"
+      )}
     >
-      <div className="mb-2">
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-[10px] text-muted-foreground">{sublabel}</p>
+      {/* Slot Header */}
+      <div className="mb-2 pb-1 border-b border-border/30">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm">{slot.icon}</span>
+          <span className="text-xs font-medium text-foreground">{slot.label}</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground">{slot.hours}</p>
       </div>
 
+      {/* Items */}
       <SortableContext
         items={sortedItems.map(i => i.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {sortedItems.length === 0 ? (
-            <div className="flex items-center justify-center py-6 text-center">
-              <p className="text-xs text-muted-foreground">
-                Arraste atividades aqui
+            <div className="flex items-center justify-center py-4">
+              <p className="text-[10px] text-muted-foreground/60">
+                Arraste itens aqui
               </p>
             </div>
           ) : (
@@ -304,6 +291,7 @@ const TimeSlotDropZone = ({ date, timeSlot, label, sublabel, items, onRemove }: 
                 key={item.id}
                 item={item}
                 onRemove={() => onRemove(item.id)}
+                onToggleComplete={onToggleComplete ? () => onToggleComplete(item.id) : undefined}
               />
             ))
           )}
@@ -313,13 +301,14 @@ const TimeSlotDropZone = ({ date, timeSlot, label, sublabel, items, onRemove }: 
   );
 };
 
-// Componente: SortableActivityCard
+// Sortable Activity Card Component
 interface SortableActivityCardProps {
   item: PlannerItem;
   onRemove: () => void;
+  onToggleComplete?: () => void;
 }
 
-const SortableActivityCard = ({ item, onRemove }: SortableActivityCardProps) => {
+const SortableActivityCard = ({ item, onRemove, onToggleComplete }: SortableActivityCardProps) => {
   const {
     attributes,
     listeners,
@@ -343,38 +332,79 @@ const SortableActivityCard = ({ item, onRemove }: SortableActivityCardProps) => 
       {...listeners}
       className="relative group touch-none"
     >
-      <ActivityCard item={item} onRemove={onRemove} />
+      <ActivityCard 
+        item={item} 
+        onRemove={onRemove} 
+        onToggleComplete={onToggleComplete}
+      />
     </div>
   );
 };
 
-// Componente: ActivityCard
+// Activity Card Component
 interface ActivityCardProps {
   item: PlannerItem;
   isDragging?: boolean;
   onRemove?: () => void;
+  onToggleComplete?: () => void;
 }
 
-const ActivityCard = ({ item, isDragging, onRemove }: ActivityCardProps) => {
-  const icon = item.icon || getCategoryIcon(item.category, item.item_type);
+const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete }: ActivityCardProps) => {
+  const categoryStyle = getCategoryStyle(item.category);
+  const icon = item.icon || getDefaultIcon(item.item_type, item.category);
   
   return (
     <div
-      className={`p-2.5 rounded-lg text-xs font-medium cursor-grab active:cursor-grabbing transition-all ${
-        isDragging ? 'shadow-lg scale-105' : 'shadow-sm hover:shadow-md'
-      }`}
-      style={{ 
-        backgroundColor: `${item.color}15`, 
-        border: `1.5px solid ${item.color}`,
-      }}
+      className={cn(
+        "p-2 rounded-lg border text-xs cursor-grab active:cursor-grabbing transition-all",
+        isDragging ? "shadow-xl scale-105 ring-2 ring-primary" : "shadow-sm hover:shadow-md",
+        item.completed ? "opacity-60" : "",
+        categoryStyle.bg,
+        categoryStyle.border
+      )}
     >
       <div className="flex items-start justify-between gap-1">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+        <div className="flex items-start gap-1.5 flex-1 min-w-0">
+          {/* Complete checkbox */}
+          {onToggleComplete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleComplete();
+              }}
+              className={cn(
+                "mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
+                item.completed
+                  ? "bg-green-500 border-green-500 text-white"
+                  : "border-gray-300 hover:border-primary"
+              )}
+            >
+              {item.completed && <Check className="w-2 h-2" />}
+            </button>
+          )}
+          
           <span className="text-sm flex-shrink-0">{icon}</span>
-          <span className="truncate text-foreground font-medium">
-            {item.item_name}
-          </span>
+          <div className="flex-1 min-w-0">
+            <span className={cn(
+              "block truncate font-medium",
+              categoryStyle.text,
+              item.completed && "line-through"
+            )}>
+              {item.item_name}
+            </span>
+            
+            {/* Category Tag */}
+            <span className={cn(
+              "inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wide",
+              categoryStyle.bg,
+              categoryStyle.text
+            )}>
+              {item.category}
+            </span>
+          </div>
         </div>
+        
+        {/* Remove button */}
         {onRemove && (
           <button
             onClick={(e) => {
@@ -385,22 +415,23 @@ const ActivityCard = ({ item, isDragging, onRemove }: ActivityCardProps) => {
             className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20 text-destructive flex-shrink-0"
             aria-label="Remover item"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <Trash2 className="w-3 h-3" />
           </button>
         )}
       </div>
       
-      <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
+      {/* Metadata */}
+      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
         {item.duration && (
           <span className="flex items-center gap-0.5">
-            ⏱️ {item.duration}min
+            <Clock className="w-2.5 h-2.5" />
+            {item.duration}min
           </span>
         )}
         {item.reservation_confirmed && (
-          <span className="flex items-center gap-0.5 text-success">
-            ✓ Reservado
+          <span className="flex items-center gap-0.5 text-green-600">
+            <Check className="w-2.5 h-2.5" />
+            Reservado
           </span>
         )}
         {item.start_time && (
@@ -411,12 +442,32 @@ const ActivityCard = ({ item, isDragging, onRemove }: ActivityCardProps) => {
       </div>
 
       {item.notes && (
-        <p className="mt-1.5 text-[10px] text-muted-foreground line-clamp-1 italic">
+        <p className="mt-1 text-[10px] text-muted-foreground line-clamp-1 italic">
           {item.notes}
         </p>
       )}
     </div>
   );
+};
+
+// Helper function for default icons
+const getDefaultIcon = (itemType: string, category: string): string => {
+  if (itemType === 'park') {
+    if (category === 'disney') return '🏰';
+    if (category === 'universal') return '⚡';
+    if (category === 'seaworld') return '🐬';
+    return '🎢';
+  }
+  if (itemType === 'attraction') return '🎠';
+  if (itemType === 'restaurant') return '🍽️';
+  if (itemType === 'shopping') {
+    if (category === 'outlet') return '🛍️';
+    if (category === 'supermarket') return '🛒';
+    return '🏬';
+  }
+  if (itemType === 'activity') return '🌴';
+  if (itemType === 'hotel') return '🏨';
+  return '📍';
 };
 
 export default PlannerCalendar;
