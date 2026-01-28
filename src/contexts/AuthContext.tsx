@@ -296,6 +296,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
+      // Recalculate completion percentage based on actual data
+      profile.completionPercentage = calculateCompletionPercentage(profile);
+      
       return profile;
     } catch (error) {
       console.error('[Auth] Error loading profile:', error);
