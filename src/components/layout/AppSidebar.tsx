@@ -20,7 +20,8 @@ import {
   Map,
   FileText,
   UtensilsCrossed,
-  Route
+  Route,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -50,10 +51,12 @@ const iconMap: Record<string, React.ElementType> = {
   Headphones,
   UtensilsCrossed,
   Route,
+  Heart,
 };
 
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
+  { icon: Heart, label: 'Meus Favoritos', path: '/favoritos', pageKey: 'favoritos' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
