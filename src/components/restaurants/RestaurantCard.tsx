@@ -13,12 +13,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Navigation,
-  Eye
+  Eye,
+  Heart
 } from 'lucide-react';
 import { type Restaurant } from '@/data/restaurantsData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useFavoriteSlugs, useToggleFavorite, getRestaurantIdBySlug } from '@/hooks/useRestaurantFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -26,8 +29,14 @@ interface RestaurantCardProps {
 
 const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const { data: favoriteSlugs } = useFavoriteSlugs();
+  const toggleFavorite = useToggleFavorite();
+  
+  const isFavorite = favoriteSlugs?.has(restaurant.id) || false;
 
   const getPriceColor = (price: string) => {
     switch (price) {
@@ -67,12 +76,30 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
   // The restaurant.id is now the slug from the database
   const restaurantSlug = restaurant.id;
 
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const restaurantId = await getRestaurantIdBySlug(restaurant.id);
+    if (!restaurantId) return;
+
+    toggleFavorite.mutate({
+      restaurantId,
+      restaurantSlug: restaurant.id,
+      isFavorite,
+    });
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer" onClick={() => navigate(`/restaurante/${restaurantSlug}`)}>
       {/* Imagem do Restaurante */}
       <div className="relative h-56 overflow-hidden group">
         <img 
-          src={restaurant.images[currentImageIndex]} 
+          src={restaurant.images[currentImageIndex] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80'} 
           alt={restaurant.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -94,17 +121,30 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
           )}
         </div>
 
+        {/* Botão de Favorito */}
+        <button
+          onClick={handleToggleFavorite}
+          className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
+            isFavorite 
+              ? 'bg-red-500 text-white' 
+              : 'bg-black/50 text-white hover:bg-black/70'
+          }`}
+          disabled={toggleFavorite.isPending}
+        >
+          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} />
+        </button>
+
         {/* Navegação de imagens */}
         {restaurant.images.length > 1 && (
           <>
             <button
-              onClick={prevImage}
+              onClick={(e) => { e.stopPropagation(); prevImage(); }}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
-              onClick={nextImage}
+              onClick={(e) => { e.stopPropagation(); nextImage(); }}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
             >
               <ChevronRight className="w-4 h-4" />

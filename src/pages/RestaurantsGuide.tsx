@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Star, UtensilsCrossed, Filter, Loader2, Sparkles, ChefHat, Wine, Utensils } from 'lucide-react';
+import { Search, MapPin, Star, UtensilsCrossed, Filter, Loader2, Sparkles, ChefHat, Wine, Utensils, Heart } from 'lucide-react';
 import { useRestaurants, type Restaurant } from '@/hooks/useRestaurants';
+import { useFavoriteSlugs, useRestaurantFavorites } from '@/hooks/useRestaurantFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 import { restaurantsData as staticRestaurantsData, type Restaurant as StaticRestaurant } from '@/data/restaurantsData';
 import RestaurantCard from '@/components/restaurants/RestaurantCard';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -42,9 +44,15 @@ const RestaurantsGuide = () => {
   const [selectedPark, setSelectedPark] = useState<string>('all');
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [priceFilter, setPriceFilter] = useState<string>('all');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  const { user } = useAuth();
 
   // Fetch restaurants from Supabase
   const { data: supabaseRestaurants = [], isLoading } = useRestaurants();
+  
+  // Fetch favorites
+  const { data: favoriteSlugs } = useFavoriteSlugs();
 
   // Use Supabase data if available, otherwise fallback to static data
   const restaurantsData: StaticRestaurant[] = useMemo(() => {
@@ -143,8 +151,16 @@ const RestaurantsGuide = () => {
       filtered = filtered.filter(r => r.priceRange === priceFilter);
     }
 
+    // Favorites filter
+    if (showFavoritesOnly && favoriteSlugs) {
+      filtered = filtered.filter(r => favoriteSlugs.has(r.id));
+    }
+
     return filtered;
-  }, [restaurantsData, searchTerm, selectedCategory, selectedPark, selectedRegion, selectedSubcategory, priceFilter]);
+  }, [restaurantsData, searchTerm, selectedCategory, selectedPark, selectedRegion, selectedSubcategory, priceFilter, showFavoritesOnly, favoriteSlugs]);
+
+  // Count favorites
+  const favoritesCount = favoriteSlugs?.size || 0;
 
   // Stats cards data
   const statsCards = [
@@ -271,9 +287,10 @@ const RestaurantsGuide = () => {
                       setSelectedPark('all');
                       setSelectedRegion('all');
                       setSelectedSubcategory('all');
+                      setShowFavoritesOnly(false);
                     }}
                     className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                      selectedCategory === cat.value
+                      selectedCategory === cat.value && !showFavoritesOnly
                         ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25'
                         : 'bg-muted hover:bg-muted/80 text-foreground'
                     }`}
@@ -281,6 +298,29 @@ const RestaurantsGuide = () => {
                     {cat.label} <span className="opacity-70">({cat.count})</span>
                   </button>
                 ))}
+                
+                {/* Favorites Filter - only show if user is logged in */}
+                {user && (
+                  <button
+                    onClick={() => {
+                      setShowFavoritesOnly(!showFavoritesOnly);
+                      if (!showFavoritesOnly) {
+                        setSelectedCategory('all');
+                        setSelectedPark('all');
+                        setSelectedRegion('all');
+                        setSelectedSubcategory('all');
+                      }
+                    }}
+                    className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      showFavoritesOnly
+                        ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg shadow-red-500/25'
+                        : 'bg-muted hover:bg-muted/80 text-foreground'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+                    Favoritos <span className="opacity-70">({favoritesCount})</span>
+                  </button>
+                )}
               </div>
 
               {/* Filters Grid */}
