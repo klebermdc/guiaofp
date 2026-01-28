@@ -457,7 +457,7 @@ const Content = () => {
                       {/* Dark gradient overlay for text legibility */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute top-2 left-2">
-                        <Badge variant="secondary" className="text-xs bg-white/90 text-foreground">
+                        <Badge className="text-xs bg-white text-gray-900 font-semibold shadow-md border-0">
                           {park.categoryLabel}
                         </Badge>
                       </div>
