@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 
 // Converter dados do Supabase para o formato esperado pelo RestaurantCard
 const convertToCardFormat = (restaurant: Restaurant): StaticRestaurant => ({
-  id: restaurant.id,
+  id: restaurant.slug, // Use slug as ID for navigation
   name: restaurant.name,
   category: (restaurant.category as 'disney' | 'universal' | 'fora-parques') || 'fora-parques',
   subcategory: restaurant.subcategory || undefined,

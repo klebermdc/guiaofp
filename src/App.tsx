@@ -40,6 +40,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NewPassword = lazy(() => import("./pages/NewPassword"));
 const Restaurants = lazy(() => import("./pages/Restaurants"));
 const RestaurantsGuide = lazy(() => import("./pages/RestaurantsGuide"));
+const RestaurantDetails = lazy(() => import("./pages/RestaurantDetails"));
 const RoteiroPersonalizado = lazy(() => import("./pages/RoteiroPersonalizado"));
 const RoteiroQuestionario = lazy(() => import("./pages/RoteiroQuestionario"));
 const RoteiroView = lazy(() => import("./pages/RoteiroView"));
@@ -113,6 +114,7 @@ const App = () => {
                     <Route path="/checklists" element={<Checklists />} />
                     <Route path="/restaurantes" element={<Restaurants />} />
                     <Route path="/guia-restaurantes" element={<RestaurantsGuide />} />
+                    <Route path="/restaurante/:slug" element={<RestaurantDetails />} />
                     <Route path="/roteiro-personalizado" element={<RoteiroPersonalizado />} />
                     <Route path="/roteiro-personalizado/questionario" element={<RoteiroQuestionario />} />
                     <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />

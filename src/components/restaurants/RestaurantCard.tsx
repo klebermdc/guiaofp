@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
   Phone, 
@@ -11,7 +12,8 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
-  Navigation
+  Navigation,
+  Eye
 } from 'lucide-react';
 import { type Restaurant } from '@/data/restaurantsData';
 import { Button } from '@/components/ui/button';
@@ -23,6 +25,7 @@ interface RestaurantCardProps {
 }
 
 const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -61,8 +64,11 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
     );
   };
 
+  // The restaurant.id is now the slug from the database
+  const restaurantSlug = restaurant.id;
+
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer" onClick={() => navigate(`/restaurante/${restaurantSlug}`)}>
       {/* Imagem do Restaurante */}
       <div className="relative h-56 overflow-hidden group">
         <img 
@@ -243,29 +249,23 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
         )}
 
         {/* Botões de Ação */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
           <Button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => navigate(`/restaurante/${restaurantSlug}`)}
             className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
           >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="w-4 h-4 mr-2" />
-                Ver Menos
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4 mr-2" />
-                Ver Mais
-              </>
-            )}
+            <Eye className="w-4 h-4 mr-2" />
+            Ver Detalhes
           </Button>
 
           {restaurant.website && (
             <Button
               variant="outline"
               size="icon"
-              onClick={() => window.open(restaurant.website!, '_blank')}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(restaurant.website!, '_blank');
+              }}
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
@@ -273,7 +273,7 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
         </div>
 
         {/* Indicadores de Reserva */}
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
           {restaurant.reservations ? (
             <span className="flex items-center text-green-600">
               <Clock className="w-3 h-3 mr-1" />
