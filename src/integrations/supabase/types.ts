@@ -899,6 +899,70 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_images: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+          restaurant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+          restaurant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_images_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_menu_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          item_name: string
+          restaurant_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          item_name: string
+          restaurant_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          item_name?: string
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_menu_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurants: {
         Row: {
           address: string | null
@@ -910,20 +974,27 @@ export type Database = {
           created_at: string | null
           cuisine: string | null
           description: string | null
+          featured: boolean | null
+          highlights: string[] | null
           id: string
           image_url: string | null
           latitude: number | null
           location: string | null
           longitude: number | null
           menu_url: string | null
+          michelin: boolean | null
           must_try: string | null
           name: string
           operating_hours: Json | null
           park_id: string | null
+          phone: string | null
+          price_range: string | null
           reservation_required: boolean | null
           slug: string
+          subcategory: string | null
           tips: string | null
           type: string | null
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -935,20 +1006,27 @@ export type Database = {
           created_at?: string | null
           cuisine?: string | null
           description?: string | null
+          featured?: boolean | null
+          highlights?: string[] | null
           id?: string
           image_url?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
           menu_url?: string | null
+          michelin?: boolean | null
           must_try?: string | null
           name: string
           operating_hours?: Json | null
           park_id?: string | null
+          phone?: string | null
+          price_range?: string | null
           reservation_required?: boolean | null
           slug: string
+          subcategory?: string | null
           tips?: string | null
           type?: string | null
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -960,20 +1038,27 @@ export type Database = {
           created_at?: string | null
           cuisine?: string | null
           description?: string | null
+          featured?: boolean | null
+          highlights?: string[] | null
           id?: string
           image_url?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
           menu_url?: string | null
+          michelin?: boolean | null
           must_try?: string | null
           name?: string
           operating_hours?: Json | null
           park_id?: string | null
+          phone?: string | null
+          price_range?: string | null
           reservation_required?: boolean | null
           slug?: string
+          subcategory?: string | null
           tips?: string | null
           type?: string | null
+          website?: string | null
         }
         Relationships: [
           {

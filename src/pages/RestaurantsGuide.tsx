@@ -1,12 +1,38 @@
 import { useState, useMemo } from 'react';
-import { Search, MapPin, Star, UtensilsCrossed, Filter } from 'lucide-react';
-import { restaurantsData, type Restaurant } from '@/data/restaurantsData';
+import { Search, MapPin, Star, UtensilsCrossed, Filter, Loader2 } from 'lucide-react';
+import { useRestaurants, type Restaurant } from '@/hooks/useRestaurants';
+import { restaurantsData as staticRestaurantsData, type Restaurant as StaticRestaurant } from '@/data/restaurantsData';
 import RestaurantCard from '@/components/restaurants/RestaurantCard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SEO } from '@/components/SEO';
+
+// Converter dados do Supabase para o formato esperado pelo RestaurantCard
+const convertToCardFormat = (restaurant: Restaurant): StaticRestaurant => ({
+  id: restaurant.id,
+  name: restaurant.name,
+  category: (restaurant.category as 'disney' | 'universal' | 'fora-parques') || 'fora-parques',
+  subcategory: restaurant.subcategory || undefined,
+  park: restaurant.location || restaurant.area || undefined,
+  address: restaurant.address || '',
+  phone: restaurant.phone || undefined,
+  description: restaurant.description || '',
+  priceRange: (restaurant.price_range as '$' | '$$' | '$$$' | '$$$$') || '$$',
+  highlights: restaurant.highlights || [],
+  website: restaurant.website || undefined,
+  reservations: restaurant.reservation_required || false,
+  michelin: restaurant.michelin || false,
+  featured: restaurant.featured || false,
+  images: restaurant.image_url ? [restaurant.image_url] : [],
+  menu: {
+    appetizers: [],
+    mainCourses: restaurant.must_try ? [restaurant.must_try] : [],
+    desserts: [],
+    drinks: [],
+  },
+});
 
 const RestaurantsGuide = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,23 +42,34 @@ const RestaurantsGuide = () => {
   const [showMichelinOnly, setShowMichelinOnly] = useState(false);
   const [priceFilter, setPriceFilter] = useState<string>('all');
 
-  // Organizar restaurantes por categoria
+  // Fetch restaurants from Supabase
+  const { data: supabaseRestaurants = [], isLoading } = useRestaurants();
+
+  // Use Supabase data if available, otherwise fallback to static data
+  const restaurantsData: StaticRestaurant[] = useMemo(() => {
+    if (supabaseRestaurants.length > 0) {
+      return supabaseRestaurants.map(convertToCardFormat);
+    }
+    return staticRestaurantsData;
+  }, [supabaseRestaurants]);
+
+  // Organize restaurants by category
   const disneyRestaurants = restaurantsData.filter(r => r.category === 'disney');
   const universalRestaurants = restaurantsData.filter(r => r.category === 'universal');
   const outsideRestaurants = restaurantsData.filter(r => r.category === 'fora-parques');
 
-  // Obter parques únicos
+  // Get unique parks
   const disneyParks = [...new Set(disneyRestaurants.map(r => r.park).filter(Boolean))];
   const universalParks = [...new Set(universalRestaurants.map(r => r.park).filter(Boolean))];
 
-  // Obter subcategorias únicas
+  // Get unique subcategories
   const subcategories = [...new Set(outsideRestaurants.map(r => r.subcategory).filter(Boolean))];
 
-  // Filtrar restaurantes
+  // Filter restaurants
   const filteredRestaurants = useMemo(() => {
     let filtered = restaurantsData;
 
-    // Filtro de busca
+    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(r =>
         r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,37 +78,37 @@ const RestaurantsGuide = () => {
       );
     }
 
-    // Filtro de categoria
+    // Category filter
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(r => r.category === selectedCategory);
     }
 
-    // Filtro de parque
+    // Park filter
     if (selectedPark !== 'all') {
       filtered = filtered.filter(r => r.park === selectedPark);
     }
 
-    // Filtro de subcategoria
+    // Subcategory filter
     if (selectedSubcategory !== 'all') {
       filtered = filtered.filter(r => r.subcategory === selectedSubcategory);
     }
 
-    // Filtro Michelin
+    // Michelin filter
     if (showMichelinOnly) {
       filtered = filtered.filter(r => r.michelin);
     }
 
-    // Filtro de preço
+    // Price filter
     if (priceFilter !== 'all') {
       filtered = filtered.filter(r => r.priceRange === priceFilter);
     }
 
     return filtered;
-  }, [searchTerm, selectedCategory, selectedPark, selectedSubcategory, showMichelinOnly, priceFilter]);
+  }, [restaurantsData, searchTerm, selectedCategory, selectedPark, selectedSubcategory, showMichelinOnly, priceFilter]);
 
-  // Organizar restaurantes filtrados
+  // Organize filtered restaurants
   const organizedRestaurants = useMemo(() => {
-    const organized: Record<string, Restaurant[]> = {};
+    const organized: Record<string, StaticRestaurant[]> = {};
 
     if (selectedCategory === 'disney' || selectedCategory === 'all') {
       disneyParks.forEach(park => {
@@ -134,9 +171,9 @@ const RestaurantsGuide = () => {
           </div>
         </div>
 
-        {/* Barra de Busca e Filtros */}
+        {/* Search and Filters Bar */}
         <div className="bg-card rounded-2xl shadow-lg p-6 border">
-          {/* Busca */}
+          {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
@@ -147,9 +184,9 @@ const RestaurantsGuide = () => {
             />
           </div>
 
-          {/* Filtros */}
+          {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Categoria */}
+            {/* Category */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
                 Categoria
@@ -170,7 +207,7 @@ const RestaurantsGuide = () => {
               </select>
             </div>
 
-            {/* Parque (Disney/Universal) */}
+            {/* Park (Disney/Universal) */}
             {(selectedCategory === 'disney' || selectedCategory === 'universal') && (
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
@@ -192,7 +229,7 @@ const RestaurantsGuide = () => {
               </div>
             )}
 
-            {/* Tipo de Culinária (Fora dos Parques) */}
+            {/* Cuisine Type (Outside Parks) */}
             {(selectedCategory === 'fora-parques' || selectedCategory === 'all') && (
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
@@ -211,7 +248,7 @@ const RestaurantsGuide = () => {
               </div>
             )}
 
-            {/* Faixa de Preço */}
+            {/* Price Range */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
                 Faixa de Preço
@@ -230,7 +267,7 @@ const RestaurantsGuide = () => {
             </div>
           </div>
 
-          {/* Toggle Michelin */}
+          {/* Michelin Toggle */}
           <div className="mt-4 flex items-center space-x-2">
             <Checkbox
               id="michelin-filter"
@@ -243,14 +280,22 @@ const RestaurantsGuide = () => {
             </label>
           </div>
 
-          {/* Contador de Resultados */}
+          {/* Results Counter */}
           <div className="mt-4 text-center text-muted-foreground">
             <span className="font-semibold text-orange-600">{filteredRestaurants.length}</span> restaurante(s) encontrado(s)
           </div>
         </div>
 
-        {/* Lista de Restaurantes Organizados */}
-        {Object.keys(organizedRestaurants).length === 0 ? (
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mr-2" />
+            <span className="text-muted-foreground">Carregando restaurantes...</span>
+          </div>
+        )}
+
+        {/* Organized Restaurant List */}
+        {!isLoading && Object.keys(organizedRestaurants).length === 0 ? (
           <div className="text-center py-16">
             <Filter className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
             <h3 className="text-2xl font-semibold text-muted-foreground mb-2">
@@ -280,7 +325,7 @@ const RestaurantsGuide = () => {
           ))
         )}
 
-        {/* Footer com Estatísticas */}
+        {/* Footer with Statistics */}
         <div className="bg-card rounded-2xl p-8 border mt-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
