@@ -386,38 +386,40 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       )}
 
       {/* Items List */}
-      <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12">
-              <span className="text-4xl mb-2 block">🔍</span>
-              <p className="text-sm text-muted-foreground">
-                Nenhum resultado encontrado
-              </p>
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs text-primary hover:underline mt-2"
-                >
-                  Limpar busca
-                </button>
-              )}
-            </div>
-          ) : (
-            filteredItems.map(item => (
-              <DraggableActivityItem
-                key={`${item.type}-${item.id}`}
-                item={item}
-                onDragStart={onDragStart}
-              />
-            ))
-          )}
-        </div>
-      </ScrollArea>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-3 space-y-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-12">
+                <span className="text-4xl mb-2 block">🔍</span>
+                <p className="text-sm text-muted-foreground">
+                  Nenhum resultado encontrado
+                </p>
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs text-primary hover:underline mt-2"
+                  >
+                    Limpar busca
+                  </button>
+                )}
+              </div>
+            ) : (
+              filteredItems.map(item => (
+                <DraggableActivityItem
+                  key={`${item.type}-${item.id}`}
+                  item={item}
+                  onDragStart={onDragStart}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Footer Tip */}
       <div className="p-3 border-t border-border bg-gradient-to-t from-muted/30 to-transparent">
