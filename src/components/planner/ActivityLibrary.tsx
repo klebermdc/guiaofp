@@ -5,7 +5,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, ExternalLink, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -36,7 +35,7 @@ interface ActivityLibraryProps {
 // Tab configuration
 const TABS = [
   { id: 'all', label: 'Todos', icon: '📋' },
-  { id: 'attractions', label: 'Atrações', icon: '🎢' },
+  { id: 'parks', label: 'Parques', icon: '🏰' },
   { id: 'restaurants', label: 'Restaurantes', icon: '🍽️' },
   { id: 'shopping', label: 'Compras', icon: '🛍️' },
   { id: 'activities', label: 'Outras', icon: '🌴' },
@@ -63,15 +62,6 @@ const fetchParks = async () => {
   const { data, error } = await supabase
     .from('parks')
     .select('id, name, slug, color, typical_visit_duration')
-    .order('name');
-  if (error) throw error;
-  return data;
-};
-
-const fetchAttractions = async () => {
-  const { data, error } = await supabase
-    .from('attractions')
-    .select('id, name, icon, duration, area, park_id, parks(name, slug, color)')
     .order('name');
   if (error) throw error;
   return data;
@@ -179,18 +169,12 @@ const RESTAURANT_TYPES = [
 export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const [selectedTab, setSelectedTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPark, setSelectedPark] = useState<string>('all');
   const [selectedRestaurantType, setSelectedRestaurantType] = useState<string>('all');
 
   // Fetch data
   const { data: parks = [], isLoading: loadingParks } = useQuery({ 
     queryKey: ['parks'], 
     queryFn: fetchParks,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: attractions = [], isLoading: loadingAttractions } = useQuery({ 
-    queryKey: ['attractions'], 
-    queryFn: fetchAttractions,
     staleTime: 5 * 60 * 1000,
   });
   const { data: restaurants = [], isLoading: loadingRestaurants } = useQuery({ 
@@ -209,23 +193,21 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = loadingParks || loadingAttractions || loadingRestaurants || loadingShopping || loadingActivities;
+  const isLoading = loadingParks || loadingRestaurants || loadingShopping || loadingActivities;
 
   // Transform data to LibraryItem format
   const transformedItems = useMemo(() => {
-    const attractionItems: LibraryItem[] = attractions.map(attr => {
-      const info = getCategoryInfo(attr, 'attraction', parks);
+    // Parks as draggable items
+    const parkItems: LibraryItem[] = parks.map(park => {
+      const info = getCategoryInfo(park, 'park', parks);
       return {
-        id: attr.id,
-        name: attr.name,
-        type: 'attraction' as const,
+        id: park.id,
+        name: park.name,
+        type: 'park' as const,
         category: info.category,
         color: info.color,
-        icon: getItemIcon(attr, 'attraction'),
-        duration: attr.duration || undefined,
-        area: attr.area || undefined,
-        park_id: attr.park_id || undefined,
-        parkName: info.parkName,
+        icon: getItemIcon(park, 'park'),
+        duration: park.typical_visit_duration || undefined,
       };
     });
 
@@ -291,20 +273,20 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     });
 
     return {
-      attractions: attractionItems,
+      parks: parkItems,
       restaurants: restaurantItems,
       shopping: shoppingItems,
       activities: activityItems,
     };
-  }, [parks, attractions, restaurants, shopping, activities]);
+  }, [parks, restaurants, shopping, activities]);
 
   // Filter items based on tab, search, and park
   const filteredItems = useMemo(() => {
     let items: LibraryItem[] = [];
 
     switch (selectedTab) {
-      case 'attractions':
-        items = transformedItems.attractions;
+      case 'parks':
+        items = transformedItems.parks;
         break;
       case 'restaurants':
         items = transformedItems.restaurants;
@@ -318,7 +300,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       case 'all':
       default:
         items = [
-          ...transformedItems.attractions,
+          ...transformedItems.parks,
           ...transformedItems.restaurants,
           ...transformedItems.shopping,
           ...transformedItems.activities,
@@ -337,30 +319,24 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       );
     }
 
-    // Filter by park (only for attractions tab)
-    if (selectedTab === 'attractions' && selectedPark && selectedPark !== 'all') {
-      items = items.filter(item => item.park_id === selectedPark);
-    }
-
     // Filter by restaurant type (only for restaurants tab)
     if (selectedTab === 'restaurants' && selectedRestaurantType && selectedRestaurantType !== 'all') {
       items = items.filter(item => item.restaurantType === selectedRestaurantType);
     }
 
     return items;
-  }, [selectedTab, searchQuery, selectedPark, selectedRestaurantType, transformedItems]);
+  }, [selectedTab, searchQuery, selectedRestaurantType, transformedItems]);
 
   // Tab counts
   const tabCounts = useMemo(() => ({
-    all: transformedItems.attractions.length + transformedItems.restaurants.length + 
+    all: transformedItems.parks.length + transformedItems.restaurants.length + 
          transformedItems.shopping.length + transformedItems.activities.length,
-    attractions: transformedItems.attractions.length,
+    parks: transformedItems.parks.length,
     restaurants: transformedItems.restaurants.length,
     shopping: transformedItems.shopping.length,
     activities: transformedItems.activities.length + transformedItems.shopping.length,
   }), [transformedItems]);
 
-  const showParkFilter = selectedTab === 'attractions';
   const showRestaurantTypeFilter = selectedTab === 'restaurants';
 
   return (
@@ -405,25 +381,6 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
           </TabsList>
         </Tabs>
       </div>
-
-      {/* Park Filter (only for attractions) */}
-      {showParkFilter && (
-        <div className="px-3 py-2 border-b border-border bg-blue-50/50">
-          <Select value={selectedPark} onValueChange={setSelectedPark}>
-            <SelectTrigger className="w-full h-8 text-xs bg-white">
-              <SelectValue placeholder="Filtrar por parque" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">🏰 Todos os Parques</SelectItem>
-              {parks.map(park => (
-                <SelectItem key={park.id} value={park.id}>
-                  {park.slug?.includes('disney') ? '🏰' : '⚡'} {park.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       {/* Restaurant Type Filter (only for restaurants) */}
       {showRestaurantTypeFilter && (
