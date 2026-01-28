@@ -41,6 +41,7 @@ const PlannerManual = () => {
   const [activeItemType, setActiveItemType] = useState<'library' | 'calendar' | null>(null);
   const [showLibrary, setShowLibrary] = useState(!isMobile);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [highlightedSlot, setHighlightedSlot] = useState<string | null>(null);
 
   // Configure sensors for better mobile support
   const sensors = useSensors(
@@ -141,15 +142,29 @@ const PlannerManual = () => {
 
     const dragId = active.id as string;
     const dropTarget = over.id as string;
-    
-    // Parse drop target - format: "date-YYYY-MM-DD-slot-slotId"
-    const match = dropTarget.match(/^date-(\d{4}-\d{2}-\d{2})-slot-(\w+)$/);
-    if (!match) {
-      // Maybe dropped on another item for reordering - handled by PlannerCalendar
-      return;
+
+    // Resolve drop target:
+    // 1) Slot drop: date-YYYY-MM-DD-slot-slotId
+    // 2) Dropped over an existing item: use that item's date/time_slot
+    const slotMatch = dropTarget.match(/^date-(\d{4}-\d{2}-\d{2})-slot-(\w+)$/);
+
+    let date: string | null = null;
+    let timeSlot: string | null = null;
+    const overItem = plannerItems.find(i => i.id === dropTarget);
+
+    if (slotMatch) {
+      [, date, timeSlot] = slotMatch;
+    } else if (overItem?.date && overItem.time_slot) {
+      date = overItem.date;
+      timeSlot = overItem.time_slot;
     }
-    
-    const [, date, timeSlot] = match;
+
+    if (!date || !timeSlot) return;
+
+    // Visual feedback (slot highlight)
+    const highlightId = `date-${date}-slot-${timeSlot}`;
+    setHighlightedSlot(highlightId);
+    setTimeout(() => setHighlightedSlot(null), 1500);
 
     if (dragId.startsWith('library-')) {
       // Dropping from library
@@ -165,10 +180,35 @@ const PlannerManual = () => {
         });
       }
     } else {
-      // Moving existing item to different slot
+      // Moving/reordering an existing item
       const existingItem = plannerItems.find(item => item.id === dragId);
       if (existingItem) {
-        // Check if moving to different slot
+        // Reorder when dropping over another item within the same slot
+        if (
+          overItem &&
+          existingItem.date === overItem.date &&
+          existingItem.time_slot === overItem.time_slot &&
+          existingItem.id !== overItem.id
+        ) {
+          const slotItems = plannerItems
+            .filter(i => i.date === existingItem.date && i.time_slot === existingItem.time_slot)
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+          const oldIndex = slotItems.findIndex(i => i.id === existingItem.id);
+          const newIndex = slotItems.findIndex(i => i.id === overItem.id);
+
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const next = [...slotItems];
+            const [moved] = next.splice(oldIndex, 1);
+            next.splice(newIndex, 0, moved);
+
+            const reordered = next.map((it, idx) => ({ ...it, order_index: idx }));
+            await handleReorder(existingItem.date, existingItem.time_slot, reordered);
+          }
+          return;
+        }
+
+        // Move when dropping into a different slot/day
         if (existingItem.date !== date || existingItem.time_slot !== timeSlot) {
           try {
             await handleMoveToSlot(dragId, date, timeSlot);
@@ -182,7 +222,7 @@ const PlannerManual = () => {
         }
       }
     }
-  }, [planner?.id, handleDrop, handleMoveToSlot, plannerItems, toast]);
+  }, [planner?.id, handleDrop, handleMoveToSlot, handleReorder, plannerItems, toast]);
 
   // Handle drop from PlannerCalendar (for moves between slots)
   const handleCalendarDrop = useCallback(async (item: any, date: string, timeSlot: string) => {
@@ -462,6 +502,7 @@ const PlannerManual = () => {
                   onReorder={handleReorder}
                   onToggleComplete={toggleCompleted}
                   onUpdateItem={handleUpdateItem}
+                  highlightedSlotOverride={highlightedSlot}
                 />
               ) : (
                 <Card className="p-8 text-center">

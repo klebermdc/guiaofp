@@ -52,6 +52,7 @@ interface PlannerCalendarProps {
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
   onToggleComplete?: (itemId: string) => void;
   onUpdateItem?: (itemId: string, updates: Partial<PlannerItem>) => Promise<void>;
+  highlightedSlotOverride?: string | null;
 }
 
 // Track recently added items for highlight animation
@@ -101,6 +102,7 @@ export const PlannerCalendar = ({
   onReorder,
   onToggleComplete,
   onUpdateItem,
+  highlightedSlotOverride,
 }: PlannerCalendarProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeItem = items.find(item => item.id === activeId);
@@ -210,14 +212,9 @@ export const PlannerCalendar = ({
 
   return (
     <>
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="space-y-4">
+      <div className="space-y-4">
           {dates.map((date, index) => (
-            <DayRow
+          <DayRow
               key={date}
               date={date}
               dayNumber={index + 1}
@@ -225,15 +222,10 @@ export const PlannerCalendar = ({
               onRemove={onRemove}
               onToggleComplete={onToggleComplete}
               onEdit={handleEditItem}
-              highlightedSlot={highlightedSlot}
+            highlightedSlot={highlightedSlotOverride ?? highlightedSlot}
             />
           ))}
-        </div>
-
-        <DragOverlay>
-          {activeItem && <ActivityCard item={activeItem} isDragging />}
-        </DragOverlay>
-      </DndContext>
+      </div>
 
       {/* Edit Modal */}
       <EditPlannerItemModal
@@ -357,6 +349,7 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdi
 
       {/* Items */}
       <SortableContext
+        id={dropId}
         items={sortedItems.map(i => i.id)}
         strategy={verticalListSortingStrategy}
       >
