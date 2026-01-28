@@ -29,8 +29,11 @@ const navSections = [
   { id: 'aeroporto', label: 'Aeroporto', icon: Plane, color: 'from-violet-500 to-purple-500' },
   { id: 'mochila', label: 'Mochila', icon: Backpack, color: 'from-green-500 to-emerald-500' },
   { id: 'compras', label: 'Compras', icon: ShoppingBag, color: 'from-pink-500 to-rose-500' },
-  { id: 'parques-disney', label: 'Dicas Disney', icon: Star, color: 'from-yellow-500 to-amber-500' },
-  { id: 'parques-universal', label: 'Dicas Universal', icon: Sparkles, color: 'from-purple-500 to-pink-500' },
+  { id: 'parques-disney', label: 'Disney', icon: Star, color: 'from-yellow-500 to-amber-500' },
+  { id: 'parques-universal', label: 'Universal', icon: Sparkles, color: 'from-purple-500 to-pink-500' },
+  { id: 'parques-seaworld', label: 'SeaWorld', icon: Fish, color: 'from-blue-600 to-cyan-500' },
+  { id: 'parques-busch', label: 'Busch', icon: Flame, color: 'from-orange-600 to-red-500' },
+  { id: 'parques-legoland', label: 'LEGO', icon: Globe, color: 'from-yellow-500 to-red-500' },
   { id: 'medidas', label: 'Medidas', icon: Ruler, color: 'from-slate-500 to-gray-500' },
   { id: 'emergencias', label: 'Emergências', icon: Shield, color: 'from-red-500 to-rose-500' },
 ];
@@ -813,6 +816,177 @@ const TravelGuide = () => {
                         { icon: Accessibility, title: 'Single Rider', desc: 'Disponível em várias atrações', color: 'from-green-500 to-emerald-500' },
                         { icon: Ticket, title: 'Early Park Admission', desc: 'Entre 1h antes sendo hóspede', color: 'from-amber-500 to-orange-500' },
                         { icon: Navigation, title: 'Hogwarts Express', desc: 'Precisa de ingresso Park-to-Park', color: 'from-red-500 to-rose-500' },
+                      ].map((tip) => (
+                        <div key={tip.title} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tip.color} flex items-center justify-center flex-shrink-0`}>
+                            <tip.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{tip.title}</p>
+                            <p className="text-sm text-muted-foreground">{tip.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* DICAS SEAWORLD & AQUATICA */}
+          <div data-section="parques-seaworld" className="group">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="parques-seaworld" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
+                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                      <Fish className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-display font-bold text-xl">Dicas SeaWorld & Aquatica</h3>
+                      <p className="text-sm text-muted-foreground">Shows, animais e parque aquático</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <div className="space-y-6">
+                    {/* Quick Queue */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
+                      <h5 className="font-bold text-lg mb-3 flex items-center gap-2">
+                        <Zap className="w-5 h-5" />
+                        Quick Queue (Fura-Fila)
+                      </h5>
+                      <p className="text-white/90 text-sm mb-4">
+                        Acesso prioritário às atrações. Preços variam de $30-80+ por pessoa dependendo do dia. Inclui Aquatica no combo!
+                      </p>
+                      <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+                        <p className="font-semibold">💡 Dica: Combo SeaWorld + Aquatica</p>
+                        <p className="text-white/80 text-sm">Compre o ingresso combo e economize até 30%!</p>
+                      </div>
+                    </div>
+
+                    {/* Dicas SeaWorld */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {[
+                        { icon: Clock, title: 'Shows com Horário', desc: 'Chegue 15min antes dos shows de golfinhos e orcas', color: 'from-blue-500 to-cyan-500' },
+                        { icon: Camera, title: 'All Day Dining', desc: 'Plano de refeições ilimitadas - vale a pena!', color: 'from-green-500 to-emerald-500' },
+                        { icon: Fish, title: 'Manta & Kraken', desc: 'Montanhas-russas TOP - vá cedo!', color: 'from-purple-500 to-pink-500' },
+                        { icon: Sun, title: 'Aquatica', desc: 'Leve roupa de banho e toalha própria', color: 'from-amber-500 to-orange-500' },
+                      ].map((tip) => (
+                        <div key={tip.title} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tip.color} flex items-center justify-center flex-shrink-0`}>
+                            <tip.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{tip.title}</p>
+                            <p className="text-sm text-muted-foreground">{tip.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* DICAS BUSCH GARDENS */}
+          <div data-section="parques-busch" className="group">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="parques-busch" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
+                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-600 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                      <Flame className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-display font-bold text-xl">Dicas Busch Gardens Tampa</h3>
+                      <p className="text-sm text-muted-foreground">Montanhas-russas radicais e safári</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <div className="space-y-6">
+                    {/* Quick Queue */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-orange-600 to-red-500 text-white">
+                      <h5 className="font-bold text-lg mb-3 flex items-center gap-2">
+                        <Zap className="w-5 h-5" />
+                        Quick Queue Unlimited
+                      </h5>
+                      <p className="text-white/90 text-sm mb-4">
+                        Acesso ilimitado às principais atrações. Preços variam de $50-100+ por pessoa. Essencial em dias cheios!
+                      </p>
+                      <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+                        <p className="font-semibold">📍 Fica em Tampa - 1h de Orlando</p>
+                        <p className="text-white/80 text-sm">Reserve o dia todo, vale a viagem!</p>
+                      </div>
+                    </div>
+
+                    {/* Dicas Busch */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {[
+                        { icon: Flame, title: 'Iron Gwazi', desc: 'Melhor montanha-russa da Flórida!', color: 'from-red-500 to-orange-500' },
+                        { icon: Heart, title: 'Serengeti Safari', desc: 'Tour com animais - reserve com antecedência', color: 'from-green-500 to-emerald-500' },
+                        { icon: Users, title: 'Menos Lotado', desc: 'Geralmente mais vazio que outros parques', color: 'from-blue-500 to-cyan-500' },
+                        { icon: Clock, title: 'Chegue Cedo', desc: 'Comece pelas montanhas-russas do fundo', color: 'from-purple-500 to-pink-500' },
+                      ].map((tip) => (
+                        <div key={tip.title} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
+                          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tip.color} flex items-center justify-center flex-shrink-0`}>
+                            <tip.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{tip.title}</p>
+                            <p className="text-sm text-muted-foreground">{tip.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* DICAS LEGOLAND */}
+          <div data-section="parques-legoland" className="group">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="parques-legoland" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
+                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                      <Globe className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-display font-bold text-xl">Dicas LEGOLAND Florida</h3>
+                      <p className="text-sm text-muted-foreground">Ideal para crianças de 2-12 anos</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <div className="space-y-6">
+                    {/* Info Principal */}
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-yellow-500 to-red-500 text-white">
+                      <h5 className="font-bold text-lg mb-3 flex items-center gap-2">
+                        <Baby className="w-5 h-5" />
+                        Parque para Crianças
+                      </h5>
+                      <p className="text-white/90 text-sm mb-4">
+                        Focado em crianças de 2 a 12 anos. Adultos sem crianças podem achar limitado. Inclui parque aquático!
+                      </p>
+                      <div className="p-4 rounded-xl bg-white/20 backdrop-blur-sm">
+                        <p className="font-semibold">📍 Fica em Winter Haven - 45min de Orlando</p>
+                        <p className="text-white/80 text-sm">Reserve 1 dia inteiro para aproveitar bem</p>
+                      </div>
+                    </div>
+
+                    {/* Dicas LEGO */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {[
+                        { icon: Globe, title: 'Miniland USA', desc: 'Réplicas de cidades em LEGO - imperdível!', color: 'from-yellow-500 to-amber-500' },
+                        { icon: Sun, title: 'Parque Aquático', desc: 'Incluso no combo - leve roupa de banho', color: 'from-blue-500 to-cyan-500' },
+                        { icon: Star, title: 'Build & Test', desc: 'Área para construir carros LEGO', color: 'from-red-500 to-orange-500' },
+                        { icon: Ticket, title: 'Desconto LEGO', desc: 'Cupons no site oficial - sempre confira!', color: 'from-green-500 to-emerald-500' },
                       ].map((tip) => (
                         <div key={tip.title} className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
                           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tip.color} flex items-center justify-center flex-shrink-0`}>
