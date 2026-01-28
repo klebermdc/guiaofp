@@ -1,9 +1,19 @@
-import { useState, useCallback } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, pointerWithin } from '@dnd-kit/core';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback, useEffect } from 'react';
+import { 
+  DndContext, 
+  DragEndEvent, 
+  DragOverlay, 
+  DragStartEvent, 
+  pointerWithin,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+} from '@dnd-kit/core';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Share2, Download, Plus } from 'lucide-react';
+import { Share2, Download, Plus, Loader2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,21 +21,37 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ActivityLibrary, LibraryItem } from '@/components/planner';
-import { PlannerCalendarView } from '@/components/planner/PlannerCalendarView';
+import { ActivityLibrary, LibraryItem, PlannerCalendar, PlannerItem } from '@/components/planner';
 import { usePlannerDragDrop } from '@/hooks/usePlannerDragDrop';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SEO } from '@/components/SEO';
+import { cn } from '@/lib/utils';
 
 const PlannerManual = () => {
   const { user, travelProfile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   
-  const [activeItem, setActiveItem] = useState<LibraryItem | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [activeItem, setActiveItem] = useState<LibraryItem | PlannerItem | null>(null);
+  const [activeItemType, setActiveItemType] = useState<'library' | 'calendar' | null>(null);
   const [showLibrary, setShowLibrary] = useState(!isMobile);
+
+  // Configure sensors for better mobile support
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
+  );
 
   // Get or create user planner
   const { data: planner, isLoading: plannerLoading } = useQuery({
@@ -71,51 +97,100 @@ const PlannerManual = () => {
   const { 
     items: plannerItems, 
     isLoading: itemsLoading,
+    isSaving,
     handleDrop, 
     handleRemove, 
     handleReorder,
+    handleMoveToSlot,
     toggleCompleted 
   } = usePlannerDragDrop({ plannerId: planner?.id || '' });
 
-  // Handle drag start
+  // Handle drag start - detect if from library or calendar
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    const item = event.active.data.current as LibraryItem;
-    setActiveItem(item);
-  }, []);
+    const dragId = event.active.id as string;
+    const itemData = event.active.data.current;
+    
+    if (dragId.startsWith('library-')) {
+      // From library
+      setActiveItem(itemData as LibraryItem);
+      setActiveItemType('library');
+    } else {
+      // From calendar (existing planner item)
+      const existingItem = plannerItems.find(item => item.id === dragId);
+      if (existingItem) {
+        setActiveItem(existingItem);
+        setActiveItemType('calendar');
+      }
+    }
+  }, [plannerItems]);
 
   // Handle drag end
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    setActiveItem(null);
-    
     const { active, over } = event;
+    
+    setActiveItem(null);
+    setActiveItemType(null);
+    
     if (!over || !planner?.id) return;
 
-    const draggedItem = active.data.current as LibraryItem;
+    const dragId = active.id as string;
     const dropTarget = over.id as string;
     
-    // Parse drop target (format: "date-YYYY-MM-DD-slot-morning|afternoon|evening")
-    const match = dropTarget.match(/^date-(\d{4}-\d{2}-\d{2})-slot-(\w+)$/);
-    if (!match) return;
+    // Parse drop target - format: "YYYY-MM-DD-slotId"
+    const match = dropTarget.match(/^(\d{4}-\d{2}-\d{2})-(\w+)$/);
+    if (!match) {
+      // Maybe dropped on another item for reordering - handled by PlannerCalendar
+      return;
+    }
     
     const [, date, timeSlot] = match;
-    
-    setIsSaving(true);
-    try {
-      await handleDrop(draggedItem, date, timeSlot);
-      toast({
-        title: 'Item adicionado!',
-        description: `${draggedItem.name} foi adicionado ao seu roteiro.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro ao adicionar',
-        description: 'Não foi possível adicionar o item.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSaving(false);
+
+    if (dragId.startsWith('library-')) {
+      // Dropping from library
+      const draggedItem = active.data.current as LibraryItem;
+      
+      try {
+        await handleDrop(draggedItem, date, timeSlot);
+      } catch (error) {
+        toast({
+          title: 'Erro ao adicionar',
+          description: 'Não foi possível adicionar o item.',
+          variant: 'destructive'
+        });
+      }
+    } else {
+      // Moving existing item to different slot
+      const existingItem = plannerItems.find(item => item.id === dragId);
+      if (existingItem) {
+        // Check if moving to different slot
+        if (existingItem.date !== date || existingItem.time_slot !== timeSlot) {
+          try {
+            await handleMoveToSlot(dragId, date, timeSlot);
+          } catch (error) {
+            toast({
+              title: 'Erro ao mover',
+              description: 'Não foi possível mover o item.',
+              variant: 'destructive'
+            });
+          }
+        }
+      }
     }
-  }, [planner?.id, handleDrop, toast]);
+  }, [planner?.id, handleDrop, handleMoveToSlot, plannerItems, toast]);
+
+  // Handle drop from PlannerCalendar (for moves between slots)
+  const handleCalendarDrop = useCallback(async (item: any, date: string, timeSlot: string) => {
+    // Check if it's a library item or existing planner item
+    if (item.type && ['park', 'attraction', 'restaurant', 'shopping', 'activity'].includes(item.type)) {
+      // Library item
+      await handleDrop(item, date, timeSlot);
+    } else if (item.id && item.planner_id) {
+      // Existing planner item - move to new slot
+      if (item.date !== date || item.time_slot !== timeSlot) {
+        await handleMoveToSlot(item.id, date, timeSlot);
+      }
+    }
+  }, [handleDrop, handleMoveToSlot]);
 
   // Export planner
   const handleExport = useCallback(() => {
@@ -143,9 +218,19 @@ const PlannerManual = () => {
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([date, items]) => {
         text += `📆 ${format(new Date(date), 'EEEE, dd/MM', { locale: ptBR })}\n`;
+        
+        // Sort by time slot
+        const slotOrder = { morning: 0, afternoon: 1, evening: 2, night: 3 };
+        items.sort((a, b) => 
+          (slotOrder[a.time_slot as keyof typeof slotOrder] || 0) - 
+          (slotOrder[b.time_slot as keyof typeof slotOrder] || 0)
+        );
+        
         items.forEach(item => {
-          text += `  ${item.icon || '📍'} ${item.item_name}`;
+          const slotEmoji = { morning: '☀️', afternoon: '🌤️', evening: '🌙', night: '🌃' };
+          text += `  ${slotEmoji[item.time_slot as keyof typeof slotEmoji] || '📍'} ${item.icon || ''} ${item.item_name}`;
           if (item.start_time) text += ` (${item.start_time})`;
+          if (item.completed) text += ' ✓';
           text += '\n';
         });
         text += '\n';
@@ -184,10 +269,9 @@ const PlannerManual = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-            <span className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Carregando seu roteiro...</p>
           </div>
         </div>
       </AppLayout>
@@ -202,33 +286,43 @@ const PlannerManual = () => {
       />
       
       <DndContext
+        sensors={sensors}
         collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <div className="space-y-4">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {planner?.title || 'Meu Roteiro'}
-              </h1>
-              {planner && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {format(new Date(planner.start_date), 'dd/MM/yyyy')} - {format(new Date(planner.end_date), 'dd/MM/yyyy')}
-                  <Badge variant="secondary" className="ml-2">
-                    {planner.total_days} dias
-                  </Badge>
-                </p>
-              )}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-xl border border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">
+                  {planner?.title || 'Meu Roteiro'}
+                </h1>
+                {planner && (
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(planner.start_date), 'dd/MM/yyyy')} - {format(new Date(planner.end_date), 'dd/MM/yyyy')}
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {planner.total_days} dias
+                    </Badge>
+                    <Badge variant="outline" className="ml-1 text-xs">
+                      {plannerItems.length} atividades
+                    </Badge>
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-2">
               {isMobile && (
                 <Button
-                  variant="outline"
+                  variant={showLibrary ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowLibrary(!showLibrary)}
+                  className="transition-all"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   {showLibrary ? 'Calendário' : 'Adicionar'}
@@ -249,39 +343,75 @@ const PlannerManual = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Calendar - 70% on desktop */}
             <div 
-              className={`flex-1 lg:w-[70%] ${isMobile && showLibrary ? 'hidden' : 'block'}`}
+              className={cn(
+                "flex-1 lg:w-[70%] transition-all duration-300",
+                isMobile && showLibrary && "hidden"
+              )}
             >
-              <PlannerCalendarView
-                planner={planner}
-                items={plannerItems}
-                isLoading={itemsLoading}
-                onRemoveItem={handleRemove}
-                onToggleComplete={toggleCompleted}
-                onReorder={handleReorder}
-              />
+              {itemsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : planner ? (
+                <PlannerCalendar
+                  startDate={planner.start_date}
+                  endDate={planner.end_date}
+                  items={plannerItems}
+                  onDrop={handleCalendarDrop}
+                  onRemove={handleRemove}
+                  onReorder={handleReorder}
+                  onToggleComplete={toggleCompleted}
+                />
+              ) : (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">
+                    Nenhum roteiro encontrado. Crie um novo para começar.
+                  </p>
+                </Card>
+              )}
             </div>
 
             {/* Library Sidebar - 30% on desktop */}
             <div 
-              className={`lg:w-[30%] ${isMobile && !showLibrary ? 'hidden' : 'block'}`}
+              className={cn(
+                "lg:w-[30%] transition-all duration-300",
+                isMobile && !showLibrary && "hidden"
+              )}
             >
-              <div className="sticky top-4">
-                <ActivityLibrary />
-              </div>
+              <ActivityLibrary />
             </div>
           </div>
         </div>
 
-        {/* Drag Overlay */}
-        <DragOverlay>
+        {/* Drag Overlay - visual feedback while dragging */}
+        <DragOverlay dropAnimation={{
+          duration: 200,
+          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+        }}>
           {activeItem && (
-            <Card className="p-3 shadow-xl border-2 border-primary bg-background w-64">
+            <Card 
+              className={cn(
+                "p-3 shadow-2xl border-2 bg-background w-56 rotate-3 scale-105",
+                activeItemType === 'library' ? "border-primary" : "border-green-500"
+              )}
+            >
               <div className="flex items-center gap-2">
-                <span className="text-xl">{activeItem.icon}</span>
+                <span className="text-xl">
+                  {'icon' in activeItem ? activeItem.icon : '📍'}
+                </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{activeItem.name}</p>
-                  <p className="text-xs text-muted-foreground">{activeItem.category}</p>
+                  <p className="text-sm font-medium truncate">
+                    {'name' in activeItem ? activeItem.name : 
+                     'item_name' in activeItem ? activeItem.item_name : 'Item'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {'category' in activeItem ? activeItem.category : ''}
+                  </p>
                 </div>
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+                <span className="animate-pulse">🎯</span>
+                <span>Solte em um horário do calendário</span>
               </div>
             </Card>
           )}
