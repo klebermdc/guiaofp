@@ -666,6 +666,80 @@ export type Database = {
         }
         Relationships: []
       }
+      planner_items: {
+        Row: {
+          category: string
+          color: string
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          duration: number | null
+          end_time: string | null
+          icon: string | null
+          id: string
+          item_id: string | null
+          item_name: string
+          item_type: string
+          notes: string | null
+          order_index: number | null
+          planner_id: string
+          reservation_confirmed: boolean | null
+          reservation_time: string | null
+          start_time: string | null
+          time_slot: string | null
+        }
+        Insert: {
+          category: string
+          color: string
+          completed?: boolean | null
+          created_at?: string | null
+          date: string
+          duration?: number | null
+          end_time?: string | null
+          icon?: string | null
+          id?: string
+          item_id?: string | null
+          item_name: string
+          item_type: string
+          notes?: string | null
+          order_index?: number | null
+          planner_id: string
+          reservation_confirmed?: boolean | null
+          reservation_time?: string | null
+          start_time?: string | null
+          time_slot?: string | null
+        }
+        Update: {
+          category?: string
+          color?: string
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          duration?: number | null
+          end_time?: string | null
+          icon?: string | null
+          id?: string
+          item_id?: string | null
+          item_name?: string
+          item_type?: string
+          notes?: string | null
+          order_index?: number | null
+          planner_id?: string
+          reservation_confirmed?: boolean | null
+          reservation_time?: string | null
+          start_time?: string | null
+          time_slot?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planner_items_planner_id_fkey"
+            columns: ["planner_id"]
+            isOneToOne: false
+            referencedRelation: "user_planners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           arrival_date: string | null
