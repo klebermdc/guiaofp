@@ -338,6 +338,51 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
     await handleUpdateItem(itemId, { completed: !item.completed });
   }, [items, handleUpdateItem]);
 
+  // Refetch items
+  const refetchItems = useCallback(async () => {
+    if (!plannerId) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('planner_items')
+        .select('*')
+        .eq('planner_id', plannerId)
+        .order('date', { ascending: true })
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      
+      const transformedItems: PlannerItem[] = (data || []).map(item => ({
+        id: item.id,
+        planner_id: item.planner_id,
+        date: item.date,
+        time_slot: item.time_slot as PlannerItem['time_slot'],
+        start_time: item.start_time || undefined,
+        end_time: item.end_time || undefined,
+        item_type: item.item_type as PlannerItem['item_type'],
+        item_id: item.item_id || undefined,
+        item_name: item.item_name,
+        category: item.category,
+        color: item.color,
+        icon: item.icon || undefined,
+        duration: item.duration || undefined,
+        notes: item.notes || undefined,
+        order_index: item.order_index || 0,
+        completed: item.completed || false,
+        reservation_confirmed: item.reservation_confirmed || undefined,
+        reservation_time: item.reservation_time || undefined,
+      }));
+
+      setItems(transformedItems);
+      onItemsChange?.(transformedItems);
+    } catch (error) {
+      console.error('Error refetching planner items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [plannerId, onItemsChange]);
+
   return {
     items,
     isLoading,
@@ -348,6 +393,7 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
     handleMoveToSlot,
     handleUpdateItem,
     toggleCompleted,
+    refetchItems,
   };
 };
 
