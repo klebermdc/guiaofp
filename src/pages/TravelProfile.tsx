@@ -4,6 +4,7 @@ import {
   Accessibility, PartyPopper, Star, ChevronDown, ChevronUp,
   Check, AlertCircle, Loader2, Upload, FileText, Trash2
 } from 'lucide-react';
+import { TicketUploadContainer } from '@/components/profile/TicketUploadContainer';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -80,14 +81,25 @@ const TravelProfile = () => {
   };
 
   const parks = [
-    'Magic Kingdom',
-    'EPCOT',
-    'Hollywood Studios',
-    'Animal Kingdom',
-    'Universal Studios',
-    'Islands of Adventure',
-    'SeaWorld',
-    'LEGOLAND',
+    // Disney
+    { name: 'Magic Kingdom', category: 'Disney' },
+    { name: 'EPCOT', category: 'Disney' },
+    { name: 'Hollywood Studios', category: 'Disney' },
+    { name: 'Animal Kingdom', category: 'Disney' },
+    { name: 'Typhoon Lagoon', category: 'Disney' },
+    { name: 'Blizzard Beach', category: 'Disney' },
+    // Universal
+    { name: 'Universal Studios', category: 'Universal' },
+    { name: 'Islands of Adventure', category: 'Universal' },
+    { name: 'Epic Universe', category: 'Universal' },
+    { name: 'Volcano Bay', category: 'Universal' },
+    // SeaWorld Parks
+    { name: 'SeaWorld', category: 'SeaWorld' },
+    { name: 'Busch Gardens', category: 'SeaWorld' },
+    { name: 'Aquatica', category: 'SeaWorld' },
+    { name: 'Discovery Cove', category: 'SeaWorld' },
+    // Outros
+    { name: 'LEGOLAND', category: 'Outros' },
   ];
 
   const priorities = [
@@ -370,28 +382,116 @@ const TravelProfile = () => {
                           </RadioGroup>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           <Label>Quais parques pretende visitar?</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {parks.map((park) => (
-                              <div key={park} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={park}
-                                  checked={travelProfile.parks.includes(park)}
-                                  onCheckedChange={(checked) => {
-                                    const newParks = checked
-                                      ? [...travelProfile.parks, park]
-                                      : travelProfile.parks.filter(p => p !== park);
-                                    handleFieldChange({ parks: newParks });
-                                  }}
-                                />
-                                <Label htmlFor={park} className="text-sm cursor-pointer">
-                                  {park}
-                                </Label>
-                              </div>
-                            ))}
+                          
+                          {/* Disney Parks */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-500/20 text-blue-400">Disney</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {parks.filter(p => p.category === 'Disney').map((park) => (
+                                <div key={park.name} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={park.name}
+                                    checked={travelProfile.parks.includes(park.name)}
+                                    onCheckedChange={(checked) => {
+                                      const newParks = checked
+                                        ? [...travelProfile.parks, park.name]
+                                        : travelProfile.parks.filter(p => p !== park.name);
+                                      handleFieldChange({ parks: newParks });
+                                    }}
+                                  />
+                                  <Label htmlFor={park.name} className="text-sm cursor-pointer">
+                                    {park.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Universal Parks */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-500/20 text-yellow-400">Universal</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {parks.filter(p => p.category === 'Universal').map((park) => (
+                                <div key={park.name} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={park.name}
+                                    checked={travelProfile.parks.includes(park.name)}
+                                    onCheckedChange={(checked) => {
+                                      const newParks = checked
+                                        ? [...travelProfile.parks, park.name]
+                                        : travelProfile.parks.filter(p => p !== park.name);
+                                      handleFieldChange({ parks: newParks });
+                                    }}
+                                  />
+                                  <Label htmlFor={park.name} className="text-sm cursor-pointer">
+                                    {park.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* SeaWorld Parks */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-1 rounded bg-cyan-500/20 text-cyan-400">SeaWorld Parks</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {parks.filter(p => p.category === 'SeaWorld').map((park) => (
+                                <div key={park.name} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={park.name}
+                                    checked={travelProfile.parks.includes(park.name)}
+                                    onCheckedChange={(checked) => {
+                                      const newParks = checked
+                                        ? [...travelProfile.parks, park.name]
+                                        : travelProfile.parks.filter(p => p !== park.name);
+                                      handleFieldChange({ parks: newParks });
+                                    }}
+                                  />
+                                  <Label htmlFor={park.name} className="text-sm cursor-pointer">
+                                    {park.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Outros Parks */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-1 rounded bg-green-500/20 text-green-400">Outros</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {parks.filter(p => p.category === 'Outros').map((park) => (
+                                <div key={park.name} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={park.name}
+                                    checked={travelProfile.parks.includes(park.name)}
+                                    onCheckedChange={(checked) => {
+                                      const newParks = checked
+                                        ? [...travelProfile.parks, park.name]
+                                        : travelProfile.parks.filter(p => p !== park.name);
+                                      handleFieldChange({ parks: newParks });
+                                    }}
+                                  />
+                                  <Label htmlFor={park.name} className="text-sm cursor-pointer">
+                                    {park.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Ticket Upload Section */}
+                        <TicketUploadContainer />
 
                         {/* Park Dates Section */}
                         {travelProfile.parks.length > 0 && (
