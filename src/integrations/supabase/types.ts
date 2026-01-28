@@ -394,6 +394,60 @@ export type Database = {
         }
         Relationships: []
       }
+      parks: {
+        Row: {
+          address: string | null
+          average_cost: number | null
+          category: string
+          color: string
+          created_at: string | null
+          description: string | null
+          early_entry: boolean | null
+          extended_hours: boolean | null
+          id: string
+          logo_url: string | null
+          name: string
+          official_website: string | null
+          operating_hours: Json | null
+          slug: string
+          typical_visit_duration: number | null
+        }
+        Insert: {
+          address?: string | null
+          average_cost?: number | null
+          category: string
+          color: string
+          created_at?: string | null
+          description?: string | null
+          early_entry?: boolean | null
+          extended_hours?: boolean | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          official_website?: string | null
+          operating_hours?: Json | null
+          slug: string
+          typical_visit_duration?: number | null
+        }
+        Update: {
+          address?: string | null
+          average_cost?: number | null
+          category?: string
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          early_entry?: boolean | null
+          extended_hours?: boolean | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          official_website?: string | null
+          operating_hours?: Json | null
+          slug?: string
+          typical_visit_duration?: number | null
+        }
+        Relationships: []
+      }
       plan_page_access: {
         Row: {
           basic_visible: boolean | null
