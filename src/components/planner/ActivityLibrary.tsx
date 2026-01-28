@@ -37,20 +37,20 @@ const TABS = [
   { id: 'activities', label: 'Outras', icon: '🌴' },
 ] as const;
 
-// Category color mapping
+// Category color mapping - using darker colors for dark theme
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  disney: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-  universal: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-  seaworld: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
-  outlet: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-  mall: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-  supermarket: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-  restaurante: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  atividade: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+  disney: { bg: 'bg-blue-950/50', text: 'text-blue-300', border: 'border-blue-700' },
+  universal: { bg: 'bg-purple-950/50', text: 'text-purple-300', border: 'border-purple-700' },
+  seaworld: { bg: 'bg-cyan-950/50', text: 'text-cyan-300', border: 'border-cyan-700' },
+  outlet: { bg: 'bg-rose-950/50', text: 'text-rose-300', border: 'border-rose-700' },
+  mall: { bg: 'bg-pink-950/50', text: 'text-pink-300', border: 'border-pink-700' },
+  supermarket: { bg: 'bg-green-950/50', text: 'text-green-300', border: 'border-green-700' },
+  restaurante: { bg: 'bg-orange-950/50', text: 'text-orange-300', border: 'border-orange-700' },
+  atividade: { bg: 'bg-teal-950/50', text: 'text-teal-300', border: 'border-teal-700' },
 };
 
 const getCategoryStyle = (category: string) => {
-  return CATEGORY_STYLES[category.toLowerCase()] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
+  return CATEGORY_STYLES[category.toLowerCase()] || { bg: 'bg-muted/50', text: 'text-foreground', border: 'border-border' };
 };
 
 // Fetch functions
@@ -324,7 +324,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const showParkFilter = selectedTab === 'attractions';
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm sticky top-4 max-h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-sm sticky top-4 max-h-[calc(100vh-120px)] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border bg-gradient-to-b from-muted/30 to-transparent">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
@@ -338,7 +338,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
           <Input
             type="text"
             placeholder="Buscar por nome, área..."
-            className="pl-9 h-9 text-sm bg-white"
+            className="pl-9 h-9 text-sm bg-background"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -455,7 +455,7 @@ const DraggableActivityItem = ({ item, onDragStart }: DraggableActivityItemProps
       {...attributes}
       className={cn(
         "p-2.5 border rounded-lg cursor-grab active:cursor-grabbing transition-all touch-none group",
-        "bg-white hover:shadow-md hover:border-primary/30",
+        "bg-card hover:shadow-md hover:border-primary/30",
         isDragging && "shadow-xl scale-105 opacity-80 ring-2 ring-primary z-50",
         categoryStyle.border
       )}

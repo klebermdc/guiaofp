@@ -59,18 +59,20 @@ const TIME_SLOTS = [
   { id: 'night', label: 'Madrugada', icon: '🌃', hours: '00h - 6h' },
 ] as const;
 
-// Category colors
+// Category colors - dark theme compatible
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  disney: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
-  universal: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
-  seaworld: { bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-300' },
-  outlet: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
-  mall: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300' },
-  supermarket: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300' },
-  restaurant: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300' },
-  activity: { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-300' },
-  hotel: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-300' },
-  other: { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300' },
+  disney: { bg: 'bg-blue-950/60', text: 'text-blue-300', border: 'border-blue-700' },
+  universal: { bg: 'bg-purple-950/60', text: 'text-purple-300', border: 'border-purple-700' },
+  seaworld: { bg: 'bg-cyan-950/60', text: 'text-cyan-300', border: 'border-cyan-700' },
+  outlet: { bg: 'bg-rose-950/60', text: 'text-rose-300', border: 'border-rose-700' },
+  mall: { bg: 'bg-pink-950/60', text: 'text-pink-300', border: 'border-pink-700' },
+  supermarket: { bg: 'bg-green-950/60', text: 'text-green-300', border: 'border-green-700' },
+  restaurant: { bg: 'bg-orange-950/60', text: 'text-orange-300', border: 'border-orange-700' },
+  restaurante: { bg: 'bg-orange-950/60', text: 'text-orange-300', border: 'border-orange-700' },
+  activity: { bg: 'bg-teal-950/60', text: 'text-teal-300', border: 'border-teal-700' },
+  atividade: { bg: 'bg-teal-950/60', text: 'text-teal-300', border: 'border-teal-700' },
+  hotel: { bg: 'bg-indigo-950/60', text: 'text-indigo-300', border: 'border-indigo-700' },
+  other: { bg: 'bg-muted/60', text: 'text-foreground', border: 'border-border' },
 };
 
 const getCategoryStyle = (category: string) => {
@@ -108,17 +110,14 @@ export const PlannerCalendar = ({
 
     const overId = over.id as string;
     
-    // Check if dropped on a time slot (format: "YYYY-MM-DD-slotId")
-    if (overId.includes('-')) {
-      const parts = overId.split('-');
-      if (parts.length >= 4) {
-        const dateStr = `${parts[0]}-${parts[1]}-${parts[2]}`;
-        const slot = parts[3];
-        
-        const draggedItem = items.find(item => item.id === active.id);
-        if (draggedItem && (draggedItem.date !== dateStr || draggedItem.time_slot !== slot)) {
-          onDrop(draggedItem, dateStr, slot);
-        }
+    // Check if dropped on a time slot (format: "date-YYYY-MM-DD-slot-slotId")
+    const slotMatch = overId.match(/^date-(\d{4}-\d{2}-\d{2})-slot-(\w+)$/);
+    if (slotMatch) {
+      const [, dateStr, slot] = slotMatch;
+      
+      const draggedItem = items.find(item => item.id === active.id);
+      if (draggedItem && (draggedItem.date !== dateStr || draggedItem.time_slot !== slot)) {
+        onDrop(draggedItem, dateStr, slot);
       }
     }
 
@@ -191,8 +190,8 @@ const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete }: DayRowPr
     <div className={cn(
       "rounded-xl border transition-colors",
       isWeekendDay 
-        ? "bg-blue-50/80 border-blue-200" 
-        : "bg-white border-border"
+        ? "bg-primary/5 border-primary/30" 
+        : "bg-card border-border"
     )}>
       {/* Day Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/50">
@@ -246,7 +245,8 @@ interface TimeSlotDropZoneProps {
 }
 
 const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete }: TimeSlotDropZoneProps) => {
-  const dropId = `${date}-${slot.id}`;
+  // Format: date-YYYY-MM-DD-slot-slotId (matching PlannerManual's expected format)
+  const dropId = `date-${date}-slot-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({
     id: dropId,
     data: { date, timeSlot: slot.id },
@@ -260,8 +260,8 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete }: Tim
       className={cn(
         "min-h-[120px] border-2 border-dashed rounded-lg p-2 transition-all duration-200",
         isOver 
-          ? "border-primary bg-primary/10 scale-[1.02] shadow-md" 
-          : "border-border/40 hover:border-border/80 bg-white/50"
+          ? "border-primary bg-primary/20 scale-[1.02] shadow-md" 
+          : "border-border/40 hover:border-border/80 bg-background/50"
       )}
     >
       {/* Slot Header */}
