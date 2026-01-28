@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { AdminSidebar, type AdminSection } from './AdminSidebar';
 import { AdminOverview } from './AdminOverview';
 import { CategoriesManager } from './CategoriesManager';
@@ -14,7 +14,6 @@ import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
 import { POIEditor } from './POIEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
   Users, 
   Receipt, 
@@ -28,11 +27,19 @@ import {
   MapPin, 
   Navigation, 
   Palette, 
-  UtensilsCrossed 
+  UtensilsCrossed,
+  LayoutDashboard,
+  type LucideIcon
 } from 'lucide-react';
 
-const sectionConfig: Record<AdminSection, { title: string; description: string; icon: any }> = {
-  overview: { title: 'Visão Geral', description: 'Resumo das métricas do sistema', icon: Settings },
+interface SectionConfig {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+}
+
+const sectionConfig: Record<AdminSection, SectionConfig> = {
+  overview: { title: 'Visão Geral', description: 'Resumo das métricas do sistema', icon: LayoutDashboard },
   clients: { title: 'Clientes', description: 'Gerenciar usuários e perfis', icon: Users },
   transactions: { title: 'Transações', description: 'Acompanhar pagamentos e receitas', icon: Receipt },
   coupons: { title: 'Cupons de Desconto', description: 'Criar e gerenciar promoções', icon: Tag },
@@ -48,12 +55,17 @@ const sectionConfig: Record<AdminSection, { title: string; description: string; 
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
 };
 
-export function AdminPanel() {
+const AdminPanelComponent = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>('overview');
   
-  const currentConfig = sectionConfig[activeSection];
+  const currentConfig = useMemo(() => sectionConfig[activeSection], [activeSection]);
+  const IconComponent = currentConfig.icon;
 
-  const renderContent = () => {
+  const handleSectionChange = useCallback((section: AdminSection) => {
+    setActiveSection(section);
+  }, []);
+
+  const renderContent = useMemo(() => {
     switch (activeSection) {
       case 'overview':
         return <AdminOverview />;
@@ -86,24 +98,24 @@ export function AdminPanel() {
       default:
         return <AdminOverview />;
     }
-  };
+  }, [activeSection]);
 
   return (
     <div className="flex gap-0 min-h-[calc(100vh-12rem)]">
       {/* Sidebar */}
       <AdminSidebar 
         activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
+        onSectionChange={handleSectionChange} 
       />
       
       {/* Main Content */}
-      <div className="flex-1 bg-card border-t border-r border-b border-border rounded-r-xl">
-        <div className="p-6">
+      <div className="flex-1 bg-card border-t border-r border-b border-border rounded-r-xl overflow-hidden">
+        <div className="p-6 h-full overflow-y-auto">
           {activeSection !== 'overview' && (
             <div className="mb-6 pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-primary/10">
-                  <currentConfig.icon className="h-6 w-6 text-primary" />
+                  <IconComponent className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-foreground">{currentConfig.title}</h2>
@@ -114,10 +126,12 @@ export function AdminPanel() {
           )}
           
           <div className="min-h-[500px]">
-            {renderContent()}
+            {renderContent}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export const AdminPanel = memo(AdminPanelComponent);

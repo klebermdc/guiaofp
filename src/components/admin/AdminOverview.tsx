@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -9,7 +9,8 @@ import {
   MapPin, 
   UtensilsCrossed,
   FileVideo,
-  Tag
+  Tag,
+  type LucideIcon
 } from 'lucide-react';
 
 interface Stats {
@@ -21,6 +22,15 @@ interface Stats {
   activeCoupons: number;
   totalPOIs: number;
   pendingTransactions: number;
+}
+
+interface StatCard {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  color: string;
+  bgColor: string;
+  subtitle?: string;
 }
 
 export function AdminOverview() {
@@ -37,6 +47,8 @@ export function AdminOverview() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchStats = async () => {
       try {
         const [
@@ -54,6 +66,8 @@ export function AdminOverview() {
           supabase.from('discount_coupons').select('id', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('attractions').select('id', { count: 'exact', head: true }),
         ]);
+
+        if (!isMounted) return;
 
         const transactions = transactionsRes.data || [];
         const confirmedTransactions = transactions.filter(t => t.status === 'CONFIRMED' || t.status === 'RECEIVED');
@@ -73,14 +87,18 @@ export function AdminOverview() {
       } catch (error) {
         console.error('Error fetching admin stats:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchStats();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const statCards = [
+  const statCards: StatCard[] = [
     {
       title: 'Total de Clientes',
       value: stats.totalClients,
@@ -157,30 +175,33 @@ export function AdminOverview() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title} variant="interactive" className="group">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {stat.value}
-                  </p>
-                  {stat.subtitle && (
-                    <p className="text-xs text-amber-500 font-medium">
-                      {stat.subtitle}
+        {statCards.map((stat) => {
+          const IconComponent = stat.icon;
+          return (
+            <Card key={stat.title} variant="interactive" className="group">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
                     </p>
-                  )}
+                    <p className="text-2xl font-bold text-foreground">
+                      {stat.value}
+                    </p>
+                    {stat.subtitle && (
+                      <p className="text-xs text-amber-500 font-medium">
+                        {stat.subtitle}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`p-3 rounded-xl ${stat.bgColor} transition-transform group-hover:scale-110`}>
+                    <IconComponent className={`h-6 w-6 ${stat.color}`} />
+                  </div>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.bgColor} transition-transform group-hover:scale-110`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -238,7 +259,13 @@ export function AdminOverview() {
   );
 }
 
-function QuickActionCard({ icon: Icon, label, description }: { icon: any; label: string; description: string }) {
+interface QuickActionCardProps {
+  icon: LucideIcon;
+  label: string;
+  description: string;
+}
+
+const QuickActionCard = memo(function QuickActionCard({ icon: Icon, label, description }: QuickActionCardProps) {
   return (
     <div className="p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer group">
       <div className="flex items-center gap-3">
@@ -252,22 +279,35 @@ function QuickActionCard({ icon: Icon, label, description }: { icon: any; label:
       </div>
     </div>
   );
+});
+
+interface StatusItemProps {
+  label: string;
+  status: 'online' | 'offline' | 'warning';
 }
 
-function StatusItem({ label, status }: { label: string; status: 'online' | 'offline' | 'warning' }) {
+const StatusItem = forwardRef<HTMLDivElement, StatusItemProps>(function StatusItem({ label, status }, ref) {
   const statusColors = {
     online: 'bg-green-500',
     offline: 'bg-red-500',
     warning: 'bg-amber-500',
   };
 
+  const statusLabels = {
+    online: 'Online',
+    offline: 'Offline',
+    warning: 'Atenção',
+  };
+
   return (
-    <div className="flex items-center justify-between">
+    <div ref={ref} className="flex items-center justify-between">
       <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${statusColors[status]} animate-pulse`} />
-        <span className="text-sm font-medium text-foreground capitalize">{status}</span>
+        <span className="text-sm font-medium text-foreground">{statusLabels[status]}</span>
       </div>
     </div>
   );
-}
+});
+
+StatusItem.displayName = 'StatusItem';
