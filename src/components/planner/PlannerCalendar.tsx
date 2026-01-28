@@ -15,12 +15,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format, eachDayOfInterval, parseISO, isWeekend } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Check, Clock, Sparkles, Pencil } from 'lucide-react';
+import { Trash2, Check, Clock, Sparkles, Pencil, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { EditPlannerItemModal } from './EditPlannerItemModal';
+import { AttractionsModal } from './AttractionsModal';
 
 export interface PlannerItem {
   id: string;
@@ -432,6 +434,10 @@ const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete, onEdit }: 
   const categoryStyle = getCategoryStyle(item.category);
   const icon = item.icon || getDefaultIcon(item.item_type, item.category);
   const [isNewlyAdded, setIsNewlyAdded] = useState(false);
+  const [attractionsModalOpen, setAttractionsModalOpen] = useState(false);
+  
+  // Check if this is a park item
+  const isPark = item.item_type === 'park';
 
   // Check if this item was recently added
   useEffect(() => {
@@ -443,118 +449,146 @@ const ActivityCard = ({ item, isDragging, onRemove, onToggleComplete, onEdit }: 
   }, [item.id]);
   
   return (
-    <div
-      className={cn(
-        "p-2 rounded-lg border text-xs cursor-grab active:cursor-grabbing transition-all",
-        isDragging ? "shadow-xl scale-105 ring-2 ring-primary" : "shadow-sm hover:shadow-md",
-        item.completed ? "opacity-60" : "",
-        categoryStyle.bg,
-        categoryStyle.border,
-        isNewlyAdded && "animate-[success-pop_0.4s_ease-out] ring-2 ring-success/60 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-      )}
-    >
-      <div className="flex items-start justify-between gap-1">
-        <div className="flex items-start gap-1.5 flex-1 min-w-0">
-          {/* Complete checkbox */}
-          {onToggleComplete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleComplete();
-              }}
-              className={cn(
-                "mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
-                item.completed
-                  ? "bg-green-500 border-green-500 text-white"
-                  : "border-gray-300 hover:border-primary"
-              )}
-            >
-              {item.completed && <Check className="w-2 h-2" />}
-            </button>
-          )}
-          
-          <span className="text-sm flex-shrink-0">{icon}</span>
-          <div className="flex-1 min-w-0">
-            <span className={cn(
-              "block truncate font-medium",
-              categoryStyle.text,
-              item.completed && "line-through"
-            )}>
-              {item.item_name}
-            </span>
+    <>
+      <div
+        className={cn(
+          "p-2 rounded-lg border text-xs cursor-grab active:cursor-grabbing transition-all",
+          isDragging ? "shadow-xl scale-105 ring-2 ring-primary" : "shadow-sm hover:shadow-md",
+          item.completed ? "opacity-60" : "",
+          categoryStyle.bg,
+          categoryStyle.border,
+          isNewlyAdded && "animate-[success-pop_0.4s_ease-out] ring-2 ring-success/60 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+        )}
+      >
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex items-start gap-1.5 flex-1 min-w-0">
+            {/* Complete checkbox */}
+            {onToggleComplete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleComplete();
+                }}
+                className={cn(
+                  "mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
+                  item.completed
+                    ? "bg-green-500 border-green-500 text-white"
+                    : "border-gray-300 hover:border-primary"
+                )}
+              >
+                {item.completed && <Check className="w-2 h-2" />}
+              </button>
+            )}
             
-            {/* Category Tag */}
-            <span className={cn(
-              "inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wide",
-              categoryStyle.bg,
-              categoryStyle.text
-            )}>
-              {item.category}
-            </span>
+            <span className="text-sm flex-shrink-0">{icon}</span>
+            <div className="flex-1 min-w-0">
+              <span className={cn(
+                "block truncate font-medium",
+                categoryStyle.text,
+                item.completed && "line-through"
+              )}>
+                {item.item_name}
+              </span>
+              
+              {/* Category Tag */}
+              <span className={cn(
+                "inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wide",
+                categoryStyle.bg,
+                categoryStyle.text
+              )}>
+                {item.category}
+              </span>
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            {/* Edit button */}
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onEdit();
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-primary/20 text-primary"
+                aria-label="Editar item"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+            
+            {/* Remove button */}
+            {onRemove && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onRemove();
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20 text-destructive"
+                aria-label="Remover item"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          {/* Edit button */}
-          {onEdit && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onEdit();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-primary/20 text-primary"
-              aria-label="Editar item"
-            >
-              <Pencil className="w-3 h-3" />
-            </button>
+        {/* Button to select attractions for park items */}
+        {isPark && !item.completed && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 h-6 text-[10px] w-full gap-1 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setAttractionsModalOpen(true);
+            }}
+          >
+            <Star className="h-3 w-3" />
+            Escolher Atrações
+          </Button>
+        )}
+        
+        {/* Metadata */}
+        <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+          {item.duration && (
+            <span className="flex items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5" />
+              {item.duration}min
+            </span>
           )}
-          
-          {/* Remove button */}
-          {onRemove && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onRemove();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20 text-destructive"
-              aria-label="Remover item"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
+          {item.reservation_confirmed && (
+            <span className="flex items-center gap-0.5 text-green-600">
+              <Check className="w-2.5 h-2.5" />
+              Reservado
+            </span>
+          )}
+          {item.start_time && (
+            <span className="flex items-center gap-0.5">
+              🕐 {item.start_time}
+            </span>
           )}
         </div>
+
+        {item.notes && (
+          <p className="mt-1 text-[10px] text-muted-foreground line-clamp-1 italic">
+            {item.notes}
+          </p>
+        )}
       </div>
       
-      {/* Metadata */}
-      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-        {item.duration && (
-          <span className="flex items-center gap-0.5">
-            <Clock className="w-2.5 h-2.5" />
-            {item.duration}min
-          </span>
-        )}
-        {item.reservation_confirmed && (
-          <span className="flex items-center gap-0.5 text-green-600">
-            <Check className="w-2.5 h-2.5" />
-            Reservado
-          </span>
-        )}
-        {item.start_time && (
-          <span className="flex items-center gap-0.5">
-            🕐 {item.start_time}
-          </span>
-        )}
-      </div>
-
-      {item.notes && (
-        <p className="mt-1 text-[10px] text-muted-foreground line-clamp-1 italic">
-          {item.notes}
-        </p>
+      {/* Attractions Modal */}
+      {isPark && (
+        <AttractionsModal
+          open={attractionsModalOpen}
+          onOpenChange={setAttractionsModalOpen}
+          parkName={item.item_name}
+        />
       )}
-    </div>
+    </>
   );
 };
 
