@@ -73,16 +73,7 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95"
-          style={{ 
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100vw',
-            height: '100vh',
-          }}
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 p-4"
         >
           {/* Close button */}
           <motion.button
@@ -91,39 +82,32 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ delay: 0.1 }}
             onClick={onClose}
-            className="absolute top-4 right-4 z-[100000] p-3 bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
-            style={{ position: 'absolute' }}
+            className="absolute top-4 right-4 z-[100000] p-2 bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-5 h-5 text-white" />
           </motion.button>
 
-          {/* Video container */}
+          {/* Video container - compact size */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 50 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 50 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className={`relative ${
-              isLandscape 
-                ? 'w-full h-full' 
-                : 'w-[92vw] max-w-lg'
-            }`}
+            className="w-full max-w-xl"
           >
-            {/* Title bar - only in portrait */}
-            {!isLandscape && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="mb-3 px-1"
-              >
-                <h3 className="text-white font-bold text-base text-center">{title}</h3>
-              </motion.div>
-            )}
+            {/* Title bar */}
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-2 px-1"
+            >
+              <h3 className="text-white font-medium text-sm text-center truncate">{title}</h3>
+            </motion.div>
 
-            {/* Video player */}
-            <div className={`bg-black ${isLandscape ? 'w-full h-full' : 'aspect-video rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20'}`}>
+            {/* Video player - compact aspect ratio */}
+            <div className="aspect-video rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/20 bg-black">
               {isYoutube ? (
                 <iframe
                   src={`${getYoutubeEmbedUrl(videoUrl)}?autoplay=1&playsinline=1&rel=0&modestbranding=1`}
@@ -141,19 +125,6 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
                 />
               )}
             </div>
-
-            {/* Landscape hint - only in portrait */}
-            {!isLandscape && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="mt-4 flex items-center justify-center gap-2"
-              >
-                <Maximize2 className="w-4 h-4 text-white/60" />
-                <span className="text-white/60 text-sm">Gire o celular para tela cheia</span>
-              </motion.div>
-            )}
           </motion.div>
         </motion.div>
       )}
