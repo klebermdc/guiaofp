@@ -18,6 +18,10 @@ const routeModules: Record<string, () => Promise<unknown>> = {
   '/checklists': () => import('@/pages/Checklists'),
   '/restaurantes': () => import('@/pages/Restaurants'),
   '/checkout': () => import('@/pages/Checkout'),
+  '/favoritos': () => import('@/pages/Favorites'),
+  '/guia-restaurantes': () => import('@/pages/RestaurantsGuide'),
+  '/roteiro-personalizado': () => import('@/pages/RoteiroPersonalizado'),
+  '/planner-manual': () => import('@/pages/PlannerManual'),
 };
 
 // Track which routes have been prefetched to avoid duplicate requests
