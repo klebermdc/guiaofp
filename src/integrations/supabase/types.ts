@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          address: string | null
+          best_time: string | null
+          category: string | null
+          color: string | null
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          distance_from_parks: string | null
+          duration: number | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          reservation_required: boolean | null
+          slug: string
+          tips: string | null
+          type: string | null
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          best_time?: string | null
+          category?: string | null
+          color?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          distance_from_parks?: string | null
+          duration?: number | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          reservation_required?: boolean | null
+          slug: string
+          tips?: string | null
+          type?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          best_time?: string | null
+          category?: string | null
+          color?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          distance_from_parks?: string | null
+          duration?: number | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          reservation_required?: boolean | null
+          slug?: string
+          tips?: string | null
+          type?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       attraction_preferences: {
         Row: {
           attraction_name: string
