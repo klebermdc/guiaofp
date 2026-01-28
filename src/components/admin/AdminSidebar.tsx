@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   Users, 
@@ -15,9 +16,7 @@ import {
   UtensilsCrossed,
   LayoutDashboard,
   ChevronRight,
-  Store,
-  Map,
-  Wrench
+  type LucideIcon
 } from 'lucide-react';
 
 export type AdminSection = 
@@ -41,62 +40,77 @@ interface AdminSidebarProps {
   onSectionChange: (section: AdminSection) => void;
 }
 
-const menuGroups = [
+interface MenuItem {
+  id: AdminSection;
+  icon: LucideIcon;
+  label: string;
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
   {
     title: 'Geral',
     items: [
-      { id: 'overview' as AdminSection, icon: LayoutDashboard, label: 'Visão Geral' },
+      { id: 'overview', icon: LayoutDashboard, label: 'Visão Geral' },
     ]
   },
   {
     title: 'Clientes & Vendas',
     items: [
-      { id: 'clients' as AdminSection, icon: Users, label: 'Clientes' },
-      { id: 'transactions' as AdminSection, icon: Receipt, label: 'Transações' },
-      { id: 'coupons' as AdminSection, icon: Tag, label: 'Cupons' },
+      { id: 'clients', icon: Users, label: 'Clientes' },
+      { id: 'transactions', icon: Receipt, label: 'Transações' },
+      { id: 'coupons', icon: Tag, label: 'Cupons' },
     ]
   },
   {
     title: 'Planos & Pagamentos',
     items: [
-      { id: 'pricing' as AdminSection, icon: DollarSign, label: 'Preços' },
-      { id: 'plans' as AdminSection, icon: Settings, label: 'Acesso aos Planos' },
-      { id: 'payments' as AdminSection, icon: CreditCard, label: 'Gateway' },
+      { id: 'pricing', icon: DollarSign, label: 'Preços' },
+      { id: 'plans', icon: Settings, label: 'Acesso aos Planos' },
+      { id: 'payments', icon: CreditCard, label: 'Gateway' },
     ]
   },
   {
     title: 'Conteúdo',
     items: [
-      { id: 'categories' as AdminSection, icon: FolderOpen, label: 'Categorias' },
-      { id: 'content' as AdminSection, icon: FileVideo, label: 'Conteúdos' },
+      { id: 'categories', icon: FolderOpen, label: 'Categorias' },
+      { id: 'content', icon: FileVideo, label: 'Conteúdos' },
     ]
   },
   {
     title: 'Mapas & Locais',
     items: [
-      { id: 'coordinates' as AdminSection, icon: MapPin, label: 'Coordenadas' },
-      { id: 'pois' as AdminSection, icon: Navigation, label: 'POIs' },
-      { id: 'markers' as AdminSection, icon: Palette, label: 'Ícones do Mapa' },
+      { id: 'coordinates', icon: MapPin, label: 'Coordenadas' },
+      { id: 'pois', icon: Navigation, label: 'POIs' },
+      { id: 'markers', icon: Palette, label: 'Ícones do Mapa' },
     ]
   },
   {
     title: 'Estabelecimentos',
     items: [
-      { id: 'restaurants' as AdminSection, icon: UtensilsCrossed, label: 'Restaurantes' },
+      { id: 'restaurants', icon: UtensilsCrossed, label: 'Restaurantes' },
     ]
   },
   {
     title: 'Ferramentas',
     items: [
-      { id: 'password' as AdminSection, icon: KeyRound, label: 'Gerador de Senhas' },
+      { id: 'password', icon: KeyRound, label: 'Gerador de Senhas' },
     ]
   },
 ];
 
-export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarProps) {
+const AdminSidebarComponent = ({ activeSection, onSectionChange }: AdminSidebarProps) => {
+  const handleClick = useCallback((id: AdminSection) => {
+    onSectionChange(id);
+  }, [onSectionChange]);
+
   return (
-    <aside className="w-64 bg-card border-r border-border min-h-[calc(100vh-12rem)] rounded-l-xl">
-      <div className="p-4">
+    <aside className="w-64 bg-card border-r border-border min-h-[calc(100vh-12rem)] rounded-l-xl flex-shrink-0">
+      <div className="p-4 h-full overflow-y-auto">
         <nav className="space-y-6">
           {menuGroups.map((group) => (
             <div key={group.title}>
@@ -106,10 +120,11 @@ export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarPro
               <ul className="space-y-1">
                 {group.items.map((item) => {
                   const isActive = activeSection === item.id;
+                  const IconComponent = item.icon;
                   return (
                     <li key={item.id}>
                       <button
-                        onClick={() => onSectionChange(item.id)}
+                        onClick={() => handleClick(item.id)}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                           isActive
@@ -117,7 +132,7 @@ export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarPro
                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                       >
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        <IconComponent className="h-4 w-4 flex-shrink-0" />
                         <span className="flex-1 text-left">{item.label}</span>
                         {isActive && <ChevronRight className="h-4 w-4" />}
                       </button>
@@ -131,4 +146,6 @@ export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarPro
       </div>
     </aside>
   );
-}
+};
+
+export const AdminSidebar = memo(AdminSidebarComponent);
