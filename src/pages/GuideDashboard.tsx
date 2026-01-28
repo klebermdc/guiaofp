@@ -1,3 +1,4 @@
+// Guide Dashboard v2.1 - Fixed React dispatcher issue
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
