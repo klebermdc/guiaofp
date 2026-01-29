@@ -268,32 +268,36 @@ const Checklists = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { key: 'documents' as CategoryKey, label: 'Documentos', icon: FileText },
-            { key: 'luggage' as CategoryKey, label: 'Mala', icon: Backpack },
-            { key: 'apps' as CategoryKey, label: 'Apps', icon: Phone },
-            { key: 'parkDay' as CategoryKey, label: 'Dia no Parque', icon: Sun },
-          ].map((item) => (
-            <Card 
-              key={item.key} 
-              className="relative overflow-hidden border-0 bg-gradient-to-br from-card to-muted/30 shadow-lg cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => setActiveAccordion(activeAccordion === item.key ? undefined : item.key)}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-r ${checklistCategories[item.key].color} opacity-5`} />
-              <CardContent className="relative p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${checklistCategories[item.key].color} flex items-center justify-center shadow-lg`}>
-                    <item.icon className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-xl font-bold">{getCategoryProgress(item.key)}%</span>
-                </div>
-                <p className="font-medium text-sm">{item.label}</p>
-                <Progress value={getCategoryProgress(item.key)} className="h-1.5 mt-2" />
-              </CardContent>
-            </Card>
-          ))}
+        {/* Quick Stats - Horizontal scroll on mobile */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground px-1">Progresso por categoria</h2>
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-3 pb-2" style={{ minWidth: 'max-content' }}>
+              {(Object.entries(checklistCategories) as [CategoryKey, typeof checklistCategories[CategoryKey]][]).map(([key, category]) => {
+                const Icon = category.icon;
+                const progress = getCategoryProgress(key);
+                return (
+                  <Card 
+                    key={key} 
+                    className="relative overflow-hidden border-0 bg-gradient-to-br from-card to-muted/30 shadow-lg cursor-pointer hover:scale-105 transition-transform flex-shrink-0 w-[140px] sm:w-[160px]"
+                    onClick={() => setActiveAccordion(activeAccordion === key ? undefined : key)}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-5`} />
+                    <CardContent className="relative p-3 sm:p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-r ${category.color} flex items-center justify-center shadow-lg`}>
+                          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                        </div>
+                        <span className="text-lg sm:text-xl font-bold">{progress}%</span>
+                      </div>
+                      <p className="font-medium text-xs sm:text-sm truncate">{category.title}</p>
+                      <Progress value={progress} className="h-1.5 mt-2" />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* All Checklists */}
