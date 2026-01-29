@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ActivityLibrary, LibraryItem, PlannerCalendar, PlannerItem } from '@/components/planner';
 import { usePlannerDragDrop } from '@/hooks/usePlannerDragDrop';
+import { usePlannerAutoPopulate } from '@/hooks/usePlannerAutoPopulate';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SEO } from '@/components/SEO';
@@ -58,6 +59,10 @@ const PlannerManual = () => {
     })
   );
 
+  // Auto-populate hook
+  const { autoPopulatePlanner } = usePlannerAutoPopulate();
+  const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
+
   // Get or create user planner
   const { data: planner, isLoading: plannerLoading } = useQuery({
     queryKey: ['user-planner', user?.id],
@@ -73,7 +78,7 @@ const PlannerManual = () => {
         .limit(1)
         .single();
       
-      if (existing) return existing;
+      if (existing) return { planner: existing, isNew: false };
       
       // Create new planner based on profile dates
       const startDate = travelProfile?.arrivalDate || format(new Date(), 'yyyy-MM-dd');
@@ -93,10 +98,14 @@ const PlannerManual = () => {
         .single();
       
       if (error) throw error;
-      return newPlanner;
+      return { planner: newPlanner, isNew: true };
     },
     enabled: !!user?.id
   });
+
+  // Extract planner data
+  const plannerData = planner?.planner;
+  const isNewPlanner = planner?.isNew || false;
 
   // Use drag-drop hook
   const { 
@@ -110,7 +119,44 @@ const PlannerManual = () => {
     handleUpdateItem,
     toggleCompleted,
     refetchItems
-  } = usePlannerDragDrop({ plannerId: planner?.id || '' });
+  } = usePlannerDragDrop({ plannerId: plannerData?.id || '' });
+
+  // Auto-populate planner with hotel and park items
+  useEffect(() => {
+    const doAutoPopulate = async () => {
+      if (!plannerData?.id || hasAutoPopulated || itemsLoading) return;
+      
+      // Only auto-populate for new planners OR if items are empty
+      const shouldPopulate = isNewPlanner || plannerItems.length === 0;
+      if (!shouldPopulate) {
+        setHasAutoPopulated(true);
+        return;
+      }
+
+      const result = await autoPopulatePlanner({
+        plannerId: plannerData.id,
+        travelProfile: travelProfile ? {
+          hotel: travelProfile.hotel,
+          hotelAddress: travelProfile.hotelAddress,
+          arrivalDate: travelProfile.arrivalDate,
+          departureDate: travelProfile.departureDate,
+          parkDates: travelProfile.parkDates,
+        } : null,
+      });
+
+      if (result.hotelItemsAdded > 0 || result.parkItemsAdded > 0) {
+        await refetchItems();
+        toast({
+          title: 'Roteiro pré-configurado!',
+          description: `Adicionados automaticamente: ${result.hotelItemsAdded > 0 ? 'Hotel (check-in/check-out)' : ''}${result.hotelItemsAdded > 0 && result.parkItemsAdded > 0 ? ' e ' : ''}${result.parkItemsAdded > 0 ? `${result.parkItemsAdded} parque(s)` : ''}`,
+        });
+      }
+
+      setHasAutoPopulated(true);
+    };
+
+    doAutoPopulate();
+  }, [plannerData?.id, isNewPlanner, hasAutoPopulated, itemsLoading, plannerItems.length, travelProfile, autoPopulatePlanner, refetchItems, toast]);
 
   // Handle drag start - detect if from library or calendar
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -138,7 +184,7 @@ const PlannerManual = () => {
     setActiveItem(null);
     setActiveItemType(null);
     
-    if (!over || !planner?.id) return;
+    if (!over || !plannerData?.id) return;
 
     const dragId = active.id as string;
     const dropTarget = over.id as string;
@@ -222,7 +268,7 @@ const PlannerManual = () => {
         }
       }
     }
-  }, [planner?.id, handleDrop, handleMoveToSlot, handleReorder, plannerItems, toast]);
+  }, [plannerData?.id, handleDrop, handleMoveToSlot, handleReorder, plannerItems, toast]);
 
   // Handle drop from PlannerCalendar (for moves between slots)
   const handleCalendarDrop = useCallback(async (item: any, date: string, timeSlot: string) => {
@@ -240,7 +286,7 @@ const PlannerManual = () => {
 
   // Export planner as text (copy to clipboard)
   const handleExportText = useCallback(() => {
-    if (!planner || !plannerItems.length) {
+    if (!plannerData || !plannerItems.length) {
       toast({
         title: 'Nada para exportar',
         description: 'Adicione itens ao seu roteiro primeiro.',
@@ -257,8 +303,8 @@ const PlannerManual = () => {
     }, {} as Record<string, typeof plannerItems>);
 
     // Generate text
-    let text = `🏰 ${planner.title}\n`;
-    text += `📅 ${format(new Date(planner.start_date), 'dd/MM/yyyy')} - ${format(new Date(planner.end_date), 'dd/MM/yyyy')}\n\n`;
+    let text = `🏰 ${plannerData.title}\n`;
+    text += `📅 ${format(new Date(plannerData.start_date), 'dd/MM/yyyy')} - ${format(new Date(plannerData.end_date), 'dd/MM/yyyy')}\n\n`;
 
     Object.entries(grouped)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -288,11 +334,11 @@ const PlannerManual = () => {
       title: 'Roteiro copiado!',
       description: 'O roteiro foi copiado para a área de transferência.',
     });
-  }, [planner, plannerItems, toast]);
+  }, [plannerData, plannerItems, toast]);
 
   // Export planner as PDF
   const handleExportPDF = useCallback(() => {
-    if (!planner || !plannerItems.length) {
+    if (!plannerData || !plannerItems.length) {
       toast({
         title: 'Nada para exportar',
         description: 'Adicione itens ao seu roteiro primeiro.',
@@ -302,7 +348,7 @@ const PlannerManual = () => {
     }
 
     try {
-      const fileName = exportPlannerToPDF(planner, plannerItems);
+      const fileName = exportPlannerToPDF(plannerData, plannerItems);
       toast({
         title: 'PDF gerado!',
         description: `Arquivo ${fileName} baixado com sucesso.`,
@@ -315,14 +361,14 @@ const PlannerManual = () => {
         variant: 'destructive'
       });
     }
-  }, [planner, plannerItems, toast]);
+  }, [plannerData, plannerItems, toast]);
 
   // Share planner
   const handleShare = useCallback(async () => {
-    if (!planner) return;
+    if (!plannerData) return;
     
     const shareData = {
-      title: planner.title,
+      title: plannerData.title,
       text: `Confira meu roteiro para Orlando!`,
       url: window.location.href
     };
@@ -336,21 +382,21 @@ const PlannerManual = () => {
         description: 'O link foi copiado para a área de transferência.',
       });
     }
-  }, [planner, toast]);
+  }, [plannerData, toast]);
 
   // Import template items
   const handleImportTemplate = useCallback(async (template: PlannerTemplate) => {
-    if (!planner?.id) return;
+    if (!plannerData?.id) return;
 
     try {
-      const startDate = new Date(planner.start_date);
+      const startDate = new Date(plannerData.start_date);
       
       // Prepare all items to insert
       const itemsToInsert = template.days.flatMap(day => {
         const dayDate = format(addDays(startDate, day.dayOffset), 'yyyy-MM-dd');
         
         return day.items.map((item, index) => ({
-          planner_id: planner.id,
+          planner_id: plannerData.id,
           date: dayDate,
           time_slot: item.time_slot,
           item_type: item.item_type,
@@ -390,7 +436,7 @@ const PlannerManual = () => {
       });
       throw error;
     }
-  }, [planner, refetchItems, toast]);
+  }, [plannerData, refetchItems, toast]);
 
   if (plannerLoading) {
     return (
@@ -427,13 +473,13 @@ const PlannerManual = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
-                  {planner?.title || 'Meu Roteiro'}
+                  {plannerData?.title || 'Meu Roteiro'}
                 </h1>
-                {planner && (
+                {plannerData && (
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(planner.start_date), 'dd/MM/yyyy')} - {format(new Date(planner.end_date), 'dd/MM/yyyy')}
+                    {format(new Date(plannerData.start_date), 'dd/MM/yyyy')} - {format(new Date(plannerData.end_date), 'dd/MM/yyyy')}
                     <Badge variant="secondary" className="ml-2 text-xs">
-                      {planner.total_days} dias
+                      {plannerData.total_days} dias
                     </Badge>
                     <Badge variant="outline" className="ml-1 text-xs">
                       {plannerItems.length} atividades
@@ -492,10 +538,10 @@ const PlannerManual = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : planner ? (
+              ) : plannerData ? (
                 <PlannerCalendar
-                  startDate={planner.start_date}
-                  endDate={planner.end_date}
+                  startDate={plannerData.start_date}
+                  endDate={plannerData.end_date}
                   items={plannerItems}
                   onDrop={handleCalendarDrop}
                   onRemove={handleRemove}
@@ -562,12 +608,12 @@ const PlannerManual = () => {
         <SavingIndicator isSaving={isSaving} />
 
         {/* Template Gallery Modal */}
-        {planner && (
+        {plannerData && (
           <TemplateGalleryModal
             open={showTemplateModal}
             onOpenChange={setShowTemplateModal}
-            startDate={planner.start_date}
-            plannerId={planner.id}
+            startDate={plannerData.start_date}
+            plannerId={plannerData.id}
             onImport={handleImportTemplate}
           />
         )}
