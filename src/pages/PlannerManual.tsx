@@ -63,11 +63,16 @@ const PlannerManual = () => {
   const { autoPopulatePlanner } = usePlannerAutoPopulate();
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
 
-  // Get or create user planner
+  // Get or create user planner (and sync dates with profile)
   const { data: planner, isLoading: plannerLoading } = useQuery({
-    queryKey: ['user-planner', user?.id],
+    queryKey: ['user-planner', user?.id, travelProfile?.arrivalDate, travelProfile?.departureDate],
     queryFn: async () => {
       if (!user?.id) return null;
+      
+      // Get profile dates (or defaults)
+      const profileStartDate = travelProfile?.arrivalDate || format(new Date(), 'yyyy-MM-dd');
+      const profileEndDate = travelProfile?.departureDate || format(addDays(new Date(), 7), 'yyyy-MM-dd');
+      const profileTotalDays = Math.max(1, differenceInDays(new Date(profileEndDate), new Date(profileStartDate)) + 1);
       
       // Try to get existing planner
       const { data: existing } = await supabase
@@ -78,21 +83,42 @@ const PlannerManual = () => {
         .limit(1)
         .single();
       
-      if (existing) return { planner: existing, isNew: false };
+      if (existing) {
+        // Check if planner dates need updating to match profile
+        const needsUpdate = existing.start_date !== profileStartDate || 
+                           existing.end_date !== profileEndDate;
+        
+        if (needsUpdate && travelProfile?.arrivalDate && travelProfile?.departureDate) {
+          // Update planner dates to match profile
+          const { data: updatedPlanner, error: updateError } = await supabase
+            .from('user_planners')
+            .update({
+              start_date: profileStartDate,
+              end_date: profileEndDate,
+              total_days: profileTotalDays,
+            })
+            .eq('id', existing.id)
+            .select()
+            .single();
+          
+          if (!updateError && updatedPlanner) {
+            console.log('Planner dates synced with profile:', profileStartDate, '-', profileEndDate);
+            return { planner: updatedPlanner, isNew: false, datesUpdated: true };
+          }
+        }
+        
+        return { planner: existing, isNew: false };
+      }
       
       // Create new planner based on profile dates
-      const startDate = travelProfile?.arrivalDate || format(new Date(), 'yyyy-MM-dd');
-      const endDate = travelProfile?.departureDate || format(addDays(new Date(), 7), 'yyyy-MM-dd');
-      const totalDays = Math.max(1, differenceInDays(new Date(endDate), new Date(startDate)) + 1);
-      
       const { data: newPlanner, error } = await supabase
         .from('user_planners')
         .insert({
           user_id: user.id,
           title: 'Meu Roteiro Orlando',
-          start_date: startDate,
-          end_date: endDate,
-          total_days: totalDays
+          start_date: profileStartDate,
+          end_date: profileEndDate,
+          total_days: profileTotalDays
         })
         .select()
         .single();
