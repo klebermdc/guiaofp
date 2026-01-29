@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -8,13 +7,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { 
   Search, 
-  MapPin, 
   UtensilsCrossed, 
-  Star,
-  Clock,
   Loader2,
-  Navigation,
-  ExternalLink,
   Filter,
   X,
   ChefHat,
@@ -22,9 +16,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
 import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
 import { PARKS } from '@/data/constants';
 import { SEO, SEO_PAGES } from '@/components/SEO';
+import { RestaurantListCard } from '@/components/restaurants/RestaurantListCard';
+import { RestaurantListSkeleton } from '@/components/restaurants/RestaurantListSkeleton';
 import {
   Select,
   SelectContent,
@@ -193,52 +190,49 @@ const Restaurants = () => {
     return groups;
   }, [filteredRestaurants]);
 
-  const navigateToRestaurant = (restaurant: Restaurant) => {
-    if (restaurant.latitude && restaurant.longitude) {
-      navigate(`/mapa?destLat=${restaurant.latitude}&destLng=${restaurant.longitude}&destName=${encodeURIComponent(restaurant.name)}`);
-    }
-  };
+  const handleNavigate = useCallback((lat: number, lng: number, name: string) => {
+    navigate(`/mapa?destLat=${lat}&destLng=${lng}&destName=${encodeURIComponent(name)}`);
+  }, [navigate]);
 
-  const getTypeInfo = (restaurant: Restaurant) => {
+  const getTypeInfo = useCallback((restaurant: Restaurant) => {
     if (restaurant.type) {
       return getTypeLabel(restaurant.type);
     }
     const details = RESTAURANT_DETAILS[restaurant.name];
     return details ? getTypeLabel(details.type) : getTypeLabel('quick-service');
-  };
+  }, []);
 
-  const getPriceDisplay = (restaurant: Restaurant) => {
+  const getPriceDisplay = useCallback((restaurant: Restaurant) => {
     if (restaurant.price_range) {
       return restaurant.price_range;
     }
     const details = RESTAURANT_DETAILS[restaurant.name];
     return details ? getPriceIndicator(details.priceLevel) : '$';
-  };
+  }, []);
 
-  const getTip = (restaurant: Restaurant) => {
+  const getTip = useCallback((restaurant: Restaurant): string | undefined => {
     if (restaurant.tips) return restaurant.tips;
     const details = RESTAURANT_DETAILS[restaurant.name];
     return details?.tip;
-  };
+  }, []);
 
-  const getMustTry = (restaurant: Restaurant) => {
+  const getMustTry = useCallback((restaurant: Restaurant): string | undefined => {
     if (restaurant.must_try) return restaurant.must_try;
     const details = RESTAURANT_DETAILS[restaurant.name];
     return details?.mustTry;
-  };
+  }, []);
 
-  const needsReservation = (restaurant: Restaurant) => {
+  const needsReservation = useCallback((restaurant: Restaurant) => {
     if (restaurant.reservation_required !== null) return restaurant.reservation_required;
     const details = RESTAURANT_DETAILS[restaurant.name];
-    return details?.reservation;
-  };
+    return details?.reservation ?? false;
+  }, []);
 
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <SEO {...SEO_PAGES.restaurants} />
+        <RestaurantListSkeleton />
       </AppLayout>
     );
   }
@@ -413,90 +407,18 @@ const Restaurants = () => {
                 </h2>
                 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {parkRestaurants.map(restaurant => {
-                    const typeInfo = getTypeInfo(restaurant);
-                    const hasCoords = restaurant.latitude && restaurant.longitude;
-                    const tip = getTip(restaurant);
-                    const mustTry = getMustTry(restaurant);
-                    const reservation = needsReservation(restaurant);
-
-                    return (
-                      <Card 
-                        key={restaurant.id} 
-                        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => navigate(`/restaurante/${restaurant.slug}`)}
-                      >
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-semibold text-base truncate">{restaurant.name}</h3>
-                              {restaurant.cuisine && (
-                                <p className="text-xs text-muted-foreground truncate">{restaurant.cuisine}</p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <Badge className={`${typeInfo.color} text-white text-xs`}>
-                                  {typeInfo.label}
-                                </Badge>
-                                <span className="text-sm text-green-600 font-medium">
-                                  {getPriceDisplay(restaurant)}
-                                </span>
-                                {reservation && (
-                                  <Badge variant="outline" className="text-xs">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    Reserva
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                              {restaurant.menu_url && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-orange-500 hover:bg-orange-500/10"
-                                  onClick={() => window.open(restaurant.menu_url!, '_blank')}
-                                  title="Ver menu virtual"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </Button>
-                              )}
-                              {hasCoords && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-primary hover:bg-primary/10"
-                                  onClick={() => navigateToRestaurant(restaurant)}
-                                  title="Navegar até o restaurante"
-                                >
-                                  <Navigation className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-
-                          {tip && (
-                            <p className="text-sm text-muted-foreground flex items-start gap-1 line-clamp-2">
-                              <Star className="w-3 h-3 mt-0.5 shrink-0 text-yellow-500" />
-                              {tip}
-                            </p>
-                          )}
-
-                          {mustTry && (
-                            <p className="text-sm font-medium text-primary truncate">
-                              🍽️ Experimente: {mustTry}
-                            </p>
-                          )}
-
-                          {!hasCoords && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              Localização pendente
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  {parkRestaurants.map(restaurant => (
+                    <RestaurantListCard
+                      key={restaurant.id}
+                      restaurant={restaurant}
+                      typeInfo={getTypeInfo(restaurant)}
+                      priceDisplay={getPriceDisplay(restaurant)}
+                      tip={getTip(restaurant)}
+                      mustTry={getMustTry(restaurant)}
+                      needsReservation={needsReservation(restaurant)}
+                      onNavigate={handleNavigate}
+                    />
+                  ))}
                 </div>
               </div>
             );
