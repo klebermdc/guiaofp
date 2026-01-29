@@ -20,7 +20,8 @@ import {
   Map,
   FileText,
   Route,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -77,6 +78,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
 
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
+  { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },
   { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
