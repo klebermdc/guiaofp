@@ -268,32 +268,33 @@ const Checklists = () => {
           </div>
         </div>
 
-        {/* Quick Stats - Horizontal scroll on mobile */}
+        {/* Quick Stats - Button style like "Estratégias por Parque" */}
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground px-1">Progresso por categoria</h2>
+          <h2 className="text-sm font-medium text-muted-foreground px-1">Selecione uma categoria</h2>
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-3 pb-2" style={{ minWidth: 'max-content' }}>
+            <div className="flex gap-2 pb-2" style={{ minWidth: 'max-content' }}>
               {(Object.entries(checklistCategories) as [CategoryKey, typeof checklistCategories[CategoryKey]][]).map(([key, category]) => {
                 const Icon = category.icon;
                 const progress = getCategoryProgress(key);
+                const isActive = activeAccordion === key;
                 return (
-                  <Card 
-                    key={key} 
-                    className="relative overflow-hidden border-0 bg-gradient-to-br from-card to-muted/30 shadow-lg cursor-pointer hover:scale-105 transition-transform flex-shrink-0 w-[140px] sm:w-[160px]"
-                    onClick={() => setActiveAccordion(activeAccordion === key ? undefined : key)}
+                  <button
+                    key={key}
+                    onClick={() => setActiveAccordion(isActive ? undefined : key)}
+                    className={`
+                      flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200 whitespace-nowrap
+                      ${isActive 
+                        ? 'bg-primary border-primary text-primary-foreground shadow-md' 
+                        : 'bg-transparent border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                      }
+                    `}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-5`} />
-                    <CardContent className="relative p-3 sm:p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-r ${category.color} flex items-center justify-center shadow-lg`}>
-                          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                        </div>
-                        <span className="text-lg sm:text-xl font-bold">{progress}%</span>
-                      </div>
-                      <p className="font-medium text-xs sm:text-sm truncate">{category.title}</p>
-                      <Progress value={progress} className="h-1.5 mt-2" />
-                    </CardContent>
-                  </Card>
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{category.title}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-primary-foreground/20' : 'bg-muted'}`}>
+                      {progress}%
+                    </span>
+                  </button>
                 );
               })}
             </div>
