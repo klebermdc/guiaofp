@@ -82,7 +82,22 @@ export const SendWhatsAppMessage = ({ clients }: SendWhatsAppMessageProps) => {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success(`WhatsApp enviado para ${client.responsible_name}!`);
+        const providerStatus = String(
+          data?.provider_status ?? data?.provider_response?.status ?? ''
+        ).toLowerCase();
+        const providerToken = data?.provider_token ?? data?.provider_response?.token;
+
+        const toMasked = data?.to_phone_masked || (client.whatsapp ? `${client.whatsapp}` : '');
+        const base = `WhatsApp aceito para ${client.responsible_name || client.email}${toMasked ? ` (${toMasked})` : ''}`;
+
+        if (providerStatus === 'offline') {
+          toast.warning(`${base} (status: offline)${providerToken ? ` • ${providerToken}` : ''}`);
+        } else if (providerStatus) {
+          toast.success(`${base} (status: ${providerStatus})${providerToken ? ` • ${providerToken}` : ''}`);
+        } else {
+          toast.success(base);
+        }
+
         setCustomMessage('');
         setSelectedClient('');
       } else {
@@ -100,7 +115,7 @@ export const SendWhatsAppMessage = ({ clients }: SendWhatsAppMessageProps) => {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <MessageSquare className="w-5 h-5 text-green-500" />
+          <MessageSquare className="w-5 h-5 text-primary" />
           Enviar WhatsApp
         </CardTitle>
       </CardHeader>
@@ -186,7 +201,7 @@ export const SendWhatsAppMessage = ({ clients }: SendWhatsAppMessageProps) => {
         <Button
           onClick={handleSend}
           disabled={isSending || !selectedClient}
-          className="w-full gap-2 bg-green-600 hover:bg-green-700"
+          className="w-full gap-2"
         >
           {isSending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
