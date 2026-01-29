@@ -198,60 +198,29 @@ const RestaurantsGuide = () => {
       />
       
       <div className="space-y-8">
-        {/* Hero Header - Redesigned */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden bg-gradient-to-br from-orange-600 via-red-600 to-pink-700 text-white py-16 px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 rounded-b-[3rem]"
-        >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full" />
-            <div className="absolute bottom-10 right-10 w-48 h-48 border-4 border-white rounded-full" />
-            <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white rounded-full" />
+        {/* Hero Header - Compact */}
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center">
+            <UtensilsCrossed className="h-6 w-6 text-primary-foreground" />
           </div>
-          
-          <div className="relative max-w-5xl mx-auto text-center">
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl mb-6"
-            >
-              <UtensilsCrossed className="w-10 h-10" />
-            </motion.div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-              Guia de Restaurantes
-            </h1>
-            <p className="text-xl text-white/90 mb-2 max-w-2xl mx-auto">
-              Descubra experiências gastronômicas incríveis em Orlando
-            </p>
-            <p className="text-white/70">
-              De comida de parque a fine dining com estrela Michelin
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Guia de Restaurantes</h1>
+            <p className="text-muted-foreground text-sm">
+              {restaurantsData.length} restaurantes nos parques e Orlando
             </p>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Stats Cards */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 -mt-12 relative z-10 px-4"
-        >
+        {/* Stats Cards - Compact inline */}
+        <div className="flex flex-wrap gap-3 mb-4">
           {statsCards.map((stat, index) => (
-            <Card key={index} className="border-0 shadow-lg overflow-hidden">
-              <CardContent className="p-0">
-                <div className={`bg-gradient-to-br ${stat.color} p-4 text-white`}>
-                  <stat.icon className="w-6 h-6 mb-2 opacity-80" />
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <div className="text-sm text-white/80">{stat.label}</div>
-                </div>
-              </CardContent>
-            </Card>
+            <Badge key={index} variant="secondary" className="px-3 py-1.5 text-sm gap-1.5">
+              <stat.icon className="w-4 h-4" />
+              <span className="font-bold">{stat.value}</span>
+              <span className="text-muted-foreground">{stat.label}</span>
+            </Badge>
           ))}
-        </motion.div>
+        </div>
 
         {/* Search and Filters - Redesigned */}
         <motion.div 

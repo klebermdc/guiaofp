@@ -20,7 +20,6 @@ import {
   Calendar,
   Info,
   Heart,
-  Share2,
   Bookmark,
   Image as ImageIcon
 } from 'lucide-react';
@@ -269,20 +268,6 @@ const RestaurantDetails = () => {
               }}
             >
               <Heart className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="bg-black/30 hover:bg-black/50 text-white backdrop-blur-sm"
-              onClick={() => {
-                navigator.share?.({
-                  title: restaurant.name,
-                  text: restaurant.description || '',
-                  url: window.location.href
-                });
-              }}
-            >
-              <Share2 className="w-5 h-5" />
             </Button>
           </div>
 

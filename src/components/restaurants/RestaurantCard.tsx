@@ -1,23 +1,11 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
-  Phone, 
-  Star, 
-  ExternalLink, 
   Clock, 
-  ChevronDown,
-  ChevronUp,
-  UtensilsCrossed,
   Award,
-  ChevronLeft,
-  ChevronRight,
-  Navigation,
-  Eye,
   Heart
 } from 'lucide-react';
 import { type Restaurant } from '@/data/restaurantsData';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFavoriteSlugs, useToggleFavorite, getRestaurantIdBySlug } from '@/hooks/useRestaurantFavorites';
@@ -30,8 +18,6 @@ interface RestaurantCardProps {
 const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const { data: favoriteSlugs } = useFavoriteSlugs();
   const toggleFavorite = useToggleFavorite();
@@ -61,18 +47,6 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
     }
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === restaurant.images.length - 1 ? 0 : prev + 1
-    );
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? restaurant.images.length - 1 : prev - 1
-    );
-  };
-
   // The restaurant.id is now the slug from the database
   const restaurantSlug = restaurant.id;
 
@@ -95,28 +69,24 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer" onClick={() => navigate(`/restaurante/${restaurantSlug}`)}>
-      {/* Imagem do Restaurante */}
-      <div className="relative h-56 overflow-hidden group">
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer" onClick={() => navigate(`/restaurante/${restaurantSlug}`)}>
+      {/* Imagem do Restaurante - Compacta */}
+      <div className="relative h-36 overflow-hidden">
         <img 
-          src={restaurant.images[currentImageIndex] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80'} 
+          src={restaurant.images?.[0] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80'} 
           alt={restaurant.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80';
+          }}
         />
         
         {/* Badges sobre a imagem */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="absolute top-2 left-2 flex gap-1.5">
           {getCategoryBadge(restaurant.category)}
-          {restaurant.featured && (
-            <Badge className="bg-orange-500 text-white hover:bg-orange-500">
-              <Star className="w-3 h-3 mr-1 fill-white" />
-              Destaque
-            </Badge>
-          )}
           {restaurant.michelin && (
-            <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-400">
-              <Award className="w-3 h-3 mr-1" />
-              Michelin
+            <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs px-1.5 py-0.5">
+              <Award className="w-3 h-3" />
             </Badge>
           )}
         </div>
@@ -124,207 +94,71 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
         {/* Botão de Favorito */}
         <button
           onClick={handleToggleFavorite}
-          className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all ${
             isFavorite 
               ? 'bg-red-500 text-white' 
               : 'bg-black/50 text-white hover:bg-black/70'
           }`}
           disabled={toggleFavorite.isPending}
         >
-          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} />
+          <Heart className={`w-4 h-4 ${isFavorite ? 'fill-white' : ''}`} />
         </button>
-
-        {/* Navegação de imagens */}
-        {restaurant.images.length > 1 && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-              {restaurant.images.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    idx === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
-          </>
-        )}
       </div>
 
-      {/* Conteúdo do Card */}
-      <CardContent className="p-6">
+      {/* Conteúdo do Card - Compacto */}
+      <CardContent className="p-4">
         {/* Título e Preço */}
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-xl font-bold text-foreground flex-1 leading-tight">
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <h3 className="font-semibold text-foreground line-clamp-1 flex-1">
             {restaurant.name}
           </h3>
-          <span className={`ml-2 px-3 py-1 rounded-full text-sm font-bold ${getPriceColor(restaurant.priceRange)}`}>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${getPriceColor(restaurant.priceRange)}`}>
             {restaurant.priceRange}
           </span>
         </div>
 
-        {/* Localização com GPS */}
+        {/* Localização */}
         {restaurant.address && (
-          <div className="mb-3">
-            <div className="flex items-start text-muted-foreground text-sm mb-2">
-              <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-orange-500" />
-              <span className="line-clamp-2">{restaurant.address}</span>
-            </div>
-            {/* Botões de Navegação GPS */}
-            <div className="flex gap-2 ml-6">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors text-xs font-medium border border-blue-500/30"
-              >
-                <Navigation className="w-3 h-3" />
-                Google Maps
-              </a>
-              <a
-                href={`https://waze.com/ul?q=${encodeURIComponent(restaurant.address)}&navigate=yes`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 transition-colors text-xs font-medium border border-cyan-500/30"
-              >
-                <Navigation className="w-3 h-3" />
-                Waze
-              </a>
-            </div>
+          <div className="flex items-center text-muted-foreground text-xs mb-2">
+            <MapPin className="w-3 h-3 mr-1 shrink-0 text-primary" />
+            <span className="line-clamp-1">{restaurant.address}</span>
           </div>
         )}
 
-        {/* Telefone */}
-        {restaurant.phone && (
-          <div className="flex items-center text-muted-foreground mb-3 text-sm">
-            <Phone className="w-4 h-4 mr-2 text-orange-500" />
-            <a href={`tel:${restaurant.phone}`} className="hover:text-orange-600">
-              {restaurant.phone}
-            </a>
-          </div>
-        )}
-
-        {/* Descrição */}
-        <p className={`text-muted-foreground mb-4 leading-relaxed ${isExpanded ? '' : 'line-clamp-3'}`}>
+        {/* Descrição curta */}
+        <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
           {restaurant.description}
         </p>
 
-        {/* Highlights */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {restaurant.highlights.slice(0, isExpanded ? undefined : 3).map((highlight, idx) => (
-            <Badge
-              key={idx}
-              variant="outline"
-              className="bg-orange-50 text-orange-700 border-orange-200"
-            >
-              {highlight}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Menu Expandido */}
-        {isExpanded && restaurant.menu && (
-          <div className="mt-4 p-4 bg-muted rounded-xl">
-            <div className="flex items-center mb-3">
-              <UtensilsCrossed className="w-5 h-5 text-orange-600 mr-2" />
-              <h4 className="font-bold text-foreground">Menu Highlights</h4>
-            </div>
-            
-            {restaurant.menu.appetizers && restaurant.menu.appetizers.length > 0 && (
-              <div className="mb-3">
-                <h5 className="font-semibold text-sm text-foreground mb-1">Entradas:</h5>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {restaurant.menu.appetizers.map((item, idx) => (
-                    <li key={idx}>• {item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {restaurant.menu.mainCourses && restaurant.menu.mainCourses.length > 0 && (
-              <div className="mb-3">
-                <h5 className="font-semibold text-sm text-foreground mb-1">Pratos Principais:</h5>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {restaurant.menu.mainCourses.map((item, idx) => (
-                    <li key={idx}>• {item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {restaurant.menu.desserts && restaurant.menu.desserts.length > 0 && (
-              <div className="mb-3">
-                <h5 className="font-semibold text-sm text-foreground mb-1">Sobremesas:</h5>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {restaurant.menu.desserts.map((item, idx) => (
-                    <li key={idx}>• {item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {restaurant.menu.drinks && restaurant.menu.drinks.length > 0 && (
-              <div>
-                <h5 className="font-semibold text-sm text-foreground mb-1">Bebidas:</h5>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {restaurant.menu.drinks.map((item, idx) => (
-                    <li key={idx}>• {item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        {/* Highlights - máximo 2 */}
+        {restaurant.highlights.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {restaurant.highlights.slice(0, 2).map((highlight, idx) => (
+              <Badge
+                key={idx}
+                variant="outline"
+                className="text-xs px-2 py-0.5"
+              >
+                {highlight}
+              </Badge>
+            ))}
           </div>
         )}
 
-        {/* Botões de Ação */}
-        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
-          <Button
-            onClick={() => navigate(`/restaurante/${restaurantSlug}`)}
-            className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Ver Detalhes
-          </Button>
-
-          {restaurant.website && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(restaurant.website!, '_blank');
-              }}
-            >
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Indicadores de Reserva */}
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+        {/* Footer com reserva */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
           {restaurant.reservations ? (
             <span className="flex items-center text-green-600">
               <Clock className="w-3 h-3 mr-1" />
-              Aceita reservas
+              Reserva
             </span>
           ) : (
             <span className="flex items-center">
               <Clock className="w-3 h-3 mr-1" />
-              Sem reservas (ordem de chegada)
+              Sem reserva
             </span>
           )}
+          <span className="text-primary font-medium">Ver detalhes →</span>
         </div>
       </CardContent>
     </Card>
