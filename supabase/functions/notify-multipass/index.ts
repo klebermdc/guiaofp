@@ -53,6 +53,33 @@ async function sendPushNotifications(supabaseUrl: string, supabaseKey: string, u
   return null;
 }
 
+async function sendWhatsAppNotification(
+  supabaseUrl: string,
+  supabaseKey: string,
+  userId: string,
+  template: string,
+  templateData: Record<string, string>
+): Promise<void> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({ user_id: userId, template, template_data: templateData }),
+    });
+    
+    if (response.ok) {
+      console.log(`WhatsApp sent to user ${userId}`);
+    } else {
+      console.error('WhatsApp send failed:', await response.text());
+    }
+  } catch (error) {
+    console.error('Error sending WhatsApp:', error);
+  }
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
