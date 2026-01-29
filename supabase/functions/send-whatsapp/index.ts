@@ -52,8 +52,18 @@ _Equipe OFP Planejador_
   custom: (data: Record<string, string>) => data.message || '',
 };
 
+type UtalkResponse = {
+  type?: string;
+  token?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
 // Umbler Talk (uTalk) API integration - Using legacy endpoint
-async function sendUtalkMessage(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
+async function sendUtalkMessage(
+  phone: string,
+  message: string
+): Promise<{ success: boolean; error?: string; provider_response?: UtalkResponse | string }> {
   const UTALK_TOKEN = Deno.env.get("UTALK_TOKEN");
 
   if (!UTALK_TOKEN) {
@@ -85,14 +95,25 @@ async function sendUtalkMessage(phone: string, message: string): Promise<{ succe
     );
 
     const responseText = await response.text();
+
+    let providerResponse: UtalkResponse | string = responseText;
+    try {
+      providerResponse = JSON.parse(responseText) as UtalkResponse;
+    } catch {
+      // keep raw string
+    }
     
     if (!response.ok) {
       console.error('Umbler Talk error:', responseText);
-      return { success: false, error: `Umbler Talk error: ${response.status} - ${responseText}` };
+      return {
+        success: false,
+        provider_response: providerResponse,
+        error: `Umbler Talk error: ${response.status} - ${responseText}`,
+      };
     }
 
     console.log('Umbler Talk success:', responseText);
-    return { success: true };
+    return { success: true, provider_response: providerResponse };
   } catch (error) {
     console.error('Umbler Talk request failed:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -158,10 +179,28 @@ const handler = async (req: Request): Promise<Response> => {
     const result = await sendUtalkMessage(targetPhone, finalMessage);
 
     // Log the attempt
-    console.log(`WhatsApp ${result.success ? 'sent' : 'failed'} to ${targetPhone.substring(0, 8)}...`);
+    const providerStatus =
+      typeof result.provider_response === 'object' && result.provider_response
+        ? String((result.provider_response as UtalkResponse).status ?? '')
+        : '';
+
+    console.log(
+      `WhatsApp ${result.success ? 'sent' : 'failed'} to ${targetPhone.substring(0, 8)}...${providerStatus ? ` (provider_status=${providerStatus})` : ''}`
+    );
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        ...result,
+        provider_status:
+          typeof result.provider_response === 'object' && result.provider_response
+            ? (result.provider_response as UtalkResponse).status ?? null
+            : null,
+        provider_token:
+          typeof result.provider_response === 'object' && result.provider_response
+            ? (result.provider_response as UtalkResponse).token ?? null
+            : null,
+        to_phone_masked: targetPhone.substring(0, 8) + '...',
+      }),
       { 
         status: result.success ? 200 : 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
