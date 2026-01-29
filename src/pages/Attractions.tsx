@@ -1,34 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { ItineraryModal } from '@/components/itinerary/ItineraryModal';
 import { useGenerateItinerary } from '@/hooks/useGenerateItinerary';
+import { ParkAttractionsTab } from '@/components/attractions/ParkAttractionsTab';
+import { AttractionsPageSkeleton } from '@/components/attractions/AttractionsPageSkeleton';
 import { 
   Castle, 
   Sparkles, 
   Globe, 
   Film, 
   Rocket,
-  Wand2,
-  Zap,
-  Star,
-  Heart,
-  Clock,
   Loader2,
   TreePine,
   Waves,
   Route,
-  Play
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -304,19 +298,7 @@ export default function Attractions() {
     return map[parkName] || parkName;
   };
 
-  const getContentId = (attractionName: string) => {
-    const normalizedAttractionName = normalizeString(attractionName);
-    const content = contentItems.find(
-      item => 
-        normalizeString(item.title || '') === normalizedAttractionName ||
-        normalizeString(item.attraction_name || '') === normalizedAttractionName
-    );
-    return content?.id || null;
-  };
-
-  const hasContentVideo = (attractionName: string) => {
-    return getContentId(attractionName) !== null;
-  };
+  // getContentId moved to useCallback below (line ~428)
 
   const loadPreferences = async () => {
     if (!user) return;
@@ -360,16 +342,19 @@ export default function Attractions() {
     }
   };
 
-  const isSelected = (parkName: string, attractionName: string) => {
-    return selectedAttractions.some(
-      a => a.parkName === parkName && a.attractionName === attractionName
-    );
-  };
+  // Memoized set for O(1) lookup
+  const selectedAttractionsSet = useMemo(() => {
+    return new Set(selectedAttractions.map(a => `${a.parkName}-${a.attractionName}`));
+  }, [selectedAttractions]);
 
-  const toggleAttraction = async (parkName: string, attractionName: string) => {
+  const isSelected = useCallback((parkName: string, attractionName: string) => {
+    return selectedAttractionsSet.has(`${parkName}-${attractionName}`);
+  }, [selectedAttractionsSet]);
+
+  const toggleAttraction = useCallback(async (parkName: string, attractionName: string) => {
     let newSelected: SelectedAttraction[];
     
-    if (isSelected(parkName, attractionName)) {
+    if (selectedAttractionsSet.has(`${parkName}-${attractionName}`)) {
       newSelected = selectedAttractions.filter(a => !(a.parkName === parkName && a.attractionName === attractionName));
     } else {
       newSelected = [
@@ -382,16 +367,16 @@ export default function Attractions() {
     
     // Auto-save to database
     await saveToDatabase(newSelected);
-  };
+  }, [selectedAttractions, selectedAttractionsSet]);
 
-  const updateNote = async (parkName: string, attractionName: string, note: string) => {
+  const updateNote = useCallback(async (parkName: string, attractionName: string, note: string) => {
     const key = `${parkName}-${attractionName}`;
     const newNotes = { ...notes, [key]: note };
     setNotes(newNotes);
     
     // Debounced save - will save after user stops typing
     await saveToDatabase(selectedAttractions, newNotes);
-  };
+  }, [notes, selectedAttractions]);
 
   const saveToDatabase = async (attractions: SelectedAttraction[], currentNotes?: Record<string, string>) => {
     if (!user) return;
@@ -429,58 +414,25 @@ export default function Attractions() {
     }
   };
 
-  const getTypeIcon = (type: Attraction['type']) => {
-    switch (type) {
-      case 'ride': return Zap;
-      case 'show': return Star;
-      case 'character': return Heart;
-      case 'experience': return Sparkles;
-      default: return Star;
-    }
-  };
-
-  const getTypeLabel = (type: Attraction['type']) => {
-    switch (type) {
-      case 'ride': return 'Atração';
-      case 'show': return 'Show';
-      case 'character': return 'Personagem';
-      case 'experience': return 'Experiência';
-      default: return type;
-    }
-  };
-
-  const getThrillBadge = (level?: number) => {
-    if (!level) return null;
-    const colors = {
-      1: 'bg-green-100 text-green-700',
-      2: 'bg-yellow-100 text-yellow-700',
-      3: 'bg-orange-100 text-orange-700',
-      4: 'bg-red-100 text-red-700',
-      5: 'bg-purple-100 text-purple-700',
-    };
-    const labels = {
-      1: 'Leve',
-      2: 'Moderado',
-      3: 'Intenso',
-      4: 'Radical',
-      5: 'Extremo',
-    };
-    return (
-      <Badge className={colors[level as keyof typeof colors] || colors[1]}>
-        {labels[level as keyof typeof labels] || 'Leve'}
-      </Badge>
+  const getContentId = useCallback((attractionName: string) => {
+    const normalizedAttractionName = normalizeString(attractionName);
+    const content = contentItems.find(
+      item => 
+        normalizeString(item.title || '') === normalizedAttractionName ||
+        normalizeString(item.attraction_name || '') === normalizedAttractionName
     );
-  };
+    return content?.id || null;
+  }, [contentItems]);
 
-  const countByPark = (parkId: string) => {
+  const countByPark = useCallback((parkId: string) => {
     const park = parks.find(p => p.id === parkId);
     if (!park) return 0;
-    // Only count attractions that still exist in the current attractions list
     return selectedAttractions.filter(a => 
       a.parkName === park.name && 
       park.attractions.some(attr => attr.name === a.attractionName)
     ).length;
-  };
+  }, [selectedAttractions]);
+
 
   const handleGenerateItinerary = async () => {
     const activePark = parks.find(p => p.id === activeTab);
@@ -517,9 +469,7 @@ export default function Attractions() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <AttractionsPageSkeleton />
       </AppLayout>
     );
   }
@@ -654,87 +604,14 @@ export default function Attractions() {
 
           {parks.map(park => (
             <TabsContent key={park.id} value={park.id} className="mt-4">
-              <Card>
-                <CardHeader className={`bg-gradient-to-r ${park.color} text-white rounded-t-lg`}>
-                  <CardTitle className="flex items-center gap-2">
-                    <park.icon className="w-6 h-6" />
-                    {park.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {park.attractions.map((attraction, idx) => {
-                      const selected = isSelected(park.name, attraction.name);
-                      const TypeIcon = getTypeIcon(attraction.type);
-                      const noteKey = `${park.name}-${attraction.name}`;
-                      
-                      return (
-                        <div 
-                          key={idx}
-                          className={`p-3 rounded-lg border transition-all ${
-                            selected 
-                              ? 'border-primary bg-primary/5' 
-                              : 'border-border hover:border-muted-foreground/30'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <Checkbox
-                              checked={selected}
-                              onCheckedChange={() => toggleAttraction(park.name, attraction.name)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`font-medium ${selected ? 'text-primary' : ''}`}>
-                                  {attraction.name}
-                                </span>
-                                {attraction.mustDo && (
-                                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs">
-                                    <Star className="w-3 h-3 mr-1" />
-                                    Imperdível
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {attraction.description}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2 mt-2">
-                                <Badge variant="outline" className="text-xs">
-                                  <TypeIcon className="w-3 h-3 mr-1" />
-                                  {getTypeLabel(attraction.type)}
-                                </Badge>
-                                {getThrillBadge(attraction.thrillLevel)}
-                                {getContentId(attraction.name) && (
-                                  <Link
-                                    to={`/conteudos?video=${getContentId(attraction.name)}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                                  >
-                                    <Play className="w-3 h-3" />
-                                    {t('attractions.watchVideo')}
-                                  </Link>
-                                )}
-                              </div>
-                              
-                              {selected && (
-                                <div className="mt-3">
-                                  <Textarea
-                                    placeholder={t('attractions.notePlaceholder')}
-                                    value={notes[noteKey] || ''}
-                                    onChange={(e) => updateNote(park.name, attraction.name, e.target.value)}
-                                    className="text-sm resize-none"
-                                    rows={2}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+              <ParkAttractionsTab
+                park={park}
+                selectedAttractions={selectedAttractionsSet}
+                notes={notes}
+                getContentId={getContentId}
+                onToggleAttraction={toggleAttraction}
+                onNoteChange={updateNote}
+              />
             </TabsContent>
           ))}
         </Tabs>
