@@ -68,6 +68,17 @@ export const useMultipassStatus = () => {
 
       if (error) throw error;
 
+      // Trigger WhatsApp notification for confirmed purchase (fire-and-forget)
+      supabase.functions.invoke('send-whatsapp', {
+        body: {
+          user_id: user.id,
+          template: 'multipass_purchased',
+          template_data: {
+            date: new Date().toLocaleDateString('pt-BR'),
+          },
+        },
+      }).catch(err => console.error('WhatsApp notification failed:', err));
+
       await loadStatus();
       return { success: true };
     } catch (error: any) {
