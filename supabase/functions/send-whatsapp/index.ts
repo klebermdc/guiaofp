@@ -51,45 +51,46 @@ _Equipe OFP Planejador_
   custom: (data: Record<string, string>) => data.message || '',
 };
 
-// Umbler Talk (uTalk) API integration
+// Umbler Talk (uTalk) API integration - Using legacy endpoint
 async function sendUtalkMessage(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
   const UTALK_TOKEN = Deno.env.get("UTALK_TOKEN");
-  const UTALK_ORG_ID = Deno.env.get("UTALK_ORG_ID");
 
-  if (!UTALK_TOKEN || !UTALK_ORG_ID) {
-    return { success: false, error: 'Umbler Talk credentials not configured' };
+  if (!UTALK_TOKEN) {
+    return { success: false, error: 'Umbler Talk token not configured' };
   }
 
   // Clean phone number (remove non-digits, ensure country code)
   const cleanPhone = phone.replace(/\D/g, '');
   const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+  // Format as WhatsApp JID (phone@c.us)
+  const whatsappJid = `${formattedPhone}@c.us`;
 
   try {
+    // Using legacy uTalk API endpoint
     const response = await fetch(
-      'https://app-utalk.umbler.com/api/v1/messages/simplified',
+      `https://api.utalk.chat/send/${UTALK_TOKEN}`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${UTALK_TOKEN}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-          organizationId: UTALK_ORG_ID,
-          channelType: 'WhatsAppStarter',
-          phone: formattedPhone,
-          text: message,
-        }),
+        body: new URLSearchParams({
+          token: UTALK_TOKEN,
+          cmd: 'chat',
+          to: whatsappJid,
+          msg: message,
+        }).toString(),
       }
     );
 
+    const responseText = await response.text();
+    
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Umbler Talk error:', errorData);
-      return { success: false, error: `Umbler Talk error: ${response.status} - ${JSON.stringify(errorData)}` };
+      console.error('Umbler Talk error:', responseText);
+      return { success: false, error: `Umbler Talk error: ${response.status} - ${responseText}` };
     }
 
-    const result = await response.json();
-    console.log('Umbler Talk success:', result);
+    console.log('Umbler Talk success:', responseText);
     return { success: true };
   } catch (error) {
     console.error('Umbler Talk request failed:', error);
