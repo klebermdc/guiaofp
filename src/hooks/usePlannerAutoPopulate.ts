@@ -67,29 +67,43 @@ const getParkInfo = (parkName: string): { category: string; color: string; icon:
 
 export const usePlannerAutoPopulate = () => {
   /**
-   * Check if items already exist for a planner to avoid duplicates
+   * Check existing items and identify what's missing
    */
   const checkExistingItems = useCallback(async (plannerId: string): Promise<{
-    hasHotelItems: boolean;
-    parkDatesWithItems: Set<string>;
+    hasCheckIn: boolean;
+    hasCheckOut: boolean;
+    existingParkDates: Set<string>; // "parkName-date" format
   }> => {
     const { data: existingItems } = await supabase
       .from('planner_items')
       .select('item_type, item_name, date')
       .eq('planner_id', plannerId);
 
-    const hasHotelItems = existingItems?.some(item => item.item_type === 'hotel') || false;
-    const parkDatesWithItems = new Set<string>(
-      existingItems
-        ?.filter(item => item.item_type === 'park')
-        .map(item => `${item.item_name}-${item.date}`) || []
-    );
+    // Check for hotel check-in/check-out
+    const hasCheckIn = existingItems?.some(item => 
+      item.item_type === 'hotel' && item.item_name?.includes('Check-in')
+    ) || false;
+    
+    const hasCheckOut = existingItems?.some(item => 
+      item.item_type === 'hotel' && item.item_name?.includes('Check-out')
+    ) || false;
 
-    return { hasHotelItems, parkDatesWithItems };
+    // Create set of existing park+date combinations (normalized)
+    const existingParkDates = new Set<string>();
+    existingItems?.forEach(item => {
+      if (item.item_type === 'park' && item.item_name && item.date) {
+        // Normalize park name for comparison
+        const normalizedName = item.item_name.toLowerCase().trim();
+        existingParkDates.add(`${normalizedName}-${item.date}`);
+      }
+    });
+
+    return { hasCheckIn, hasCheckOut, existingParkDates };
   }, []);
 
   /**
    * Auto-populate planner with hotel check-in/check-out and park items
+   * This function is smart: it only adds what's missing
    */
   const autoPopulatePlanner = useCallback(async (options: AutoPopulateOptions): Promise<{
     hotelItemsAdded: number;
@@ -102,19 +116,15 @@ export const usePlannerAutoPopulate = () => {
     }
 
     // Check what already exists
-    const { hasHotelItems, parkDatesWithItems } = await checkExistingItems(plannerId);
+    const { hasCheckIn, hasCheckOut, existingParkDates } = await checkExistingItems(plannerId);
 
     const itemsToInsert: any[] = [];
 
-    // === Hotel Check-in/Check-out ===
-    if (!hasHotelItems && travelProfile.hotel && travelProfile.arrivalDate && travelProfile.departureDate) {
+    // === Hotel Check-in (if missing) ===
+    if (!hasCheckIn && travelProfile.hotel && travelProfile.arrivalDate) {
       const hotelName = travelProfile.hotel;
       const hotelAddress = travelProfile.hotelAddress || '';
-      const displayName = hotelAddress 
-        ? `${hotelName}\n📍 ${hotelAddress}`
-        : hotelName;
 
-      // Check-in item (arrival date, morning slot)
       itemsToInsert.push({
         planner_id: plannerId,
         date: travelProfile.arrivalDate,
@@ -129,8 +139,13 @@ export const usePlannerAutoPopulate = () => {
         completed: false,
         reservation_confirmed: false,
       });
+    }
 
-      // Check-out item (departure date, morning slot)
+    // === Hotel Check-out (if missing) ===
+    if (!hasCheckOut && travelProfile.hotel && travelProfile.departureDate) {
+      const hotelName = travelProfile.hotel;
+      const hotelAddress = travelProfile.hotelAddress || '';
+
       itemsToInsert.push({
         planner_id: plannerId,
         date: travelProfile.departureDate,
@@ -147,21 +162,24 @@ export const usePlannerAutoPopulate = () => {
       });
     }
 
-    // === Park dates ===
+    // === Park dates (only add missing ones) ===
     if (travelProfile.parkDates && travelProfile.parkDates.length > 0) {
       for (const parkDate of travelProfile.parkDates) {
         if (!parkDate.park || !parkDate.date) continue;
         
-        // Check if this park+date combo already exists
-        const key = `${parkDate.park}-${parkDate.date}`;
-        if (parkDatesWithItems.has(key)) continue;
+        // Normalize park name for comparison
+        const normalizedParkName = parkDate.park.toLowerCase().trim();
+        const key = `${normalizedParkName}-${parkDate.date}`;
+        
+        // Skip if this park+date already exists
+        if (existingParkDates.has(key)) continue;
 
         const parkInfo = getParkInfo(parkDate.park);
 
         itemsToInsert.push({
           planner_id: plannerId,
           date: parkDate.date,
-          time_slot: 'morning', // Parks go in the morning slot
+          time_slot: 'morning',
           item_type: 'park',
           item_name: parkDate.park,
           category: parkInfo.category,
@@ -191,6 +209,8 @@ export const usePlannerAutoPopulate = () => {
 
     const hotelItemsAdded = itemsToInsert.filter(i => i.item_type === 'hotel').length;
     const parkItemsAdded = itemsToInsert.filter(i => i.item_type === 'park').length;
+
+    console.log(`Auto-populated planner: ${hotelItemsAdded} hotel items, ${parkItemsAdded} park items`);
 
     return { hotelItemsAdded, parkItemsAdded };
   }, [checkExistingItems]);

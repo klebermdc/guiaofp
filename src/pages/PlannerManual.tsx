@@ -121,17 +121,14 @@ const PlannerManual = () => {
     refetchItems
   } = usePlannerDragDrop({ plannerId: plannerData?.id || '' });
 
-  // Auto-populate planner with hotel and park items
+  // Auto-populate planner with hotel and park items (runs once per session)
   useEffect(() => {
     const doAutoPopulate = async () => {
+      // Wait for planner and items to load
       if (!plannerData?.id || hasAutoPopulated || itemsLoading) return;
       
-      // Only auto-populate for new planners OR if items are empty
-      const shouldPopulate = isNewPlanner || plannerItems.length === 0;
-      if (!shouldPopulate) {
-        setHasAutoPopulated(true);
-        return;
-      }
+      // Always try to auto-populate - the hook will skip items that already exist
+      // This ensures we catch missing check-in/check-out or profile park dates
 
       const result = await autoPopulatePlanner({
         plannerId: plannerData.id,
