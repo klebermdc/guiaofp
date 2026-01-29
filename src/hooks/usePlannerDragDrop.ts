@@ -311,9 +311,17 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
   ) => {
     setIsSaving(true);
     try {
+      // Filter out undefined values but keep null (to clear fields)
+      const dbUpdates: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        if (value !== undefined) {
+          dbUpdates[key] = value;
+        }
+      }
+
       const { error } = await supabase
         .from('planner_items')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', itemId);
 
       if (error) throw error;
@@ -328,6 +336,7 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
     } catch (error) {
       console.error('Error updating item:', error);
       toast.error('Erro ao atualizar item');
+      throw error; // Re-throw so modal knows it failed
     } finally {
       setIsSaving(false);
     }
