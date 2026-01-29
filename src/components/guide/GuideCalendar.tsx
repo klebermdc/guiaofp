@@ -21,8 +21,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { ParkDate } from '@/types/shared';
+import type { Json } from '@/integrations/supabase/types';
 
-interface ClientProfile {
+// Simplified profile for calendar view
+interface CalendarClientProfile {
   id: string;
   user_id: string;
   responsible_name: string | null;
@@ -30,7 +33,7 @@ interface ClientProfile {
   arrival_date: string | null;
   departure_date: string | null;
   parks: string[] | null;
-  park_dates: any;
+  park_dates: Json; // Will be parsed as ParkDate[]
   guide_name: string | null;
 }
 
@@ -42,7 +45,7 @@ interface DayEvent {
 }
 
 interface GuideCalendarProps {
-  clients: ClientProfile[];
+  clients: CalendarClientProfile[];
   filterGuide?: string;
 }
 

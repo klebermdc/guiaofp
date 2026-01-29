@@ -11,6 +11,7 @@ import { LoadingProvider } from "@/components/ui/loading-overlay";
 import { TravelModeQuickActions } from "@/components/travel-mode/TravelModeQuickActions";
 import { SplashScreen } from "@/components/SplashScreen";
 import { GlobalErrorListener } from "@/components/GlobalErrorListener";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Eager load critical pages
 import Landing from "./pages/Landing";
@@ -80,64 +81,66 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <TravelModeProvider>
-              <LoadingProvider>
-                <TooltipProvider>
-                {showSplash && isFirstVisit && (
-                  <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
-                )}
-                <Toaster />
-                <Sonner />
-                <GlobalErrorListener />
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/recuperar-senha" element={<ResetPassword />} />
-                    <Route path="/nova-senha" element={<NewPassword />} />
-                    <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/guia-dashboard" element={<GuideDashboard />} />
-                    <Route path="/perfil" element={<TravelProfile />} />
-                    <Route path="/agenda" element={<Agenda />} />
-                    <Route path="/contato" element={<Contact />} />
-                    <Route path="/conteudos" element={<Content />} />
-                    <Route path="/mapa" element={<ParkMap />} />
-                    <Route path="/guia" element={<TravelGuide />} />
-                    <Route path="/plano" element={<Plan />} />
-                    <Route path="/pos-viagem" element={<PostTrip />} />
-                    <Route path="/atracoes" element={<Attractions />} />
-                    <Route path="/multipass" element={<MultiPass />} />
-                    <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
-                    <Route path="/checklists" element={<Checklists />} />
-                    <Route path="/restaurantes" element={<Restaurants />} />
-                    <Route path="/guia-restaurantes" element={<RestaurantsGuide />} />
-                    <Route path="/restaurante/:slug" element={<RestaurantDetails />} />
-                    <Route path="/favoritos" element={<Favorites />} />
-                    <Route path="/roteiro-personalizado" element={<RoteiroPersonalizado />} />
-                    <Route path="/roteiro-personalizado/questionario" element={<RoteiroQuestionario />} />
-                    <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />
-                    <Route path="/planner-manual" element={<PlannerManual />} />
-                    <Route path="/carteira" element={<DocumentWalletPage />} />
-                    <Route path="/checkout/:planId" element={<Checkout />} />
-                    <Route path="/admin" element={<Admin />} />
-                    <Route path="/admin/cliente/:id" element={<ClientDetails />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-                {/* Travel Mode Quick Actions - Global FAB */}
-                <TravelModeQuickActions />
-                </TooltipProvider>
-              </LoadingProvider>
-            </TravelModeProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </LanguageProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <TravelModeProvider>
+                <LoadingProvider>
+                  <TooltipProvider>
+                  {showSplash && isFirstVisit && (
+                    <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
+                  )}
+                  <Toaster />
+                  <Sonner />
+                  <GlobalErrorListener />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/recuperar-senha" element={<ResetPassword />} />
+                      <Route path="/nova-senha" element={<NewPassword />} />
+                      <Route path="/acesso-bloqueado" element={<AccessBlocked />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/guia-dashboard" element={<GuideDashboard />} />
+                      <Route path="/perfil" element={<TravelProfile />} />
+                      <Route path="/agenda" element={<Agenda />} />
+                      <Route path="/contato" element={<Contact />} />
+                      <Route path="/conteudos" element={<Content />} />
+                      <Route path="/mapa" element={<ParkMap />} />
+                      <Route path="/guia" element={<TravelGuide />} />
+                      <Route path="/plano" element={<Plan />} />
+                      <Route path="/pos-viagem" element={<PostTrip />} />
+                      <Route path="/atracoes" element={<Attractions />} />
+                      <Route path="/multipass" element={<MultiPass />} />
+                      <Route path="/guiamento-remoto" element={<RemoteGuidance />} />
+                      <Route path="/checklists" element={<Checklists />} />
+                      <Route path="/restaurantes" element={<Restaurants />} />
+                      <Route path="/guia-restaurantes" element={<RestaurantsGuide />} />
+                      <Route path="/restaurante/:slug" element={<RestaurantDetails />} />
+                      <Route path="/favoritos" element={<Favorites />} />
+                      <Route path="/roteiro-personalizado" element={<RoteiroPersonalizado />} />
+                      <Route path="/roteiro-personalizado/questionario" element={<RoteiroQuestionario />} />
+                      <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />
+                      <Route path="/planner-manual" element={<PlannerManual />} />
+                      <Route path="/carteira" element={<DocumentWalletPage />} />
+                      <Route path="/checkout/:planId" element={<Checkout />} />
+                      <Route path="/admin" element={<Admin />} />
+                      <Route path="/admin/cliente/:id" element={<ClientDetails />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  {/* Travel Mode Quick Actions - Global FAB */}
+                  <TravelModeQuickActions />
+                  </TooltipProvider>
+                </LoadingProvider>
+              </TravelModeProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </LanguageProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

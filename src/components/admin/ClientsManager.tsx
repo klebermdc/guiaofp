@@ -37,25 +37,7 @@ import { Users, Search, Eye, Calendar, Loader2, ShieldCheck, ShieldX, Trash2, Cr
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-
-interface ClientProfile {
-  id: string;
-  user_id: string;
-  responsible_name: string | null;
-  email: string | null;
-  whatsapp: string | null;
-  group_size: number | null;
-  travelers: any[];
-  arrival_date: string | null;
-  departure_date: string | null;
-  parks: string[] | null;
-  hotel: string | null;
-  completion_percentage: number | null;
-  created_at: string | null;
-  is_access_enabled: boolean | null;
-  plan_tier: string;
-  has_contract?: boolean;
-}
+import type { ClientProfile } from '@/types/shared';
 
 export function ClientsManager() {
   const navigate = useNavigate();
