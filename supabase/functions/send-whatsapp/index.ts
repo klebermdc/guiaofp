@@ -17,6 +17,7 @@ interface SendWhatsAppRequest {
   message: string;
   template?: 'multipass_purchased' | 'park_reminder' | 'custom';
   template_data?: Record<string, string>;
+  from_number?: 'rafael' | 'kleber' | 'default'; // Which guide's number to send from
 }
 
 // Message templates
