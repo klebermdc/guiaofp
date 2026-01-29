@@ -28,25 +28,7 @@ import { SendPushNotification } from '@/components/guide/SendPushNotification';
 import { CreatePremiumClient } from '@/components/guide/CreatePremiumClient';
 import { useGuideMultipassStatus } from '@/hooks/useGuideMultipassStatus';
 import logo from '@/assets/logo.png';
-
-interface ClientProfile {
-  id: string;
-  user_id: string;
-  responsible_name: string | null;
-  email: string | null;
-  whatsapp: string | null;
-  group_size: number | null;
-  travelers: any[];
-  arrival_date: string | null;
-  departure_date: string | null;
-  parks: string[] | null;
-  hotel: string | null;
-  hotel_type: string | null;
-  completion_percentage: number | null;
-  is_access_enabled: boolean | null;
-  guide_name: string | null;
-  park_dates: any;
-}
+import type { ClientProfile } from '@/types/shared';
 
 interface AttractionCount {
   user_id: string;

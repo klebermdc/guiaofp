@@ -32,34 +32,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MultipassBadge, isDisneyHotel } from '@/components/multipass/MultipassBadge';
-
-interface MultipassStatus {
-  id: string;
-  user_id: string;
-  is_purchased: boolean;
-  purchased_at: string | null;
-  confirmed_by: string | null;
-  first_disney_park_date: string | null;
-}
-
-interface ClientProfile {
-  id: string;
-  user_id: string;
-  responsible_name: string | null;
-  email: string | null;
-  whatsapp: string | null;
-  group_size: number | null;
-  travelers: any[];
-  arrival_date: string | null;
-  departure_date: string | null;
-  parks: string[] | null;
-  hotel: string | null;
-  hotel_type?: string | null;
-  completion_percentage: number | null;
-  is_access_enabled: boolean | null;
-  guide_name: string | null;
-  park_dates?: any;
-}
+import type { ClientProfile, MultipassStatus, ParkDate } from '@/types/shared';
 
 interface ClientPortfolioCardProps {
   client: ClientProfile;
