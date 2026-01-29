@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,11 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { ItineraryModal } from '@/components/itinerary/ItineraryModal';
+import { AttractionNoteField } from '@/components/attractions/AttractionNoteField';
 import { useGenerateItinerary } from '@/hooks/useGenerateItinerary';
 import { 
   Castle, 
@@ -360,11 +360,16 @@ export default function Attractions() {
     }
   };
 
-  const isSelected = (parkName: string, attractionName: string) => {
-    return selectedAttractions.some(
-      a => a.parkName === parkName && a.attractionName === attractionName
-    );
-  };
+  const selectedKeySet = useMemo(() => {
+    return new Set(selectedAttractions.map((a) => `${a.parkName}|||${a.attractionName}`));
+  }, [selectedAttractions]);
+
+  const isSelected = useCallback(
+    (parkName: string, attractionName: string) => {
+      return selectedKeySet.has(`${parkName}|||${attractionName}`);
+    },
+    [selectedKeySet]
+  );
 
   const toggleAttraction = async (parkName: string, attractionName: string) => {
     let newSelected: SelectedAttraction[];
@@ -384,47 +389,39 @@ export default function Attractions() {
     await saveToDatabase(newSelected);
   };
 
-  // Debounce ref for notes saving
-  const notesSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingNotesRef = useRef<Record<string, string>>({});
+  const commitNote = useCallback(
+    async (parkName: string, attractionName: string, note: string) => {
+      const key = `${parkName}-${attractionName}`;
+      // Atualiza o estado local apenas no commit (não em cada tecla)
+      setNotes((prev) => (prev[key] === note ? prev : { ...prev, [key]: note }));
 
-  const updateNote = (parkName: string, attractionName: string, note: string) => {
-    const key = `${parkName}-${attractionName}`;
-    const newNotes = { ...notes, [key]: note };
-    setNotes(newNotes);
-    pendingNotesRef.current = newNotes;
-    
-    // Clear previous timeout
-    if (notesSaveTimeoutRef.current) {
-      clearTimeout(notesSaveTimeoutRef.current);
-    }
-    
-    // Debounce: save after 800ms of inactivity
-    setSaving(true);
-    notesSaveTimeoutRef.current = setTimeout(async () => {
-      await saveNoteToDatabase(parkName, attractionName, note);
-      setSaving(false);
-    }, 800);
-  };
+      if (!user) return;
+      setSaving(true);
+      try {
+        // Upsert garante que o registro exista (evita race quando o usuário começa a digitar logo após selecionar)
+        const { error } = await supabase
+          .from('attraction_preferences')
+          .upsert(
+            {
+              user_id: user.id,
+              park_name: parkName,
+              attraction_name: attractionName,
+              priority: 1,
+              notes: note || null,
+            },
+            { onConflict: 'user_id,park_name,attraction_name' }
+          );
 
-  // Save only the specific note that changed (no DELETE/INSERT cycle)
-  const saveNoteToDatabase = async (parkName: string, attractionName: string, note: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('attraction_preferences')
-        .update({ notes: note || null })
-        .eq('user_id', user.id)
-        .eq('park_name', parkName)
-        .eq('attraction_name', attractionName);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving note:', error);
-      toast.error('Erro ao salvar anotação');
-    }
-  };
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error saving note:', error);
+        toast.error('Erro ao salvar anotação');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [user]
+  );
 
   const saveToDatabase = async (attractions: SelectedAttraction[], currentNotes?: Record<string, string>) => {
     if (!user) return;
@@ -751,12 +748,11 @@ export default function Attractions() {
                               
                               {selected && (
                                 <div className="mt-3">
-                                  <Textarea
+                                  <AttractionNoteField
                                     placeholder={t('attractions.notePlaceholder')}
                                     value={notes[noteKey] || ''}
-                                    onChange={(e) => updateNote(park.name, attraction.name, e.target.value)}
-                                    className="text-sm resize-none"
                                     rows={2}
+                                    onCommit={(value) => commitNote(park.name, attraction.name, value)}
                                   />
                                 </div>
                               )}
