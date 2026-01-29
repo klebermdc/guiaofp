@@ -6,11 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Z-API or similar WhatsApp service configuration
-const ZAPI_INSTANCE_ID = Deno.env.get("ZAPI_INSTANCE_ID");
-const ZAPI_TOKEN = Deno.env.get("ZAPI_TOKEN");
-const ZAPI_SECURITY_TOKEN = Deno.env.get("ZAPI_SECURITY_TOKEN");
-
 interface WhatsAppMessage {
   phone: string;
   message: string;
@@ -56,9 +51,13 @@ _Equipe OFP Planejador_
   custom: (data: Record<string, string>) => data.message || '',
 };
 
-async function sendZapiMessage(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
-  if (!ZAPI_INSTANCE_ID || !ZAPI_TOKEN) {
-    return { success: false, error: 'Z-API credentials not configured' };
+// Umbler Talk (uTalk) API integration
+async function sendUtalkMessage(phone: string, message: string): Promise<{ success: boolean; error?: string }> {
+  const UTALK_TOKEN = Deno.env.get("UTALK_TOKEN");
+  const UTALK_ORG_ID = Deno.env.get("UTALK_ORG_ID");
+
+  if (!UTALK_TOKEN || !UTALK_ORG_ID) {
+    return { success: false, error: 'Umbler Talk credentials not configured' };
   }
 
   // Clean phone number (remove non-digits, ensure country code)
@@ -67,31 +66,33 @@ async function sendZapiMessage(phone: string, message: string): Promise<{ succes
 
   try {
     const response = await fetch(
-      `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}/send-text`,
+      'https://app-utalk.umbler.com/api/v1/messages/simplified',
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${UTALK_TOKEN}`,
           'Content-Type': 'application/json',
-          ...(ZAPI_SECURITY_TOKEN && { 'Client-Token': ZAPI_SECURITY_TOKEN }),
         },
         body: JSON.stringify({
+          organizationId: UTALK_ORG_ID,
+          channelType: 'WhatsAppStarter',
           phone: formattedPhone,
-          message,
+          text: message,
         }),
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Z-API error:', errorData);
-      return { success: false, error: `Z-API error: ${response.status}` };
+      console.error('Umbler Talk error:', errorData);
+      return { success: false, error: `Umbler Talk error: ${response.status} - ${JSON.stringify(errorData)}` };
     }
 
     const result = await response.json();
-    console.log('Z-API success:', result);
+    console.log('Umbler Talk success:', result);
     return { success: true };
   } catch (error) {
-    console.error('Z-API request failed:', error);
+    console.error('Umbler Talk request failed:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -151,8 +152,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Send via Z-API
-    const result = await sendZapiMessage(targetPhone, finalMessage);
+    // Send via Umbler Talk
+    const result = await sendUtalkMessage(targetPhone, finalMessage);
 
     // Log the attempt
     console.log(`WhatsApp ${result.success ? 'sent' : 'failed'} to ${targetPhone.substring(0, 8)}...`);
