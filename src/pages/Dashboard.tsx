@@ -146,11 +146,6 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Planner Summary Card - Top position */}
-        <motion.div variants={itemVariants}>
-          <PlannerSummaryCard />
-        </motion.div>
-
         {/* Travel Mode Toggle - Prominent position */}
         <motion.div variants={itemVariants}>
           <TravelModeToggle />
@@ -444,6 +439,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
+        </motion.div>
+
+        {/* Planner Summary Card - After Status Cards */}
+        <motion.div variants={itemVariants}>
+          <PlannerSummaryCard />
         </motion.div>
 
         {/* WhatsApp CTA */}
