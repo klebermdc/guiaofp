@@ -4,17 +4,14 @@ import {
   User, 
   Calendar, 
   MessageCircle, 
-  CheckCircle2, 
-  MapPin,
-  Hotel,
-  Plane
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useGuideContact } from '@/hooks/useGuideContact';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
@@ -23,7 +20,7 @@ import { TravelModeToggle } from '@/components/travel-mode/TravelModeToggle';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import { IOSNotificationCard } from '@/components/notifications/IOSNotificationCard';
-import PlannerSummaryCard from '@/components/dashboard/PlannerSummaryCard';
+import TripPlannerCard from '@/components/dashboard/TripPlannerCard';
 import { SEO, SEO_PAGES } from '@/components/SEO';
 import logo from '@/assets/logo.png';
 
@@ -297,97 +294,9 @@ const Dashboard = () => {
           )}
         </motion.div>
 
-        {/* Status Cards - Grid with Trip Summary and Planner */}
-        <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-          variants={containerVariants}
-        >
-
-          {/* Trip Summary */}
-          <motion.div variants={itemVariants}>
-            <Card variant="premium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 10, -10, 0],
-                      y: [0, -3, 0]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  >
-                    <Plane className="w-5 h-5 text-accent" />
-                  </motion.div>
-                  {t('dashboard.tripSummary.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {travelProfile.arrivalDate ? (
-                  <>
-                    <motion.div 
-                      className="flex items-center gap-3 p-3 bg-muted rounded-lg"
-                      whileHover={{ x: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <Calendar className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.dates')}</p>
-                        <p className="font-medium">
-                          {travelProfile.arrivalDate} - {travelProfile.departureDate}
-                        </p>
-                      </div>
-                    </motion.div>
-
-                    <motion.div 
-                      className="flex items-center gap-3 p-3 bg-muted rounded-lg"
-                      whileHover={{ x: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <MapPin className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.parks')}</p>
-                        <p className="font-medium">
-                          {travelProfile.parks.length > 0 
-                            ? travelProfile.parks.join(', ')
-                            : t('dashboard.tripSummary.notDefined')
-                          }
-                        </p>
-                      </div>
-                    </motion.div>
-
-                    <motion.div 
-                      className="flex items-center gap-3 p-3 bg-muted rounded-lg"
-                      whileHover={{ x: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <Hotel className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.tripSummary.hotel')}</p>
-                        <p className="font-medium">
-                          {travelProfile.hotel || t('dashboard.tripSummary.notDefined')}
-                        </p>
-                      </div>
-                    </motion.div>
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground mb-4">
-                      {t('dashboard.tripSummary.fillProfile')}
-                    </p>
-                    <Link to="/perfil">
-                      <Button variant="outline">
-                        {t('dashboard.tripSummary.fillNow')}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Planner Summary Card - Same row */}
-          <motion.div variants={itemVariants}>
-            <PlannerSummaryCard />
-          </motion.div>
+        {/* Unified Trip & Planner Card */}
+        <motion.div variants={itemVariants}>
+          <TripPlannerCard />
         </motion.div>
 
         {/* WhatsApp CTA */}
