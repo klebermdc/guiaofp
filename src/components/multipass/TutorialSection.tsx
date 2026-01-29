@@ -534,15 +534,17 @@ export const TutorialSection = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="comprar">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto gap-2 p-2 bg-muted/50">
+            <TabsList className="flex flex-wrap gap-2 p-0 h-auto bg-transparent w-full justify-start">
               {tutorials.map((tutorial) => (
                 <TabsTrigger 
                   key={tutorial.id} 
                   value={tutorial.id}
-                  className="flex items-center gap-2 py-4 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="flex items-center gap-2 py-2.5 px-4 rounded-lg border-2 transition-all duration-200
+                    data-[state=inactive]:bg-transparent data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:border-primary/50 data-[state=inactive]:hover:text-foreground
+                    data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
                 >
                   {tutorial.icon}
-                  <span className="font-medium">{tutorial.title}</span>
+                  <span className="font-medium text-sm">{tutorial.title}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
