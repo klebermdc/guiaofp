@@ -212,12 +212,12 @@ const RestaurantsGuide = () => {
         </div>
 
         {/* Stats Cards - Compact inline */}
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-2">
           {statsCards.map((stat, index) => (
-            <Badge key={index} variant="secondary" className="px-3 py-1.5 text-sm gap-1.5">
-              <stat.icon className="w-4 h-4" />
-              <span className="font-bold">{stat.value}</span>
-              <span className="text-muted-foreground">{stat.label}</span>
+            <Badge key={index} variant="outline" className="px-2 py-1 text-xs gap-1 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <stat.icon className="w-3 h-3" />
+              <span className="font-semibold">{stat.value}</span>
+              <span className="opacity-80">{stat.label}</span>
             </Badge>
           ))}
         </div>
