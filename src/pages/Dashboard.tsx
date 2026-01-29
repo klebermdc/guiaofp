@@ -302,9 +302,9 @@ const Dashboard = () => {
           )}
         </motion.div>
 
-        {/* Status Cards */}
+        {/* Status Cards - Grid with Profile, Trip Summary and Planner */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
           variants={containerVariants}
         >
           {/* Profile Status */}
@@ -439,11 +439,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
-        </motion.div>
 
-        {/* Planner Summary Card - After Status Cards */}
-        <motion.div variants={itemVariants}>
-          <PlannerSummaryCard />
+          {/* Planner Summary Card - Same row */}
+          <motion.div variants={itemVariants}>
+            <PlannerSummaryCard />
+          </motion.div>
         </motion.div>
 
         {/* WhatsApp CTA */}

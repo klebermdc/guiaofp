@@ -68,7 +68,7 @@ const PlannerSummaryCard = () => {
 
   if (isLoading) {
     return (
-      <Card variant="glass">
+      <Card variant="glass" className="h-full">
         <CardHeader className="pb-3">
           <Skeleton className="h-6 w-48" />
         </CardHeader>
@@ -82,7 +82,7 @@ const PlannerSummaryCard = () => {
 
   if (!data?.planner) {
     return (
-      <Card variant="glass" className="relative overflow-hidden">
+      <Card variant="glass" className="relative overflow-hidden h-full">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -157,7 +157,7 @@ const PlannerSummaryCard = () => {
   const daysWithItems = Object.keys(itemsByDate).length;
 
   return (
-    <Card variant="glass" className="relative overflow-hidden">
+    <Card variant="glass" className="relative overflow-hidden h-full">
       <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-full pointer-events-none" />
       
       <CardHeader className="pb-3">
