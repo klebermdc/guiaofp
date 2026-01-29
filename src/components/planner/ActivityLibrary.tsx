@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, ExternalLink, Sparkles } from 'lucide-react';
+import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, ExternalLink, Sparkles, Heart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useRestaurantFavorites } from '@/hooks/useRestaurantFavorites';
 
 export interface LibraryItem {
   id: string;
@@ -26,6 +27,7 @@ export interface LibraryItem {
   mustTry?: string;
   tip?: string;
   restaurantType?: string;
+  isFavorite?: boolean;
 }
 
 interface ActivityLibraryProps {
@@ -35,6 +37,7 @@ interface ActivityLibraryProps {
 // Tab configuration
 const TABS = [
   { id: 'all', label: 'Todos', icon: '📋' },
+  { id: 'favorites', label: 'Favoritos', icon: '❤️' },
   { id: 'parks', label: 'Parques', icon: '🏰' },
   { id: 'restaurants', label: 'Restaurantes', icon: '🍽️' },
   { id: 'shopping', label: 'Compras', icon: '🛍️' },
@@ -193,7 +196,10 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = loadingParks || loadingRestaurants || loadingShopping || loadingActivities;
+  // Fetch user favorites
+  const { data: favoriteRestaurants = [], isLoading: loadingFavorites } = useRestaurantFavorites();
+
+  const isLoading = loadingParks || loadingRestaurants || loadingShopping || loadingActivities || loadingFavorites;
 
   // Transform data to LibraryItem format
   const transformedItems = useMemo(() => {
@@ -246,6 +252,37 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       };
     });
 
+    // Transform favorite restaurants
+    const favoriteItems: LibraryItem[] = favoriteRestaurants.map((fav: any) => {
+      const rest = fav.restaurants;
+      if (!rest) return null;
+      
+      const info = getCategoryInfo(rest, 'restaurant', parks);
+      let shortDesc = rest.description || '';
+      if (!shortDesc && rest.cuisine) {
+        shortDesc = `Culinária ${rest.cuisine}`;
+      }
+      
+      return {
+        id: rest.id,
+        name: rest.name,
+        type: 'restaurant' as const,
+        category: info.category || 'restaurante',
+        color: info.color,
+        icon: '❤️', // Heart icon for favorites
+        area: rest.area || undefined,
+        park_id: rest.park_id || undefined,
+        parkName: info.parkName,
+        description: shortDesc || undefined,
+        menuUrl: rest.menu_url || undefined,
+        cuisine: rest.cuisine || undefined,
+        mustTry: rest.must_try || undefined,
+        tip: rest.tips || undefined,
+        restaurantType: rest.type || undefined,
+        isFavorite: true,
+      };
+    }).filter(Boolean) as LibraryItem[];
+
     const shoppingItems: LibraryItem[] = shopping.map(shop => {
       const info = getCategoryInfo(shop, 'shopping', parks);
       return {
@@ -275,16 +312,20 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     return {
       parks: parkItems,
       restaurants: restaurantItems,
+      favorites: favoriteItems,
       shopping: shoppingItems,
       activities: activityItems,
     };
-  }, [parks, restaurants, shopping, activities]);
+  }, [parks, restaurants, shopping, activities, favoriteRestaurants]);
 
   // Filter items based on tab, search, and park
   const filteredItems = useMemo(() => {
     let items: LibraryItem[] = [];
 
     switch (selectedTab) {
+      case 'favorites':
+        items = transformedItems.favorites;
+        break;
       case 'parks':
         items = transformedItems.parks;
         break;
@@ -331,6 +372,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const tabCounts = useMemo(() => ({
     all: transformedItems.parks.length + transformedItems.restaurants.length + 
          transformedItems.shopping.length + transformedItems.activities.length,
+    favorites: transformedItems.favorites.length,
     parks: transformedItems.parks.length,
     restaurants: transformedItems.restaurants.length,
     shopping: transformedItems.shopping.length,
@@ -364,7 +406,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       {/* Tabs */}
       <div className="px-3 py-2 border-b border-border bg-muted/20">
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="w-full h-auto p-1 bg-muted/50 grid grid-cols-5 gap-1">
+          <TabsList className="w-full h-auto p-1 bg-muted/50 grid grid-cols-6 gap-0.5">
             {TABS.map(tab => (
               <TabsTrigger
                 key={tab.id}
@@ -414,27 +456,52 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-12">
-              <span className="text-4xl mb-2 block">🔍</span>
-              <p className="text-sm text-muted-foreground">
-                Nenhum resultado encontrado
-              </p>
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs text-primary hover:underline mt-2"
-                >
-                  Limpar busca
-                </button>
+              {selectedTab === 'favorites' && !searchQuery ? (
+                <>
+                  <Heart className="h-10 w-10 mx-auto mb-3 text-rose-400/50" />
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    Nenhum favorito ainda
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+                    Adicione restaurantes aos favoritos no Guia de Restaurantes para vê-los aqui
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span className="text-4xl mb-2 block">🔍</span>
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum resultado encontrado
+                  </p>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs text-primary hover:underline mt-2"
+                    >
+                      Limpar busca
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ) : (
-            filteredItems.map(item => (
-              <DraggableActivityItem
-                key={`${item.type}-${item.id}`}
-                item={item}
-                onDragStart={onDragStart}
-              />
-            ))
+            <>
+              {/* Show favorites header when on favorites tab */}
+              {selectedTab === 'favorites' && (
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+                  <Heart className="h-4 w-4 text-rose-500" />
+                  <span className="text-xs font-medium text-foreground">
+                    Seus restaurantes favoritos ({filteredItems.length})
+                  </span>
+                </div>
+              )}
+              {filteredItems.map(item => (
+                <DraggableActivityItem
+                  key={`${item.type}-${item.id}`}
+                  item={item}
+                  onDragStart={onDragStart}
+                />
+              ))}
+            </>
           )}
         </div>
       </div>
