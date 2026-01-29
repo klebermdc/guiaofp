@@ -68,14 +68,15 @@ export const EditPlannerItemModal = ({
 
     setIsSaving(true);
     try {
+      // Use null instead of undefined to properly clear fields in database
       await onSave(item.id, {
-        start_time: startTime || undefined,
-        end_time: endTime || undefined,
-        duration: duration ? parseInt(duration, 10) : undefined,
-        notes: notes || undefined,
+        start_time: startTime || null,
+        end_time: endTime || null,
+        duration: duration ? parseInt(duration, 10) : null,
+        notes: notes || null,
         time_slot: timeSlot as PlannerItem['time_slot'],
         reservation_confirmed: reservationConfirmed,
-        reservation_time: reservationTime || undefined,
+        reservation_time: reservationTime || null,
       });
       onOpenChange(false);
     } finally {
