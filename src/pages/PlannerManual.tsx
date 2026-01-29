@@ -490,15 +490,6 @@ const PlannerManual = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={() => setShowTemplateModal(true)}
-                className="bg-primary/10 hover:bg-primary/20 text-primary"
-              >
-                <FileStack className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Templates</span>
-              </Button>
               {isMobile && (
                 <Button
                   variant={showLibrary ? "default" : "outline"}
@@ -510,10 +501,6 @@ const PlannerManual = () => {
                   {showLibrary ? 'Calendário' : 'Adicionar'}
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                <FileText className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">PDF</span>
-              </Button>
               <Button variant="outline" size="sm" onClick={handleExportText}>
                 <Download className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">Copiar</span>
