@@ -26,6 +26,7 @@ import { TravelModeToggle } from '@/components/travel-mode/TravelModeToggle';
 import { MultipassStatusCard } from '@/components/multipass/MultipassStatusCard';
 import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import { IOSNotificationCard } from '@/components/notifications/IOSNotificationCard';
+import PlannerSummaryCard from '@/components/dashboard/PlannerSummaryCard';
 import { SEO, SEO_PAGES } from '@/components/SEO';
 import logo from '@/assets/logo.png';
 
@@ -143,6 +144,11 @@ const Dashboard = () => {
               {t('dashboard.tripBeingPrepared')}
             </motion.p>
           </div>
+        </motion.div>
+
+        {/* Planner Summary Card - Top position */}
+        <motion.div variants={itemVariants}>
+          <PlannerSummaryCard />
         </motion.div>
 
         {/* Travel Mode Toggle - Prominent position */}
