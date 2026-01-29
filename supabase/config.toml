@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.notify-park-day]
 verify_jwt = false
+
+[functions.utalk-webhook]
+verify_jwt = false
