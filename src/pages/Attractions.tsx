@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -384,13 +384,46 @@ export default function Attractions() {
     await saveToDatabase(newSelected);
   };
 
-  const updateNote = async (parkName: string, attractionName: string, note: string) => {
+  // Debounce ref for notes saving
+  const notesSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingNotesRef = useRef<Record<string, string>>({});
+
+  const updateNote = (parkName: string, attractionName: string, note: string) => {
     const key = `${parkName}-${attractionName}`;
     const newNotes = { ...notes, [key]: note };
     setNotes(newNotes);
+    pendingNotesRef.current = newNotes;
     
-    // Debounced save - will save after user stops typing
-    await saveToDatabase(selectedAttractions, newNotes);
+    // Clear previous timeout
+    if (notesSaveTimeoutRef.current) {
+      clearTimeout(notesSaveTimeoutRef.current);
+    }
+    
+    // Debounce: save after 800ms of inactivity
+    setSaving(true);
+    notesSaveTimeoutRef.current = setTimeout(async () => {
+      await saveNoteToDatabase(parkName, attractionName, note);
+      setSaving(false);
+    }, 800);
+  };
+
+  // Save only the specific note that changed (no DELETE/INSERT cycle)
+  const saveNoteToDatabase = async (parkName: string, attractionName: string, note: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('attraction_preferences')
+        .update({ notes: note || null })
+        .eq('user_id', user.id)
+        .eq('park_name', parkName)
+        .eq('attraction_name', attractionName);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving note:', error);
+      toast.error('Erro ao salvar anotação');
+    }
   };
 
   const saveToDatabase = async (attractions: SelectedAttraction[], currentNotes?: Record<string, string>) => {
