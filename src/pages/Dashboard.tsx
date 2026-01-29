@@ -4,9 +4,7 @@ import {
   User, 
   Calendar, 
   MessageCircle, 
-  Clock, 
   CheckCircle2, 
-  Lock,
   MapPin,
   Hotel,
   Plane
@@ -16,9 +14,8 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useGuideContact } from '@/hooks/useGuideContact';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { TripCountdown } from '@/components/dashboard/TripCountdown';
 import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 import { DocumentWallet } from '@/components/dashboard/DocumentWallet';
@@ -74,23 +71,6 @@ const Dashboard = () => {
   if (!isRoleLoading && isGuide) {
     return <Navigate to="/guia-dashboard" replace />;
   }
-  const getStatusIcon = () => {
-    if (travelProfile.isLocked) return <Lock className="w-5 h-5" />;
-    if (travelProfile.completionPercentage >= 100) return <CheckCircle2 className="w-5 h-5" />;
-    return <Clock className="w-5 h-5" />;
-  };
-
-  const getStatusText = () => {
-    if (travelProfile.isLocked) return t('dashboard.profileStatus.locked');
-    if (travelProfile.completionPercentage >= 100) return t('dashboard.profileStatus.complete');
-    return t('dashboard.profileStatus.incomplete');
-  };
-
-  const getStatusColor = () => {
-    if (travelProfile.isLocked) return 'border-l-muted-foreground';
-    if (travelProfile.completionPercentage >= 100) return 'border-l-success';
-    return 'border-l-warning';
-  };
 
   return (
     <AppLayout>
@@ -201,15 +181,30 @@ const Dashboard = () => {
                 <Card variant="interactive" className="h-full">
                   <CardContent className="p-6 flex items-center gap-4">
                     <motion.div 
-                      className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-primary-foreground"
+                      className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-primary-foreground relative"
                       whileHover={{ rotate: [0, -10, 10, 0] }}
                       transition={{ duration: 0.4 }}
                     >
                       <User size={24} />
+                      {/* Subtle status indicator */}
+                      {travelProfile.completionPercentage >= 100 ? (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
+                          <CheckCircle2 size={12} className="text-success-foreground" />
+                        </div>
+                      ) : (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning rounded-full flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-warning-foreground">{travelProfile.completionPercentage}%</span>
+                        </div>
+                      )}
                     </motion.div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-foreground">{t('dashboard.profileCard.title')}</h3>
-                      <p className="text-sm text-muted-foreground">{t('dashboard.profileCard.subtitle')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {travelProfile.completionPercentage >= 100 
+                          ? t('dashboard.profileStatus.complete')
+                          : t('dashboard.profileCard.subtitle')
+                        }
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -302,62 +297,11 @@ const Dashboard = () => {
           )}
         </motion.div>
 
-        {/* Status Cards - Grid with Profile, Trip Summary and Planner */}
+        {/* Status Cards - Grid with Trip Summary and Planner */}
         <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
           variants={containerVariants}
         >
-          {/* Profile Status */}
-          <motion.div variants={itemVariants}>
-            <Card variant="status" className={getStatusColor()}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    {getStatusIcon()}
-                    {t('dashboard.profileStatus.title')}
-                  </CardTitle>
-                  <motion.span 
-                    className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      travelProfile.completionPercentage >= 100 
-                        ? 'bg-success/10 text-success' 
-                        : 'bg-warning/10 text-warning'
-                    }`}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', delay: 0.3 }}
-                  >
-                    {getStatusText()}
-                  </motion.span>
-                </div>
-                <CardDescription>
-                  {t('dashboard.profileStatus.description')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t('dashboard.profileStatus.progress')}</span>
-                    <span className="font-semibold">{travelProfile.completionPercentage}%</span>
-                  </div>
-                  <Progress value={travelProfile.completionPercentage} className="h-2" />
-                  
-                  {travelProfile.completionPercentage < 100 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <Link to="/perfil">
-                        <Button variant="gold" size="sm" className="mt-4">
-                          {t('dashboard.profileStatus.button')}
-                        </Button>
-                      </Link>
-                    </motion.div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
 
           {/* Trip Summary */}
           <motion.div variants={itemVariants}>
