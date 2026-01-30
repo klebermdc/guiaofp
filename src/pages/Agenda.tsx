@@ -10,8 +10,10 @@ const Agenda = () => {
   const { travelProfile, isLoading } = useAuth();
   const { t, language } = useLanguage();
 
-  // Usar parkDates do perfil de viagem
-  const agendaItems = travelProfile.parkDates || [];
+  // Usar parkDates do perfil de viagem, ordenados cronologicamente
+  const agendaItems = [...(travelProfile.parkDates || [])].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 
   const formatDate = (dateStr: string) => {
     // Parse date as local time to avoid timezone issues
