@@ -16,6 +16,7 @@ import {
   UtensilsCrossed,
   LayoutDashboard,
   ChevronRight,
+  BookOpen,
   type LucideIcon
 } from 'lucide-react';
 
@@ -33,7 +34,8 @@ export type AdminSection =
   | 'pois'
   | 'markers'
   | 'restaurants'
-  | 'password';
+  | 'password'
+  | 'documentation';
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
@@ -99,6 +101,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Ferramentas',
     items: [
       { id: 'password', icon: KeyRound, label: 'Gerador de Senhas' },
+      { id: 'documentation', icon: BookOpen, label: 'Documentação' },
     ]
   },
 ];

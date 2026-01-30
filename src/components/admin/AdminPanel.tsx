@@ -14,6 +14,7 @@ import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
 import { POIEditor } from './POIEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
+import { ProjectDocumentation } from './ProjectDocumentation';
 import { 
   Users, 
   Receipt, 
@@ -29,6 +30,7 @@ import {
   Palette, 
   UtensilsCrossed,
   LayoutDashboard,
+  BookOpen,
   type LucideIcon
 } from 'lucide-react';
 
@@ -53,6 +55,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   markers: { title: 'Ícones do Mapa', description: 'Personalizar marcadores', icon: Palette },
   restaurants: { title: 'Restaurantes', description: 'Gerenciar informações de restaurantes', icon: UtensilsCrossed },
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
+  documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
 };
 
 const AdminPanelComponent = () => {
@@ -95,6 +98,8 @@ const AdminPanelComponent = () => {
         return <AdminRestaurantsPanel />;
       case 'password':
         return <PasswordGenerator />;
+      case 'documentation':
+        return <ProjectDocumentation />;
       default:
         return <AdminOverview />;
     }
