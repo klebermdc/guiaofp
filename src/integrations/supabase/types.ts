@@ -414,6 +414,60 @@ export type Database = {
         }
         Relationships: []
       }
+      editable_content: {
+        Row: {
+          badge_text: string | null
+          button_text: string | null
+          button_url: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
+          page_key: string
+          section_key: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          badge_text?: string | null
+          button_text?: string | null
+          button_url?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_key: string
+          section_key: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          badge_text?: string | null
+          button_text?: string | null
+          button_url?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          page_key?: string
+          section_key?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       itineraries: {
         Row: {
           created_at: string

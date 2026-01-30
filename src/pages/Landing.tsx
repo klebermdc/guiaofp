@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
+import { EditButton } from '@/components/admin/EditButton';
 import {
   Crown,
   MapPin,
@@ -161,7 +162,20 @@ const Landing = () => {
         />
 
         <div className="relative min-h-screen flex flex-col justify-end pb-16 px-4">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center relative">
+            {/* Edit Button for Hero */}
+            <EditButton 
+              pageKey="landing" 
+              sectionKey="hero"
+              className="absolute -top-2 -right-2"
+              fallback={{
+                title: 'Menos filas.',
+                subtitle: 'Mais magia.',
+                description: 'Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.',
+                badgeText: '✨ Planejador Inteligente de Parques',
+                buttonText: 'Escolher meu plano',
+              }}
+            />
             <Badge className="mb-6 bg-white/20 backdrop-blur-sm text-white border-white/30 px-4 py-2 text-sm animate-fade-in">
               ✨ Planejador Inteligente de Parques
             </Badge>
@@ -243,7 +257,17 @@ const Landing = () => {
       {/* How It Works - Bento Grid with Scroll Animations */}
       <section id="como-funciona" className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
-          <AnimatedCard className="text-center mb-16">
+          <AnimatedCard className="text-center mb-16 relative">
+            {/* Edit Button for How It Works */}
+            <EditButton 
+              pageKey="landing" 
+              sectionKey="how_it_works"
+              className="absolute top-0 right-0"
+              fallback={{
+                title: 'Como funciona',
+                subtitle: 'Simples e poderoso',
+              }}
+            />
             <p className="text-accent font-medium mb-2">Simples e poderoso</p>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
               Como funciona
@@ -548,6 +572,17 @@ const Landing = () => {
         </div>
 
         <AnimatedCard className="max-w-3xl mx-auto text-center relative">
+          {/* Edit Button for CTA */}
+          <EditButton 
+            pageKey="landing" 
+            sectionKey="cta"
+            className="absolute top-0 right-0"
+            fallback={{
+              title: 'Pronto para sua melhor viagem?',
+              description: 'Comece agora e transforme seu dia de parque.',
+              buttonText: 'Criar meu roteiro grátis',
+            }}
+          />
           <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
             Pronto para sua
             <br />melhor viagem?
