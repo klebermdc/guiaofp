@@ -18,7 +18,9 @@ import {
   Filter,
   X,
   ChefHat,
-  DollarSign
+  DollarSign,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +34,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useDeleteRestaurant } from '@/hooks/useRestaurants';
 
 interface Restaurant {
   id: string;
@@ -110,6 +125,9 @@ const Restaurants = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
+  const { isGuide } = useUserRole();
+  const deleteRestaurantMutation = useDeleteRestaurant();
+
   const { data: restaurants = [], isLoading } = useQuery({
     queryKey: ['restaurants-page'],
     queryFn: async () => {
@@ -123,6 +141,11 @@ const Restaurants = () => {
       return data as Restaurant[];
     },
   });
+
+  const handleDeleteRestaurant = async (restaurantId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteRestaurantMutation.mutateAsync(restaurantId);
+  };
 
   // Extract unique cuisines from database
   const availableCuisines = useMemo(() => {
@@ -470,6 +493,54 @@ const Restaurants = () => {
                                 >
                                   <Navigation className="w-4 h-4" />
                                 </Button>
+                              )}
+                              {/* Delete Button - Only for Guides/Admins */}
+                              {isGuide && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="text-destructive hover:bg-destructive/10"
+                                      title="Excluir restaurante"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                                        Excluir Restaurante
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja excluir <strong>{restaurant.name}</strong>?
+                                        <br /><br />
+                                        Esta ação é irreversível e irá remover permanentemente o restaurante do sistema.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        onClick={(e) => handleDeleteRestaurant(restaurant.id, e)}
+                                        disabled={deleteRestaurantMutation.isPending}
+                                      >
+                                        {deleteRestaurantMutation.isPending ? (
+                                          <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Excluindo...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Excluir
+                                          </>
+                                        )}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               )}
                             </div>
                           </div>
