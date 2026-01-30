@@ -12,6 +12,8 @@ interface EditButtonProps {
   pageKey: string;
   sectionKey: string;
   className?: string;
+  /** Force show the button (bypass role check) */
+  forceShow?: boolean;
   // Fallback values when no DB content exists
   fallback?: {
     title?: string;
@@ -36,6 +38,7 @@ const EditButtonComponent = ({
   sectionKey,
   className,
   fallback,
+  forceShow,
 }: EditButtonProps) => {
   const { content, canEdit, saveContent, isSaving } = useEditableContent(pageKey, sectionKey);
   const [isOpen, setIsOpen] = useState(false);
@@ -90,7 +93,9 @@ const EditButtonComponent = ({
     }
   };
 
-  if (!canEdit) {
+  const showButton = forceShow || canEdit;
+
+  if (!showButton) {
     return null;
   }
 

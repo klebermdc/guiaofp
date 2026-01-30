@@ -64,12 +64,30 @@ const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
 
 const Landing = () => {
   const { t } = useLanguage();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   
   const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
   const floatParallax = useParallax({ speed: 0.15, direction: 'up' });
+  
+  // Check if user is admin/guide to show edit buttons
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        const roles = data?.map(r => r.role) || [];
+        setIsAdminUser(roles.includes('admin') || roles.includes('guide'));
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
   
   // Safety timeout: if auth takes too long, show content anyway
   useEffect(() => {
@@ -82,14 +100,20 @@ const Landing = () => {
     return () => clearTimeout(timeout);
   }, [showContent]);
   
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (but not admins who may want to edit)
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+    if (!authLoading && isAuthenticated && !isAdminUser) {
+      // Wait a bit for admin check before redirecting
+      const timeout = setTimeout(() => {
+        if (!isAdminUser) {
+          navigate('/dashboard', { replace: true });
+        }
+      }, 500);
+      return () => clearTimeout(timeout);
     } else if (!authLoading) {
       setShowContent(true);
     }
-  }, [authLoading, isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, isAdminUser, navigate]);
   
   // Show loading only briefly while checking auth
   if (authLoading && !showContent) {
@@ -168,6 +192,7 @@ const Landing = () => {
               pageKey="landing" 
               sectionKey="hero"
               className="absolute -top-2 -right-2"
+              forceShow={isAdminUser}
               fallback={{
                 title: 'Menos filas.',
                 subtitle: 'Mais magia.',
@@ -263,6 +288,7 @@ const Landing = () => {
               pageKey="landing" 
               sectionKey="how_it_works"
               className="absolute top-0 right-0"
+              forceShow={isAdminUser}
               fallback={{
                 title: 'Como funciona',
                 subtitle: 'Simples e poderoso',
@@ -577,6 +603,7 @@ const Landing = () => {
             pageKey="landing" 
             sectionKey="cta"
             className="absolute top-0 right-0"
+            forceShow={isAdminUser}
             fallback={{
               title: 'Pronto para sua melhor viagem?',
               description: 'Comece agora e transforme seu dia de parque.',
