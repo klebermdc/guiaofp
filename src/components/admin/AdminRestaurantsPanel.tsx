@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, Trash2, Plus, Save, Search, Image as ImageIcon, Loader2, Phone, Globe, MapPin, DollarSign, Star, Edit2, X } from 'lucide-react';
+import { Upload, Trash2, Plus, Save, Search, Image as ImageIcon, Loader2, Phone, Globe, MapPin, DollarSign, Star, Edit2, X, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,24 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   useRestaurants, 
   useRestaurantImages, 
   useAddRestaurantImage, 
   useDeleteRestaurantImage,
   useUpdateRestaurant,
+  useDeleteRestaurant,
   type Restaurant 
 } from '@/hooks/useRestaurants';
 
@@ -35,6 +47,7 @@ const AdminRestaurantsPanel = () => {
   const addImageMutation = useAddRestaurantImage();
   const deleteImageMutation = useDeleteRestaurantImage();
   const updateRestaurantMutation = useUpdateRestaurant();
+  const deleteRestaurantMutation = useDeleteRestaurant();
 
   // Filter restaurants based on search
   const filteredRestaurants = restaurants.filter(r =>
@@ -124,7 +137,14 @@ const AdminRestaurantsPanel = () => {
     setEditForm({ ...editForm, highlights: highlightsArray });
   };
 
+  const handleDeleteRestaurant = async (restaurantId: string) => {
+    await deleteRestaurantMutation.mutateAsync(restaurantId);
+    setSelectedRestaurant(null);
+    setIsEditing(false);
+  };
+
   const isSaving = addImageMutation.isPending || updateRestaurantMutation.isPending;
+  const isDeleting = deleteRestaurantMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -173,25 +193,81 @@ const AdminRestaurantsPanel = () => {
                   </p>
                 ) : (
                   filteredRestaurants.map(restaurant => (
-                    <button
+                    <div
                       key={restaurant.id}
-                      onClick={() => handleSelectRestaurant(restaurant)}
-                      className={`w-full text-left p-4 rounded-xl transition-all ${
+                      className={`relative group p-4 rounded-xl transition-all ${
                         selectedRestaurant?.id === restaurant.id
                           ? 'bg-primary/10 border-2 border-primary'
                           : 'bg-muted hover:bg-muted/80 border-2 border-transparent'
                       }`}
                     >
-                      <div className="font-semibold text-foreground mb-1">
-                        {restaurant.name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {restaurant.category || 'Sem categoria'}
-                      </div>
-                      {restaurant.michelin && (
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 inline mt-1" />
-                      )}
-                    </button>
+                      <button
+                        onClick={() => handleSelectRestaurant(restaurant)}
+                        className="w-full text-left"
+                      >
+                        <div className="font-semibold text-foreground mb-1 pr-8">
+                          {restaurant.name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {restaurant.category || 'Sem categoria'}
+                        </div>
+                        {restaurant.michelin && (
+                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 inline mt-1" />
+                        )}
+                      </button>
+                      
+                      {/* Delete Button */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-destructive" />
+                              Excluir Restaurante
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir <strong>{restaurant.name}</strong>?
+                              <br /><br />
+                              Esta ação é irreversível e irá remover:
+                              <ul className="list-disc list-inside mt-2 text-sm">
+                                <li>Todas as informações do restaurante</li>
+                                <li>Todas as fotos associadas</li>
+                                <li>Itens do cardápio</li>
+                              </ul>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleDeleteRestaurant(restaurant.id)}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Excluindo...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Excluir Permanentemente
+                                </>
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   ))
                 )}
               </div>
