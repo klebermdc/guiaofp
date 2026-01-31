@@ -54,6 +54,7 @@ interface PageAccess {
   page_icon: string;
   basic_visible: boolean;
   premium_visible: boolean;
+  show_in_bottom_nav: boolean;
   travel_mode_visible: boolean;
   sort_order: number;
   mobile_sort_order: number;
@@ -85,10 +86,12 @@ interface SortableItemProps {
   page: PageAccess;
   context: SortContext;
   onVisibilityChange?: (id: string, visible: boolean) => void;
+  onBottomNavChange?: (id: string, show: boolean) => void;
   showVisibilityToggle?: boolean;
+  showBottomNavToggle?: boolean;
 }
 
-function SortableItem({ page, context, onVisibilityChange, showVisibilityToggle }: SortableItemProps) {
+function SortableItem({ page, context, onVisibilityChange, onBottomNavChange, showVisibilityToggle, showBottomNavToggle }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -140,6 +143,18 @@ function SortableItem({ page, context, onVisibilityChange, showVisibilityToggle 
           <Switch
             checked={isVisible}
             onCheckedChange={(checked) => onVisibilityChange(page.id, checked)}
+          />
+        </div>
+      )}
+
+      {showBottomNavToggle && onBottomNavChange && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {page.show_in_bottom_nav ? 'Na barra' : 'Oculto'}
+          </span>
+          <Switch
+            checked={page.show_in_bottom_nav}
+            onCheckedChange={(checked) => onBottomNavChange(page.id, checked)}
           />
         </div>
       )}
@@ -227,6 +242,15 @@ export function MenuOrderManager() {
     setHasChanges(true);
   };
 
+  const handleBottomNavChange = (id: string, show: boolean) => {
+    setPages((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, show_in_bottom_nav: show } : p
+      )
+    );
+    setHasChanges(true);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -236,6 +260,7 @@ export function MenuOrderManager() {
           .from('plan_page_access')
           .update({
             travel_mode_visible: page.travel_mode_visible,
+            show_in_bottom_nav: page.show_in_bottom_nav,
             mobile_sort_order: page.mobile_sort_order,
             desktop_sort_order: page.desktop_sort_order,
             travel_mode_sort_order: page.travel_mode_sort_order,
@@ -319,8 +344,8 @@ export function MenuOrderManager() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              📱 <strong>Barra Inferior:</strong> Os 4 primeiros itens marcados como "dashboard", "perfil", "multipass" e "agenda" 
-              aparecem na barra de navegação inferior. A ordem aqui define a sequência de exibição.
+              📱 <strong>Barra Inferior:</strong> Ative o toggle "Na barra" para escolher quais itens aparecem na navegação inferior.
+              Os 4 primeiros itens ativados serão exibidos na ordem definida.
             </p>
             <DndContext
               sensors={sensors}
@@ -331,19 +356,15 @@ export function MenuOrderManager() {
                 items={getSortedPages('mobile').map((p) => p.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {getSortedPages('mobile').map((page) => {
-                  const isBottomNavItem = ['dashboard', 'perfil', 'multipass', 'agenda'].includes(page.page_key);
-                  return (
-                    <div key={page.id} className="relative">
-                      {isBottomNavItem && (
-                        <Badge className="absolute -top-1 -right-1 z-10 text-[10px] bg-blue-500">
-                          Barra Inferior
-                        </Badge>
-                      )}
-                      <SortableItem page={page} context="mobile" />
-                    </div>
-                  );
-                })}
+                {getSortedPages('mobile').map((page) => (
+                  <SortableItem
+                    key={page.id}
+                    page={page}
+                    context="mobile"
+                    showBottomNavToggle
+                    onBottomNavChange={handleBottomNavChange}
+                  />
+                ))}
               </SortableContext>
             </DndContext>
           </TabsContent>

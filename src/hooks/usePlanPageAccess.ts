@@ -9,6 +9,7 @@ export interface PageAccess {
   basic_visible: boolean;
   premium_visible: boolean;
   travel_mode_visible: boolean;
+  show_in_bottom_nav: boolean;
   sort_order: number;
   mobile_sort_order: number;
   desktop_sort_order: number;

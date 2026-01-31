@@ -66,8 +66,6 @@ const pagePathMap: Record<string, string> = {
   contato: '/contato',
 };
 
-// Bottom nav keys - items that can appear in the bottom nav
-const bottomNavKeys = ['dashboard', 'perfil', 'multipass', 'agenda'];
 
 const MobileBottomNavComponent = () => {
   const location = useLocation();
@@ -82,8 +80,8 @@ const MobileBottomNavComponent = () => {
   
   const bottomNavItems = sortedPages
     .filter((page) => {
-      // Only include items designated for bottom nav
-      if (!bottomNavKeys.includes(page.page_key)) return false;
+      // Only include items marked for bottom nav
+      if (!page.show_in_bottom_nav) return false;
       // Guides see everything
       if (isGuide) return true;
       // In travel mode, check travel_mode_visible
