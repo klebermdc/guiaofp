@@ -656,6 +656,7 @@ export type Database = {
           page_key: string
           page_name: string
           premium_visible: boolean | null
+          show_in_bottom_nav: boolean | null
           sort_order: number | null
           travel_mode_sort_order: number | null
           travel_mode_visible: boolean | null
@@ -671,6 +672,7 @@ export type Database = {
           page_key: string
           page_name: string
           premium_visible?: boolean | null
+          show_in_bottom_nav?: boolean | null
           sort_order?: number | null
           travel_mode_sort_order?: number | null
           travel_mode_visible?: boolean | null
@@ -686,6 +688,7 @@ export type Database = {
           page_key?: string
           page_name?: string
           premium_visible?: boolean | null
+          show_in_bottom_nav?: boolean | null
           sort_order?: number | null
           travel_mode_sort_order?: number | null
           travel_mode_visible?: boolean | null
