@@ -1,21 +1,32 @@
-import { useState, useEffect, memo } from 'react';
-import { Pencil, X, Check, Loader2, Palette, Type } from 'lucide-react';
+import { memo, ReactNode, CSSProperties } from 'react';
+import { Pencil } from 'lucide-react';
+import { useEditableContent } from '@/hooks/useEditableContent';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { useEditableContent, EditableContent } from '@/hooks/useEditableContent';
-import { cn } from '@/lib/utils';
+import { X, Check, Loader2, Palette, Type } from 'lucide-react';
 
-interface InlineContentEditorProps {
+interface EditableWrapperProps {
+  /** Unique page identifier */
   pageKey: string;
+  /** Unique section identifier within the page */
   sectionKey: string;
-  children: React.ReactNode;
+  /** The content to wrap */
+  children: ReactNode;
+  /** Additional className for the wrapper */
   className?: string;
-  // Fallback values when no DB content exists
+  /** HTML tag to render as */
+  as?: keyof JSX.IntrinsicElements;
+  /** Apply dynamic styles from DB */
+  applyStyles?: boolean;
+  /** Fallback values */
   fallback?: {
     title?: string;
     subtitle?: string;
@@ -23,26 +34,6 @@ interface InlineContentEditorProps {
     buttonText?: string;
     badgeText?: string;
   };
-  // Callback to get current values from the rendered content
-  onContentReady?: (content: EditableContent | null) => void;
-}
-
-interface EditFormData {
-  // Text fields
-  title: string;
-  subtitle: string;
-  description: string;
-  button_text: string;
-  badge_text: string;
-  image_url: string;
-  // Style fields
-  text_color: string;
-  bg_color: string;
-  border_color: string;
-  accent_color: string;
-  font_size: string;
-  font_weight: string;
-  custom_classes: string;
 }
 
 const fontSizeOptions = [
@@ -55,7 +46,6 @@ const fontSizeOptions = [
   { value: 'text-2xl', label: '2XL' },
   { value: 'text-3xl', label: '3XL' },
   { value: 'text-4xl', label: '4XL' },
-  { value: 'text-5xl', label: '5XL' },
 ];
 
 const fontWeightOptions = [
@@ -68,17 +58,18 @@ const fontWeightOptions = [
   { value: 'font-extrabold', label: 'Extra Bold' },
 ];
 
-const InlineContentEditorComponent = ({
+const EditableWrapperComponent = ({
   pageKey,
   sectionKey,
   children,
   className,
+  as: Component = 'div',
+  applyStyles = true,
   fallback,
-  onContentReady,
-}: InlineContentEditorProps) => {
-  const { content, canEdit, saveContent, isSaving } = useEditableContent(pageKey, sectionKey);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<EditFormData>({
+}: EditableWrapperProps) => {
+  const { content, canEdit, saveContent, isSaving, getStyles, getClasses } = useEditableContent(pageKey, sectionKey);
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
     description: '',
@@ -94,35 +85,24 @@ const InlineContentEditorComponent = ({
     custom_classes: '',
   });
 
-  useEffect(() => {
-    if (content) {
-      setFormData({
-        title: content.title || fallback?.title || '',
-        subtitle: content.subtitle || fallback?.subtitle || '',
-        description: content.description || fallback?.description || '',
-        button_text: content.button_text || fallback?.buttonText || '',
-        badge_text: content.badge_text || fallback?.badgeText || '',
-        image_url: content.image_url || '',
-        text_color: content.text_color || '',
-        bg_color: content.bg_color || '',
-        border_color: content.border_color || '',
-        accent_color: content.accent_color || '',
-        font_size: content.font_size || '',
-        font_weight: content.font_weight || '',
-        custom_classes: content.custom_classes || '',
-      });
-    } else if (fallback) {
-      setFormData((prev) => ({
-        ...prev,
-        title: fallback.title || '',
-        subtitle: fallback.subtitle || '',
-        description: fallback.description || '',
-        button_text: fallback.buttonText || '',
-        badge_text: fallback.badgeText || '',
-      }));
-    }
-    onContentReady?.(content);
-  }, [content, fallback, onContentReady]);
+  const handleOpen = () => {
+    setFormData({
+      title: content?.title || fallback?.title || '',
+      subtitle: content?.subtitle || fallback?.subtitle || '',
+      description: content?.description || fallback?.description || '',
+      button_text: content?.button_text || fallback?.buttonText || '',
+      badge_text: content?.badge_text || fallback?.badgeText || '',
+      image_url: content?.image_url || '',
+      text_color: content?.text_color || '',
+      bg_color: content?.bg_color || '',
+      border_color: content?.border_color || '',
+      accent_color: content?.accent_color || '',
+      font_size: content?.font_size || '',
+      font_weight: content?.font_weight || '',
+      custom_classes: content?.custom_classes || '',
+    });
+    setIsOpen(true);
+  };
 
   const handleSave = async () => {
     const success = await saveContent({
@@ -142,80 +122,49 @@ const InlineContentEditorComponent = ({
     });
 
     if (success) {
-      setIsEditing(false);
+      setIsOpen(false);
     }
   };
 
-  const handleCancel = () => {
-    // Reset form to original content
-    if (content) {
-      setFormData({
-        title: content.title || '',
-        subtitle: content.subtitle || '',
-        description: content.description || '',
-        button_text: content.button_text || '',
-        badge_text: content.badge_text || '',
-        image_url: content.image_url || '',
-        text_color: content.text_color || '',
-        bg_color: content.bg_color || '',
-        border_color: content.border_color || '',
-        accent_color: content.accent_color || '',
-        font_size: content.font_size || '',
-        font_weight: content.font_weight || '',
-        custom_classes: content.custom_classes || '',
-      });
-    }
-    setIsEditing(false);
-  };
+  // Build dynamic styles
+  const dynamicStyles: CSSProperties = applyStyles ? getStyles() : {};
+  const dynamicClasses = applyStyles ? getClasses() : '';
 
-  if (!canEdit) {
-    return <>{children}</>;
-  }
+  // Create element with proper typing
+  const WrapperElement = Component as any;
 
   return (
-    <div className={cn('relative group', className)}>
-      {/* Edit Button - visible on hover for admins */}
-      {!isEditing && (
-        <button
-          onClick={() => setIsEditing(true)}
-          className="absolute top-2 right-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:scale-110 transform transition-transform"
-          title="Editar conteúdo"
-        >
-          <Pencil className="w-4 h-4" />
-        </button>
-      )}
+    <>
+      <WrapperElement
+        className={cn('relative group', dynamicClasses, className)}
+        style={dynamicStyles}
+      >
+        {/* Edit Button - visible on hover for admins */}
+        {canEdit && (
+          <button
+            onClick={handleOpen}
+            className="absolute top-2 right-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground p-2 rounded-full shadow-lg hover:scale-110 transform transition-transform"
+            title={`Editar: ${pageKey}/${sectionKey}`}
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        )}
 
-      {/* Edit Mode Overlay */}
-      {isEditing && (
-        <div className="absolute inset-0 z-40 bg-background/95 backdrop-blur-sm rounded-xl border-2 border-primary p-6 overflow-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">
-              Editar: {pageKey} / {sectionKey}
-            </h3>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Cancelar
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4 mr-1" />
-                )}
-                Salvar
-              </Button>
-            </div>
-          </div>
+        {children}
+      </WrapperElement>
+
+      {/* Edit Dialog */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5" />
+              Editar Conteúdo
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {pageKey} / {sectionKey}
+            </p>
+          </DialogHeader>
 
           <Tabs defaultValue="content" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -231,9 +180,9 @@ const InlineContentEditorComponent = ({
 
             <TabsContent value="content" className="space-y-4">
               <div>
-                <Label htmlFor="title">Título</Label>
+                <Label htmlFor="edit-title">Título</Label>
                 <Input
-                  id="title"
+                  id="edit-title"
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   placeholder="Título principal"
@@ -241,9 +190,9 @@ const InlineContentEditorComponent = ({
               </div>
 
               <div>
-                <Label htmlFor="subtitle">Subtítulo</Label>
+                <Label htmlFor="edit-subtitle">Subtítulo</Label>
                 <Input
-                  id="subtitle"
+                  id="edit-subtitle"
                   value={formData.subtitle}
                   onChange={(e) => setFormData((prev) => ({ ...prev, subtitle: e.target.value }))}
                   placeholder="Subtítulo ou destaque"
@@ -251,9 +200,9 @@ const InlineContentEditorComponent = ({
               </div>
 
               <div>
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="edit-description">Descrição</Label>
                 <Textarea
-                  id="description"
+                  id="edit-description"
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Descrição ou texto de apoio"
@@ -263,9 +212,9 @@ const InlineContentEditorComponent = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="badge_text">Badge/Tag</Label>
+                  <Label htmlFor="edit-badge">Badge/Tag</Label>
                   <Input
-                    id="badge_text"
+                    id="edit-badge"
                     value={formData.badge_text}
                     onChange={(e) => setFormData((prev) => ({ ...prev, badge_text: e.target.value }))}
                     placeholder="Texto da badge"
@@ -273,9 +222,9 @@ const InlineContentEditorComponent = ({
                 </div>
 
                 <div>
-                  <Label htmlFor="button_text">Texto do Botão</Label>
+                  <Label htmlFor="edit-button">Texto do Botão</Label>
                   <Input
-                    id="button_text"
+                    id="edit-button"
                     value={formData.button_text}
                     onChange={(e) => setFormData((prev) => ({ ...prev, button_text: e.target.value }))}
                     placeholder="Texto do botão"
@@ -284,9 +233,9 @@ const InlineContentEditorComponent = ({
               </div>
 
               <div>
-                <Label htmlFor="image_url">URL da Imagem</Label>
+                <Label htmlFor="edit-image">URL da Imagem</Label>
                 <Input
-                  id="image_url"
+                  id="edit-image"
                   value={formData.image_url}
                   onChange={(e) => setFormData((prev) => ({ ...prev, image_url: e.target.value }))}
                   placeholder="https://..."
@@ -328,14 +277,14 @@ const InlineContentEditorComponent = ({
                   <Label>Tamanho da Fonte</Label>
                   <Select
                     value={formData.font_size}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, font_size: value }))}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, font_size: value === 'default' ? '' : value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar tamanho" />
                     </SelectTrigger>
                     <SelectContent>
                       {fontSizeOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value || 'default'}>
+                        <SelectItem key={opt.value || 'default'} value={opt.value || 'default'}>
                           {opt.label}
                         </SelectItem>
                       ))}
@@ -347,14 +296,14 @@ const InlineContentEditorComponent = ({
                   <Label>Peso da Fonte</Label>
                   <Select
                     value={formData.font_weight}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, font_weight: value }))}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, font_weight: value === 'default' ? '' : value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecionar peso" />
                     </SelectTrigger>
                     <SelectContent>
                       {fontWeightOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value || 'default'}>
+                        <SelectItem key={opt.value || 'default'} value={opt.value || 'default'}>
                           {opt.label}
                         </SelectItem>
                       ))}
@@ -365,9 +314,9 @@ const InlineContentEditorComponent = ({
 
               {/* Custom Classes */}
               <div>
-                <Label htmlFor="custom_classes">Classes Tailwind Customizadas</Label>
+                <Label htmlFor="edit-classes">Classes Tailwind Customizadas</Label>
                 <Input
-                  id="custom_classes"
+                  id="edit-classes"
                   value={formData.custom_classes}
                   onChange={(e) => setFormData((prev) => ({ ...prev, custom_classes: e.target.value }))}
                   placeholder="Ex: rounded-xl shadow-lg"
@@ -381,7 +330,7 @@ const InlineContentEditorComponent = ({
               <div className="mt-4 p-4 rounded-lg border border-border">
                 <Label className="mb-2 block">Prévia</Label>
                 <div
-                  className={cn('p-4 rounded-lg', formData.custom_classes)}
+                  className={cn('p-4 rounded-lg transition-all', formData.custom_classes)}
                   style={{
                     color: formData.text_color ? `hsl(${formData.text_color})` : undefined,
                     backgroundColor: formData.bg_color ? `hsl(${formData.bg_color})` : undefined,
@@ -397,13 +346,40 @@ const InlineContentEditorComponent = ({
               </div>
             </TabsContent>
           </Tabs>
-        </div>
-      )}
 
-      {/* Original Content */}
-      {children}
-    </div>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving}>
+              <X className="w-4 h-4 mr-1" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4 mr-1" />
+              )}
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
-export const InlineContentEditor = memo(InlineContentEditorComponent);
+export const EditableWrapper = memo(EditableWrapperComponent);
+
+/**
+ * Hook to get editable text value with fallback
+ * Use this when you just need the text value, not the full wrapper
+ */
+export const useEditableText = (pageKey: string, sectionKey: string, field: keyof {
+  title: string;
+  subtitle: string;
+  description: string;
+  button_text: string;
+  badge_text: string;
+}, fallback: string) => {
+  const { content } = useEditableContent(pageKey, sectionKey);
+  return content?.[field] || fallback;
+};

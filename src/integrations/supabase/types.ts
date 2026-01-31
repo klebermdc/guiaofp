@@ -416,53 +416,77 @@ export type Database = {
       }
       editable_content: {
         Row: {
+          accent_color: string | null
           badge_text: string | null
+          bg_color: string | null
+          border_color: string | null
           button_text: string | null
           button_url: string | null
           content_type: string
           created_at: string
+          custom_classes: string | null
           description: string | null
+          font_size: string | null
+          font_weight: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
           metadata: Json | null
           page_key: string
           section_key: string
+          styles: Json | null
           subtitle: string | null
+          text_color: string | null
           title: string | null
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           badge_text?: string | null
+          bg_color?: string | null
+          border_color?: string | null
           button_text?: string | null
           button_url?: string | null
           content_type?: string
           created_at?: string
+          custom_classes?: string | null
           description?: string | null
+          font_size?: string | null
+          font_weight?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
           metadata?: Json | null
           page_key: string
           section_key: string
+          styles?: Json | null
           subtitle?: string | null
+          text_color?: string | null
           title?: string | null
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           badge_text?: string | null
+          bg_color?: string | null
+          border_color?: string | null
           button_text?: string | null
           button_url?: string | null
           content_type?: string
           created_at?: string
+          custom_classes?: string | null
           description?: string | null
+          font_size?: string | null
+          font_weight?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
           metadata?: Json | null
           page_key?: string
           section_key?: string
+          styles?: Json | null
           subtitle?: string | null
+          text_color?: string | null
           title?: string | null
           updated_at?: string
         }

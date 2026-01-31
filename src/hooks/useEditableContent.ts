@@ -18,6 +18,25 @@ export interface EditableContent {
   badge_text: string | null;
   metadata: Json;
   is_active: boolean;
+  // Style fields
+  text_color: string | null;
+  bg_color: string | null;
+  border_color: string | null;
+  accent_color: string | null;
+  font_size: string | null;
+  font_weight: string | null;
+  custom_classes: string | null;
+  styles: Json;
+}
+
+export interface ContentStyles {
+  text_color?: string | null;
+  bg_color?: string | null;
+  border_color?: string | null;
+  accent_color?: string | null;
+  font_size?: string | null;
+  font_weight?: string | null;
+  custom_classes?: string | null;
 }
 
 export const useEditableContent = (pageKey: string, sectionKey: string) => {
@@ -40,7 +59,7 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
       }
       
       if (data) {
-        setContent(data as EditableContent);
+        setContent(data as unknown as EditableContent);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -53,7 +72,7 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
     fetchContent();
   }, [fetchContent]);
 
-  const saveContent = async (updates: Partial<Omit<EditableContent, 'id' | 'metadata'>>) => {
+  const saveContent = async (updates: Partial<Omit<EditableContent, 'id' | 'metadata' | 'styles'>>) => {
     if (!isGuide) {
       toast.error('Você não tem permissão para editar conteúdos');
       return false;
@@ -95,6 +114,38 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
     }
   };
 
+  // Get inline styles from content
+  const getStyles = useCallback((): React.CSSProperties => {
+    if (!content) return {};
+    
+    const styles: React.CSSProperties = {};
+    
+    if (content.text_color) {
+      styles.color = `hsl(${content.text_color})`;
+    }
+    if (content.bg_color) {
+      styles.backgroundColor = `hsl(${content.bg_color})`;
+    }
+    if (content.border_color) {
+      styles.borderColor = `hsl(${content.border_color})`;
+    }
+    
+    return styles;
+  }, [content]);
+
+  // Get Tailwind classes from content
+  const getClasses = useCallback((): string => {
+    if (!content) return '';
+    
+    const classes: string[] = [];
+    
+    if (content.font_size) classes.push(content.font_size);
+    if (content.font_weight) classes.push(content.font_weight);
+    if (content.custom_classes) classes.push(content.custom_classes);
+    
+    return classes.join(' ');
+  }, [content]);
+
   return {
     content,
     isLoading,
@@ -102,6 +153,8 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
     saveContent,
     canEdit: isGuide,
     refetch: fetchContent,
+    getStyles,
+    getClasses,
   };
 };
 
@@ -123,7 +176,7 @@ export const usePageContent = (pageKey: string) => {
 
         const contentMap: Record<string, EditableContent> = {};
         data?.forEach((item) => {
-          contentMap[item.section_key] = item as EditableContent;
+          contentMap[item.section_key] = item as unknown as EditableContent;
         });
         setContents(contentMap);
       } catch (err) {
