@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTravelMode } from '@/contexts/TravelModeContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { cn } from '@/lib/utils';
 import {
@@ -122,17 +123,22 @@ interface MobileNavSheetProps {
 export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
-  const { pageAccess, isLoading } = usePlanPageAccess();
+  const { getSortedPages, isTravelModeVisible, isLoading } = usePlanPageAccess();
   const { t } = useLanguage();
+  const { isTravelMode } = useTravelMode();
 
   // Build dynamic menu based on plan_page_access table (excluding bottom nav items)
   const bottomNavKeys = ['dashboard', 'perfil', 'multipass', 'agenda'];
-  const dynamicMenuItems = pageAccess
+  const sortedPages = getSortedPages('mobile');
+  
+  const dynamicMenuItems = sortedPages
     .filter((page) => {
       // Skip items already in bottom nav
       if (bottomNavKeys.includes(page.page_key)) return false;
       // Guides see everything
       if (isGuide) return true;
+      // In travel mode, also check travel_mode_visible
+      if (isTravelMode && !page.travel_mode_visible) return false;
       // Check visibility based on plan
       if (planTier === 'premium') return page.premium_visible;
       return page.basic_visible;

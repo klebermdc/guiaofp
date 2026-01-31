@@ -27,6 +27,7 @@ export type AdminSection =
   | 'coupons'
   | 'pricing'
   | 'plans'
+  | 'menu_order'
   | 'payments'
   | 'categories'
   | 'content'
@@ -73,6 +74,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { id: 'pricing', icon: DollarSign, label: 'Preços' },
       { id: 'plans', icon: Settings, label: 'Acesso aos Planos' },
+      { id: 'menu_order', icon: Navigation, label: 'Ordem do Menu' },
       { id: 'payments', icon: CreditCard, label: 'Gateway' },
     ]
   },

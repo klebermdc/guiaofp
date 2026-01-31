@@ -649,34 +649,46 @@ export type Database = {
         Row: {
           basic_visible: boolean | null
           created_at: string | null
+          desktop_sort_order: number | null
           id: string
+          mobile_sort_order: number | null
           page_icon: string | null
           page_key: string
           page_name: string
           premium_visible: boolean | null
           sort_order: number | null
+          travel_mode_sort_order: number | null
+          travel_mode_visible: boolean | null
           updated_at: string | null
         }
         Insert: {
           basic_visible?: boolean | null
           created_at?: string | null
+          desktop_sort_order?: number | null
           id?: string
+          mobile_sort_order?: number | null
           page_icon?: string | null
           page_key: string
           page_name: string
           premium_visible?: boolean | null
           sort_order?: number | null
+          travel_mode_sort_order?: number | null
+          travel_mode_visible?: boolean | null
           updated_at?: string | null
         }
         Update: {
           basic_visible?: boolean | null
           created_at?: string | null
+          desktop_sort_order?: number | null
           id?: string
+          mobile_sort_order?: number | null
           page_icon?: string | null
           page_key?: string
           page_name?: string
           premium_visible?: boolean | null
           sort_order?: number | null
+          travel_mode_sort_order?: number | null
+          travel_mode_visible?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
