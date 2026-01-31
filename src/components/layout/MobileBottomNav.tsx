@@ -7,22 +7,111 @@ import {
   User, 
   Calendar, 
   Zap,
-  MoreHorizontal
+  MoreHorizontal,
+  Map,
+  MapPin,
+  BookOpen,
+  CheckCircle2,
+  FileText,
+  MessageCircle,
+  Headphones,
+  Route,
+  UtensilsCrossed,
+  Star,
+  Sparkles,
+  Ticket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileNavSheet } from './MobileNavSheet';
+import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTravelMode } from '@/contexts/TravelModeContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
-// These are the main nav items for clients - guides will be redirected from /dashboard
-const mainNavItems = [
-  { icon: LayoutDashboard, label: 'Início', path: '/dashboard' },
-  { icon: User, label: 'Perfil', path: '/perfil' },
-  { icon: Zap, label: 'Multi Pass', path: '/multipass' },
-  { icon: Calendar, label: 'Agenda', path: '/agenda' },
-];
+// Icon mapping for dynamic menu
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  User,
+  Star,
+  Calendar,
+  Map,
+  MapPin,
+  Zap,
+  BookOpen,
+  CheckSquare: CheckCircle2,
+  FileText,
+  MessageCircle,
+  Ticket,
+  Sparkles,
+  Headphones,
+  Route,
+  UtensilsCrossed,
+};
+
+// Page key to path mapping
+const pagePathMap: Record<string, string> = {
+  dashboard: '/dashboard',
+  perfil: '/perfil',
+  multipass: '/multipass',
+  agenda: '/agenda',
+  mapa: '/mapa',
+  atracoes: '/atracoes',
+  roteiro: '/guiamento-remoto',
+  guia: '/guia',
+  checklists: '/checklists',
+  restaurantes: '/restaurantes',
+  roteiro_personalizado: '/roteiro-personalizado',
+  planner_manual: '/planner-manual',
+  conteudo: '/conteudos',
+  contato: '/contato',
+};
+
+// Bottom nav keys - items that can appear in the bottom nav
+const bottomNavKeys = ['dashboard', 'perfil', 'multipass', 'agenda'];
 
 const MobileBottomNavComponent = () => {
   const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { getSortedPages, isLoading } = usePlanPageAccess();
+  const { planTier } = useAuth();
+  const { isTravelMode } = useTravelMode();
+  const { isGuide } = useUserRole();
+
+  // Get sorted pages for mobile context, filtered to bottom nav items only
+  const sortedPages = getSortedPages('mobile');
+  
+  const bottomNavItems = sortedPages
+    .filter((page) => {
+      // Only include items designated for bottom nav
+      if (!bottomNavKeys.includes(page.page_key)) return false;
+      // Guides see everything
+      if (isGuide) return true;
+      // In travel mode, check travel_mode_visible
+      if (isTravelMode && !page.travel_mode_visible) return false;
+      // Check visibility based on plan
+      if (planTier === 'premium') return page.premium_visible;
+      return page.basic_visible;
+    })
+    .slice(0, 4) // Max 4 items in bottom nav
+    .map((page) => {
+      const IconComponent = iconMap[page.page_icon] || LayoutDashboard;
+      return {
+        icon: IconComponent,
+        label: page.page_name,
+        path: pagePathMap[page.page_key] || `/${page.page_key}`,
+        pageKey: page.page_key,
+      };
+    });
+
+  // Fallback to default items while loading
+  const navItems = isLoading || bottomNavItems.length === 0 
+    ? [
+        { icon: LayoutDashboard, label: 'Início', path: '/dashboard', pageKey: 'dashboard' },
+        { icon: User, label: 'Perfil', path: '/perfil', pageKey: 'perfil' },
+        { icon: Zap, label: 'Multi Pass', path: '/multipass', pageKey: 'multipass' },
+        { icon: Calendar, label: 'Agenda', path: '/agenda', pageKey: 'agenda' },
+      ]
+    : bottomNavItems;
 
   return (
     <>
@@ -33,7 +122,7 @@ const MobileBottomNavComponent = () => {
         className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-sidebar/95 backdrop-blur-xl border-t border-sidebar-border safe-area-pb"
       >
         <div className="flex items-center justify-around h-16 px-2">
-          {mainNavItems.map((item) => {
+          {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <PrefetchLink

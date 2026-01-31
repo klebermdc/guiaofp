@@ -318,6 +318,10 @@ export function MenuOrderManager() {
                 Ordem do menu no aplicativo móvel
               </Badge>
             </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              📱 <strong>Barra Inferior:</strong> Os 4 primeiros itens marcados como "dashboard", "perfil", "multipass" e "agenda" 
+              aparecem na barra de navegação inferior. A ordem aqui define a sequência de exibição.
+            </p>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -327,9 +331,19 @@ export function MenuOrderManager() {
                 items={getSortedPages('mobile').map((p) => p.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {getSortedPages('mobile').map((page) => (
-                  <SortableItem key={page.id} page={page} context="mobile" />
-                ))}
+                {getSortedPages('mobile').map((page) => {
+                  const isBottomNavItem = ['dashboard', 'perfil', 'multipass', 'agenda'].includes(page.page_key);
+                  return (
+                    <div key={page.id} className="relative">
+                      {isBottomNavItem && (
+                        <Badge className="absolute -top-1 -right-1 z-10 text-[10px] bg-blue-500">
+                          Barra Inferior
+                        </Badge>
+                      )}
+                      <SortableItem page={page} context="mobile" />
+                    </div>
+                  );
+                })}
               </SortableContext>
             </DndContext>
           </TabsContent>
