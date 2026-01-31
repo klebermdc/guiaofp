@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -236,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
-  const loadProfileForUser = async (userId: string): Promise<TravelProfile> => {
+  const loadProfileForUser = useCallback(async (userId: string): Promise<TravelProfile> => {
     try {
       // Use Promise.race with a timeout to prevent hanging
       const profilePromise = supabase
@@ -246,7 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
       
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
       );
       
       const { data: profileData, error: profileError } = await Promise.race([
@@ -254,19 +254,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timeoutPromise
       ]) as Awaited<typeof profilePromise>;
       
-      // Contract fetch with timeout
-      const contractPromise = supabase
-        .from('contracts')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
+      // Contract fetch with timeout - run in parallel but don't block
       let contractData = null;
       try {
+        const contractPromise = supabase
+          .from('contracts')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
         const result = await Promise.race([
           contractPromise,
           new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Contract fetch timeout')), 3000)
+            setTimeout(() => reject(new Error('Contract fetch timeout')), 2000)
           )
         ]) as Awaited<typeof contractPromise>;
         contractData = result.data;
@@ -304,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('[Auth] Error loading profile:', error);
       return defaultTravelProfile;
     }
-  };
+  }, []);
 
   const loadProfile = async () => {
     if (!user) return;
@@ -329,20 +329,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // CRITICAL: Skip re-initialization if already completed
     // This prevents re-auth when switching tabs
     if (initCompletedRef.current) {
-      console.log('[Auth] Already initialized, skipping');
       return;
     }
     
     // Prevent concurrent initialization
     if (isInitializingRef.current) {
-      console.log('[Auth] Already initializing, skipping');
       return;
     }
     
     isInitializingRef.current = true;
     
-    // CRITICAL: Absolute safety timeout - ALWAYS fires after 8 seconds
-    // This ensures the app NEVER gets stuck in loading state
+    // CRITICAL: Absolute safety timeout - ALWAYS fires after 6 seconds
+    // Reduced from 8s for faster recovery
     const absoluteTimeout = setTimeout(() => {
       if (isMounted && !initCompletedRef.current) {
         console.warn('[Auth] Absolute safety timeout triggered');
@@ -350,14 +348,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsProfileLoading(false);
         initCompletedRef.current = true;
       }
-    }, 8000);
+    }, 6000);
 
     const initializeAuth = async () => {
       try {
-        // Fast session check with 4s timeout
+        // Fast session check with 3s timeout (reduced from 4s)
         const sessionPromise = supabase.auth.getSession();
         const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: new Error('Session timeout') }), 4000)
+          setTimeout(() => resolve({ data: { session: null }, error: new Error('Session timeout') }), 3000)
         );
         
         const { data: { session: currentSession }, error } = await Promise.race([
@@ -454,22 +452,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearTimeout(absoluteTimeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loadProfileForUser]);
 
+  // IMPROVED LOGIN: Waits for profile to load before returning success
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        return { success: false, error: 'Email ou senha incorretos.' };
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          return { success: false, error: 'Email ou senha incorretos.' };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
-    }
 
-    return { success: true };
+      // CRITICAL: Wait for profile to load BEFORE returning success
+      // This ensures the dashboard has data ready when it mounts
+      if (data.user) {
+        setSession(data.session);
+        setUser(data.user);
+        setIsProfileLoading(true);
+        
+        try {
+          const profile = await loadProfileForUser(data.user.id);
+          setTravelProfile(profile);
+        } catch (profileError) {
+          console.error('[Auth] Login profile error:', profileError);
+          // Still succeed login even if profile fails
+        } finally {
+          setIsProfileLoading(false);
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('[Auth] Login error:', err);
+      return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
+    }
   };
 
   const signup = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
@@ -497,44 +519,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    // Reset refs so re-login triggers fresh init
+    initCompletedRef.current = false;
+    isInitializingRef.current = false;
+    
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
     setTravelProfile(defaultTravelProfile);
   };
 
   const updateTravelProfile = async (data: Partial<TravelProfile>) => {
     if (!user) return;
+    
+    // Optimistic update
+    const updatedProfile = { ...travelProfile, ...data };
+    updatedProfile.completionPercentage = calculateCompletionPercentage(updatedProfile);
+    setTravelProfile(updatedProfile);
+    
+    try {
+      const dbData = frontendToDb({ ...data, completionPercentage: updatedProfile.completionPercentage });
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(dbData)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('[Auth] Profile update error:', error);
+        // Revert on error
+        setTravelProfile(travelProfile);
+      }
+    } catch (error) {
+      console.error('[Auth] Profile update error:', error);
+      setTravelProfile(travelProfile);
+    }
+  };
 
-    const updated = { ...travelProfile, ...data };
-    updated.completionPercentage = calculateCompletionPercentage(updated);
-    
-    // Update local state immediately
-    setTravelProfile(updated);
-    
-    // Save to database
-    const dbData = frontendToDb({ ...data, completionPercentage: updated.completionPercentage });
-    
-    await supabase
-      .from('profiles')
-      .update(dbData)
-      .eq('user_id', user.id);
+  const value: AuthContextType = {
+    user,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    isProfileLoading,
+    isAccessEnabled: travelProfile.isAccessEnabled,
+    planTier: travelProfile.planTier,
+    login,
+    signup,
+    logout,
+    travelProfile,
+    updateTravelProfile,
+    loadProfile,
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      isAuthenticated: !!user,
-      isLoading,
-      isProfileLoading,
-      isAccessEnabled: travelProfile.isAccessEnabled,
-      planTier: travelProfile.planTier,
-      login,
-      signup,
-      logout,
-      travelProfile,
-      updateTravelProfile,
-      loadProfile,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -542,7 +581,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
