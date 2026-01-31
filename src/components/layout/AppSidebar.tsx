@@ -26,12 +26,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
-import { usePlanPageAccess } from '@/hooks/usePlanPageAccess';
+import { usePlanPageAccess, type SortContext } from '@/hooks/usePlanPageAccess';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTravelMode } from '@/contexts/TravelModeContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Icon mapping for dynamic menu
 const iconMap: Record<string, React.ElementType> = {
@@ -90,28 +92,41 @@ const AppSidebarComponent = () => {
   const location = useLocation();
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
-  const { pageAccess, isLoading } = usePlanPageAccess();
+  const { pageAccess, isLoading, getSortedPages, isTravelModeVisible } = usePlanPageAccess();
   const { t } = useLanguage();
+  const { isTravelMode } = useTravelMode();
+  const isMobile = useIsMobile();
+
+  // Determine sort context
+  const sortContext: SortContext = isTravelMode ? 'travel_mode' : (isMobile ? 'mobile' : 'desktop');
 
   // Build dynamic menu based on plan_page_access table - memoized to prevent recalculations
-  const dynamicMenuItems = useMemo(() => pageAccess
-    .filter((page) => {
-      // Guides see everything
-      if (isGuide) return true;
-      // Check visibility based on plan
-      if (planTier === 'premium') return page.premium_visible;
-      return page.basic_visible;
-    })
-    .map((page) => {
-      const config = pageConfig[page.page_key];
-      const IconComponent = iconMap[page.page_icon] || config?.defaultIcon || FileText;
-      return {
-        icon: IconComponent,
-        label: config?.label || page.page_name,
-        path: config?.path || `/${page.page_key}`,
-        pageKey: page.page_key,
-      };
-    }), [pageAccess, isGuide, planTier]);
+  const dynamicMenuItems = useMemo(() => {
+    const sortedPages = getSortedPages(sortContext);
+    
+    return sortedPages
+      .filter((page) => {
+        // Guides see everything
+        if (isGuide) return true;
+        
+        // In travel mode, also check travel_mode_visible
+        if (isTravelMode && !page.travel_mode_visible) return false;
+        
+        // Check visibility based on plan
+        if (planTier === 'premium') return page.premium_visible;
+        return page.basic_visible;
+      })
+      .map((page) => {
+        const config = pageConfig[page.page_key];
+        const IconComponent = iconMap[page.page_icon] || config?.defaultIcon || FileText;
+        return {
+          icon: IconComponent,
+          label: config?.label || page.page_name,
+          path: config?.path || `/${page.page_key}`,
+          pageKey: page.page_key,
+        };
+      });
+  }, [pageAccess, isGuide, planTier, sortContext, isTravelMode, getSortedPages]);
 
   // Combine dynamic items with static items
   const allMenuItems = useMemo(() => {

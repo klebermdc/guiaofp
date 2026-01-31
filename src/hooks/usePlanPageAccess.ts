@@ -8,8 +8,14 @@ export interface PageAccess {
   page_icon: string;
   basic_visible: boolean;
   premium_visible: boolean;
+  travel_mode_visible: boolean;
   sort_order: number;
+  mobile_sort_order: number;
+  desktop_sort_order: number;
+  travel_mode_sort_order: number;
 }
+
+export type SortContext = 'mobile' | 'desktop' | 'travel_mode';
 
 export function usePlanPageAccess() {
   const [pageAccess, setPageAccess] = useState<PageAccess[]>([]);
@@ -44,7 +50,7 @@ export function usePlanPageAccess() {
 
   const updatePageAccess = async (
     id: string,
-    updates: Partial<Pick<PageAccess, "basic_visible" | "premium_visible">>
+    updates: Partial<Pick<PageAccess, "basic_visible" | "premium_visible" | "travel_mode_visible">>
   ) => {
     const { error } = await supabase
       .from("plan_page_access")
@@ -69,11 +75,28 @@ export function usePlanPageAccess() {
     return page.basic_visible;
   };
 
+  const isTravelModeVisible = (pageKey: string): boolean => {
+    const page = pageAccess.find((p) => p.page_key === pageKey);
+    if (!page) return true; // Default to visible if not configured
+    return page.travel_mode_visible;
+  };
+
+  const getSortedPages = (context: SortContext): PageAccess[] => {
+    const sortKey = `${context}_sort_order` as keyof PageAccess;
+    return [...pageAccess].sort((a, b) => {
+      const aOrder = (a[sortKey] as number) ?? a.sort_order ?? 0;
+      const bOrder = (b[sortKey] as number) ?? b.sort_order ?? 0;
+      return aOrder - bOrder;
+    });
+  };
+
   return {
     pageAccess,
     isLoading,
     fetchPageAccess,
     updatePageAccess,
     isPageVisible,
+    isTravelModeVisible,
+    getSortedPages,
   };
 }

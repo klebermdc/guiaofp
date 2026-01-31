@@ -6,6 +6,7 @@ import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
 import { PlanAccessManager } from './PlanAccessManager';
+import { MenuOrderManager } from './MenuOrderManager';
 import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
@@ -31,6 +32,7 @@ import {
   UtensilsCrossed,
   LayoutDashboard,
   BookOpen,
+  Menu,
   type LucideIcon
 } from 'lucide-react';
 
@@ -47,6 +49,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   coupons: { title: 'Cupons de Desconto', description: 'Criar e gerenciar promoções', icon: Tag },
   pricing: { title: 'Preços dos Planos', description: 'Configurar valores e features', icon: DollarSign },
   plans: { title: 'Acesso aos Planos', description: 'Controlar visibilidade de páginas', icon: Settings },
+  menu_order: { title: 'Ordem do Menu', description: 'Reordenar itens por contexto', icon: Menu },
   payments: { title: 'Gateway de Pagamento', description: 'Configurar integrações de pagamento', icon: CreditCard },
   categories: { title: 'Categorias', description: 'Organizar conteúdos por categoria', icon: FolderOpen },
   content: { title: 'Conteúdos', description: 'Gerenciar vídeos e materiais', icon: FileVideo },
@@ -82,6 +85,8 @@ const AdminPanelComponent = () => {
         return <PlanPricingManager />;
       case 'plans':
         return <PlanAccessManager />;
+      case 'menu_order':
+        return <MenuOrderManager />;
       case 'payments':
         return <PaymentGatewayManager />;
       case 'categories':
