@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Navigation, Star, Clock, UtensilsCrossed } from 'lucide-react';
-import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
+import { Navigation, Star, Clock, UtensilsCrossed, DollarSign } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface POI {
@@ -17,6 +16,10 @@ interface POI {
   requiresReservation?: boolean | null;
   hasWarning?: boolean | null;
   warningText?: string | null;
+  priceRange?: string | null;
+  serviceType?: string | null;
+  mustTry?: string | null;
+  tips?: string | null;
 }
 
 interface RestaurantSidebarCardProps {
@@ -27,6 +30,19 @@ interface RestaurantSidebarCardProps {
   onOpenMenu?: (url: string, name: string) => void;
 }
 
+// Get service type label with color
+const getTypeLabel = (type: string | null | undefined) => {
+  switch (type) {
+    case 'signature':
+      return { label: 'Signature', color: 'bg-purple-500' };
+    case 'table-service':
+      return { label: 'Mesa', color: 'bg-blue-500' };
+    case 'quick-service':
+    default:
+      return { label: 'Quick Service', color: 'bg-green-500' };
+  }
+};
+
 export function RestaurantSidebarCard({ 
   poi, 
   isSelected, 
@@ -35,9 +51,8 @@ export function RestaurantSidebarCard({
   onOpenMenu 
 }: RestaurantSidebarCardProps) {
   const isMobile = useIsMobile();
-  const details = RESTAURANT_DETAILS[poi.name];
-  const typeInfo = details ? getTypeLabel(details.type) : getTypeLabel('quick-service');
-  const reservation = details?.reservation || poi.requiresReservation;
+  const typeInfo = getTypeLabel(poi.serviceType);
+  const reservation = poi.requiresReservation;
 
   const handleOpenMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,9 +87,9 @@ export function RestaurantSidebarCard({
               <Badge className={`${typeInfo.color} text-white text-[10px] px-1.5 h-5`}>
                 {typeInfo.label}
               </Badge>
-              {details && (
+              {poi.priceRange && (
                 <span className="text-xs text-green-500 font-bold">
-                  {getPriceIndicator(details.priceLevel)}
+                  {poi.priceRange}
                 </span>
               )}
               {reservation && (
@@ -106,24 +121,24 @@ export function RestaurantSidebarCard({
           </div>
         </div>
 
-        {/* Tip Section */}
-        {details?.tip && (
+        {/* Tip Section - from database */}
+        {poi.tips && (
           <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
             <Star className="w-3 h-3 mt-0.5 shrink-0 text-yellow-500" />
-            <span className="line-clamp-2">{details.tip}</span>
+            <span className="line-clamp-2">{poi.tips}</span>
           </p>
         )}
 
-        {/* Must Try Section */}
-        {details?.mustTry && (
+        {/* Must Try Section - from database */}
+        {poi.mustTry && (
           <p className="text-[11px] font-medium text-primary flex items-start gap-1.5">
             <UtensilsCrossed className="w-3 h-3 mt-0.5 shrink-0" />
-            <span>Experimente: {details.mustTry}</span>
+            <span>Experimente: {poi.mustTry}</span>
           </p>
         )}
 
-        {/* Description fallback if no details */}
-        {!details && poi.description && (
+        {/* Description fallback */}
+        {!poi.tips && !poi.mustTry && poi.description && (
           <p className="text-[11px] text-muted-foreground line-clamp-2">
             {poi.description}
           </p>
