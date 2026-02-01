@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
@@ -39,12 +39,64 @@ export interface ContentStyles {
   custom_classes?: string | null;
 }
 
-// Global cache for editable content
+// Global cache for editable content - shared across all hooks
 const contentCache = new Map<string, { content: EditableContent | null; timestamp: number }>();
+const pageContentCache = new Map<string, { contents: Record<string, EditableContent>; timestamp: number }>();
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - content rarely changes
+
+// Track pages that have been preloaded
+const preloadedPages = new Set<string>();
 
 const getCacheKey = (pageKey: string, sectionKey: string) => `${pageKey}:${sectionKey}`;
 
+/**
+ * Preload all content for a page in background - call once at page level
+ * This populates the cache so individual hooks don't make requests
+ */
+export const preloadPageContent = async (pageKey: string): Promise<void> => {
+  // Skip if already preloaded and cache is valid
+  const cached = pageContentCache.get(pageKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return;
+  }
+
+  // Mark as preloading to prevent duplicate calls
+  if (preloadedPages.has(pageKey)) {
+    return;
+  }
+  preloadedPages.add(pageKey);
+
+  try {
+    const { data, error } = await supabase
+      .from('editable_content')
+      .select('*')
+      .eq('page_key', pageKey);
+
+    if (error) {
+      console.error('Error preloading page content:', error);
+      preloadedPages.delete(pageKey);
+      return;
+    }
+
+    const contentMap: Record<string, EditableContent> = {};
+    data?.forEach((item) => {
+      const content = item as unknown as EditableContent;
+      contentMap[item.section_key] = content;
+      // Also populate individual cache entries
+      const key = getCacheKey(pageKey, item.section_key);
+      contentCache.set(key, { content, timestamp: Date.now() });
+    });
+
+    pageContentCache.set(pageKey, { contents: contentMap, timestamp: Date.now() });
+  } catch (err) {
+    console.error('Error preloading content:', err);
+    preloadedPages.delete(pageKey);
+  }
+};
+
+/**
+ * Hook for single section - reads from cache if preloaded
+ */
 export const useEditableContent = (pageKey: string, sectionKey: string) => {
   const cacheKey = getCacheKey(pageKey, sectionKey);
   
@@ -70,11 +122,11 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
   const fetchedKeyRef = useRef<string | null>(null);
 
   const fetchContent = useCallback(async (force = false) => {
-    // Skip if we have valid cache and not forcing refresh
+    // Check cache first (may have been populated by preload)
     const cached = contentCache.get(cacheKey);
     if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL) {
       if (fetchedKeyRef.current === cacheKey) {
-        return; // Already fetched, skip
+        return; // Already set, skip
       }
       setContent(cached.content);
       setIsLoading(false);
@@ -112,6 +164,15 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
   }, [pageKey, sectionKey, cacheKey]);
 
   useEffect(() => {
+    // Check if content was preloaded
+    const cached = contentCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setContent(cached.content);
+      setIsLoading(false);
+      fetchedKeyRef.current = cacheKey;
+      return;
+    }
+
     // Reset ref when keys change
     if (fetchedKeyRef.current !== cacheKey) {
       fetchedKeyRef.current = null;
@@ -152,6 +213,8 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
       toast.success('Conteúdo salvo com sucesso!');
       // Invalidate cache and refetch
       contentCache.delete(cacheKey);
+      pageContentCache.delete(pageKey);
+      preloadedPages.delete(pageKey);
       fetchedKeyRef.current = null;
       await fetchContent(true);
       return true;
@@ -199,9 +262,11 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
   // Force refresh function
   const refetch = useCallback(() => {
     contentCache.delete(cacheKey);
+    pageContentCache.delete(pageKey);
+    preloadedPages.delete(pageKey);
     fetchedKeyRef.current = null;
     return fetchContent(true);
-  }, [cacheKey, fetchContent]);
+  }, [cacheKey, pageKey, fetchContent]);
 
   return {
     content,
@@ -215,10 +280,9 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
   };
 };
 
-// Global cache for page content
-const pageContentCache = new Map<string, { contents: Record<string, EditableContent>; timestamp: number }>();
-
-// Hook for fetching all content for a page
+/**
+ * Hook for fetching all content for a page - use for admin/bulk operations
+ */
 export const usePageContent = (pageKey: string) => {
   const [contents, setContents] = useState<Record<string, EditableContent>>(() => {
     // Initialize from cache if available
@@ -269,7 +333,11 @@ export const usePageContent = (pageKey: string) => {
 
         const contentMap: Record<string, EditableContent> = {};
         data?.forEach((item) => {
-          contentMap[item.section_key] = item as unknown as EditableContent;
+          const content = item as unknown as EditableContent;
+          contentMap[item.section_key] = content;
+          // Also populate individual cache
+          const key = getCacheKey(pageKey, item.section_key);
+          contentCache.set(key, { content, timestamp: Date.now() });
         });
         setContents(contentMap);
         // Update cache
