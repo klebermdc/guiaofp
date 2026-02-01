@@ -28,10 +28,11 @@ const Login = () => {
   useEffect(() => {
     // Only redirect if authenticated AND auth check is complete
     // This prevents race conditions when reopening the app
-    if (isAuthenticated && !authLoading) {
+    // Also skip redirect if we're in the middle of a login submission
+    if (isAuthenticated && !authLoading && !isSubmitting) {
       navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, isSubmitting, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

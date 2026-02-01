@@ -63,17 +63,10 @@ const PageLoader = () => (
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
-
-  useEffect(() => {
-    // Check if user has seen splash before in this session
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-    if (hasSeenSplash) {
-      setShowSplash(false);
-      setIsFirstVisit(false);
-    }
-  }, []);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Check immediately on mount - avoid showing splash if already seen
+    return !sessionStorage.getItem('hasSeenSplash');
+  });
 
   const handleSplashFinish = () => {
     setShowSplash(false);
@@ -89,8 +82,8 @@ const App = () => {
               <TravelModeProvider>
                 <LoadingProvider>
                   <TooltipProvider>
-                  {showSplash && isFirstVisit && (
-                    <SplashScreen onFinish={handleSplashFinish} minDuration={2500} />
+                  {showSplash && (
+                    <SplashScreen onFinish={handleSplashFinish} minDuration={1800} />
                   )}
                   <Toaster />
                   <Sonner />

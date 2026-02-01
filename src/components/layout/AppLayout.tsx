@@ -40,13 +40,22 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  // Only show loading if we're truly in an initial auth check (not returning from login)
+  // This prevents the double-loading screen after login
+  const showLoading = isLoading || (isRoleLoading && !isAuthenticated);
+
+  if (!isAuthenticated && !isLoading) {
     return <Navigate to="/login" replace />;
   }
 
-  // Wait for auth, role, AND profile to load before checking access
-  // This prevents the flash of "access blocked" screen
-  if (isLoading || isRoleLoading || isProfileLoading) {
+  // During initial auth check, show loading
+  if (showLoading) {
+    return <AuthLoadingScreen />;
+  }
+
+  // Wait for profile only if we're authenticated but profile is still loading
+  // Use a softer loading state - keep the layout but show skeleton in content
+  if (isProfileLoading || isRoleLoading) {
     return <AuthLoadingScreen />;
   }
 
