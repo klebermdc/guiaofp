@@ -27,7 +27,7 @@ import {
   POI_CONFIG, 
   GOOGLE_MAPS_API_KEY,
   REFRESH_INTERVALS,
-  type POIType,
+  type ExtendedPOIType,
   type Park 
 } from '@/data/constants';
 
@@ -55,7 +55,7 @@ interface Attraction {
 
 interface POI {
   id: string;
-  type: POIType;
+  type: ExtendedPOIType;
   name: string;
   position: LatLng;
   schedule?: string | null;
@@ -130,10 +130,10 @@ export default function ParkMap() {
   const [showAttractionsList, setShowAttractionsList] = useState(false);
   const [isNavPanelExpanded, setIsNavPanelExpanded] = useState(true);
   const [attractionFilter, setAttractionFilter] = useState<'all' | 'open' | 'low-wait'>('all');
-  const [sidebarTab, setSidebarTab] = useState<'attractions' | 'live-shows' | POIType>('attractions');
+  const [sidebarTab, setSidebarTab] = useState<'attractions' | 'live-shows' | ExtendedPOIType>('attractions');
   const [hasPlayedArrivalSound, setHasPlayedArrivalSound] = useState(false);
   const [mapType, setMapType] = useState<'satellite' | 'roadmap'>('satellite');
-  const [visiblePOIs, setVisiblePOIs] = useState<Set<POIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
+  const [visiblePOIs, setVisiblePOIs] = useState<Set<ExtendedPOIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
@@ -220,7 +220,7 @@ export default function ParkMap() {
     .filter(poi => poi.latitude && poi.longitude)
     .map(poi => ({
       id: poi.id,
-      type: (poi.icon as POIType) || 'restroom',
+      type: (poi.icon as ExtendedPOIType) || 'restroom',
       name: poi.title,
       position: { lat: Number(poi.latitude), lng: Number(poi.longitude) },
       schedule: poi.schedule,
@@ -242,7 +242,7 @@ export default function ParkMap() {
     .filter(r => r.latitude && r.longitude)
     .map(r => ({
       id: `restaurant-${r.id}`,
-      type: 'restaurant' as POIType,
+      type: 'restaurant' as ExtendedPOIType,
       name: r.name,
       position: { lat: Number(r.latitude), lng: Number(r.longitude) },
       schedule: null,
@@ -265,7 +265,7 @@ export default function ParkMap() {
   const currentParkPOIs: POI[] = [...nonRestaurantPOIs, ...restaurantPOIs];
 
   // Toggle POI visibility
-  const togglePOIType = (type: POIType) => {
+  const togglePOIType = (type: ExtendedPOIType) => {
     setVisiblePOIs(prev => {
       const newSet = new Set(prev);
       if (newSet.has(type)) {
@@ -278,7 +278,7 @@ export default function ParkMap() {
   };
 
   // Get POI marker icon with unique, visually distinct SVG paths
-  const getPOIMarkerIcon = (type: POIType): google.maps.Icon | google.maps.Symbol | undefined => {
+  const getPOIMarkerIcon = (type: ExtendedPOIType): google.maps.Icon | google.maps.Symbol | undefined => {
     if (typeof google === 'undefined') {
       return undefined;
     }
@@ -1387,7 +1387,7 @@ export default function ParkMap() {
             <span className="hidden sm:inline">{attractionsWithWaitTimes.length}</span>
           </Button>
           {/* POI type toggles */}
-          {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
+          {(Object.keys(POI_CONFIG) as ExtendedPOIType[]).map((type) => {
             const config = POI_CONFIG[type];
             const isActive = visiblePOIs.has(type);
             const count = currentParkPOIs.filter(p => p.type === type).length;
@@ -1794,7 +1794,7 @@ export default function ParkMap() {
                     {liveShows.length}
                   </Badge>
                 </Button>
-                {(Object.keys(POI_CONFIG) as POIType[]).map((type) => {
+                {(Object.keys(POI_CONFIG) as ExtendedPOIType[]).map((type) => {
                   const config = POI_CONFIG[type];
                   const count = currentParkPOIs.filter(p => p.type === type).length;
                   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, Trash2, Plus, Save, Search, Image as ImageIcon, Loader2, Phone, Globe, MapPin, DollarSign, Star, Edit2, X, AlertTriangle } from 'lucide-react';
+import { Upload, Trash2, Plus, Save, Search, Image as ImageIcon, Loader2, Phone, Globe, MapPin, DollarSign, Star, Edit2, X, AlertTriangle, Navigation } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +33,7 @@ import {
   useDeleteRestaurantImage,
   useUpdateRestaurant,
   useDeleteRestaurant,
+  useCreateRestaurant,
   type Restaurant 
 } from '@/hooks/useRestaurants';
 
@@ -36,6 +44,8 @@ const AdminRestaurantsPanel = () => {
   const [newImageUrl, setNewImageUrl] = useState('');
   const [editForm, setEditForm] = useState<Partial<Restaurant>>({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newRestaurantName, setNewRestaurantName] = useState('');
 
   // Queries
   const { data: restaurants = [], isLoading: loadingRestaurants } = useRestaurants();
@@ -48,6 +58,7 @@ const AdminRestaurantsPanel = () => {
   const deleteImageMutation = useDeleteRestaurantImage();
   const updateRestaurantMutation = useUpdateRestaurant();
   const deleteRestaurantMutation = useDeleteRestaurant();
+  const createRestaurantMutation = useCreateRestaurant();
 
   // Filter restaurants based on search
   const filteredRestaurants = restaurants.filter(r =>
@@ -77,6 +88,8 @@ const AdminRestaurantsPanel = () => {
       character_dining: restaurant.character_dining,
       michelin: restaurant.michelin,
       featured: restaurant.featured,
+      latitude: restaurant.latitude,
+      longitude: restaurant.longitude,
     });
     setNewImages([]);
     setIsEditing(false);
@@ -143,20 +156,46 @@ const AdminRestaurantsPanel = () => {
     setIsEditing(false);
   };
 
+  const handleCreateRestaurant = async () => {
+    if (!newRestaurantName.trim()) return;
+
+    const slug = newRestaurantName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    await createRestaurantMutation.mutateAsync({
+      name: newRestaurantName.trim(),
+      slug,
+    });
+
+    setNewRestaurantName('');
+    setIsCreateDialogOpen(false);
+  };
+
   const isSaving = addImageMutation.isPending || updateRestaurantMutation.isPending;
   const isDeleting = deleteRestaurantMutation.isPending;
+  const isCreating = createRestaurantMutation.isPending;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-          <ImageIcon className="h-6 w-6 text-white" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <ImageIcon className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Gerenciar Restaurantes</h2>
+            <p className="text-muted-foreground">Edite informações, fotos e coordenadas do mapa</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Gerenciar Restaurantes</h2>
-          <p className="text-muted-foreground">Edite informações e gerencie fotos dos restaurantes</p>
-        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Restaurante
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -208,8 +247,13 @@ const AdminRestaurantsPanel = () => {
                         <div className="font-semibold text-foreground mb-1 pr-8">
                           {restaurant.name}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground flex items-center gap-2">
                           {restaurant.category || 'Sem categoria'}
+                          {restaurant.latitude && restaurant.longitude && (
+                            <span className="inline-flex items-center gap-1 text-green-600">
+                              <MapPin className="w-3 h-3" />
+                            </span>
+                          )}
                         </div>
                         {restaurant.michelin && (
                           <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 inline mt-1" />
@@ -242,6 +286,7 @@ const AdminRestaurantsPanel = () => {
                                 <li>Todas as informações do restaurante</li>
                                 <li>Todas as fotos associadas</li>
                                 <li>Itens do cardápio</li>
+                                <li>Marcador no mapa</li>
                               </ul>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -312,8 +357,9 @@ const AdminRestaurantsPanel = () => {
 
               <CardContent>
                 <Tabs defaultValue="details" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="details">Informações</TabsTrigger>
+                    <TabsTrigger value="location">Localização</TabsTrigger>
                     <TabsTrigger value="photos">Fotos</TabsTrigger>
                   </TabsList>
 
@@ -389,25 +435,10 @@ const AdminRestaurantsPanel = () => {
                           </div>
                         </div>
 
-                        {/* Address */}
-                        <div className="space-y-2">
-                          <Label htmlFor="address">Endereço</Label>
-                          <div className="relative">
-                            <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                            <Textarea
-                              id="address"
-                              value={editForm.address || ''}
-                              onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                              className="pl-10"
-                              rows={2}
-                            />
-                          </div>
-                        </div>
-
                         {/* Location Details */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="location">Localização</Label>
+                            <Label htmlFor="location">Parque/Local</Label>
                             <Input
                               id="location"
                               value={editForm.location || ''}
@@ -647,6 +678,110 @@ const AdminRestaurantsPanel = () => {
                     )}
                   </TabsContent>
 
+                  {/* Location Tab */}
+                  <TabsContent value="location" className="space-y-6">
+                    <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Navigation className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold text-foreground">Coordenadas do Mapa</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Defina as coordenadas para que o restaurante apareça no mapa interativo.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="latitude">Latitude</Label>
+                          <Input
+                            id="latitude"
+                            type="number"
+                            step="0.000001"
+                            value={editForm.latitude ?? ''}
+                            onChange={(e) => setEditForm({ 
+                              ...editForm, 
+                              latitude: e.target.value ? parseFloat(e.target.value) : null 
+                            })}
+                            placeholder="Ex: 28.418889"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="longitude">Longitude</Label>
+                          <Input
+                            id="longitude"
+                            type="number"
+                            step="0.000001"
+                            value={editForm.longitude ?? ''}
+                            onChange={(e) => setEditForm({ 
+                              ...editForm, 
+                              longitude: e.target.value ? parseFloat(e.target.value) : null 
+                            })}
+                            placeholder="Ex: -81.581389"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Address for reference */}
+                      <div className="mt-4 space-y-2">
+                        <Label htmlFor="address">Endereço Completo</Label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                          <Textarea
+                            id="address"
+                            value={editForm.address || ''}
+                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                            className="pl-10"
+                            rows={2}
+                            placeholder="Endereço completo..."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Status indicator */}
+                      <div className="mt-4 p-3 rounded-lg flex items-center gap-2 text-sm"
+                        style={{
+                          backgroundColor: (editForm.latitude && editForm.longitude) 
+                            ? 'hsl(var(--success) / 0.1)' 
+                            : 'hsl(var(--destructive) / 0.1)',
+                          color: (editForm.latitude && editForm.longitude) 
+                            ? 'hsl(142 76% 36%)' 
+                            : 'hsl(var(--destructive))'
+                        }}
+                      >
+                        <MapPin className="w-4 h-4" />
+                        {editForm.latitude && editForm.longitude ? (
+                          <span>✓ Coordenadas configuradas - aparece no mapa</span>
+                        ) : (
+                          <span>⚠ Sem coordenadas - não aparece no mapa</span>
+                        )}
+                      </div>
+
+                      {/* Save coordinates */}
+                      <Button
+                        onClick={handleSaveDetails}
+                        className="w-full mt-4"
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Salvar Localização
+                      </Button>
+                    </div>
+
+                    {/* Google Maps Helper */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">💡 Como obter coordenadas</h4>
+                      <ol className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-decimal list-inside">
+                        <li>Abra o Google Maps e pesquise o restaurante</li>
+                        <li>Clique com o botão direito no local exato</li>
+                        <li>Copie as coordenadas que aparecem (ex: 28.418889, -81.581389)</li>
+                        <li>Cole a primeira número em Latitude e o segundo em Longitude</li>
+                      </ol>
+                    </div>
+                  </TabsContent>
+
                   {/* Photos Tab */}
                   <TabsContent value="photos" className="space-y-6">
                     {/* Current Photos */}
@@ -731,10 +866,7 @@ const AdminRestaurantsPanel = () => {
                             accept="image/*"
                             multiple
                             className="hidden"
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              console.log('Files selected:', files.length);
-                            }}
+                            onChange={() => {}}
                           />
                         </label>
                       </div>
@@ -811,6 +943,43 @@ const AdminRestaurantsPanel = () => {
           )}
         </div>
       </div>
+
+      {/* Create Restaurant Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Restaurante</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-restaurant-name">Nome do Restaurante</Label>
+              <Input
+                id="new-restaurant-name"
+                value={newRestaurantName}
+                onChange={(e) => setNewRestaurantName(e.target.value)}
+                placeholder="Ex: Cinderella's Royal Table"
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateRestaurant()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateRestaurant} 
+              disabled={!newRestaurantName.trim() || isCreating}
+            >
+              {isCreating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              Criar Restaurante
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
