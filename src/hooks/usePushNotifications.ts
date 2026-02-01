@@ -32,8 +32,8 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
+    } catch {
+      // Silent fail
     }
   }, []);
 
@@ -51,10 +51,8 @@ export function usePushNotifications() {
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('Service Worker registered:', registration);
         return registration;
       } catch (error) {
-        console.error('Service Worker registration failed:', error);
         throw error;
       }
     }
@@ -105,9 +103,9 @@ export function usePushNotifications() {
 
       setIsSubscribed(true);
       return { success: true };
-    } catch (error: any) {
-      console.error('Error subscribing to push:', error);
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }
@@ -136,9 +134,9 @@ export function usePushNotifications() {
 
       setIsSubscribed(false);
       return { success: true };
-    } catch (error: any) {
-      console.error('Error unsubscribing:', error);
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }

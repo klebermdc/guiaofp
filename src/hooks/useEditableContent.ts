@@ -73,7 +73,6 @@ export const preloadPageContent = async (pageKey: string): Promise<void> => {
       .eq('page_key', pageKey);
 
     if (error) {
-      console.error('Error preloading page content:', error);
       preloadedPages.delete(pageKey);
       return;
     }
@@ -88,8 +87,7 @@ export const preloadPageContent = async (pageKey: string): Promise<void> => {
     });
 
     pageContentCache.set(pageKey, { contents: contentMap, timestamp: Date.now() });
-  } catch (err) {
-    console.error('Error preloading content:', err);
+  } catch {
     preloadedPages.delete(pageKey);
   }
 };
@@ -147,17 +145,13 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
         .eq('section_key', sectionKey)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching content:', error);
-      }
-      
-      const contentData = data ? (data as unknown as EditableContent) : null;
+      const contentData = (data && !error) ? (data as unknown as EditableContent) : null;
       setContent(contentData);
       // Update cache
       contentCache.set(cacheKey, { content: contentData, timestamp: Date.now() });
       fetchedKeyRef.current = cacheKey;
-    } catch (err) {
-      console.error('Error:', err);
+    } catch {
+      // Silent fail
     } finally {
       setIsLoading(false);
     }
@@ -218,8 +212,7 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
       fetchedKeyRef.current = null;
       await fetchContent(true);
       return true;
-    } catch (err) {
-      console.error('Error saving content:', err);
+    } catch {
       toast.error('Erro ao salvar conteúdo');
       return false;
     } finally {
@@ -343,8 +336,8 @@ export const usePageContent = (pageKey: string) => {
         // Update cache
         pageContentCache.set(pageKey, { contents: contentMap, timestamp: Date.now() });
         fetchedKeyRef.current = pageKey;
-      } catch (err) {
-        console.error('Error:', err);
+      } catch {
+        // Silent fail
       } finally {
         setIsLoading(false);
       }

@@ -67,17 +67,6 @@ export function useIOSPushSupport(): IOSPushSupport {
     // We show this even if PushManager isn't available yet (it becomes available in standalone mode)
     const needsInstallation = isIOS && !isStandalone && meetsVersionRequirement;
     
-    // Debug log for troubleshooting
-    console.log('[iOS Push Support]', {
-      isIOS,
-      isSafari,
-      isStandalone,
-      safariVersion,
-      supportsWebPush,
-      canReceivePush,
-      needsInstallation,
-    });
-    
     setSupport({
       isIOS,
       isSafari,

@@ -297,8 +297,8 @@ export default function ParkMap() {
         oscillator.start(now + index * 0.15);
         oscillator.stop(now + index * 0.15 + 0.5);
       });
-    } catch (error) {
-      console.log('Could not play arrival sound:', error);
+    } catch {
+      // Silent fail - audio is not critical
     }
   }, []);
 

@@ -10,7 +10,6 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('SW registered:', registration.scope);
 
           // Only reload on SW update if the page is actively being viewed
           // This prevents reload when switching back to the tab
@@ -24,7 +23,6 @@ if ('serviceWorker' in navigator) {
             
             // Only reload if document is visible - prevents reload on tab switch
             if (document.visibilityState !== 'visible') {
-              console.log('[SW] Skipping reload - tab not visible');
               return;
             }
             
@@ -45,8 +43,8 @@ if ('serviceWorker' in navigator) {
             }
           });
         })
-        .catch((error) => {
-          console.log('SW registration failed:', error);
+        .catch(() => {
+          // SW registration failed silently
         });
     } else {
       // Cleanup any previously-registered SW + caches in preview/dev.

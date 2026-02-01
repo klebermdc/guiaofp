@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wallet, 
@@ -59,7 +59,7 @@ const DOCUMENT_TYPES = [
   { value: 'other', label: 'Outro Documento', icon: FileText, color: 'text-muted-foreground' },
 ];
 
-export function DocumentWallet() {
+const DocumentWalletComponent = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,7 +75,7 @@ export function DocumentWallet() {
     }
   }, [user]);
 
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -87,12 +87,12 @@ export function DocumentWallet() {
 
       if (error) throw error;
       setDocuments((data as UserDocument[]) || []);
-    } catch (error) {
-      console.error('Error loading documents:', error);
+    } catch {
+      // Silent fail
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,8 +139,7 @@ export function DocumentWallet() {
       setShowUploadModal(false);
       setSelectedType('');
       loadDocuments();
-    } catch (error) {
-      console.error('Error uploading document:', error);
+    } catch {
       toast.error('Erro ao enviar documento');
     } finally {
       setIsUploading(false);
@@ -170,8 +169,7 @@ export function DocumentWallet() {
 
       toast.success('Documento excluído');
       loadDocuments();
-    } catch (error) {
-      console.error('Error deleting document:', error);
+    } catch {
       toast.error('Erro ao excluir documento');
     } finally {
       setDeleteDoc(null);
@@ -441,4 +439,6 @@ export function DocumentWallet() {
       </AlertDialog>
     </>
   );
-}
+};
+
+export const DocumentWallet = memo(DocumentWalletComponent);

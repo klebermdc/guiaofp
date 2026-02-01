@@ -352,8 +352,7 @@ export default function Attractions() {
         });
         setNotes(notesMap);
       }
-    } catch (error) {
-      console.error('Error loading preferences:', error);
+    } catch {
       toast.error('Erro ao carregar preferências');
     } finally {
       setLoading(false);

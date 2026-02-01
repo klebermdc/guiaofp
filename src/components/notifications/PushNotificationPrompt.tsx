@@ -52,16 +52,6 @@ export const PushNotificationPrompt = forwardRef<HTMLDivElement>((_, ref) => {
       return;
     }
 
-    // Show prompt if supported and not subscribed
-    console.log('[Push Prompt] Check:', { 
-      isIOS, 
-      canReceivePush, 
-      isSupported, 
-      effectivelySupported,
-      permission, 
-      isSubscribed 
-    });
-    
     if (effectivelySupported && permission === 'default' && !isSubscribed) {
       setShowPrompt(true);
     }
