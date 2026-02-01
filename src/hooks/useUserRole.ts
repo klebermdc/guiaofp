@@ -1,13 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 type AppRole = 'admin' | 'guide' | 'client';
 
+// Cache roles to prevent refetching on every render/tab switch
+const rolesCache = new Map<string, { roles: AppRole[]; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export const useUserRole = () => {
   const { user } = useAuth();
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [roles, setRoles] = useState<AppRole[]>(() => {
+    // Initialize from cache if available
+    if (user?.id) {
+      const cached = rolesCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.roles;
+      }
+    }
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached roles, don't show loading
+    if (user?.id) {
+      const cached = rolesCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return false;
+      }
+    }
+    return true;
+  });
+  
+  // Track if we've already fetched for this user
+  const fetchedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -16,6 +41,24 @@ export const useUserRole = () => {
       if (!user) {
         setRoles([]);
         setIsLoading(false);
+        fetchedUserIdRef.current = null;
+        return;
+      }
+
+      // Skip if we already fetched for this user and have valid cache
+      const cached = rolesCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        if (fetchedUserIdRef.current === user.id) {
+          return; // Already fetched, skip
+        }
+        setRoles(cached.roles);
+        setIsLoading(false);
+        fetchedUserIdRef.current = user.id;
+        return;
+      }
+
+      // Don't refetch if we already fetched for this exact user
+      if (fetchedUserIdRef.current === user.id) {
         return;
       }
 
@@ -28,7 +71,15 @@ export const useUserRole = () => {
         if (!isMounted) return;
         
         if (!error && data) {
-          setRoles(data.map((r) => r.role as AppRole));
+          const fetchedRoles = data.map((r) => r.role as AppRole);
+          setRoles(fetchedRoles);
+          
+          // Cache the result
+          rolesCache.set(user.id, { 
+            roles: fetchedRoles, 
+            timestamp: Date.now() 
+          });
+          fetchedUserIdRef.current = user.id;
         }
       } catch (err) {
         console.error('Error fetching user roles:', err);
@@ -42,10 +93,18 @@ export const useUserRole = () => {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id, not the entire user object
 
   const isGuide = roles.includes('guide') || roles.includes('admin');
   const isAdmin = roles.includes('admin');
 
-  return { roles, isGuide, isAdmin, isLoading };
+  // Function to force refresh roles (useful after role changes)
+  const refreshRoles = useCallback(() => {
+    if (user?.id) {
+      rolesCache.delete(user.id);
+      fetchedUserIdRef.current = null;
+    }
+  }, [user?.id]);
+
+  return { roles, isGuide, isAdmin, isLoading, refreshRoles };
 };

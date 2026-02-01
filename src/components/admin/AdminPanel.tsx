@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { AdminSidebar, type AdminSection } from './AdminSidebar';
 import { AdminOverview } from './AdminOverview';
 import { CategoriesManager } from './CategoriesManager';
@@ -61,8 +61,22 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
 };
 
+const ADMIN_SECTION_KEY = 'admin_active_section';
+
 const AdminPanelComponent = () => {
-  const [activeSection, setActiveSection] = useState<AdminSection>('overview');
+  // Persist active section in sessionStorage to survive tab switches
+  const [activeSection, setActiveSection] = useState<AdminSection>(() => {
+    const saved = sessionStorage.getItem(ADMIN_SECTION_KEY);
+    if (saved && saved in sectionConfig) {
+      return saved as AdminSection;
+    }
+    return 'overview';
+  });
+  
+  // Save to sessionStorage whenever section changes
+  useEffect(() => {
+    sessionStorage.setItem(ADMIN_SECTION_KEY, activeSection);
+  }, [activeSection]);
   
   const currentConfig = useMemo(() => sectionConfig[activeSection], [activeSection]);
   const IconComponent = currentConfig.icon;
