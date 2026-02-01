@@ -65,6 +65,11 @@ interface POI {
   requiresReservation?: boolean | null;
   hasWarning?: boolean | null;
   warningText?: string | null;
+  // Additional restaurant fields from restaurants table
+  priceRange?: string | null;
+  serviceType?: string | null;
+  mustTry?: string | null;
+  tips?: string | null;
 }
 
 // Normalize attraction names for matching with wait times
@@ -180,7 +185,7 @@ export default function ParkMap() {
     toast.info('Localização do carro removida');
   }, []);
 
-  // Fetch POIs for current park from database
+  // Fetch POIs for current park from database (content_items)
   const { data: dbPOIs = [], isLoading: isLoadingPOIs } = useQuery({
     queryKey: ['park-pois', selectedPark.id],
     queryFn: async () => {
@@ -196,8 +201,22 @@ export default function ParkMap() {
     },
   });
 
+  // Fetch restaurants from the restaurants table (managed via Admin Panel)
+  const { data: dbRestaurants = [] } = useQuery({
+    queryKey: ['map-restaurants', selectedPark.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, latitude, longitude, description, menu_url, cuisine, reservation_required, tips, must_try, price_range, type')
+        .eq('park_id', selectedPark.id);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Transform database POIs to the expected format
-  const currentParkPOIs: POI[] = dbPOIs
+  const contentItemPOIs: POI[] = dbPOIs
     .filter(poi => poi.latitude && poi.longitude)
     .map(poi => ({
       id: poi.id,
@@ -217,6 +236,33 @@ export default function ParkMap() {
       hasWarning: poi.has_warning,
       warningText: poi.warning_text,
     }));
+
+  // Transform restaurants table data to POI format with all fields
+  const restaurantPOIs: POI[] = dbRestaurants
+    .filter(r => r.latitude && r.longitude)
+    .map(r => ({
+      id: `restaurant-${r.id}`,
+      type: 'restaurant' as POIType,
+      name: r.name,
+      position: { lat: Number(r.latitude), lng: Number(r.longitude) },
+      schedule: null,
+      description: r.description,
+      menuUrl: r.menu_url,
+      cuisineType: r.cuisine,
+      requiresReservation: r.reservation_required,
+      hasWarning: false,
+      warningText: null,
+      // Additional restaurant-specific fields
+      priceRange: r.price_range,
+      serviceType: r.type,
+      mustTry: r.must_try,
+      tips: r.tips,
+    }));
+
+  // Merge POIs: restaurants from restaurants table + other POIs from content_items
+  // Avoid duplicates by filtering out content_items restaurants that might overlap
+  const nonRestaurantPOIs = contentItemPOIs.filter(poi => poi.type !== 'restaurant');
+  const currentParkPOIs: POI[] = [...nonRestaurantPOIs, ...restaurantPOIs];
 
   // Toggle POI visibility
   const togglePOIType = (type: POIType) => {

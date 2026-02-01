@@ -156,6 +156,10 @@ export function useAddRestaurantImage() {
         queryKey: ['restaurant-images', variables.restaurantId],
       });
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-page'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-guide'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', variables.restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ['map-restaurants'] });
       toast.success('Imagem adicionada com sucesso!');
     },
     onError: (error) => {
@@ -189,6 +193,10 @@ export function useDeleteRestaurantImage() {
         queryKey: ['restaurant-images', variables.restaurantId],
       });
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-page'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-guide'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', variables.restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ['map-restaurants'] });
       toast.success('Imagem removida com sucesso!');
     },
     onError: (error) => {
@@ -220,8 +228,13 @@ export function useUpdateRestaurant() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate all restaurant-related queries to ensure sync across all pages
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-page'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-guide'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['map-restaurants'] });
       toast.success('Restaurante atualizado!');
     },
     onError: (error) => {
@@ -248,6 +261,9 @@ export function useCreateRestaurant() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-page'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-guide'] });
+      queryClient.invalidateQueries({ queryKey: ['map-restaurants'] });
       toast.success('Restaurante criado com sucesso!');
     },
     onError: (error) => {
@@ -268,6 +284,9 @@ export function useDeleteRestaurant() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['restaurants'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-page'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurants-guide'] });
+      queryClient.invalidateQueries({ queryKey: ['map-restaurants'] });
       toast.success('Restaurante removido!');
     },
     onError: (error) => {
