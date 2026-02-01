@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
 import { EditButton } from '@/components/admin/EditButton';
+import { preloadPageContent } from '@/hooks/useEditableContent';
 import {
   Crown,
   MapPin,
@@ -31,6 +32,9 @@ import heroCastle from '@/assets/landing/hero-castle.jpg';
 import familyPark from '@/assets/landing/family-park.jpg';
 import featureCoaster from '@/assets/landing/feature-coaster.jpg';
 import logo from '@/assets/logo.png';
+
+// Preload landing page content in background (runs once)
+preloadPageContent('landing');
 
 interface AnimatedCardProps {
   children: React.ReactNode;
