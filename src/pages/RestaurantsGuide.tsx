@@ -11,31 +11,67 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SEO } from '@/components/SEO';
 import { motion } from 'framer-motion';
+import { PARKS } from '@/data/constants';
+
+const parkNameById = new Map<string, string>(PARKS.map((p) => [p.id, p.name]));
+
+const DISNEY_PARK_NAMES = new Set<string>([
+  'Magic Kingdom',
+  'EPCOT',
+  'Hollywood Studios',
+  'Animal Kingdom',
+]);
+
+const UNIVERSAL_PARK_NAMES = new Set<string>([
+  'Universal Studios',
+  'Islands of Adventure',
+  'Epic Universe',
+  'Volcano Bay',
+]);
+
+const inferRestaurantCategory = (
+  restaurant: Restaurant,
+  parkName?: string
+): 'disney' | 'universal' | 'fora-parques' => {
+  const explicit = restaurant.category as 'disney' | 'universal' | 'fora-parques' | null;
+  if (explicit === 'disney' || explicit === 'universal' || explicit === 'fora-parques') return explicit;
+
+  if (!parkName) return 'fora-parques';
+  if (DISNEY_PARK_NAMES.has(parkName)) return 'disney';
+  if (UNIVERSAL_PARK_NAMES.has(parkName)) return 'universal';
+  return 'fora-parques';
+};
 
 // Converter dados do Supabase para o formato esperado pelo RestaurantCard
-const convertToCardFormat = (restaurant: Restaurant): StaticRestaurant => ({
-  id: restaurant.slug, // Use slug as ID for navigation
-  name: restaurant.name,
-  category: (restaurant.category as 'disney' | 'universal' | 'fora-parques') || 'fora-parques',
-  subcategory: restaurant.subcategory || undefined,
-  park: restaurant.location || restaurant.area || undefined,
-  address: restaurant.address || '',
-  phone: restaurant.phone || undefined,
-  description: restaurant.description || '',
-  priceRange: (restaurant.price_range as '$' | '$$' | '$$$' | '$$$$') || '$$',
-  highlights: restaurant.highlights || [],
-  website: restaurant.website || undefined,
-  reservations: restaurant.reservation_required || false,
-  michelin: restaurant.michelin || false,
-  featured: restaurant.featured || false,
-  images: restaurant.image_url ? [restaurant.image_url] : [],
-  menu: {
-    appetizers: [],
-    mainCourses: restaurant.must_try ? [restaurant.must_try] : [],
-    desserts: [],
-    drinks: [],
-  },
-});
+const convertToCardFormat = (restaurant: Restaurant): StaticRestaurant => {
+  const parkName = restaurant.park_id ? parkNameById.get(restaurant.park_id) : undefined;
+  const category = inferRestaurantCategory(restaurant, parkName);
+  const parkLabel = parkName || restaurant.location || restaurant.area || undefined;
+
+  return {
+    id: restaurant.slug, // Use slug as ID for navigation
+    name: restaurant.name,
+    category,
+    subcategory: restaurant.subcategory || undefined,
+    park: parkLabel,
+    address: restaurant.address || '',
+    phone: restaurant.phone || undefined,
+    description: restaurant.description || '',
+    priceRange: (restaurant.price_range as '$' | '$$' | '$$$' | '$$$$') || '$$',
+    highlights: restaurant.highlights || [],
+    website: restaurant.website || undefined,
+    reservations: restaurant.reservation_required || false,
+    michelin: restaurant.michelin || false,
+    featured: restaurant.featured || false,
+    images: restaurant.image_url ? [restaurant.image_url] : [],
+    menu: {
+      appetizers: [],
+      mainCourses: restaurant.must_try ? [restaurant.must_try] : [],
+      desserts: [],
+      drinks: [],
+    },
+  };
+};
 
 const RestaurantsGuide = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,7 +118,7 @@ const RestaurantsGuide = () => {
 
   // Lista fixa de parques Universal
   const universalParks = [
-    'Universal Studios Florida',
+    'Universal Studios',
     'Islands of Adventure',
     'Epic Universe',
     'Volcano Bay',
