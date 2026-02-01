@@ -102,7 +102,6 @@ const PlannerManual = () => {
             .single();
           
           if (!updateError && updatedPlanner) {
-            console.log('Planner dates synced with profile:', profileStartDate, '-', profileEndDate);
             return { planner: updatedPlanner, isNew: false, datesUpdated: true };
           }
         }

@@ -203,14 +203,11 @@ export const usePlannerAutoPopulate = () => {
       .insert(itemsToInsert);
 
     if (error) {
-      console.error('Error auto-populating planner:', error);
       return { hotelItemsAdded: 0, parkItemsAdded: 0 };
     }
 
     const hotelItemsAdded = itemsToInsert.filter(i => i.item_type === 'hotel').length;
     const parkItemsAdded = itemsToInsert.filter(i => i.item_type === 'park').length;
-
-    console.log(`Auto-populated planner: ${hotelItemsAdded} hotel items, ${parkItemsAdded} park items`);
 
     return { hotelItemsAdded, parkItemsAdded };
   }, [checkExistingItems]);
