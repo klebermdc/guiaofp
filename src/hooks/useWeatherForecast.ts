@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Orlando coordinates (central location for Disney/Universal area)
 const ORLANDO_LAT = 28.4177;
@@ -30,6 +30,10 @@ interface WeatherData {
   isLoading: boolean;
   error: string | null;
 }
+
+// Global cache for weather data
+let weatherCache: { data: WeatherData; timestamp: number; daysAhead: number } | null = null;
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes - weather doesn't change that fast
 
 // WMO Weather interpretation codes
 const getWeatherInfo = (code: number): { description: string; icon: string } => {
@@ -80,24 +84,44 @@ const formatDate = (dateStr: string): string => {
 };
 
 export const useWeatherForecast = (daysAhead: number = 7) => {
-  const [data, setData] = useState<WeatherData>({
-    current: {
-      temp: 0,
-      humidity: 0,
-      weatherCode: 0,
-      weatherDescription: '',
-      weatherIcon: '',
-      uvIndex: 0,
-    },
-    daily: [],
-    isLoading: true,
-    error: null,
+  const [data, setData] = useState<WeatherData>(() => {
+    // Initialize from cache if available and matching days
+    if (weatherCache && 
+        Date.now() - weatherCache.timestamp < CACHE_TTL && 
+        weatherCache.daysAhead === daysAhead) {
+      return weatherCache.data;
+    }
+    return {
+      current: {
+        temp: 0,
+        humidity: 0,
+        weatherCode: 0,
+        weatherDescription: '',
+        weatherIcon: '',
+        uvIndex: 0,
+      },
+      daily: [],
+      isLoading: true,
+      error: null,
+    };
   });
+  
+  const isFetchedRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
     
-    const fetchWeather = async () => {
+    const fetchWeather = async (isBackground = false) => {
+      // Skip if we have valid cache (unless background refresh)
+      if (!isBackground && weatherCache && 
+          Date.now() - weatherCache.timestamp < CACHE_TTL && 
+          weatherCache.daysAhead === daysAhead) {
+        if (isFetchedRef.current) return;
+        setData(weatherCache.data);
+        isFetchedRef.current = true;
+        return;
+      }
+
       try {
         // Open-Meteo API (free, no API key required)
         const response = await fetch(
@@ -130,7 +154,7 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
           };
         });
 
-        setData({
+        const newData: WeatherData = {
           current: {
             temp: Math.round(result.current.temperature_2m),
             humidity: result.current.relative_humidity_2m,
@@ -142,7 +166,12 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
           daily: dailyForecasts,
           isLoading: false,
           error: null,
-        });
+        };
+
+        setData(newData);
+        // Update cache
+        weatherCache = { data: newData, timestamp: Date.now(), daysAhead };
+        isFetchedRef.current = true;
       } catch (error) {
         console.error('Weather fetch error:', error);
         if (isMounted) {
@@ -157,8 +186,8 @@ export const useWeatherForecast = (daysAhead: number = 7) => {
 
     fetchWeather();
     
-    // Refresh every 30 minutes
-    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
+    // Refresh every 30 minutes (background refresh)
+    const interval = setInterval(() => fetchWeather(true), 30 * 60 * 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
