@@ -56,10 +56,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background safe-area-top">
       <AppSidebar />
       <MobileBottomNav />
-      <main className="lg:ml-72 min-h-screen pb-20 lg:pb-0">
+      <main 
+        className="lg:ml-72 min-h-screen lg:pb-0"
+        style={{ 
+          paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 5rem), 5rem)' 
+        }}
+      >
         <AnimatePresence mode="wait">
           <motion.div 
             key={location.pathname}

@@ -136,8 +136,10 @@ const AppSidebarComponent = () => {
 
   return (
     <>
-      {/* Desktop Sidebar Only */}
-      <aside className="hidden lg:block fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50">
+      {/* Desktop Sidebar Only - with safe area support */}
+      <aside 
+        className="hidden lg:block fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50 safe-area-top safe-area-left"
+      >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 border-b border-sidebar-border">
