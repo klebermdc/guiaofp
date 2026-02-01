@@ -18,12 +18,37 @@ export interface PageAccess {
 
 export type SortContext = 'mobile' | 'desktop' | 'travel_mode';
 
+// Global cache for page access data
+let pageAccessCache: { data: PageAccess[]; timestamp: number } | null = null;
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - this data rarely changes
+
 export function usePlanPageAccess() {
-  const [pageAccess, setPageAccess] = useState<PageAccess[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pageAccess, setPageAccess] = useState<PageAccess[]>(() => {
+    // Initialize from cache if available
+    if (pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL) {
+      return pageAccessCache.data;
+    }
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached data, don't show loading
+    if (pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL) {
+      return false;
+    }
+    return true;
+  });
   const isFetched = useRef(false);
 
-  const fetchPageAccess = useCallback(async () => {
+  const fetchPageAccess = useCallback(async (force = false) => {
+    // Skip if we have valid cache and not forcing refresh
+    if (!force && pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL) {
+      if (isFetched.current) return;
+      setPageAccess(pageAccessCache.data);
+      setIsLoading(false);
+      isFetched.current = true;
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -33,6 +58,9 @@ export function usePlanPageAccess() {
 
       if (!error && data) {
         setPageAccess(data as PageAccess[]);
+        // Update cache
+        pageAccessCache = { data: data as PageAccess[], timestamp: Date.now() };
+        isFetched.current = true;
       }
     } catch (err) {
       console.error('Error fetching page access:', err);
@@ -44,7 +72,6 @@ export function usePlanPageAccess() {
   useEffect(() => {
     // Only fetch once on mount to avoid duplicate calls
     if (!isFetched.current) {
-      isFetched.current = true;
       fetchPageAccess();
     }
   }, [fetchPageAccess]);
@@ -59,9 +86,10 @@ export function usePlanPageAccess() {
       .eq("id", id);
 
     if (!error) {
-      setPageAccess((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
-      );
+      const newData = pageAccess.map((p) => (p.id === id ? { ...p, ...updates } : p));
+      setPageAccess(newData);
+      // Invalidate cache after update
+      pageAccessCache = { data: newData, timestamp: Date.now() };
     }
     return { error };
   };
@@ -91,6 +119,13 @@ export function usePlanPageAccess() {
     });
   };
 
+  // Force refresh function - useful after admin changes
+  const refreshPageAccess = useCallback(() => {
+    pageAccessCache = null;
+    isFetched.current = false;
+    return fetchPageAccess(true);
+  }, [fetchPageAccess]);
+
   return {
     pageAccess,
     isLoading,
@@ -99,5 +134,6 @@ export function usePlanPageAccess() {
     isPageVisible,
     isTravelModeVisible,
     getSortedPages,
+    refreshPageAccess,
   };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,15 +16,57 @@ interface MultipassStatus {
   updated_at: string;
 }
 
+// Cache for multipass status per user
+const statusCache = new Map<string, { status: MultipassStatus | null; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export const useMultipassStatus = () => {
   const { user } = useAuth();
-  const [status, setStatus] = useState<MultipassStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState<MultipassStatus | null>(() => {
+    // Initialize from cache if available
+    if (user?.id) {
+      const cached = statusCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.status;
+      }
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached data, don't show loading
+    if (user?.id) {
+      const cached = statusCache.get(user.id);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return false;
+      }
+    }
+    return true;
+  });
+  
+  const fetchedUserIdRef = useRef<string | null>(null);
 
-  const loadStatus = useCallback(async () => {
+  const loadStatus = useCallback(async (force = false) => {
     if (!user) {
       setStatus(null);
       setIsLoading(false);
+      fetchedUserIdRef.current = null;
+      return;
+    }
+
+    // Skip if we have valid cache and not forcing refresh
+    const cached = statusCache.get(user.id);
+    if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      if (fetchedUserIdRef.current === user.id) {
+        return; // Already fetched, skip
+      }
+      setStatus(cached.status);
+      setIsLoading(false);
+      fetchedUserIdRef.current = user.id;
+      return;
+    }
+
+    // Don't refetch if we already fetched for this exact user
+    if (!force && fetchedUserIdRef.current === user.id) {
       return;
     }
 
@@ -40,6 +82,9 @@ export const useMultipassStatus = () => {
       }
 
       setStatus(data);
+      // Update cache
+      statusCache.set(user.id, { status: data, timestamp: Date.now() });
+      fetchedUserIdRef.current = user.id;
     } catch (err) {
       console.error('Error in loadStatus:', err);
     } finally {
@@ -79,7 +124,10 @@ export const useMultipassStatus = () => {
         },
       }).catch(err => console.error('WhatsApp notification failed:', err));
 
-      await loadStatus();
+      // Invalidate cache and refetch
+      statusCache.delete(user.id);
+      fetchedUserIdRef.current = null;
+      await loadStatus(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error confirming purchase:', error);
@@ -102,7 +150,10 @@ export const useMultipassStatus = () => {
 
       if (error) throw error;
 
-      await loadStatus();
+      // Invalidate cache and refetch
+      statusCache.delete(user.id);
+      fetchedUserIdRef.current = null;
+      await loadStatus(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error undoing purchase:', error);
@@ -110,11 +161,20 @@ export const useMultipassStatus = () => {
     }
   };
 
+  // Force refresh function
+  const refetch = useCallback(() => {
+    if (user?.id) {
+      statusCache.delete(user.id);
+      fetchedUserIdRef.current = null;
+    }
+    return loadStatus(true);
+  }, [user?.id, loadStatus]);
+
   return {
     status,
     isLoading,
     confirmPurchase,
     undoPurchase,
-    refetch: loadStatus,
+    refetch,
   };
 };

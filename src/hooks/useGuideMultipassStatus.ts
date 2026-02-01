@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MultipassStatus {
@@ -15,12 +15,39 @@ interface MultipassStatus {
   updated_at: string;
 }
 
+// Global cache for guide multipass statuses
+let guideStatusCache: { data: MultipassStatus[]; timestamp: number } | null = null;
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes - guides need more fresh data
+
 // Hook for guides to manage any client's status
 export const useGuideMultipassStatus = () => {
-  const [statuses, setStatuses] = useState<MultipassStatus[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [statuses, setStatuses] = useState<MultipassStatus[]>(() => {
+    // Initialize from cache if available
+    if (guideStatusCache && Date.now() - guideStatusCache.timestamp < CACHE_TTL) {
+      return guideStatusCache.data;
+    }
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached data, don't show loading
+    if (guideStatusCache && Date.now() - guideStatusCache.timestamp < CACHE_TTL) {
+      return false;
+    }
+    return true;
+  });
+  
+  const isFetchedRef = useRef(false);
 
-  const loadAllStatuses = useCallback(async () => {
+  const loadAllStatuses = useCallback(async (force = false) => {
+    // Skip if we have valid cache and not forcing refresh
+    if (!force && guideStatusCache && Date.now() - guideStatusCache.timestamp < CACHE_TTL) {
+      if (isFetchedRef.current) return;
+      setStatuses(guideStatusCache.data);
+      setIsLoading(false);
+      isFetchedRef.current = true;
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('multipass_status')
@@ -31,7 +58,11 @@ export const useGuideMultipassStatus = () => {
         console.error('Error loading all multipass statuses:', error);
       }
 
-      setStatuses(data || []);
+      const statusData = data || [];
+      setStatuses(statusData);
+      // Update cache
+      guideStatusCache = { data: statusData, timestamp: Date.now() };
+      isFetchedRef.current = true;
     } catch (err) {
       console.error('Error in loadAllStatuses:', err);
     } finally {
@@ -40,7 +71,9 @@ export const useGuideMultipassStatus = () => {
   }, []);
 
   useEffect(() => {
-    loadAllStatuses();
+    if (!isFetchedRef.current) {
+      loadAllStatuses();
+    }
   }, [loadAllStatuses]);
 
   const confirmClientPurchase = async (userId: string) => {
@@ -58,7 +91,10 @@ export const useGuideMultipassStatus = () => {
 
       if (error) throw error;
 
-      await loadAllStatuses();
+      // Invalidate cache and refetch
+      guideStatusCache = null;
+      isFetchedRef.current = false;
+      await loadAllStatuses(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error confirming client purchase:', error);
@@ -79,7 +115,10 @@ export const useGuideMultipassStatus = () => {
 
       if (error) throw error;
 
-      await loadAllStatuses();
+      // Invalidate cache and refetch
+      guideStatusCache = null;
+      isFetchedRef.current = false;
+      await loadAllStatuses(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error undoing client purchase:', error);
@@ -91,12 +130,19 @@ export const useGuideMultipassStatus = () => {
     return statuses.find(s => s.user_id === userId) || null;
   };
 
+  // Force refresh function
+  const refetch = useCallback(() => {
+    guideStatusCache = null;
+    isFetchedRef.current = false;
+    return loadAllStatuses(true);
+  }, [loadAllStatuses]);
+
   return {
     statuses,
     isLoading,
     confirmClientPurchase,
     undoClientPurchase,
     getStatusForUser,
-    refetch: loadAllStatuses,
+    refetch,
   };
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
@@ -39,13 +39,54 @@ export interface ContentStyles {
   custom_classes?: string | null;
 }
 
+// Global cache for editable content
+const contentCache = new Map<string, { content: EditableContent | null; timestamp: number }>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - content rarely changes
+
+const getCacheKey = (pageKey: string, sectionKey: string) => `${pageKey}:${sectionKey}`;
+
 export const useEditableContent = (pageKey: string, sectionKey: string) => {
-  const [content, setContent] = useState<EditableContent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cacheKey = getCacheKey(pageKey, sectionKey);
+  
+  const [content, setContent] = useState<EditableContent | null>(() => {
+    // Initialize from cache if available
+    const cached = contentCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.content;
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached data, don't show loading
+    const cached = contentCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return false;
+    }
+    return true;
+  });
   const [isSaving, setIsSaving] = useState(false);
   const { isGuide } = useUserRole();
+  
+  const fetchedKeyRef = useRef<string | null>(null);
 
-  const fetchContent = useCallback(async () => {
+  const fetchContent = useCallback(async (force = false) => {
+    // Skip if we have valid cache and not forcing refresh
+    const cached = contentCache.get(cacheKey);
+    if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      if (fetchedKeyRef.current === cacheKey) {
+        return; // Already fetched, skip
+      }
+      setContent(cached.content);
+      setIsLoading(false);
+      fetchedKeyRef.current = cacheKey;
+      return;
+    }
+
+    // Don't refetch if we already fetched for this exact key
+    if (!force && fetchedKeyRef.current === cacheKey) {
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('editable_content')
@@ -58,19 +99,25 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
         console.error('Error fetching content:', error);
       }
       
-      if (data) {
-        setContent(data as unknown as EditableContent);
-      }
+      const contentData = data ? (data as unknown as EditableContent) : null;
+      setContent(contentData);
+      // Update cache
+      contentCache.set(cacheKey, { content: contentData, timestamp: Date.now() });
+      fetchedKeyRef.current = cacheKey;
     } catch (err) {
       console.error('Error:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [pageKey, sectionKey]);
+  }, [pageKey, sectionKey, cacheKey]);
 
   useEffect(() => {
+    // Reset ref when keys change
+    if (fetchedKeyRef.current !== cacheKey) {
+      fetchedKeyRef.current = null;
+    }
     fetchContent();
-  }, [fetchContent]);
+  }, [fetchContent, cacheKey]);
 
   const saveContent = async (updates: Partial<Omit<EditableContent, 'id' | 'metadata' | 'styles'>>) => {
     if (!isGuide) {
@@ -103,7 +150,10 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
       }
 
       toast.success('Conteúdo salvo com sucesso!');
-      await fetchContent();
+      // Invalidate cache and refetch
+      contentCache.delete(cacheKey);
+      fetchedKeyRef.current = null;
+      await fetchContent(true);
       return true;
     } catch (err) {
       console.error('Error saving content:', err);
@@ -146,26 +196,69 @@ export const useEditableContent = (pageKey: string, sectionKey: string) => {
     return classes.join(' ');
   }, [content]);
 
+  // Force refresh function
+  const refetch = useCallback(() => {
+    contentCache.delete(cacheKey);
+    fetchedKeyRef.current = null;
+    return fetchContent(true);
+  }, [cacheKey, fetchContent]);
+
   return {
     content,
     isLoading,
     isSaving,
     saveContent,
     canEdit: isGuide,
-    refetch: fetchContent,
+    refetch,
     getStyles,
     getClasses,
   };
 };
 
+// Global cache for page content
+const pageContentCache = new Map<string, { contents: Record<string, EditableContent>; timestamp: number }>();
+
 // Hook for fetching all content for a page
 export const usePageContent = (pageKey: string) => {
-  const [contents, setContents] = useState<Record<string, EditableContent>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [contents, setContents] = useState<Record<string, EditableContent>>(() => {
+    // Initialize from cache if available
+    const cached = pageContentCache.get(pageKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.contents;
+    }
+    return {};
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    // If we have cached data, don't show loading
+    const cached = pageContentCache.get(pageKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return false;
+    }
+    return true;
+  });
   const { isGuide } = useUserRole();
+  
+  const fetchedKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchContents = async () => {
+      // Skip if we have valid cache
+      const cached = pageContentCache.get(pageKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        if (fetchedKeyRef.current === pageKey) {
+          return;
+        }
+        setContents(cached.contents);
+        setIsLoading(false);
+        fetchedKeyRef.current = pageKey;
+        return;
+      }
+
+      // Don't refetch if we already fetched for this key
+      if (fetchedKeyRef.current === pageKey) {
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('editable_content')
@@ -179,6 +272,9 @@ export const usePageContent = (pageKey: string) => {
           contentMap[item.section_key] = item as unknown as EditableContent;
         });
         setContents(contentMap);
+        // Update cache
+        pageContentCache.set(pageKey, { contents: contentMap, timestamp: Date.now() });
+        fetchedKeyRef.current = pageKey;
       } catch (err) {
         console.error('Error:', err);
       } finally {
@@ -186,6 +282,10 @@ export const usePageContent = (pageKey: string) => {
       }
     };
 
+    // Reset ref when key changes
+    if (fetchedKeyRef.current !== pageKey) {
+      fetchedKeyRef.current = null;
+    }
     fetchContents();
   }, [pageKey]);
 
