@@ -27,6 +27,7 @@ import {
   POI_CONFIG, 
   GOOGLE_MAPS_API_KEY,
   REFRESH_INTERVALS,
+  getParksTableId,
   type ExtendedPOIType,
   type Park 
 } from '@/data/constants';
@@ -202,13 +203,15 @@ export default function ParkMap() {
   });
 
   // Fetch restaurants from the restaurants table (managed via Admin Panel)
+  // Use getParksTableId to convert content_categories ID to parks table ID
+  const parksTableId = getParksTableId(selectedPark.id);
   const { data: dbRestaurants = [] } = useQuery({
-    queryKey: ['map-restaurants', selectedPark.id],
+    queryKey: ['map-restaurants', selectedPark.id, parksTableId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('restaurants')
         .select('id, name, latitude, longitude, description, menu_url, cuisine, reservation_required, tips, must_try, price_range, type')
-        .eq('park_id', selectedPark.id);
+        .eq('park_id', parksTableId);
 
       if (error) throw error;
       return data;
