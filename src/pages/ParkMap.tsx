@@ -459,6 +459,9 @@ export default function ParkMap() {
 
   // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
   useEffect(() => {
+    // Fetch immediately on park change so the UI doesn't stay with "—" until the first interval tick
+    fetchWaitTimes(selectedPark.id, false);
+
     const refreshInterval = isMobile ? 30000 : 15000;
     const interval = setInterval(() => {
       fetchWaitTimes(selectedPark.id, true);
