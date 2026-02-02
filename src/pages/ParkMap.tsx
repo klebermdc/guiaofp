@@ -1787,17 +1787,17 @@ export default function ParkMap() {
                     {attractionsWithWaitTimes.length}
                   </Badge>
                 </Button>
-                {/* Live Shows/Characters Tab */}
+                {/* Live Shows/Characters Tab - with split counts */}
                 <Button
                   variant={sidebarTab === 'live-shows' ? 'default' : 'outline'}
                   size="sm"
                   className="h-7 px-2 text-xs shrink-0 gap-1"
                   onClick={() => setSidebarTab('live-shows')}
-                  style={sidebarTab === 'live-shows' ? { backgroundColor: '#EC4899' } : {}}
+                  style={sidebarTab === 'live-shows' ? { background: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)' } : {}}
                 >
                   🎭 Ao Vivo
                   <Badge variant="secondary" className="text-[10px] px-1 h-4 ml-0.5">
-                    {liveShows.length}
+                    {liveShows.filter(s => s.entityType === 'SHOW').length}🎭 {liveShows.filter(s => s.entityType === 'CHARACTER').length}🤗
                   </Badge>
                 </Button>
                 {(Object.keys(POI_CONFIG) as ExtendedPOIType[]).map((type) => {
@@ -1868,16 +1868,23 @@ export default function ParkMap() {
                 </>
               )}
 
-              {/* Live Shows Header */}
+              {/* Live Shows Header - with separated counts */}
               {sidebarTab === 'live-shows' && (
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm bg-pink-500">
-                    🎭
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm" style={{ background: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)' }}>
+                    ✨
                   </div>
-                  <span className="font-medium text-sm">Shows e Personagens</span>
-                  <Badge variant="secondary" className="text-xs ml-auto">
-                    {liveShows.length} ao vivo
-                  </Badge>
+                  <span className="font-medium text-sm">Ao Vivo</span>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 h-5 flex items-center gap-1 bg-pink-500/20 text-pink-600 dark:text-pink-400">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      {liveShows.filter(s => s.entityType === 'SHOW').length}
+                    </Badge>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 h-5 flex items-center gap-1 bg-purple-500/20 text-purple-600 dark:text-purple-400">
+                      <Users className="w-2.5 h-2.5" />
+                      {liveShows.filter(s => s.entityType === 'CHARACTER').length}
+                    </Badge>
+                  </div>
                 </div>
               )}
 
@@ -1948,7 +1955,7 @@ export default function ParkMap() {
                 </>
               )}
 
-              {/* Live Shows Tab Content */}
+              {/* Live Shows Tab Content - Separated by type */}
               {sidebarTab === 'live-shows' && (
                 <>
                   {isLoadingLiveShows ? (
@@ -1962,24 +1969,83 @@ export default function ParkMap() {
                       <p className="text-xs mt-1">Os dados são atualizados em tempo real</p>
                     </div>
                   ) : (
-                    <div className="divide-y">
-                      {/* Shows first, then characters */}
-                      {liveShows
-                        .sort((a, b) => {
-                          // Shows before characters
-                          if (a.entityType !== b.entityType) {
-                            return a.entityType === 'SHOW' ? -1 : 1;
-                          }
-                          // Operating before closed
-                          if (a.status !== b.status) {
-                            return a.status === 'OPERATING' ? -1 : 1;
-                          }
-                          // Alphabetical
-                          return a.name.localeCompare(b.name);
-                        })
-                        .map((show) => (
-                          <LiveShowCard key={show.id} show={show} />
-                        ))}
+                    <div>
+                      {/* Shows Section */}
+                      {liveShows.filter(s => s.entityType === 'SHOW').length > 0 && (
+                        <div>
+                          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-3 py-2 border-b flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-pink-500/20 flex items-center justify-center">
+                              <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+                            </div>
+                            <span className="font-semibold text-sm">Shows</span>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 ml-auto">
+                              {liveShows.filter(s => s.entityType === 'SHOW').length}
+                            </Badge>
+                          </div>
+                          <div className="divide-y">
+                            {liveShows
+                              .filter(s => s.entityType === 'SHOW')
+                              .sort((a, b) => {
+                                if (a.status !== b.status) {
+                                  return a.status === 'OPERATING' ? -1 : 1;
+                                }
+                                return a.name.localeCompare(b.name);
+                              })
+                              .map((show) => (
+                                <LiveShowCard 
+                                  key={show.id} 
+                                  show={show} 
+                                  onNavigate={() => {
+                                    // TODO: Navigate to show location when coordinates available
+                                    toast.info(`🎭 ${show.name}`, {
+                                      description: show.nextShowtime 
+                                        ? `Próximo: ${show.nextShowtime}` 
+                                        : 'Horários na tela',
+                                    });
+                                  }}
+                                />
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Characters Section */}
+                      {liveShows.filter(s => s.entityType === 'CHARACTER').length > 0 && (
+                        <div>
+                          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-3 py-2 border-b flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                              <Users className="w-3.5 h-3.5 text-purple-500" />
+                            </div>
+                            <span className="font-semibold text-sm">Personagens</span>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 h-4 ml-auto">
+                              {liveShows.filter(s => s.entityType === 'CHARACTER').length}
+                            </Badge>
+                          </div>
+                          <div className="divide-y">
+                            {liveShows
+                              .filter(s => s.entityType === 'CHARACTER')
+                              .sort((a, b) => {
+                                if (a.status !== b.status) {
+                                  return a.status === 'OPERATING' ? -1 : 1;
+                                }
+                                return a.name.localeCompare(b.name);
+                              })
+                              .map((show) => (
+                                <LiveShowCard 
+                                  key={show.id} 
+                                  show={show}
+                                  onNavigate={() => {
+                                    toast.info(`🤗 ${show.name}`, {
+                                      description: show.nextShowtime 
+                                        ? `Próximo: ${show.nextShowtime}` 
+                                        : 'Disponível agora',
+                                    });
+                                  }}
+                                />
+                              ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   {lastShowsUpdate && (
