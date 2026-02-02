@@ -5,17 +5,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ThemeParks.wiki park slugs - using content_categories IDs
-const THEMEPARKS_SLUGS: Record<string, string> = {
-  'dd6b79b8-d934-4e15-8967-1f1af1911fef': 'WaltDisneyWorldMagicKingdom',
-  '03e87b8e-7467-4121-971b-91826dd55bec': 'WaltDisneyWorldEpcot',
-  'ffdca010-b62c-40cc-98ee-37a853da037d': 'WaltDisneyWorldHollywoodStudios',
-  '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': 'WaltDisneyWorldAnimalKingdom',
-  'c63c98b3-1cef-4d90-8142-0a68331907e1': 'UniversalStudiosFloridaDestination',
-  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 'UniversalIslandsOfAdventure',
-  'ba562b14-26bf-4b12-a13d-2aa7df43297e': 'UniversalEpicUniverse',
-  'b1297379-c77e-4889-b55b-1ab5dd8a874a': 'SeaWorldOrlando',
-  'c808f299-ebbd-49ab-bd0b-87f6dd74d418': 'BuschGardensTampaBay',
+// ThemeParks.wiki park entity IDs - using content_categories IDs mapped to ThemeParks.wiki UUIDs
+const THEMEPARKS_IDS: Record<string, string> = {
+  'dd6b79b8-d934-4e15-8967-1f1af1911fef': '75ea578a-adc8-4116-a54d-dccb60765ef9', // Magic Kingdom
+  '03e87b8e-7467-4121-971b-91826dd55bec': '47f90d2c-e191-4239-a466-5892ef59a88b', // EPCOT
+  'ffdca010-b62c-40cc-98ee-37a853da037d': '288747d1-8b4f-4a64-867e-ea7c9b27bad8', // Hollywood Studios
+  '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': '1c84a229-8862-4648-9c71-378ddd2c7693', // Animal Kingdom
+  'c63c98b3-1cef-4d90-8142-0a68331907e1': 'eb3f4560-2383-4a36-9152-6b3e5ed6bc57', // Universal Studios Florida
+  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': '267615cc-8943-4c2a-ae2c-5da728ca591f', // Islands of Adventure
+  'ba562b14-26bf-4b12-a13d-2aa7df43297e': '12dbb85b-265f-44e6-bccf-f1faa17211fc', // Epic Universe
+  'b1297379-c77e-4889-b55b-1ab5dd8a874a': '27d64dee-d85e-48dc-ad6d-8077445cd946', // SeaWorld Orlando
+  'c808f299-ebbd-49ab-bd0b-87f6dd74d418': 'fc40c99a-be0a-42f4-a483-1e939db275c2', // Busch Gardens Tampa
 };
 
 // Queue-Times.com park IDs (fallback) - using content_categories IDs
@@ -50,44 +50,13 @@ interface FormattedShow {
   lastUpdated: string;
 }
 
-// Fetch from ThemeParks.wiki API
-async function fetchFromThemeParks(parkSlug: string): Promise<{ rides: FormattedRide[]; shows: FormattedShow[] } | null> {
+// Fetch from ThemeParks.wiki API using direct entity ID
+async function fetchFromThemeParks(themeParksEntityId: string): Promise<{ rides: FormattedRide[]; shows: FormattedShow[] } | null> {
   try {
-    console.log(`Trying ThemeParks.wiki for: ${parkSlug}`);
+    console.log(`Trying ThemeParks.wiki for entity: ${themeParksEntityId}`);
     
-    // First get the entity ID
-    const destinationsRes = await fetch('https://api.themeparks.wiki/v1/destinations', {
-      headers: { 'Accept': 'application/json' },
-    });
-    
-    if (!destinationsRes.ok) {
-      console.error('ThemeParks.wiki destinations API error:', destinationsRes.status);
-      return null;
-    }
-    
-    const destinations = await destinationsRes.json();
-    
-    // Find the park
-    let parkId: string | null = null;
-    for (const dest of destinations.destinations) {
-      if (dest.parks) {
-        for (const park of dest.parks) {
-          if (park.slug === parkSlug || park.id?.includes(parkSlug)) {
-            parkId = park.id;
-            break;
-          }
-        }
-      }
-      if (parkId) break;
-    }
-    
-    if (!parkId) {
-      console.log(`Park not found in ThemeParks.wiki: ${parkSlug}`);
-      return null;
-    }
-    
-    // Get live data
-    const liveRes = await fetch(`https://api.themeparks.wiki/v1/entity/${parkId}/live`, {
+    // Get live data directly using the entity ID
+    const liveRes = await fetch(`https://api.themeparks.wiki/v1/entity/${themeParksEntityId}/live`, {
       headers: { 'Accept': 'application/json' },
     });
     
@@ -238,10 +207,10 @@ serve(async (req) => {
       );
     }
 
-    const themeParksSlug = THEMEPARKS_SLUGS[parkId];
+    const themeParksEntityId = THEMEPARKS_IDS[parkId];
     const queueTimesParkId = QUEUE_TIMES_IDS[parkId];
     
-    if (!themeParksSlug && !queueTimesParkId) {
+    if (!themeParksEntityId && !queueTimesParkId) {
       return new Response(
         JSON.stringify({ success: false, error: 'Park not supported', data: [], shows: [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -253,8 +222,8 @@ serve(async (req) => {
     let source = 'unknown';
 
     // Try ThemeParks.wiki first (more real-time, has shows/characters)
-    if (themeParksSlug) {
-      const result = await fetchFromThemeParks(themeParksSlug);
+    if (themeParksEntityId) {
+      const result = await fetchFromThemeParks(themeParksEntityId);
       if (result) {
         rides = result.rides;
         shows = result.shows;
