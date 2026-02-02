@@ -48,6 +48,8 @@ export const PARKS: Park[] = [
   { id: '7ca9972a-3bd9-4b9b-81a2-33cec9a7d57c', name: 'Universal Studios', center: { lat: 28.4752, lng: -81.4683 }, zoom: 17 },
   { id: 'cd4ff5ed-0ab7-4cd5-8523-6dde98353ed9', name: 'Islands of Adventure', center: { lat: 28.4711, lng: -81.4710 }, zoom: 17 },
   { id: '2d91ec83-0bfb-4041-84de-5f23179b51c2', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 16 },
+  { id: '9f162d12-260a-4e48-b4e9-8ae6e91b4d7c', name: 'SeaWorld', center: { lat: 28.4114, lng: -81.4612 }, zoom: 16 },
+  { id: 'c20551ca-7494-4dae-86b9-014198afdaa4', name: 'Busch Gardens', center: { lat: 28.0373, lng: -82.4214 }, zoom: 16 },
 ];
 
 // Helper to get park by ID

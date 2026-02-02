@@ -14,6 +14,8 @@ const THEMEPARKS_SLUGS: Record<string, string> = {
   'c63c98b3-1cef-4d90-8142-0a68331907e1': 'UniversalStudiosFloridaDestination',
   '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 'UniversalIslandsOfAdventure',
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': 'UniversalEpicUniverse',
+  '9f162d12-260a-4e48-b4e9-8ae6e91b4d7c': 'SeaWorldOrlando',
+  'c20551ca-7494-4dae-86b9-014198afdaa4': 'BuschGardensTampaBay',
 };
 
 // Queue-Times.com park IDs (fallback)
@@ -25,6 +27,8 @@ const QUEUE_TIMES_IDS: Record<string, number> = {
   'c63c98b3-1cef-4d90-8142-0a68331907e1': 65, // Universal Studios Florida
   '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 64, // Islands of Adventure
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': 334, // Epic Universe
+  '9f162d12-260a-4e48-b4e9-8ae6e91b4d7c': 21, // SeaWorld Orlando
+  'c20551ca-7494-4dae-86b9-014198afdaa4': 24, // Busch Gardens Tampa Bay
 };
 
 interface FormattedRide {
