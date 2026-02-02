@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ThemeParks.wiki park slugs
+// ThemeParks.wiki park slugs - using content_categories IDs
 const THEMEPARKS_SLUGS: Record<string, string> = {
   'dd6b79b8-d934-4e15-8967-1f1af1911fef': 'WaltDisneyWorldMagicKingdom',
   '03e87b8e-7467-4121-971b-91826dd55bec': 'WaltDisneyWorldEpcot',
@@ -14,11 +14,11 @@ const THEMEPARKS_SLUGS: Record<string, string> = {
   'c63c98b3-1cef-4d90-8142-0a68331907e1': 'UniversalStudiosFloridaDestination',
   '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 'UniversalIslandsOfAdventure',
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': 'UniversalEpicUniverse',
-  '9f162d12-260a-4e48-b4e9-8ae6e91b4d7c': 'SeaWorldOrlando',
-  'c20551ca-7494-4dae-86b9-014198afdaa4': 'BuschGardensTampaBay',
+  'b1297379-c77e-4889-b55b-1ab5dd8a874a': 'SeaWorldOrlando',
+  'c808f299-ebbd-49ab-bd0b-87f6dd74d418': 'BuschGardensTampaBay',
 };
 
-// Queue-Times.com park IDs (fallback)
+// Queue-Times.com park IDs (fallback) - using content_categories IDs
 const QUEUE_TIMES_IDS: Record<string, number> = {
   'dd6b79b8-d934-4e15-8967-1f1af1911fef': 6,  // Magic Kingdom
   '03e87b8e-7467-4121-971b-91826dd55bec': 5,  // EPCOT
@@ -27,8 +27,8 @@ const QUEUE_TIMES_IDS: Record<string, number> = {
   'c63c98b3-1cef-4d90-8142-0a68331907e1': 65, // Universal Studios Florida
   '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 64, // Islands of Adventure
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': 334, // Epic Universe
-  '9f162d12-260a-4e48-b4e9-8ae6e91b4d7c': 21, // SeaWorld Orlando
-  'c20551ca-7494-4dae-86b9-014198afdaa4': 24, // Busch Gardens Tampa Bay
+  'b1297379-c77e-4889-b55b-1ab5dd8a874a': 21, // SeaWorld Orlando
+  'c808f299-ebbd-49ab-bd0b-87f6dd74d418': 24, // Busch Gardens Tampa Bay
 };
 
 interface FormattedRide {
