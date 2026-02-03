@@ -48,6 +48,7 @@ const RoteiroQuestionario = lazy(() => import("./pages/RoteiroQuestionario"));
 const RoteiroView = lazy(() => import("./pages/RoteiroView"));
 const PlannerManual = lazy(() => import("./pages/PlannerManual"));
 const DocumentWalletPage = lazy(() => import("./pages/DocumentWalletPage"));
+const TermsAndPrivacy = lazy(() => import("./pages/TermsAndPrivacy"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -118,6 +119,7 @@ const App = () => {
                       <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />
                       <Route path="/planner-manual" element={<PlannerManual />} />
                       <Route path="/carteira" element={<DocumentWalletPage />} />
+                      <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
                       <Route path="/admin/cliente/:id" element={<ClientDetails />} />

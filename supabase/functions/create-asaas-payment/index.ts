@@ -37,6 +37,8 @@ interface PaymentRequest {
     addressNumber: string;
     phone: string;
   };
+  termsAccepted?: boolean;
+  termsVersion?: string;
 }
 
 async function createOrGetCustomer(email: string, name: string, cpf: string): Promise<string> {
@@ -216,7 +218,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: usersData } = await supabase.auth.admin.listUsers();
     const authUser = usersData?.users?.find(u => u.email === payload.email);
     
-    const { error: insertError } = await supabase.from("transactions").insert({
+    const { data: transactionData, error: insertError } = await supabase.from("transactions").insert({
       user_id: authUser?.id || "00000000-0000-0000-0000-000000000000",
       email: payload.email,
       customer_name: payload.customerName,
@@ -232,10 +234,24 @@ const handler = async (req: Request): Promise<Response> => {
       asaas_boleto_url: payment.bankSlipUrl,
       coupon_code: payload.couponCode || null,
       discount_amount_cents: payload.discountAmountCents || 0,
-    });
+    }).select('id').single();
 
     if (insertError) {
       console.error("Error saving transaction:", insertError);
+    }
+
+    // Save terms acceptance if provided
+    if (payload.termsAccepted && transactionData?.id) {
+      const { error: termsError } = await supabase.from("terms_acceptances").insert({
+        user_id: authUser?.id || "00000000-0000-0000-0000-000000000000",
+        transaction_id: transactionData.id,
+        document_version: payload.termsVersion || "1.0",
+        accepted_at: new Date().toISOString(),
+      });
+
+      if (termsError) {
+        console.error("Error saving terms acceptance:", termsError);
+      }
     }
 
     // If credit card payment was confirmed immediately, enable access

@@ -1293,6 +1293,47 @@ export type Database = {
         }
         Relationships: []
       }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          created_at: string
+          document_version: string
+          id: string
+          ip_address: string | null
+          transaction_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          created_at?: string
+          document_version?: string
+          id?: string
+          ip_address?: string | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          created_at?: string
+          document_version?: string
+          id?: string
+          ip_address?: string | null
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_acceptances_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount_cents: number
