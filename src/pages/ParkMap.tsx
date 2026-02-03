@@ -983,21 +983,22 @@ export default function ParkMap() {
         <div className="flex-1 flex flex-col min-w-0 relative">
           {/* Compact Mobile Header - Only on mobile */}
           {isMobile && (
-          <div className="bg-background/95 backdrop-blur-sm border-b z-20 p-2 sm:p-3 safe-area-top">
-        <div className="flex items-center gap-2">
-          {/* Park Selector - Compact on mobile */}
-          <Select value={selectedPark.id} onValueChange={handleParkChange}>
-            <SelectTrigger className="flex-1 h-9 text-sm">
-              <SelectValue placeholder="Parque" />
-            </SelectTrigger>
-            <SelectContent>
-              {PARKS.map((park) => (
-                <SelectItem key={park.id} value={park.id}>
-                  {park.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="bg-background/95 backdrop-blur-sm border-b z-20 safe-area-top">
+            {/* Top row: Park selector + action buttons */}
+            <div className="flex items-center gap-2 p-2">
+              {/* Park Selector - Compact on mobile */}
+              <Select value={selectedPark.id} onValueChange={handleParkChange}>
+                <SelectTrigger className="flex-1 h-9 text-sm">
+                  <SelectValue placeholder="Parque" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PARKS.map((park) => (
+                    <SelectItem key={park.id} value={park.id}>
+                      {park.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
           {/* Refresh Wait Times */}
           <Button
@@ -1106,8 +1107,56 @@ export default function ParkMap() {
               </div>
             </SheetContent>
           </Sheet>
-        </div>
-      </div>
+            </div>
+
+            {/* Horizontal Filter Pills - Scrollable on mobile */}
+            <div className="overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
+              <div className="flex gap-1.5 min-w-max">
+                {/* Attractions toggle pill */}
+                <button
+                  onClick={() => setShowAttractionMarkers(!showAttractionMarkers)}
+                  className={`filter-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 touch-manipulation ${
+                    showAttractionMarkers 
+                      ? 'bg-gradient-to-r from-green-500 to-amber-500 text-white shadow-md' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <span>⭐</span>
+                  <span>Atrações</span>
+                  <span className="bg-white/20 px-1.5 py-0.5 rounded-full text-[10px]">
+                    {attractionsWithWaitTimes.length}
+                  </span>
+                </button>
+                
+                {/* POI type toggle pills */}
+                {(Object.keys(POI_CONFIG) as ExtendedPOIType[]).map((type) => {
+                  const config = POI_CONFIG[type];
+                  const isActive = visiblePOIs.has(type);
+                  const count = currentParkPOIs.filter(p => p.type === type).length;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => togglePOIType(type)}
+                      className={`filter-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 touch-manipulation ${
+                        isActive 
+                          ? 'text-white shadow-md' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                      style={isActive ? { backgroundColor: config.color } : {}}
+                    >
+                      <span>{config.emoji}</span>
+                      <span>{config.label}</span>
+                      {count > 0 && (
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-white/20' : 'bg-background'}`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Desktop Header - Minimal */}
@@ -1378,8 +1427,8 @@ export default function ParkMap() {
           </div>
         )}
 
-        {/* POI Filters - Floating buttons (hide during guided navigation) */}
-        {navigationMode !== 'guided' && (
+        {/* POI Filters - Floating buttons (Desktop only - mobile uses horizontal pills in header) */}
+        {!isMobile && navigationMode !== 'guided' && (
         <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
           {/* Attractions toggle */}
           <Button
@@ -1390,7 +1439,7 @@ export default function ParkMap() {
             title="Atrações"
           >
             <span>⭐</span>
-            <span className="hidden sm:inline">{attractionsWithWaitTimes.length}</span>
+            <span>{attractionsWithWaitTimes.length}</span>
           </Button>
           {/* POI type toggles */}
           {(Object.keys(POI_CONFIG) as ExtendedPOIType[]).map((type) => {
@@ -1408,7 +1457,7 @@ export default function ParkMap() {
                 style={isActive ? { backgroundColor: config.color } : {}}
               >
                 <span>{config.emoji}</span>
-                <span className="hidden sm:inline">{count}</span>
+                <span>{count}</span>
               </Button>
             );
           })}
@@ -1418,7 +1467,8 @@ export default function ParkMap() {
         {/* Travel Mode Indicator */}
         <TravelModeIndicator />
 
-        {/* Map Legend - Top positioned with styled header */}
+        {/* Map Legend - Desktop only (mobile has limited space) */}
+        {!isMobile && (
         <div className="absolute top-16 left-2 bg-background/95 backdrop-blur-sm rounded-xl p-2.5 shadow-lg z-10 border border-border/50">
           <div className="flex items-center gap-2 mb-1.5">
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
@@ -1441,6 +1491,7 @@ export default function ParkMap() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Zoom Controls - Mobile friendly - adjusted for mobile nav */}
         <div className="absolute bottom-24 lg:bottom-4 right-2 flex flex-col gap-1 z-10">
