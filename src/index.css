@@ -345,6 +345,15 @@
   @apply hover:bg-card/90 hover:border-border transition-all duration-300;
 }
 
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Interactive press effect */
 .press-effect {
   @apply active:scale-[0.98] transition-transform duration-150;
@@ -383,11 +392,19 @@ p, span, h1, h2, h3, h4, h5, h6, article, .prose, textarea, input {
   user-select: text;
 }
 
-/* Better touch targets for mobile - minimum 44x44 */
+/* Better touch targets for mobile - minimum 44x44 (excludes filter pills) */
 @media (max-width: 768px) {
-  button, a, [role="button"] {
+  button:not(.filter-pill), 
+  a:not(.filter-pill), 
+  [role="button"]:not(.filter-pill) {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  /* Filter pills have custom smaller sizing for horizontal scroll */
+  .filter-pill {
+    min-height: 32px;
+    min-width: auto;
   }
 }
 
