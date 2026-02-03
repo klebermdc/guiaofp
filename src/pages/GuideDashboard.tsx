@@ -182,12 +182,13 @@ const GuideDashboard = () => {
               </p>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <CreatePremiumClient onClientCreated={fetchData} />
               <Link to="/admin">
-                <Button variant="secondary" size="sm" className="gap-2">
+                <Button variant="secondary" size="sm" className="gap-2 whitespace-nowrap">
                   <Settings className="w-4 h-4" />
-                  Configurações
+                  <span className="hidden sm:inline">Configurações</span>
+                  <span className="sm:hidden">Config</span>
                 </Button>
               </Link>
             </div>
