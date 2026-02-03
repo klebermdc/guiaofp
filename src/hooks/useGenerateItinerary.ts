@@ -9,10 +9,26 @@ interface AttractionInput {
   notes?: string;
 }
 
+interface WaitTimeDataItem {
+  name: string;
+  currentWait: number;
+  status: string;
+  avgHistorical: number | null;
+  optimalWindows: Array<{
+    start: string;
+    end: string;
+    avgWait: number;
+    ranking: number;
+    confidence: number;
+  }>;
+}
+
 interface ItineraryResult {
   itinerary: string;
   hasGuide: boolean;
   parkName: string;
+  waitTimeData?: WaitTimeDataItem[];
+  dataSource?: 'real-time' | 'none';
 }
 
 export const useGenerateItinerary = () => {
@@ -25,7 +41,8 @@ export const useGenerateItinerary = () => {
     attractions: AttractionInput[],
     parkName: string,
     parkDate?: string,
-    groupSize?: number
+    groupSize?: number,
+    useRealTimeData: boolean = true
   ) => {
     setIsGenerating(true);
     setError(null);
@@ -39,6 +56,7 @@ export const useGenerateItinerary = () => {
           parkDate,
           groupSize,
           hasGuide,
+          useRealTimeData,
         },
       });
 
@@ -51,6 +69,14 @@ export const useGenerateItinerary = () => {
       }
 
       setResult(data);
+      
+      // Show success toast with data source info
+      if (data.dataSource === 'real-time' && data.waitTimeData?.length > 0) {
+        toast.success(`Roteiro gerado com dados de ${data.waitTimeData.length} atrações em tempo real! 🎢`);
+      } else {
+        toast.success('Roteiro gerado com sucesso!');
+      }
+      
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
