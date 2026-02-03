@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   ChevronRight,
   BookOpen,
+  ShoppingCart,
   type LucideIcon
 } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export type AdminSection =
   | 'clients' 
   | 'transactions' 
   | 'coupons'
+  | 'abandoned_carts'
   | 'pricing'
   | 'plans'
   | 'menu_order'
@@ -66,6 +68,7 @@ const menuGroups: MenuGroup[] = [
       { id: 'clients', icon: Users, label: 'Clientes' },
       { id: 'transactions', icon: Receipt, label: 'Transações' },
       { id: 'coupons', icon: Tag, label: 'Cupons' },
+      { id: 'abandoned_carts', icon: ShoppingCart, label: 'Carrinhos Abandonados' },
     ]
   },
   {

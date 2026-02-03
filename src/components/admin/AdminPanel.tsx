@@ -11,6 +11,7 @@ import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
+import { AbandonedCartsManager } from './AbandonedCartsManager';
 import { UnifiedMapEditor } from './UnifiedMapEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
@@ -31,6 +32,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Menu,
+  ShoppingCart,
   type LucideIcon
 } from 'lucide-react';
 
@@ -45,6 +47,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   clients: { title: 'Clientes', description: 'Gerenciar usuários e perfis', icon: Users },
   transactions: { title: 'Transações', description: 'Acompanhar pagamentos e receitas', icon: Receipt },
   coupons: { title: 'Cupons de Desconto', description: 'Criar e gerenciar promoções', icon: Tag },
+  abandoned_carts: { title: 'Carrinhos Abandonados', description: 'Recuperar vendas perdidas', icon: ShoppingCart },
   pricing: { title: 'Preços dos Planos', description: 'Configurar valores e features', icon: DollarSign },
   plans: { title: 'Acesso aos Planos', description: 'Controlar visibilidade de páginas', icon: Settings },
   menu_order: { title: 'Ordem do Menu', description: 'Reordenar itens por contexto', icon: Menu },
@@ -92,6 +95,8 @@ const AdminPanelComponent = () => {
         return <TransactionsManager />;
       case 'coupons':
         return <CouponsManager />;
+      case 'abandoned_carts':
+        return <AbandonedCartsManager />;
       case 'pricing':
         return <PlanPricingManager />;
       case 'plans':

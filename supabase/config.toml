@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.utalk-webhook]
 verify_jwt = false
+
+[functions.notify-abandoned-cart]
+verify_jwt = false
