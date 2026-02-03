@@ -414,6 +414,90 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_analytics: {
+        Row: {
+          attraction_name: string
+          avg_wait_time: number | null
+          best_time: string | null
+          best_wait_time: number | null
+          closing_time: string | null
+          confidence_score: number | null
+          created_at: string
+          data_completeness_percent: number | null
+          data_points_collected: number | null
+          date: string
+          day_of_week: number
+          id: string
+          is_holiday: boolean | null
+          max_wait_time: number | null
+          median_wait_time: number | null
+          min_wait_time: number | null
+          opening_time: string | null
+          park_name: string
+          peak_time: string | null
+          peak_wait_time: number | null
+          special_event: string | null
+          std_deviation: number | null
+          total_operating_minutes: number | null
+          updated_at: string
+          weather_summary: string | null
+        }
+        Insert: {
+          attraction_name: string
+          avg_wait_time?: number | null
+          best_time?: string | null
+          best_wait_time?: number | null
+          closing_time?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_completeness_percent?: number | null
+          data_points_collected?: number | null
+          date: string
+          day_of_week: number
+          id?: string
+          is_holiday?: boolean | null
+          max_wait_time?: number | null
+          median_wait_time?: number | null
+          min_wait_time?: number | null
+          opening_time?: string | null
+          park_name: string
+          peak_time?: string | null
+          peak_wait_time?: number | null
+          special_event?: string | null
+          std_deviation?: number | null
+          total_operating_minutes?: number | null
+          updated_at?: string
+          weather_summary?: string | null
+        }
+        Update: {
+          attraction_name?: string
+          avg_wait_time?: number | null
+          best_time?: string | null
+          best_wait_time?: number | null
+          closing_time?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          data_completeness_percent?: number | null
+          data_points_collected?: number | null
+          date?: string
+          day_of_week?: number
+          id?: string
+          is_holiday?: boolean | null
+          max_wait_time?: number | null
+          median_wait_time?: number | null
+          min_wait_time?: number | null
+          opening_time?: string | null
+          park_name?: string
+          peak_time?: string | null
+          peak_wait_time?: number | null
+          special_event?: string | null
+          std_deviation?: number | null
+          total_operating_minutes?: number | null
+          updated_at?: string
+          weather_summary?: string | null
+        }
+        Relationships: []
+      }
       discount_coupons: {
         Row: {
           applicable_plans: string[] | null
@@ -663,6 +747,66 @@ export type Database = {
           purchased_at?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      optimal_windows: {
+        Row: {
+          attraction_name: string
+          avg_wait_time: number
+          confidence_score: number | null
+          created_at: string
+          day_of_week: number
+          id: string
+          is_recommended: boolean | null
+          last_updated: string
+          max_wait_time: number | null
+          min_wait_time: number | null
+          notes: string | null
+          park_name: string
+          ranking: number | null
+          sample_size: number
+          std_deviation: number | null
+          time_window_end: string
+          time_window_start: string
+        }
+        Insert: {
+          attraction_name: string
+          avg_wait_time: number
+          confidence_score?: number | null
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_recommended?: boolean | null
+          last_updated?: string
+          max_wait_time?: number | null
+          min_wait_time?: number | null
+          notes?: string | null
+          park_name: string
+          ranking?: number | null
+          sample_size?: number
+          std_deviation?: number | null
+          time_window_end: string
+          time_window_start: string
+        }
+        Update: {
+          attraction_name?: string
+          avg_wait_time?: number
+          confidence_score?: number | null
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_recommended?: boolean | null
+          last_updated?: string
+          max_wait_time?: number | null
+          min_wait_time?: number | null
+          notes?: string | null
+          park_name?: string
+          ranking?: number | null
+          sample_size?: number
+          std_deviation?: number | null
+          time_window_end?: string
+          time_window_start?: string
         }
         Relationships: []
       }
@@ -1344,6 +1488,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health_logs: {
+        Row: {
+          attractions_updated: number | null
+          component: string
+          created_at: string
+          error_details: Json | null
+          execution_time_ms: number | null
+          id: string
+          message: string | null
+          parks_processed: number | null
+          records_created: number | null
+          status: string
+        }
+        Insert: {
+          attractions_updated?: number | null
+          component: string
+          created_at?: string
+          error_details?: Json | null
+          execution_time_ms?: number | null
+          id?: string
+          message?: string | null
+          parks_processed?: number | null
+          records_created?: number | null
+          status: string
+        }
+        Update: {
+          attractions_updated?: number | null
+          component?: string
+          created_at?: string
+          error_details?: Json | null
+          execution_time_ms?: number | null
+          id?: string
+          message?: string | null
+          parks_processed?: number | null
+          records_created?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       terms_acceptances: {
         Row: {
           accepted_at: string
@@ -1543,6 +1726,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wait_time_records: {
+        Row: {
+          attraction_id: string | null
+          attraction_name: string
+          created_at: string
+          crowd_level: number | null
+          data_source: string | null
+          date: string
+          day_of_week: number
+          id: number
+          is_holiday: boolean | null
+          is_raining: boolean | null
+          park_name: string
+          status: string | null
+          temperature_f: number | null
+          time: string
+          timestamp: string
+          wait_time_minutes: number | null
+          weather_condition: string | null
+        }
+        Insert: {
+          attraction_id?: string | null
+          attraction_name: string
+          created_at?: string
+          crowd_level?: number | null
+          data_source?: string | null
+          date?: string
+          day_of_week?: number
+          id?: number
+          is_holiday?: boolean | null
+          is_raining?: boolean | null
+          park_name: string
+          status?: string | null
+          temperature_f?: number | null
+          time?: string
+          timestamp?: string
+          wait_time_minutes?: number | null
+          weather_condition?: string | null
+        }
+        Update: {
+          attraction_id?: string | null
+          attraction_name?: string
+          created_at?: string
+          crowd_level?: number | null
+          data_source?: string | null
+          date?: string
+          day_of_week?: number
+          id?: number
+          is_holiday?: boolean | null
+          is_raining?: boolean | null
+          park_name?: string
+          status?: string | null
+          temperature_f?: number | null
+          time?: string
+          timestamp?: string
+          wait_time_minutes?: number | null
+          weather_condition?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wait_time_records_attraction_id_fkey"
+            columns: ["attraction_id"]
+            isOneToOne: false
+            referencedRelation: "attractions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
