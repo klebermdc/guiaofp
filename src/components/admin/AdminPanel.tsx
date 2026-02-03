@@ -11,8 +11,7 @@ import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
-import { AttractionCoordinatesEditor } from './AttractionCoordinatesEditor';
-import { POIEditor } from './POIEditor';
+import { UnifiedMapEditor } from './UnifiedMapEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { ProjectDocumentation } from './ProjectDocumentation';
@@ -27,7 +26,6 @@ import {
   FileVideo, 
   KeyRound, 
   MapPin, 
-  Navigation, 
   Palette, 
   UtensilsCrossed,
   LayoutDashboard,
@@ -53,8 +51,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   payments: { title: 'Gateway de Pagamento', description: 'Configurar integrações de pagamento', icon: CreditCard },
   categories: { title: 'Categorias', description: 'Organizar conteúdos por categoria', icon: FolderOpen },
   content: { title: 'Conteúdos', description: 'Gerenciar vídeos e materiais', icon: FileVideo },
-  coordinates: { title: 'Coordenadas', description: 'Posicionar atrações no mapa', icon: MapPin },
-  pois: { title: 'Pontos de Interesse', description: 'Gerenciar locais no mapa', icon: Navigation },
+  coordinates: { title: 'Editor de Mapa', description: 'Posicionar atrações, restaurantes e POIs', icon: MapPin },
   markers: { title: 'Ícones do Mapa', description: 'Personalizar marcadores', icon: Palette },
   restaurants: { title: 'Restaurantes', description: 'Gerenciar informações de restaurantes', icon: UtensilsCrossed },
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
@@ -108,9 +105,7 @@ const AdminPanelComponent = () => {
       case 'content':
         return <ContentManager />;
       case 'coordinates':
-        return <AttractionCoordinatesEditor />;
-      case 'pois':
-        return <POIEditor />;
+        return <UnifiedMapEditor />;
       case 'markers':
         return <MarkerIconManager />;
       case 'restaurants':

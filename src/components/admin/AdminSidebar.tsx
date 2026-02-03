@@ -32,7 +32,6 @@ export type AdminSection =
   | 'categories'
   | 'content'
   | 'coordinates'
-  | 'pois'
   | 'markers'
   | 'restaurants'
   | 'password'
@@ -88,8 +87,7 @@ const menuGroups: MenuGroup[] = [
   {
     title: 'Mapas & Locais',
     items: [
-      { id: 'coordinates', icon: MapPin, label: 'Coordenadas' },
-      { id: 'pois', icon: Navigation, label: 'POIs' },
+      { id: 'coordinates', icon: MapPin, label: 'Editor de Mapa' },
       { id: 'markers', icon: Palette, label: 'Ícones do Mapa' },
     ]
   },
