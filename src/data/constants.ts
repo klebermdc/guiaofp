@@ -47,6 +47,7 @@ export const PARKS: Park[] = [
   { id: '03e87b8e-7467-4121-971b-91826dd55bec', name: 'EPCOT', center: { lat: 28.3747, lng: -81.5494 }, zoom: 16 },
   { id: 'ffdca010-b62c-40cc-98ee-37a853da037d', name: 'Hollywood Studios', center: { lat: 28.3575, lng: -81.5583 }, zoom: 17 },
   { id: '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205', name: 'Animal Kingdom', center: { lat: 28.3580, lng: -81.5900 }, zoom: 16 },
+  { id: 'e7d4a3b1-8c5f-4e2a-9d6b-3f1a2c5e8d7b', name: 'Disney Springs', center: { lat: 28.3714, lng: -81.5195 }, zoom: 17 },
   { id: 'c63c98b3-1cef-4d90-8142-0a68331907e1', name: 'Universal Studios', center: { lat: 28.4752, lng: -81.4683 }, zoom: 17 },
   { id: '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148', name: 'Islands of Adventure', center: { lat: 28.4711, lng: -81.4710 }, zoom: 17 },
   { id: 'ba562b14-26bf-4b12-a13d-2aa7df43297e', name: 'Epic Universe', center: { lat: 28.4720, lng: -81.4450 }, zoom: 16 },
@@ -61,6 +62,7 @@ export const CONTENT_TO_PARKS_ID_MAP: Record<string, string> = {
   '03e87b8e-7467-4121-971b-91826dd55bec': 'c5945e0b-056c-4376-9d14-68e9db296ce2', // EPCOT
   'ffdca010-b62c-40cc-98ee-37a853da037d': '69cb145a-d34d-4f7f-9759-a8613325b4e9', // Hollywood Studios
   '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': 'd0905179-8ac1-484e-a05e-80e3e25789b8', // Animal Kingdom
+  'e7d4a3b1-8c5f-4e2a-9d6b-3f1a2c5e8d7b': 'a1b2c3d4-e5f6-7890-abcd-123456789abc', // Disney Springs
   'c63c98b3-1cef-4d90-8142-0a68331907e1': '7ca9972a-3bd9-4b9b-81a2-33cec9a7d57c', // Universal Studios
   '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': 'cd4ff5ed-0ab7-4cd5-8523-6dde98353ed9', // Islands of Adventure
   'ba562b14-26bf-4b12-a13d-2aa7df43297e': '2d91ec83-0bfb-4041-84de-5f23179b51c2', // Epic Universe
