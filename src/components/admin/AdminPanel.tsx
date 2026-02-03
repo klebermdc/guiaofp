@@ -16,6 +16,7 @@ import { UnifiedMapEditor } from './UnifiedMapEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { ProjectDocumentation } from './ProjectDocumentation';
+import { WaitTimeAnalytics } from './WaitTimeAnalytics';
 import { 
   Users, 
   Receipt, 
@@ -33,6 +34,7 @@ import {
   BookOpen,
   Menu,
   ShoppingCart,
+  Timer,
   type LucideIcon
 } from 'lucide-react';
 
@@ -57,6 +59,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   coordinates: { title: 'Editor de Mapa', description: 'Posicionar atrações, restaurantes e POIs', icon: MapPin },
   markers: { title: 'Ícones do Mapa', description: 'Personalizar marcadores', icon: Palette },
   restaurants: { title: 'Restaurantes', description: 'Gerenciar informações de restaurantes', icon: UtensilsCrossed },
+  wait_times: { title: 'Filas (Analytics)', description: 'Monitorar coleta de tempos de espera', icon: Timer },
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
 };
@@ -115,6 +118,8 @@ const AdminPanelComponent = () => {
         return <MarkerIconManager />;
       case 'restaurants':
         return <AdminRestaurantsPanel />;
+      case 'wait_times':
+        return <WaitTimeAnalytics />;
       case 'password':
         return <PasswordGenerator />;
       case 'documentation':

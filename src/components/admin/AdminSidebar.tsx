@@ -18,6 +18,7 @@ import {
   ChevronRight,
   BookOpen,
   ShoppingCart,
+  Timer,
   type LucideIcon
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export type AdminSection =
   | 'coordinates'
   | 'markers'
   | 'restaurants'
+  | 'wait_times'
   | 'password'
   | 'documentation';
 
@@ -92,6 +94,12 @@ const menuGroups: MenuGroup[] = [
     items: [
       { id: 'coordinates', icon: MapPin, label: 'Editor de Mapa' },
       { id: 'markers', icon: Palette, label: 'Ícones do Mapa' },
+    ]
+  },
+  {
+    title: 'Dados & Analytics',
+    items: [
+      { id: 'wait_times', icon: Timer, label: 'Filas (Analytics)' },
     ]
   },
   {
