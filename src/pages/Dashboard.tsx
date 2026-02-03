@@ -73,7 +73,7 @@ const Dashboard = () => {
     <AppLayout>
       <SEO {...SEO_PAGES.dashboard} />
       <motion.div 
-        className="max-w-6xl mx-auto space-y-6 relative"
+        className="max-w-6xl mx-auto space-y-4 sm:space-y-6 relative"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -90,9 +90,9 @@ const Dashboard = () => {
         {/* Welcome Header */}
         <motion.div 
           variants={itemVariants}
-          className="relative overflow-hidden rounded-2xl gradient-primary p-8 text-primary-foreground"
+          className="relative overflow-hidden rounded-xl sm:rounded-2xl gradient-primary p-5 sm:p-8 text-primary-foreground"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 gradient-magic opacity-20 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 gradient-magic opacity-20 rounded-full blur-3xl" />
           
           <div className="relative">
             <motion.div 
@@ -101,11 +101,11 @@ const Dashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <span className="text-2xl">✨</span>
-              <span className="text-secondary text-sm font-medium">{t('dashboard.exclusiveArea')}</span>
+              <span className="text-xl sm:text-2xl">✨</span>
+              <span className="text-secondary text-xs sm:text-sm font-medium">{t('dashboard.exclusiveArea')}</span>
             </motion.div>
             <motion.h1 
-              className="font-display text-3xl md:text-4xl font-bold mb-2"
+              className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -113,7 +113,7 @@ const Dashboard = () => {
               {t('dashboard.welcome')}, {user?.user_metadata?.name?.split(' ')[0] || 'Visitante'}!
             </motion.h1>
             <motion.p 
-              className="text-primary-foreground/80 text-lg"
+              className="text-primary-foreground/80 text-sm sm:text-lg"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -164,7 +164,7 @@ const Dashboard = () => {
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4"
           variants={containerVariants}
         >
           <motion.div variants={itemVariants}>
@@ -176,27 +176,27 @@ const Dashboard = () => {
                 whileTap="tap"
               >
                 <Card variant="interactive" className="h-full">
-                  <CardContent className="p-6 flex items-center gap-4">
+                  <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
                     <motion.div 
-                      className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-primary-foreground relative"
+                      className="w-10 h-10 sm:w-12 sm:h-12 gradient-primary rounded-lg sm:rounded-xl flex items-center justify-center text-primary-foreground relative flex-shrink-0"
                       whileHover={{ rotate: [0, -10, 10, 0] }}
                       transition={{ duration: 0.4 }}
                     >
-                      <User size={24} />
+                      <User size={20} className="sm:w-6 sm:h-6" />
                       {/* Subtle status indicator */}
                       {travelProfile.completionPercentage >= 100 ? (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
-                          <CheckCircle2 size={12} className="text-success-foreground" />
+                        <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-success rounded-full flex items-center justify-center">
+                          <CheckCircle2 size={10} className="sm:w-3 sm:h-3 text-success-foreground" />
                         </div>
                       ) : (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-warning rounded-full flex items-center justify-center">
-                          <span className="text-[10px] font-bold text-warning-foreground">{travelProfile.completionPercentage}%</span>
+                        <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-warning rounded-full flex items-center justify-center">
+                          <span className="text-[8px] sm:text-[10px] font-bold text-warning-foreground">{travelProfile.completionPercentage}%</span>
                         </div>
                       )}
                     </motion.div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{t('dashboard.profileCard.title')}</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base">{t('dashboard.profileCard.title')}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {travelProfile.completionPercentage >= 100 
                           ? t('dashboard.profileStatus.complete')
                           : t('dashboard.profileCard.subtitle')
@@ -218,17 +218,17 @@ const Dashboard = () => {
                 whileTap="tap"
               >
                 <Card variant="interactive" className="h-full">
-                  <CardContent className="p-6 flex items-center gap-4">
+                  <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
                     <motion.div 
-                      className="w-12 h-12 gradient-magic rounded-xl flex items-center justify-center text-accent-foreground"
+                      className="w-10 h-10 sm:w-12 sm:h-12 gradient-magic rounded-lg sm:rounded-xl flex items-center justify-center text-accent-foreground flex-shrink-0"
                       whileHover={{ rotate: [0, -10, 10, 0] }}
                       transition={{ duration: 0.4 }}
                     >
-                      <Calendar size={24} />
+                      <Calendar size={20} className="sm:w-6 sm:h-6" />
                     </motion.div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{t('dashboard.itineraryCard.title')}</h3>
-                      <p className="text-sm text-muted-foreground">{t('dashboard.itineraryCard.subtitle')}</p>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base">{t('dashboard.itineraryCard.title')}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('dashboard.itineraryCard.subtitle')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -251,17 +251,17 @@ const Dashboard = () => {
                   whileTap="tap"
                 >
                   <Card variant="interactive" className="h-full">
-                    <CardContent className="p-6 flex items-center gap-4">
+                    <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
                       <motion.div 
-                        className="w-12 h-12 bg-[hsl(142_70%_45%)] rounded-xl flex items-center justify-center text-white"
+                        className="w-10 h-10 sm:w-12 sm:h-12 bg-[hsl(142_70%_45%)] rounded-lg sm:rounded-xl flex items-center justify-center text-white flex-shrink-0"
                         whileHover={{ scale: 1.1 }}
                         transition={{ type: 'spring', stiffness: 400 }}
                       >
-                        <MessageCircle size={24} />
+                        <MessageCircle size={20} className="sm:w-6 sm:h-6" />
                       </motion.div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{t('dashboard.guideCard.title')} {guideName}</h3>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.guideCard.subtitle')}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{t('dashboard.guideCard.title')} {guideName}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('dashboard.guideCard.subtitle')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -278,13 +278,13 @@ const Dashboard = () => {
                   whileTap="tap"
                 >
                   <Card variant="interactive" className="h-full">
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
-                        <MessageCircle size={24} />
+                    <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-lg sm:rounded-xl flex items-center justify-center text-muted-foreground flex-shrink-0">
+                        <MessageCircle size={20} className="sm:w-6 sm:h-6" />
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{t('dashboard.guideCard.noGuide')}</h3>
-                        <p className="text-sm text-muted-foreground">{t('dashboard.guideCard.selectGuide')}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm sm:text-base">{t('dashboard.guideCard.noGuide')}</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{t('dashboard.guideCard.selectGuide')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -303,13 +303,13 @@ const Dashboard = () => {
         {hasGuide && (
           <motion.div variants={itemVariants}>
             <Card className="overflow-hidden border-0 gradient-primary text-primary-foreground">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="text-center md:text-left">
-                    <h3 className="font-display text-2xl font-bold mb-2">
+              <CardContent className="p-5 sm:p-8">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+                  <div className="text-center sm:text-left">
+                    <h3 className="font-display text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
                       {t('dashboard.needHelp.title')}
                     </h3>
-                    <p className="text-primary-foreground/80">
+                    <p className="text-primary-foreground/80 text-sm sm:text-base">
                       {guideName} {t('dashboard.needHelp.subtitle')}
                     </p>
                   </div>
@@ -319,9 +319,10 @@ const Dashboard = () => {
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    className="w-full sm:w-auto flex-shrink-0"
                   >
-                    <Button variant="whatsapp" size="xl">
-                      <MessageCircle size={24} />
+                    <Button variant="whatsapp" size="lg" className="w-full sm:w-auto">
+                      <MessageCircle size={20} className="sm:w-6 sm:h-6" />
                       {t('dashboard.needHelp.button')}
                     </Button>
                   </motion.a>

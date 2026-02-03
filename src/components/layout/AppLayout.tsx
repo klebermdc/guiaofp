@@ -81,7 +81,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="p-4 pt-4 lg:p-8"
+            className="px-3 py-4 sm:px-4 lg:p-8"
           >
             {children}
           </motion.div>
