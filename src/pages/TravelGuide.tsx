@@ -23,6 +23,8 @@ const shoeSizes = {
   kids: { brasil: ['24-25', '26', '27', '29', '30', '31', '32'], usa: ['9', '10', '11', '12', '13', '13.5', '1'] }
 };
 
+import { UsefulAddresses } from '@/components/guide/UsefulAddresses';
+
 // Navigation sections
 const navSections = [
   { id: 'locomocao', label: 'Locomoção', icon: Car, color: 'from-blue-500 to-cyan-500' },
@@ -35,6 +37,7 @@ const navSections = [
   { id: 'parques-busch', label: 'Busch', icon: Flame, color: 'from-orange-600 to-red-500' },
   { id: 'parques-legoland', label: 'LEGO', icon: Globe, color: 'from-yellow-500 to-red-500' },
   { id: 'medidas', label: 'Medidas', icon: Ruler, color: 'from-slate-500 to-gray-500' },
+  { id: 'enderecos', label: 'Endereços', icon: MapPin, color: 'from-teal-500 to-emerald-500' },
   { id: 'emergencias', label: 'Emergências', icon: Shield, color: 'from-red-500 to-rose-500' },
 ];
 
@@ -1061,6 +1064,28 @@ const TravelGuide = () => {
                       ))}
                     </TabsContent>
                   </Tabs>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* ENDEREÇOS ÚTEIS */}
+          <div data-section="enderecos" className="group">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="enderecos" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/30 flex-shrink-0">
+                      <MapPin className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Endereços Úteis</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Parques, hospitais, aeroportos e compras</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 sm:px-6 pb-6">
+                  <UsefulAddresses />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
