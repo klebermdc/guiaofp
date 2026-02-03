@@ -131,28 +131,31 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background font-body overflow-x-hidden">
       {/* Floating Header */}
-      <header className="fixed top-4 left-4 right-4 z-50">
-        <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl px-6 py-3 flex items-center justify-between shadow-soft">
+      <header className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50">
+        <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shadow-soft">
           <div className="flex items-center">
             <img 
               src={logo} 
               alt="Orlando Fast Pass Planejador" 
-              className="h-14 sm:h-16 w-auto object-contain"
+              className="h-10 sm:h-14 md:h-16 w-auto object-contain"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <LanguageSelector />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <div className="hidden sm:block">
+              <LanguageSelector />
+            </div>
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Button variant="ghost" size="sm" className="text-muted-foreground px-2 sm:px-4 min-h-[44px]">
                 {t('common.login')}
               </Button>
             </Link>
             <Button 
               size="sm" 
-              className="gradient-primary text-primary-foreground rounded-xl"
+              className="gradient-primary text-primary-foreground rounded-lg sm:rounded-xl px-3 sm:px-4 min-h-[44px] text-xs sm:text-sm"
               onClick={() => scrollToSection('planos')}
             >
-              Ver planos
+              <span className="hidden xs:inline">Ver planos</span>
+              <span className="xs:hidden">Planos</span>
             </Button>
           </div>
         </div>
@@ -205,12 +208,12 @@ const Landing = () => {
                 buttonText: 'Escolher meu plano',
               }}
             />
-            <Badge className="mb-6 bg-white/20 backdrop-blur-sm text-white border-white/30 px-4 py-2 text-sm animate-fade-in">
+            <Badge className="mb-4 sm:mb-6 bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm animate-fade-in">
               ✨ Planejador Inteligente de Parques
             </Badge>
 
             <h1 
-              className="font-display text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-lg animate-fade-in"
+              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-4 sm:mb-6 drop-shadow-lg animate-fade-in px-2"
               style={{ animationDelay: '0.1s' }}
             >
               Menos filas.
@@ -221,54 +224,54 @@ const Landing = () => {
             </h1>
 
             <p 
-              className="text-xl text-white/90 max-w-2xl mx-auto mb-10 drop-shadow animate-fade-in"
+              className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 sm:mb-10 drop-shadow animate-fade-in px-4"
               style={{ animationDelay: '0.2s' }}
             >
               Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
             </p>
 
             <div 
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 animate-fade-in px-4"
               style={{ animationDelay: '0.3s' }}
             >
               <Button 
                 size="lg" 
-                className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group hover:scale-105 transition-transform"
+                className="gradient-gold text-secondary-foreground rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg shadow-gold group hover:scale-105 transition-transform w-full sm:w-auto"
                 onClick={() => scrollToSection('planos')}
               >
                 Escolher meu plano
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="rounded-2xl px-8 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:scale-105 transition-transform"
+                className="rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:scale-105 transition-transform w-full sm:w-auto"
                 onClick={() => scrollToSection('como-funciona')}
               >
-                <Play className="w-5 h-5 mr-2" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Como funciona
               </Button>
             </div>
 
             {/* Stats with stagger animation */}
             <div 
-              className="flex items-center justify-center gap-4 sm:gap-8 text-center animate-fade-in"
+              className="flex items-center justify-center gap-2 sm:gap-4 md:gap-8 text-center animate-fade-in flex-wrap px-2"
               style={{ animationDelay: '0.4s' }}
             >
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 hover:bg-white/20 transition-colors">
-                <p className="text-2xl sm:text-3xl font-bold text-white">500+</p>
-                <p className="text-xs sm:text-sm text-white/70">Famílias</p>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 hover:bg-white/20 transition-colors">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">500+</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Famílias</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 hover:bg-white/20 transition-colors">
-                <p className="text-2xl sm:text-3xl font-bold text-white">7</p>
-                <p className="text-xs sm:text-sm text-white/70">Parques</p>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 hover:bg-white/20 transition-colors">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">7</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Parques</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 sm:px-6 py-4 flex items-center gap-2 hover:bg-white/20 transition-colors">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center gap-1 sm:gap-2 hover:bg-white/20 transition-colors">
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-white">5.0</p>
-                  <p className="text-xs sm:text-sm text-white/70">Avaliação</p>
+                  <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">5.0</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Avaliação</p>
                 </div>
-                <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-secondary text-secondary" />
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-secondary text-secondary" />
               </div>
             </div>
           </div>
@@ -284,9 +287,9 @@ const Landing = () => {
       </section>
 
       {/* How It Works - Bento Grid with Scroll Animations */}
-      <section id="como-funciona" className="py-24 px-4">
+      <section id="como-funciona" className="py-16 sm:py-24 px-3 sm:px-4">
         <div className="max-w-6xl mx-auto">
-          <AnimatedCard className="text-center mb-16 relative">
+          <AnimatedCard className="text-center mb-10 sm:mb-16 relative">
             {/* Edit Button for How It Works */}
             <EditButton 
               pageKey="landing" 
@@ -298,31 +301,31 @@ const Landing = () => {
                 subtitle: 'Simples e poderoso',
               }}
             />
-            <p className="text-accent font-medium mb-2">Simples e poderoso</p>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
+            <p className="text-accent font-medium mb-2 text-sm sm:text-base">Simples e poderoso</p>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
               Como funciona
             </h2>
           </AnimatedCard>
 
           {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Step 1 - Large with Image */}
             <AnimatedCard delay={100} className="md:col-span-2">
               <Card className="overflow-hidden group hover:shadow-glow transition-all duration-500">
                 <div className="grid md:grid-cols-2 h-full">
-                  <CardContent className="p-8 flex flex-col justify-center">
-                    <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                      <Users className="w-6 h-6 text-accent" />
+                  <CardContent className="p-5 sm:p-8 flex flex-col justify-center order-2 md:order-1">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-accent/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
                     </div>
-                    <p className="text-accent text-sm font-medium mb-2">Passo 1</p>
-                    <h3 className="font-display text-2xl font-bold text-foreground mb-2">
+                    <p className="text-accent text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 1</p>
+                    <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
                       Monte seu perfil
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Datas, tamanho do grupo, preferências e estilo de viagem. Tudo em minutos.
                     </p>
                   </CardContent>
-                  <div className="relative h-48 md:h-auto overflow-hidden">
+                  <div className="relative h-40 sm:h-48 md:h-auto overflow-hidden order-1 md:order-2">
                     <img 
                       src={familyPark} 
                       alt="Família no parque" 
@@ -338,16 +341,16 @@ const Landing = () => {
             {/* Step 2 */}
             <AnimatedCard delay={200}>
               <Card className="bg-gradient-to-br from-secondary/10 to-transparent border-secondary/20 overflow-hidden hover:shadow-gold transition-all duration-500 h-full group">
-                <CardContent className="p-8 flex flex-col h-full min-h-[280px]">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Star className="w-6 h-6 text-secondary" />
+                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[200px] sm:min-h-[280px]">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-secondary/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                    <Star className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
                   </div>
                   <div className="mt-auto">
-                    <p className="text-secondary text-sm font-medium mb-2">Passo 2</p>
-                    <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                    <p className="text-secondary text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 2</p>
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
                       Escolha as atrações
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-xs sm:text-sm">
                       Marque tudo que quer fazer em cada parque.
                     </p>
                   </div>
@@ -364,16 +367,16 @@ const Landing = () => {
                   className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700"
                   loading="lazy"
                 />
-                <CardContent className="p-8 flex flex-col h-full min-h-[280px] relative">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Route className="w-6 h-6 text-primary" />
+                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[200px] sm:min-h-[280px] relative">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                    <Route className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   </div>
                   <div className="mt-auto">
-                    <p className="text-primary text-sm font-medium mb-2">Passo 3</p>
-                    <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                    <p className="text-primary text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 3</p>
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
                       Gere seu roteiro
                     </h3>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-xs sm:text-sm">
                       IA cria a melhor sequência para você.
                     </p>
                   </div>
@@ -384,16 +387,16 @@ const Landing = () => {
             {/* Step 4 - Large */}
             <AnimatedCard delay={400} className="md:col-span-2">
               <Card className="bg-gradient-to-br from-success/10 to-transparent border-success/20 overflow-hidden hover:shadow-soft transition-all duration-500 group">
-                <CardContent className="p-8 flex flex-col h-full min-h-[280px]">
-                  <div className="w-12 h-12 rounded-2xl bg-success/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Zap className="w-6 h-6 text-success" />
+                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[180px] sm:min-h-[280px]">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-success/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
                   </div>
                   <div className="mt-auto">
-                    <p className="text-success text-sm font-medium mb-2">Passo 4</p>
-                    <h3 className="font-display text-2xl font-bold text-foreground mb-2">
+                    <p className="text-success text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 4</p>
+                    <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
                       Aproveite sem stress
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-sm sm:text-base">
                       Menos tempo na fila, mais tempo criando memórias. Simples assim.
                     </p>
                   </div>

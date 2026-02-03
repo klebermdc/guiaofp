@@ -160,20 +160,20 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" hideCloseButton className="h-[85vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0 flex flex-col">
-        <SheetHeader className="px-6 pb-4 border-b border-sidebar-border flex-shrink-0">
+      <SheetContent side="bottom" hideCloseButton className="h-[80vh] max-h-[80vh] rounded-t-3xl bg-sidebar/95 backdrop-blur-xl border-sidebar-border px-0 flex flex-col overflow-hidden">
+        <SheetHeader className="px-4 sm:px-6 pb-3 sm:pb-4 border-b border-sidebar-border flex-shrink-0">
           <div className="flex items-center justify-between">
             <motion.img 
               src={logo} 
               alt="Orlando Fast Pass" 
-              className="h-10 object-contain"
+              className="h-8 sm:h-10 object-contain"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             />
             <motion.button 
               onClick={() => onOpenChange(false)}
-              className="p-2 rounded-full hover:bg-sidebar-accent transition-colors"
+              className="p-2 rounded-full hover:bg-sidebar-accent transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               whileTap={{ scale: 0.9 }}
               initial={{ opacity: 0, rotate: -90 }}
               animate={{ opacity: 1, rotate: 0 }}
@@ -187,14 +187,14 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* User Info */}
         <motion.div 
-          className="px-6 py-4 border-b border-sidebar-border flex-shrink-0"
+          className="px-4 sm:px-6 py-3 sm:py-4 border-b border-sidebar-border flex-shrink-0"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <div className="flex items-center gap-3">
             <motion.div 
-              className="w-12 h-12 rounded-full gradient-magic flex items-center justify-center text-accent-foreground font-bold text-lg"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full gradient-magic flex items-center justify-center text-accent-foreground font-bold text-base sm:text-lg"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.25 }}
@@ -202,16 +202,16 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
               {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
             </motion.div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sidebar-foreground truncate">
+              <p className="font-semibold text-sidebar-foreground truncate text-sm sm:text-base">
                 {user?.user_metadata?.name || 'Visitante'}
               </p>
-              <p className="text-sm text-sidebar-foreground/60 truncate">{user?.email}</p>
+              <p className="text-xs sm:text-sm text-sidebar-foreground/60 truncate">{user?.email}</p>
             </div>
           </div>
         </motion.div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 overscroll-contain">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <motion.div 
@@ -222,7 +222,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
             </div>
           ) : (
             <motion.div 
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-2 gap-2 sm:gap-3"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -233,16 +233,16 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
                     to={item.path}
                     onClick={() => onOpenChange(false)}
                     className={({ isActive }) => cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-colors duration-200",
+                      "flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-colors duration-200 min-h-[72px] sm:min-h-[88px]",
                       isActive
                         ? "bg-sidebar-primary/20 border-sidebar-primary/40 text-sidebar-primary"
                         : "bg-sidebar-accent/50 border-sidebar-border hover:bg-sidebar-accent text-sidebar-foreground"
                     )}
                   >
                     <motion.div whileTap={{ scale: 0.9 }}>
-                      <item.icon size={24} />
+                      <item.icon size={20} className="sm:w-6 sm:h-6" />
                     </motion.div>
-                    <span className="text-sm font-medium text-center leading-tight">{item.label}</span>
+                    <span className="text-xs sm:text-sm font-medium text-center leading-tight line-clamp-2">{item.label}</span>
                   </PrefetchLink>
                 </motion.div>
               ))}
@@ -252,7 +252,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* Language Selector */}
         <motion.div 
-          className="px-6 py-2 flex-shrink-0"
+          className="px-4 sm:px-6 py-2 flex-shrink-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
@@ -262,7 +262,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
 
         {/* Logout Button */}
         <motion.div 
-          className="px-6 py-4 border-t border-sidebar-border flex-shrink-0"
+          className="px-4 sm:px-6 py-3 sm:py-4 border-t border-sidebar-border flex-shrink-0 safe-area-pb"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -273,7 +273,7 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
               onOpenChange(false);
             }}
             whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors min-h-[44px]"
           >
             <LogOut size={20} />
             <span className="font-medium">{t('common.logout')}</span>
