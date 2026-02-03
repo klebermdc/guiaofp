@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
   CreditCard, 
@@ -25,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import { TERMS_VERSION } from './TermsAndPrivacy';
 
 interface Plan {
   id: string;
@@ -104,6 +106,9 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState('');
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  
+  // Terms acceptance state
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   // Form fields
   const [formData, setFormData] = useState({
@@ -270,6 +275,11 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!termsAccepted) {
+      toast.error('Você precisa aceitar os Termos de Uso e Política de Privacidade');
+      return;
+    }
+    
     if (!formData.name || !formData.email || !formData.cpf) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
@@ -327,6 +337,8 @@ export default function Checkout() {
             addressNumber: formData.cardHolderAddressNumber,
             phone: formData.phone.replace(/\D/g, ''),
           } : undefined,
+          termsAccepted: true,
+          termsVersion: TERMS_VERSION,
         },
       });
 
@@ -767,11 +779,43 @@ export default function Checkout() {
                 </CardContent>
               </Card>
 
+              {/* Terms Acceptance Checkbox */}
+              <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="terms-acceptance"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                    className="mt-1"
+                  />
+                  <Label 
+                    htmlFor="terms-acceptance" 
+                    className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+                  >
+                    Li e concordo com os{' '}
+                    <a 
+                      href="/termos-e-privacidade" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Termos de Uso e Política de Privacidade
+                    </a>
+                  </Label>
+                </div>
+                {!termsAccepted && (
+                  <p className="text-xs text-destructive/80 flex items-center gap-1 ml-7">
+                    <Shield className="w-3 h-3" />
+                    Aceite obrigatório para continuar
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 size="lg"
                 className="w-full h-14 text-lg gradient-primary text-primary-foreground rounded-xl"
-                disabled={isProcessing}
+                disabled={isProcessing || !termsAccepted}
               >
                 {isProcessing ? (
                   <>
