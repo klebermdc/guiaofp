@@ -63,7 +63,7 @@ const TravelGuide = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-8 pb-12">
+      <div className="space-y-6 sm:space-y-8 pb-12 overflow-y-auto">
         {/* Modern Hero Header */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-accent p-5 sm:p-8 md:p-12">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
@@ -766,18 +766,18 @@ const TravelGuide = () => {
           <div data-section="parques-universal" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="parques-universal" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                      <Sparkles className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 flex-shrink-0">
+                      <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Dicas dos Parques Universal</h3>
-                      <p className="text-sm text-muted-foreground">Express Pass, estratégias</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas dos Parques Universal</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Express Pass, estratégias</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Express Pass */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-white">
@@ -822,18 +822,18 @@ const TravelGuide = () => {
           <div data-section="parques-seaworld" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="parques-seaworld" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                      <Fish className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
+                      <Fish className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Dicas SeaWorld & Aquatica</h3>
-                      <p className="text-sm text-muted-foreground">Shows, animais e parque aquático</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas SeaWorld & Aquatica</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Shows, animais e parque aquático</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Quick Queue */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
@@ -879,18 +879,18 @@ const TravelGuide = () => {
           <div data-section="parques-busch" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="parques-busch" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-600 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                      <Flame className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-600 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30 flex-shrink-0">
+                      <Flame className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Dicas Busch Gardens Tampa</h3>
-                      <p className="text-sm text-muted-foreground">Montanhas-russas radicais e safári</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas Busch Gardens Tampa</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Montanhas-russas radicais e safári</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Quick Queue */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-orange-600 to-red-500 text-white">
@@ -936,18 +936,18 @@ const TravelGuide = () => {
           <div data-section="parques-legoland" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="parques-legoland" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                      <Globe className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center shadow-lg shadow-yellow-500/30 flex-shrink-0">
+                      <Globe className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Dicas LEGOLAND Florida</h3>
-                      <p className="text-sm text-muted-foreground">Ideal para crianças de 2-12 anos</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Dicas LEGOLAND Florida</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Ideal para crianças de 2-12 anos</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Info Principal */}
                     <div className="p-5 rounded-2xl bg-gradient-to-br from-yellow-500 to-red-500 text-white">
@@ -993,18 +993,18 @@ const TravelGuide = () => {
           <div data-section="medidas" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="medidas" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-500 to-gray-500 flex items-center justify-center shadow-lg shadow-slate-500/30">
-                      <Ruler className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-500 to-gray-500 flex items-center justify-center shadow-lg shadow-slate-500/30 flex-shrink-0">
+                      <Ruler className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Tabela de Medidas</h3>
-                      <p className="text-sm text-muted-foreground">Conversão Brasil x EUA</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Tabela de Medidas</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Conversão Brasil x EUA</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <Tabs defaultValue="clothes" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-muted/50 rounded-xl p-1 mb-6">
                       <TabsTrigger value="clothes" className="rounded-lg">👕 Roupas</TabsTrigger>
@@ -1095,18 +1095,18 @@ const TravelGuide = () => {
           <div data-section="emergencias" className="group">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="emergencias" className="border-0 rounded-2xl bg-gradient-to-br from-card to-card/80 shadow-xl overflow-hidden">
-                <AccordionTrigger className="px-6 py-5 hover:no-underline hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg shadow-red-500/30">
-                      <Shield className="w-7 h-7 text-white" />
+                <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-lg shadow-red-500/30 flex-shrink-0">
+                      <Shield className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                     </div>
-                    <div className="text-left">
-                      <h3 className="font-display font-bold text-xl">Emergências e Contatos</h3>
-                      <p className="text-sm text-muted-foreground">Números úteis e hospitais</p>
+                    <div className="text-left min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-xl">Emergências e Contatos</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">Números úteis e hospitais</p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className="px-4 sm:px-6 pb-6">
                   <div className="space-y-6">
                     {/* Números Principais */}
                     <div className="grid gap-4 md:grid-cols-3">
