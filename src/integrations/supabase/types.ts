@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          abandoned_at: string | null
+          cart_items: Json
+          cart_type: string
+          created_at: string
+          id: string
+          last_activity_at: string
+          last_recovery_email_at: string | null
+          metadata: Json | null
+          recovered_at: string | null
+          recovery_attempts: number
+          recovery_coupon_code: string | null
+          status: string
+          total_value_cents: number
+          user_id: string
+        }
+        Insert: {
+          abandoned_at?: string | null
+          cart_items?: Json
+          cart_type: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          last_recovery_email_at?: string | null
+          metadata?: Json | null
+          recovered_at?: string | null
+          recovery_attempts?: number
+          recovery_coupon_code?: string | null
+          status?: string
+          total_value_cents?: number
+          user_id: string
+        }
+        Update: {
+          abandoned_at?: string | null
+          cart_items?: Json
+          cart_type?: string
+          created_at?: string
+          id?: string
+          last_activity_at?: string
+          last_recovery_email_at?: string | null
+          metadata?: Json | null
+          recovered_at?: string | null
+          recovery_attempts?: number
+          recovery_coupon_code?: string | null
+          status?: string
+          total_value_cents?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       activities: {
         Row: {
           address: string | null
@@ -1613,6 +1664,7 @@ export type Database = {
         Returns: boolean
       }
       is_guide_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      mark_abandoned_carts: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "guide" | "client"
