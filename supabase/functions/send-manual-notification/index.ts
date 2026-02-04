@@ -11,6 +11,7 @@ interface ManualNotificationRequest {
   emails: string[];
   subject: string;
   message: string;
+  planType?: string; // Optional: 'basic' or 'premium' for recovery emails
 }
 
 async function sendEmail(to: string[], subject: string, html: string) {
@@ -55,8 +56,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { emails, subject, message }: ManualNotificationRequest = await req.json();
+    const { emails, subject, message, planType }: ManualNotificationRequest = await req.json();
 
+    // Determine checkout URL based on plan type
+    const checkoutPlan = planType || 'basic';
+    const checkoutUrl = `https://guiaofp.lovable.app/login?redirect=/checkout/${checkoutPlan}&recovery=true`;
     if (!emails || emails.length === 0) {
       return new Response(
         JSON.stringify({ error: "No email recipients provided" }),
@@ -125,11 +129,11 @@ ${message}
                 <!-- CTA Button -->
                 <tr>
                   <td style="padding: 0 40px 40px 40px; text-align: center;">
-                    <a href="https://guiaofp.lovable.app/dashboard" 
+                    <a href="${checkoutUrl}" 
                        style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
                               color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 50px; 
                               font-weight: bold; font-size: 16px; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);">
-                      🚀 Acessar Meu Planejador
+                      🚀 Finalizar Minha Compra
                     </a>
                   </td>
                 </tr>

@@ -286,6 +286,7 @@ export function CartRecoveryManager() {
               emails: [email],
               subject,
               message,
+              planType: cart.cart_type, // Pass the plan type for dynamic checkout URL
             },
           });
 
