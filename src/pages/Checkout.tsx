@@ -136,6 +136,17 @@ export default function Checkout() {
   // State to track current cart ID
   const [cartId, setCartId] = useState<string | null>(null);
 
+  // Generate or retrieve anonymous visitor ID for tracking non-logged users
+  const getOrCreateVisitorId = (): string => {
+    const VISITOR_ID_KEY = 'ofp_visitor_id';
+    let visitorId = localStorage.getItem(VISITOR_ID_KEY);
+    if (!visitorId) {
+      visitorId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      localStorage.setItem(VISITOR_ID_KEY, visitorId);
+    }
+    return visitorId;
+  };
+
   // Track view_item e begin_checkout quando a página carrega
   useEffect(() => {
     if (plan) {
@@ -143,63 +154,72 @@ export default function Checkout() {
       trackBeginCheckout(plan.id, plan.name, originalAmountCents);
     }
   }, [plan, originalAmountCents, trackPlanView, trackBeginCheckout]);
+
+  // Track cart for both logged-in users AND anonymous visitors
   useEffect(() => {
     const trackCart = async () => {
+      if (!plan) return;
+
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (session?.user && plan) {
+      // Use real user_id if logged in, otherwise use anonymous visitor ID
+      const visitorId = session?.user?.id || getOrCreateVisitorId();
+      const isAnonymous = !session?.user;
+      
+      if (session?.user) {
         setUser(session.user);
         setFormData(prev => ({
           ...prev,
           email: session.user.email || '',
         }));
+      }
 
-        // Create or update abandoned cart entry
-        const cartData = {
-          user_id: session.user.id,
-          cart_type: plan.id,
-          cart_items: [{
-            name: plan.name,
-            type: 'plan',
-            plan_key: plan.id,
-            price_cents: plan.price * 100 + plan.priceCents,
-            features: plan.features,
-          }],
-          total_value_cents: plan.price * 100 + plan.priceCents,
-          status: 'active',
-          last_activity_at: new Date().toISOString(),
-          metadata: {
-            contact_name: '',
-            contact_email: session.user.email || '',
-            contact_phone: '',
-          },
-        };
+      // Create or update abandoned cart entry for both logged and anonymous users
+      const cartData = {
+        user_id: visitorId,
+        cart_type: plan.id,
+        cart_items: [{
+          name: plan.name,
+          type: 'plan',
+          plan_key: plan.id,
+          price_cents: plan.price * 100 + plan.priceCents,
+          features: plan.features,
+        }],
+        total_value_cents: plan.price * 100 + plan.priceCents,
+        status: 'active',
+        last_activity_at: new Date().toISOString(),
+        metadata: {
+          contact_name: '',
+          contact_email: session?.user?.email || '',
+          contact_phone: '',
+          is_anonymous: isAnonymous,
+        },
+      };
 
-        // Check for existing cart
-        const { data: existingCart } = await supabase
+      // Check for existing cart (by visitor ID and plan type)
+      const { data: existingCart } = await supabase
+        .from('abandoned_carts')
+        .select('id')
+        .eq('user_id', visitorId)
+        .eq('cart_type', plan.id)
+        .eq('status', 'active')
+        .single();
+
+      if (existingCart) {
+        setCartId(existingCart.id);
+        await supabase
           .from('abandoned_carts')
+          .update({ last_activity_at: new Date().toISOString() })
+          .eq('id', existingCart.id);
+      } else {
+        const { data: newCart } = await supabase
+          .from('abandoned_carts')
+          .insert(cartData)
           .select('id')
-          .eq('user_id', session.user.id)
-          .eq('cart_type', plan.id)
-          .eq('status', 'active')
           .single();
-
-        if (existingCart) {
-          setCartId(existingCart.id);
-          await supabase
-            .from('abandoned_carts')
-            .update({ last_activity_at: new Date().toISOString() })
-            .eq('id', existingCart.id);
-        } else {
-          const { data: newCart } = await supabase
-            .from('abandoned_carts')
-            .insert(cartData)
-            .select('id')
-            .single();
-          
-          if (newCart) {
-            setCartId(newCart.id);
-          }
+        
+        if (newCart) {
+          setCartId(newCart.id);
         }
       }
     };
