@@ -502,9 +502,9 @@ html, body {
   }
 }
 
-/* Prevent horizontal scroll globally */
+/* Prevent horizontal scroll globally - use clip instead of hidden to preserve scroll behavior */
 html, body, #root {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 
