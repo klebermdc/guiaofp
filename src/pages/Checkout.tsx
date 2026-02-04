@@ -21,7 +21,9 @@ import {
   ExternalLink,
   Check,
   Tag,
-  X
+  X,
+  User,
+  LogIn
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,15 +94,25 @@ interface AppliedCoupon {
   discountAmount: number;
 }
 
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+}
+
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
   const plan = plans[planId || 'basic'];
   const { trackBeginCheckout, trackAddPaymentInfo, trackPurchase, trackPlanView } = useAnalytics();
 
+  // User state
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
   const [copied, setCopied] = useState(false);
   
@@ -112,10 +124,8 @@ export default function Checkout() {
   // Terms acceptance state
   const [termsAccepted, setTermsAccepted] = useState(false);
   
-  // Form fields
+  // Form fields - only CPF and payment info needed
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     cpf: '',
     phone: '',
     cardHolderCep: '',
@@ -133,115 +143,74 @@ export default function Checkout() {
   const finalPrice = Math.floor(finalAmountCents / 100);
   const finalCents = finalAmountCents % 100;
 
-  // State to track current cart ID
-  const [cartId, setCartId] = useState<string | null>(null);
-  const [isSavingData, setIsSavingData] = useState(false);
-  const [dataSaved, setDataSaved] = useState(false);
+  // Check authentication and load user data
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        // Not logged in - redirect to register
+        toast.error('Você precisa criar uma conta para continuar');
+        navigate(`/registro/${planId || 'basic'}`, { replace: true });
+        return;
+      }
 
-  // Generate or retrieve anonymous visitor ID for tracking non-logged users
-  const getOrCreateVisitorId = (): string => {
-    const VISITOR_ID_KEY = 'ofp_visitor_id';
-    let visitorId = localStorage.getItem(VISITOR_ID_KEY);
-    if (!visitorId) {
-      visitorId = `anon_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-      localStorage.setItem(VISITOR_ID_KEY, visitorId);
-    }
-    return visitorId;
-  };
+      // Load profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('responsible_name, whatsapp')
+        .eq('user_id', session.user.id)
+        .single();
+
+      setUserProfile({
+        id: session.user.id,
+        email: session.user.email || '',
+        name: profile?.responsible_name || session.user.user_metadata?.name || '',
+        phone: profile?.whatsapp || '',
+      });
+
+      // Pre-fill phone if available
+      if (profile?.whatsapp) {
+        setFormData(prev => ({ ...prev, phone: profile.whatsapp || '' }));
+      }
+
+      setIsLoadingUser(false);
+    };
+
+    loadUser();
+  }, [navigate, planId]);
 
   // Track view_item e begin_checkout quando a página carrega
   useEffect(() => {
-    if (plan) {
+    if (plan && userProfile) {
       trackPlanView(plan.id, plan.name, originalAmountCents);
       trackBeginCheckout(plan.id, plan.name, originalAmountCents);
+      
+      // Update abandoned cart with user's actual info
+      supabase.functions.invoke('track-abandoned-cart', {
+        body: {
+          visitor_id: userProfile.id,
+          cart_type: plan.id,
+          cart_items: [{
+            name: plan.name,
+            type: 'plan',
+            plan_key: plan.id,
+            price_cents: plan.price * 100 + plan.priceCents,
+            features: plan.features,
+          }],
+          total_value_cents: plan.price * 100 + plan.priceCents,
+          metadata: {
+            contact_name: userProfile.name,
+            contact_email: userProfile.email,
+            contact_phone: userProfile.phone || null,
+            is_anonymous: false,
+            checkout_started: new Date().toISOString(),
+          },
+          action: 'create_or_update',
+        },
+      }).catch(console.error);
     }
-  }, [plan, originalAmountCents, trackPlanView, trackBeginCheckout]);
-
-  // Track cart for both logged-in users AND anonymous visitors via backend
-  useEffect(() => {
-    const trackCart = async () => {
-      if (!plan) return;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Use real user_id if logged in, otherwise use anonymous visitor ID
-      const visitorId = session?.user?.id || getOrCreateVisitorId();
-      const isAnonymous = !session?.user;
-      
-      if (session?.user) {
-        setUser(session.user);
-        setFormData(prev => ({
-          ...prev,
-          email: session.user.email || '',
-        }));
-      }
-
-      // Call backend function to create/update cart (bypasses RLS)
-      try {
-        const { data, error } = await supabase.functions.invoke('track-abandoned-cart', {
-          body: {
-            visitor_id: visitorId,
-            cart_type: plan.id,
-            cart_items: [{
-              name: plan.name,
-              type: 'plan',
-              plan_key: plan.id,
-              price_cents: plan.price * 100 + plan.priceCents,
-              features: plan.features,
-            }],
-            total_value_cents: plan.price * 100 + plan.priceCents,
-            metadata: {
-              contact_name: '',
-              contact_email: session?.user?.email || '',
-              contact_phone: '',
-              is_anonymous: isAnonymous,
-            },
-            action: 'create_or_update',
-          },
-        });
-
-        if (error) {
-          console.error('Error tracking cart:', error);
-          return;
-        }
-
-        if (data?.cart_id) {
-          setCartId(data.cart_id);
-          console.log('Cart tracked:', data.cart_id, data.action);
-        }
-      } catch (err) {
-        console.error('Failed to track cart:', err);
-      }
-    };
-
-    trackCart();
-  }, [plan]);
-
-  // Update cart metadata when form fields change (debounced) via backend
-  useEffect(() => {
-    if (!cartId) return;
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        await supabase.functions.invoke('track-abandoned-cart', {
-          body: {
-            visitor_id: '', // not needed for metadata update
-            cart_id: cartId,
-            metadata: {
-              contact_name: formData.name || null,
-              contact_email: formData.email || null,
-              contact_phone: formData.phone || null,
-            },
-            action: 'update_metadata',
-          },
-        });
-      } catch (err) {
-        console.error('Failed to update cart metadata:', err);
-      }
-    }, 1000); // Debounce 1 second
-
-    return () => clearTimeout(timeoutId);
-  }, [cartId, formData.name, formData.email, formData.phone]);
+  }, [plan, userProfile, originalAmountCents, trackPlanView, trackBeginCheckout]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
@@ -263,25 +232,21 @@ export default function Checkout() {
         return;
       }
 
-      // Check if expired
       if (data.valid_until && new Date(data.valid_until) < new Date()) {
         toast.error('Este cupom expirou');
         return;
       }
 
-      // Check if max uses reached
       if (data.max_uses && data.current_uses >= data.max_uses) {
         toast.error('Este cupom atingiu o limite de uso');
         return;
       }
 
-      // Check minimum amount
       if (data.min_amount_cents && originalAmountCents < data.min_amount_cents) {
         toast.error(`Valor mínimo para este cupom: R$${(data.min_amount_cents / 100).toFixed(2)}`);
         return;
       }
 
-      // Calculate discount
       let discountAmount = 0;
       if (data.discount_type === 'percentage') {
         discountAmount = Math.floor(originalAmountCents * (data.discount_value / 100));
@@ -297,7 +262,7 @@ export default function Checkout() {
       });
 
       toast.success(`Cupom "${data.code}" aplicado!`);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao validar cupom');
     } finally {
       setIsValidatingCoupon(false);
@@ -310,6 +275,17 @@ export default function Checkout() {
     toast.info('Cupom removido');
   };
 
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!plan) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -319,6 +295,27 @@ export default function Checkout() {
             <Link to="/">
               <Button>Voltar para início</Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center space-y-4">
+            <LogIn className="w-12 h-12 mx-auto text-muted-foreground" />
+            <p className="text-muted-foreground">Você precisa estar logado para continuar</p>
+            <div className="flex gap-2">
+              <Link to={`/registro/${planId || 'basic'}`} className="flex-1">
+                <Button className="w-full">Criar conta</Button>
+              </Link>
+              <Link to="/login" className="flex-1">
+                <Button variant="outline" className="w-full">Fazer login</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -380,8 +377,8 @@ export default function Checkout() {
       return;
     }
     
-    if (!formData.name || !formData.email || !formData.cpf) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (!formData.cpf) {
+      toast.error('Preencha o CPF');
       return;
     }
 
@@ -398,7 +395,6 @@ export default function Checkout() {
 
     setIsProcessing(true);
 
-    // Track add_payment_info event
     trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod);
 
     try {
@@ -422,8 +418,8 @@ export default function Checkout() {
 
       const response = await supabase.functions.invoke('create-asaas-payment', {
         body: {
-          customerName: formData.name,
-          email: formData.email,
+          customerName: userProfile.name,
+          email: userProfile.email,
           cpfCnpj: formData.cpf.replace(/\D/g, ''),
           planKey: plan.id,
           amountCents: finalAmountCents,
@@ -434,7 +430,7 @@ export default function Checkout() {
           creditCard: creditCardData,
           creditCardHolderInfo: creditCardData ? {
             name: formData.cardName,
-            email: formData.email,
+            email: userProfile.email,
             cpfCnpj: formData.cpf.replace(/\D/g, ''),
             postalCode: formData.cardHolderCep.replace(/\D/g, ''),
             addressNumber: formData.cardHolderAddressNumber,
@@ -442,6 +438,7 @@ export default function Checkout() {
           } : undefined,
           termsAccepted: true,
           termsVersion: TERMS_VERSION,
+          userId: userProfile.id,
         },
       });
 
@@ -455,21 +452,18 @@ export default function Checkout() {
         throw new Error(data.error);
       }
 
-      // Mark cart as converted/recovered when payment initiated
-      if (user) {
-        await supabase
-          .from('abandoned_carts')
-          .update({ 
-            status: paymentMethod === 'credit_card' && data.status === 'CONFIRMED' ? 'converted' : 'recovered',
-            recovered_at: new Date().toISOString(),
-          })
-          .eq('user_id', user.id)
-          .eq('cart_type', plan.id)
-          .eq('status', 'active');
-      }
+      // Mark cart as converted when payment initiated
+      await supabase
+        .from('abandoned_carts')
+        .update({ 
+          status: paymentMethod === 'credit_card' && data.status === 'CONFIRMED' ? 'converted' : 'recovered',
+          recovered_at: new Date().toISOString(),
+        })
+        .eq('user_id', userProfile.id)
+        .eq('cart_type', plan.id)
+        .eq('status', 'active');
 
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
-        // Track successful purchase
         trackPurchase(data.transactionId, plan.id, plan.name, finalAmountCents, 'credit_card');
         toast.success('Pagamento aprovado! Redirecionando...');
         navigate('/login?payment=success');
@@ -483,9 +477,10 @@ export default function Checkout() {
           invoiceUrl: data.invoiceUrl,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
-      toast.error(error.message || 'Erro ao processar pagamento. Tente novamente.');
+      const message = error instanceof Error ? error.message : 'Erro ao processar pagamento. Tente novamente.';
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -503,7 +498,7 @@ export default function Checkout() {
               <img src={logo} alt="Orlando Fast Pass" className="h-10" />
             </Link>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="w-4 h-4 text-success" />
+              <Shield className="w-4 h-4 text-green-500" />
               Compra segura
             </div>
           </div>
@@ -513,8 +508,8 @@ export default function Checkout() {
           <Card className="overflow-hidden">
             <div className="h-2 bg-gradient-to-r from-primary to-accent" />
             <CardHeader className="text-center pb-2">
-              <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-success" />
+              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-green-500" />
               </div>
               <CardTitle className="text-2xl">Pedido criado!</CardTitle>
               <CardDescription>
@@ -621,7 +616,7 @@ export default function Checkout() {
             <img src={logo} alt="Orlando Fast Pass" className="h-10" />
           </Link>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="w-4 h-4 text-success" />
+            <Shield className="w-4 h-4 text-green-500" />
             Compra segura
           </div>
         </div>
@@ -640,125 +635,42 @@ export default function Checkout() {
                 Finalizar compra
               </h1>
               <p className="text-muted-foreground">
-                Preencha os dados abaixo para completar sua compra
+                Complete os dados de pagamento para liberar seu acesso
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Logged User Card */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{userProfile.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{userProfile.email}</p>
+                    </div>
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* CPF Field */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Dados pessoais</CardTitle>
+                  <CardTitle className="text-lg">Dados para nota fiscal</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome completo *</Label>
-                      <Input
-                        id="name"
-                        placeholder="Seu nome"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF *</Label>
-                      <Input
-                        id="cpf"
-                        placeholder="000.000.000-00"
-                        value={formData.cpf}
-                        onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
-                        required
-                      />
-                    </div>
-                  </div>
+                <CardContent>
                   <div className="space-y-2">
-                    <Label htmlFor="email">E-mail *</Label>
+                    <Label htmlFor="cpf">CPF *</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      id="cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.cpf}
+                      onChange={(e) => handleInputChange('cpf', formatCPF(e.target.value))}
                       required
                     />
-                  </div>
-                  
-                  {/* Save Data Button */}
-                  <div className="pt-2">
-                    <Button
-                      type="button"
-                      variant={dataSaved ? "outline" : "secondary"}
-                      className="w-full"
-                      disabled={isSavingData || !formData.name || !formData.email}
-                      onClick={async () => {
-                        if (!formData.name || !formData.email) {
-                          toast.error('Preencha nome e e-mail para salvar');
-                          return;
-                        }
-                        
-                        setIsSavingData(true);
-                        try {
-                          const visitorId = user?.id || getOrCreateVisitorId();
-                          
-                          const { data, error } = await supabase.functions.invoke('track-abandoned-cart', {
-                            body: {
-                              visitor_id: visitorId,
-                              cart_type: plan.id,
-                              cart_items: [{
-                                name: plan.name,
-                                type: 'plan',
-                                plan_key: plan.id,
-                                price_cents: plan.price * 100 + plan.priceCents,
-                                features: plan.features,
-                              }],
-                              total_value_cents: plan.price * 100 + plan.priceCents,
-                              metadata: {
-                                contact_name: formData.name,
-                                contact_email: formData.email,
-                                contact_phone: formData.phone || null,
-                                is_anonymous: !user,
-                              },
-                              action: 'create_or_update',
-                            },
-                          });
-                          
-                          if (error) throw error;
-                          
-                          if (data?.cart_id) {
-                            setCartId(data.cart_id);
-                          }
-                          
-                          setDataSaved(true);
-                          toast.success('Dados salvos! Você pode continuar o pagamento quando quiser.');
-                        } catch (err) {
-                          console.error('Error saving data:', err);
-                          toast.error('Erro ao salvar dados');
-                        } finally {
-                          setIsSavingData(false);
-                        }
-                      }}
-                    >
-                      {isSavingData ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Salvando...
-                        </>
-                      ) : dataSaved ? (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          Dados salvos
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="w-4 h-4 mr-2" />
-                          Salvar meus dados
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                      Salve seus dados para continuar depois
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -773,12 +685,12 @@ export default function Checkout() {
                 </CardHeader>
                 <CardContent>
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-success" />
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
                         <div>
                           <p className="font-medium text-foreground">{appliedCoupon.code}</p>
-                          <p className="text-sm text-success">
+                          <p className="text-sm text-green-600">
                             {appliedCoupon.discount_type === 'percentage' 
                               ? `${appliedCoupon.discount_value}% de desconto`
                               : `R$${(appliedCoupon.discount_value / 100).toFixed(2)} de desconto`}
@@ -865,9 +777,9 @@ export default function Checkout() {
                   </div>
 
                   {paymentMethod === 'pix' && (
-                    <div className="p-4 rounded-xl bg-success/10 border border-success/20">
+                    <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
                       <div className="flex items-start gap-3">
-                        <QrCode className="w-5 h-5 text-success mt-0.5" />
+                        <QrCode className="w-5 h-5 text-green-500 mt-0.5" />
                         <div>
                           <p className="font-medium text-foreground">Pagamento instantâneo</p>
                           <p className="text-sm text-muted-foreground">
@@ -1054,7 +966,7 @@ export default function Checkout() {
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-3 text-sm">
-                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${plan.gradient ? 'text-secondary' : 'text-success'}`} />
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${plan.gradient ? 'text-secondary' : 'text-green-500'}`} />
                       <span className="text-foreground">{feature}</span>
                     </li>
                   ))}
@@ -1070,8 +982,8 @@ export default function Checkout() {
                   
                   {appliedCoupon && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-success">Desconto ({appliedCoupon.code})</span>
-                      <span className="text-success">-R${(discountAmountCents / 100).toFixed(2).replace('.', ',')}</span>
+                      <span className="text-green-600">Desconto ({appliedCoupon.code})</span>
+                      <span className="text-green-600">-R${(discountAmountCents / 100).toFixed(2).replace('.', ',')}</span>
                     </div>
                   )}
                   
@@ -1092,7 +1004,7 @@ export default function Checkout() {
 
                 <div className="pt-4 space-y-3">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Shield className="w-4 h-4 text-success" />
+                    <Shield className="w-4 h-4 text-green-500" />
                     Pagamento 100% seguro via Asaas
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">

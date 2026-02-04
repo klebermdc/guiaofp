@@ -38,6 +38,7 @@ const MultiPass = lazy(() => import("./pages/MultiPass"));
 const RemoteGuidance = lazy(() => import("./pages/RemoteGuidance"));
 const Checklists = lazy(() => import("./pages/Checklists"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const Register = lazy(() => import("./pages/Register"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NewPassword = lazy(() => import("./pages/NewPassword"));
 const Restaurants = lazy(() => import("./pages/Restaurants"));
@@ -122,6 +123,7 @@ const App = () => {
                       <Route path="/planner-manual" element={<PlannerManual />} />
                       <Route path="/carteira" element={<DocumentWalletPage />} />
                       <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
+                      <Route path="/registro/:planId" element={<Register />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
                       <Route path="/admin/cliente/:id" element={<ClientDetails />} />
