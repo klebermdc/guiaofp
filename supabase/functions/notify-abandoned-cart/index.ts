@@ -19,11 +19,10 @@ interface AbandonedCart {
 
 interface CartItem {
   name: string;
-  type: 'ticket' | 'hotel' | 'car_rental';
-  quantity?: number;
-  price_cents?: number;
-  date?: string;
-  image_url?: string;
+  type: 'plan';
+  plan_key: 'basic' | 'premium';
+  price_cents: number;
+  features?: string[];
 }
 
 interface UserProfile {
@@ -42,23 +41,26 @@ function formatCurrency(cents: number): string {
 // Get cart type label in Portuguese
 function getCartTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    tickets: 'Ingressos',
-    hotels: 'Hospedagem',
-    car_rentals: 'Aluguel de Carro',
-    mixed: 'Itens Selecionados',
+    basic: 'Plano Básico',
+    premium: 'Plano Guia Premium',
+    plan: 'Plano',
   };
-  return labels[type] || 'Itens';
+  return labels[type] || 'Plano';
 }
 
-// Generate urgency message based on cart type
+// Get plan name for display
+function getPlanDisplayName(planKey: string): string {
+  return planKey === 'premium' ? 'Guia Premium' : 'Básico';
+}
+
+// Generate urgency message based on plan type
 function getUrgencyMessage(cartType: string): string {
   const messages: Record<string, string> = {
-    tickets: '🎢 Os preços dos parques podem mudar a qualquer momento. Garanta sua entrada agora!',
-    hotels: '🏨 Quartos com as melhores tarifas estão acabando. Reserve antes que seja tarde!',
-    car_rentals: '🚗 Reservamos seu carro por tempo limitado. Confirme agora e viaje tranquilo!',
-    mixed: '✨ Seus itens ainda estão disponíveis, mas não podemos garantir por muito tempo!',
+    premium: '🌟 Sua viagem dos sonhos merece o melhor planejamento! Garanta suporte exclusivo do seu guia.',
+    basic: '✨ Comece agora a planejar sua viagem com nossas ferramentas exclusivas!',
+    plan: '🎯 Não deixe para depois! Sua experiência em Orlando começa com o planejamento certo.',
   };
-  return messages[cartType] || messages.mixed;
+  return messages[cartType] || messages.plan;
 }
 
 // Generate HTML email template
@@ -67,18 +69,18 @@ function generateEmailHTML(
   cart: AbandonedCart,
   recoveryUrl: string
 ): string {
-  const itemsHTML = cart.cart_items.map((item) => `
-    <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #eee;">
-        <strong>${item.name}</strong>
-        ${item.date ? `<br><small style="color: #666;">📅 ${item.date}</small>` : ''}
-      </td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">
-        ${item.quantity ? `${item.quantity}x` : ''}
-        ${item.price_cents ? formatCurrency(item.price_cents) : ''}
-      </td>
-    </tr>
-  `).join('');
+  const planItem = cart.cart_items[0];
+  const isPremium = planItem?.plan_key === 'premium';
+  
+  const featuresHTML = planItem?.features?.map((feature) => `
+    <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+      ✓ ${feature}
+    </li>
+  `).join('') || '';
+
+  const planBadge = isPremium 
+    ? '<span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">PREMIUM</span>'
+    : '<span style="background: #6b7280; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">BÁSICO</span>';
 
   return `
 <!DOCTYPE html>
@@ -86,81 +88,84 @@ function generateEmailHTML(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Você esqueceu algo mágico! ✨</title>
+  <title>Seu plano Orlando Fast Pass está esperando! ✨</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a2e; padding: 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #16213e; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🏰 Orlando Fast Pass</h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Sua aventura mágica está esperando!</p>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); padding: 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">✨ Orlando Fast Pass</h1>
+              <p style="color: rgba(255,255,255,0.95); margin: 12px 0 0 0; font-size: 16px;">Sua viagem mágica está a um clique de distância!</p>
             </td>
           </tr>
           
           <!-- Main Content -->
           <tr>
-            <td style="padding: 30px;">
-              <h2 style="color: #333; margin: 0 0 15px 0;">Olá, ${userName}! 👋</h2>
+            <td style="padding: 40px;">
+              <h2 style="color: #ffffff; margin: 0 0 20px 0; font-size: 24px;">Olá, ${userName}! 👋</h2>
               
-              <p style="color: #555; line-height: 1.6; margin: 0 0 20px 0;">
-                Notamos que você deixou alguns itens incríveis no seu carrinho. 
-                Sabemos que planejar uma viagem para Orlando é emocionante, e queremos 
-                garantir que você não perca nada!
+              <p style="color: #a0aec0; line-height: 1.8; margin: 0 0 25px 0; font-size: 16px;">
+                Notamos que você estava prestes a garantir seu planejamento perfeito para Orlando! 
+                Sua jornada para os parques mais mágicos do mundo merece o melhor suporte.
               </p>
               
               <!-- Urgency Message -->
-              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                <p style="margin: 0; color: #856404; font-weight: 500;">
+              <div style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.1)); border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                <p style="margin: 0; color: #fbbf24; font-weight: 600; font-size: 15px;">
                   ${getUrgencyMessage(cart.cart_type)}
                 </p>
               </div>
               
-              <!-- Cart Items -->
-              <h3 style="color: #333; margin: 25px 0 15px 0;">
-                📦 ${getCartTypeLabel(cart.cart_type)} no seu carrinho:
-              </h3>
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9f9f9; border-radius: 8px; overflow: hidden;">
-                ${itemsHTML}
-                <tr style="background-color: #667eea;">
-                  <td style="padding: 15px; color: #fff; font-weight: bold;">
-                    Total
-                  </td>
-                  <td style="padding: 15px; color: #fff; font-weight: bold; text-align: right;">
-                    ${formatCurrency(cart.total_value_cents)}
-                  </td>
-                </tr>
-              </table>
+              <!-- Plan Card -->
+              <div style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 30px; margin: 30px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                  <h3 style="color: #ffffff; margin: 0; font-size: 22px;">${planItem?.name || 'Plano'}</h3>
+                  ${planBadge}
+                </div>
+                
+                ${featuresHTML ? `
+                <ul style="list-style: none; padding: 0; margin: 20px 0; color: #cbd5e1;">
+                  ${featuresHTML}
+                </ul>
+                ` : ''}
+                
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px;">
+                  <p style="margin: 0 0 5px 0; color: rgba(255,255,255,0.8); font-size: 14px;">Investimento único</p>
+                  <p style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold;">${formatCurrency(cart.total_value_cents)}</p>
+                </div>
+              </div>
               
               <!-- CTA Button -->
-              <div style="text-align: center; margin: 30px 0;">
+              <div style="text-align: center; margin: 35px 0;">
                 <a href="${recoveryUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                          color: #ffffff; text-decoration: none; padding: 15px 40px; border-radius: 50px; 
-                          font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-                  🛒 Finalizar Minha Compra
+                   style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+                          color: #ffffff; text-decoration: none; padding: 18px 50px; border-radius: 50px; 
+                          font-weight: bold; font-size: 18px; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+                          transition: transform 0.2s;">
+                  🎯 Garantir Meu Plano Agora
                 </a>
               </div>
               
-              <p style="color: #888; font-size: 14px; text-align: center; margin-top: 30px;">
-                Precisa de ajuda? Nossa equipe está pronta para tornar sua viagem inesquecível!
+              <p style="color: #64748b; font-size: 14px; text-align: center; margin-top: 30px; line-height: 1.6;">
+                Dúvidas? Responda este e-mail ou entre em contato pelo WhatsApp.<br>
+                Estamos prontos para ajudar você a viver a magia de Orlando!
               </p>
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-              <p style="margin: 0; color: #888; font-size: 12px;">
+            <td style="background-color: #0f172a; padding: 25px; text-align: center; border-top: 1px solid #1e293b;">
+              <p style="margin: 0; color: #64748b; font-size: 12px;">
                 © ${new Date().getFullYear()} Orlando Fast Pass - Planejando sua magia ✨
               </p>
-              <p style="margin: 10px 0 0 0; color: #aaa; font-size: 11px;">
-                Você está recebendo este e-mail porque iniciou uma compra em nosso site.
+              <p style="margin: 12px 0 0 0; color: #475569; font-size: 11px;">
+                Você está recebendo este e-mail porque iniciou a contratação de um plano em nosso site.
               </p>
             </td>
           </tr>

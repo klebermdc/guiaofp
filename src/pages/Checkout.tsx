@@ -131,17 +131,58 @@ export default function Checkout() {
   const finalPrice = Math.floor(finalAmountCents / 100);
   const finalCents = finalAmountCents % 100;
 
+  // Track abandoned cart
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+    const trackCart = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user && plan) {
         setUser(session.user);
         setFormData(prev => ({
           ...prev,
           email: session.user.email || '',
         }));
+
+        // Create or update abandoned cart entry
+        const cartData = {
+          user_id: session.user.id,
+          cart_type: plan.id, // 'basic' or 'premium'
+          cart_items: [{
+            name: plan.name,
+            type: 'plan',
+            plan_key: plan.id,
+            price_cents: plan.price * 100 + plan.priceCents,
+            features: plan.features,
+          }],
+          total_value_cents: plan.price * 100 + plan.priceCents,
+          status: 'active',
+          last_activity_at: new Date().toISOString(),
+        };
+
+        // Upsert cart (update if exists for this user/plan)
+        const { data: existingCart } = await supabase
+          .from('abandoned_carts')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('cart_type', plan.id)
+          .eq('status', 'active')
+          .single();
+
+        if (existingCart) {
+          await supabase
+            .from('abandoned_carts')
+            .update({ last_activity_at: new Date().toISOString() })
+            .eq('id', existingCart.id);
+        } else {
+          await supabase
+            .from('abandoned_carts')
+            .insert(cartData);
+        }
       }
-    });
-  }, []);
+    };
+
+    trackCart();
+  }, [plan]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
@@ -350,6 +391,19 @@ export default function Checkout() {
 
       if (data.error) {
         throw new Error(data.error);
+      }
+
+      // Mark cart as converted/recovered when payment initiated
+      if (user) {
+        await supabase
+          .from('abandoned_carts')
+          .update({ 
+            status: paymentMethod === 'credit_card' && data.status === 'CONFIRMED' ? 'converted' : 'recovered',
+            recovered_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+          .eq('cart_type', plan.id)
+          .eq('status', 'active');
       }
 
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {

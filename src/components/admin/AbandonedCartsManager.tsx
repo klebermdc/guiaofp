@@ -45,8 +45,9 @@ interface AbandonedCart {
 interface CartItem {
   name: string;
   type: string;
-  quantity?: number;
+  plan_key?: 'basic' | 'premium';
   price_cents?: number;
+  features?: string[];
 }
 
 interface Profile {
@@ -83,10 +84,9 @@ function getStatusBadge(status: string) {
 // Get cart type label
 function getCartTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    tickets: '🎢 Ingressos',
-    hotels: '🏨 Hotéis',
-    car_rentals: '🚗 Carros',
-    mixed: '📦 Misto',
+    basic: '📋 Plano Básico',
+    premium: '🌟 Guia Premium',
+    plan: '📦 Plano',
   };
   return labels[type] || type;
 }
