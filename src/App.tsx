@@ -12,6 +12,7 @@ import { TravelModeQuickActions } from "@/components/travel-mode/TravelModeQuick
 import { SplashScreen } from "@/components/SplashScreen";
 import { GlobalErrorListener } from "@/components/GlobalErrorListener";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AnalyticsProvider } from "@/components/analytics";
 
 // Eager load critical pages
 import Landing from "./pages/Landing";
@@ -82,8 +83,9 @@ const App = () => {
             <AuthProvider>
               <TravelModeProvider>
                 <LoadingProvider>
-                  <TooltipProvider>
-                  {showSplash && (
+                  <AnalyticsProvider>
+                    <TooltipProvider>
+                    {showSplash && (
                     <SplashScreen onFinish={handleSplashFinish} minDuration={1800} />
                   )}
                   <Toaster />
@@ -126,9 +128,10 @@ const App = () => {
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
-                  {/* Travel Mode Quick Actions - Global FAB */}
-                  <TravelModeQuickActions />
-                  </TooltipProvider>
+                    {/* Travel Mode Quick Actions - Global FAB */}
+                    <TravelModeQuickActions />
+                    </TooltipProvider>
+                  </AnalyticsProvider>
                 </LoadingProvider>
               </TravelModeProvider>
             </AuthProvider>
