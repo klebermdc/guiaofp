@@ -10,6 +10,8 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
 import { EditButton } from '@/components/admin/EditButton';
 import { preloadPageContent } from '@/hooks/useEditableContent';
+import { useScrollTracking, useAnalytics } from '@/hooks/useAnalytics';
+import { TrackableButton } from '@/components/analytics';
 import {
   Crown,
   MapPin,
@@ -72,6 +74,10 @@ const Landing = () => {
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const { trackCTAClick } = useAnalytics();
+  
+  // Ativa o tracking automático de scroll depth (25%, 50%, 75%, 90%, 100%)
+  useScrollTracking();
   
   const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
   const floatParallax = useParallax({ speed: 0.15, direction: 'up' });
@@ -234,23 +240,27 @@ const Landing = () => {
               className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 animate-fade-in px-4"
               style={{ animationDelay: '0.3s' }}
             >
-              <Button 
+              <TrackableButton 
                 size="lg" 
                 className="gradient-gold text-secondary-foreground rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg shadow-gold group hover:scale-105 transition-transform w-full sm:w-auto"
                 onClick={() => scrollToSection('planos')}
+                trackingName="cta_hero_ver_planos"
+                trackingLocation="hero"
               >
                 Escolher meu plano
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
+              </TrackableButton>
+              <TrackableButton 
                 size="lg" 
                 variant="outline" 
                 className="rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:scale-105 transition-transform w-full sm:w-auto"
                 onClick={() => scrollToSection('como-funciona')}
+                trackingName="cta_hero_como_funciona"
+                trackingLocation="hero"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Como funciona
-              </Button>
+              </TrackableButton>
             </div>
 
             {/* Stats with stagger animation */}
@@ -459,7 +469,7 @@ const Landing = () => {
                     </p>
                   </div>
 
-                  <Link to="/checkout/basic" className="block">
+                  <Link to="/checkout/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
                     <Button variant="outline" className="w-full h-12 rounded-xl hover:scale-[1.02] transition-transform">
                       Começar agora
                     </Button>
@@ -513,6 +523,7 @@ const Landing = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
+                    onClick={() => trackCTAClick('cta_plano_premium_whatsapp', 'pricing')}
                   >
                     <Button className="w-full h-14 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white hover:scale-[1.02] transition-transform shadow-lg">
                       <MessageCircle className="w-5 h-5 mr-2" />

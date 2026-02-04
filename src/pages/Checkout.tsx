@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface Plan {
   id: string;
@@ -95,6 +96,7 @@ export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
   const plan = plans[planId || 'basic'];
+  const { trackBeginCheckout, trackAddPaymentInfo, trackPurchase, trackPlanView } = useAnalytics();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -134,7 +136,13 @@ export default function Checkout() {
   // State to track current cart ID
   const [cartId, setCartId] = useState<string | null>(null);
 
-  // Track abandoned cart on page load
+  // Track view_item e begin_checkout quando a página carrega
+  useEffect(() => {
+    if (plan) {
+      trackPlanView(plan.id, plan.name, originalAmountCents);
+      trackBeginCheckout(plan.id, plan.name, originalAmountCents);
+    }
+  }, [plan, originalAmountCents, trackPlanView, trackBeginCheckout]);
   useEffect(() => {
     const trackCart = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -375,6 +383,9 @@ export default function Checkout() {
 
     setIsProcessing(true);
 
+    // Track add_payment_info event
+    trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod);
+
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
         pix: 'PIX',
@@ -443,6 +454,8 @@ export default function Checkout() {
       }
 
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
+        // Track successful purchase
+        trackPurchase(data.transactionId, plan.id, plan.name, finalAmountCents, 'credit_card');
         toast.success('Pagamento aprovado! Redirecionando...');
         navigate('/login?payment=success');
       } else {
