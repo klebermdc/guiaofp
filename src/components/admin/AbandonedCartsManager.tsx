@@ -21,7 +21,8 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Phone
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,6 +41,11 @@ interface AbandonedCart {
   recovery_attempts: number;
   last_recovery_email_at: string | null;
   recovered_at: string | null;
+  metadata: {
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+  } | null;
 }
 
 interface CartItem {
@@ -254,9 +260,8 @@ export function AbandonedCartsManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Itens</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Plano</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Última Atividade</TableHead>
@@ -268,31 +273,39 @@ export function AbandonedCartsManager() {
                 carts.map((cart) => {
                   const statusInfo = getStatusBadge(cart.status);
                   const StatusIcon = statusInfo.icon;
+                  const metadata = cart.metadata as { contact_name?: string; contact_email?: string; contact_phone?: string } | null;
+                  
+                  // Prioritize metadata contact info, fallback to profile
+                  const displayName = metadata?.contact_name || cart.profile?.responsible_name || 'Não informado';
+                  const displayEmail = metadata?.contact_email || cart.profile?.email || 'Sem e-mail';
+                  const displayPhone = metadata?.contact_phone || null;
                   
                   return (
                     <TableRow key={cart.id}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {cart.profile?.responsible_name || 'Usuário'}
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">
+                            {displayName}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {cart.profile?.email || 'Sem e-mail'}
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {displayEmail}
                           </p>
+                          {displayPhone && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {displayPhone}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
+                        <span className="text-sm font-medium">
                           {getCartTypeLabel(cart.cart_type)}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {Array.isArray(cart.cart_items) ? cart.cart_items.length : 0} itens
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium">
+                        <span className="font-semibold text-primary">
                           {formatCurrency(cart.total_value_cents)}
                         </span>
                       </TableCell>
@@ -321,7 +334,7 @@ export function AbandonedCartsManager() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>Nenhum carrinho encontrado</p>
                   </TableCell>
