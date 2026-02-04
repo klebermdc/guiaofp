@@ -469,7 +469,7 @@ const Landing = () => {
                     </p>
                   </div>
 
-                  <Link to="/checkout/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
+                  <Link to="/registro/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
                     <Button variant="outline" className="w-full h-12 rounded-xl hover:scale-[1.02] transition-transform">
                       Começar agora
                     </Button>
