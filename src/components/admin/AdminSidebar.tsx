@@ -19,6 +19,7 @@ import {
   BookOpen,
   ShoppingCart,
   Timer,
+  Mail,
   type LucideIcon
 } from 'lucide-react';
 
@@ -28,6 +29,7 @@ export type AdminSection =
   | 'transactions' 
   | 'coupons'
   | 'abandoned_carts'
+  | 'cart_recovery'
   | 'pricing'
   | 'plans'
   | 'menu_order'
@@ -71,7 +73,8 @@ const menuGroups: MenuGroup[] = [
       { id: 'clients', icon: Users, label: 'Clientes' },
       { id: 'transactions', icon: Receipt, label: 'Transações' },
       { id: 'coupons', icon: Tag, label: 'Cupons' },
-      { id: 'abandoned_carts', icon: ShoppingCart, label: 'Carrinhos Abandonados' },
+      { id: 'abandoned_carts', icon: ShoppingCart, label: 'Abandonados' },
+      { id: 'cart_recovery', icon: Mail, label: 'Recuperação' },
     ]
   },
   {
