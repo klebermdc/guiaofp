@@ -135,6 +135,8 @@ export default function Checkout() {
 
   // State to track current cart ID
   const [cartId, setCartId] = useState<string | null>(null);
+  const [isSavingData, setIsSavingData] = useState(false);
+  const [dataSaved, setDataSaved] = useState(false);
 
   // Generate or retrieve anonymous visitor ID for tracking non-logged users
   const getOrCreateVisitorId = (): string => {
@@ -680,6 +682,83 @@ export default function Checkout() {
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       required
                     />
+                  </div>
+                  
+                  {/* Save Data Button */}
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant={dataSaved ? "outline" : "secondary"}
+                      className="w-full"
+                      disabled={isSavingData || !formData.name || !formData.email}
+                      onClick={async () => {
+                        if (!formData.name || !formData.email) {
+                          toast.error('Preencha nome e e-mail para salvar');
+                          return;
+                        }
+                        
+                        setIsSavingData(true);
+                        try {
+                          const visitorId = user?.id || getOrCreateVisitorId();
+                          
+                          const { data, error } = await supabase.functions.invoke('track-abandoned-cart', {
+                            body: {
+                              visitor_id: visitorId,
+                              cart_type: plan.id,
+                              cart_items: [{
+                                name: plan.name,
+                                type: 'plan',
+                                plan_key: plan.id,
+                                price_cents: plan.price * 100 + plan.priceCents,
+                                features: plan.features,
+                              }],
+                              total_value_cents: plan.price * 100 + plan.priceCents,
+                              metadata: {
+                                contact_name: formData.name,
+                                contact_email: formData.email,
+                                contact_phone: formData.phone || null,
+                                is_anonymous: !user,
+                              },
+                              action: 'create_or_update',
+                            },
+                          });
+                          
+                          if (error) throw error;
+                          
+                          if (data?.cart_id) {
+                            setCartId(data.cart_id);
+                          }
+                          
+                          setDataSaved(true);
+                          toast.success('Dados salvos! Você pode continuar o pagamento quando quiser.');
+                        } catch (err) {
+                          console.error('Error saving data:', err);
+                          toast.error('Erro ao salvar dados');
+                        } finally {
+                          setIsSavingData(false);
+                        }
+                      }}
+                    >
+                      {isSavingData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : dataSaved ? (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Dados salvos
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="w-4 h-4 mr-2" />
+                          Salvar meus dados
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Salve seus dados para continuar depois
+                    </p>
                   </div>
                 </CardContent>
               </Card>
