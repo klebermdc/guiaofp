@@ -17,6 +17,7 @@ import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { ProjectDocumentation } from './ProjectDocumentation';
 import { WaitTimeAnalytics } from './WaitTimeAnalytics';
+import { TrackingConfigManager } from './TrackingConfigManager';
 import { 
   Users, 
   Receipt, 
@@ -60,6 +61,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   markers: { title: 'Ícones do Mapa', description: 'Personalizar marcadores', icon: Palette },
   restaurants: { title: 'Restaurantes', description: 'Gerenciar informações de restaurantes', icon: UtensilsCrossed },
   wait_times: { title: 'Filas (Analytics)', description: 'Monitorar coleta de tempos de espera', icon: Timer },
+  tracking: { title: 'Tracking (LP)', description: 'Configurar Google Analytics, Facebook Pixel e GTM', icon: LayoutDashboard },
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
 };
@@ -120,6 +122,8 @@ const AdminPanelComponent = () => {
         return <AdminRestaurantsPanel />;
       case 'wait_times':
         return <WaitTimeAnalytics />;
+      case 'tracking':
+        return <TrackingConfigManager />;
       case 'password':
         return <PasswordGenerator />;
       case 'documentation':

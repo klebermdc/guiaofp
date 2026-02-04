@@ -1568,6 +1568,36 @@ export type Database = {
           },
         ]
       }
+      tracking_config: {
+        Row: {
+          config_key: string
+          config_value: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount_cents: number

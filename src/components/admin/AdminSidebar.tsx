@@ -38,6 +38,7 @@ export type AdminSection =
   | 'markers'
   | 'restaurants'
   | 'wait_times'
+  | 'tracking'
   | 'password'
   | 'documentation';
 
@@ -100,6 +101,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Dados & Analytics',
     items: [
       { id: 'wait_times', icon: Timer, label: 'Filas (Analytics)' },
+      { id: 'tracking', icon: LayoutDashboard, label: 'Tracking (LP)' },
     ]
   },
   {
