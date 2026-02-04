@@ -28,7 +28,6 @@ export type AdminSection =
   | 'clients' 
   | 'transactions' 
   | 'coupons'
-  | 'abandoned_carts'
   | 'cart_recovery'
   | 'pricing'
   | 'plans'
@@ -73,8 +72,7 @@ const menuGroups: MenuGroup[] = [
       { id: 'clients', icon: Users, label: 'Clientes' },
       { id: 'transactions', icon: Receipt, label: 'Transações' },
       { id: 'coupons', icon: Tag, label: 'Cupons' },
-      { id: 'abandoned_carts', icon: ShoppingCart, label: 'Abandonados' },
-      { id: 'cart_recovery', icon: Mail, label: 'Recuperação' },
+      { id: 'cart_recovery', icon: ShoppingCart, label: 'Carrinhos Abandonados' },
     ]
   },
   {
