@@ -188,7 +188,7 @@ export function CartRecoveryManager() {
       const { data, error } = await supabase
         .from('abandoned_carts')
         .select('*')
-        .eq('status', 'abandoned')
+        .in('status', ['active', 'abandoned'])
         .order('last_activity_at', { ascending: false })
         .limit(100);
 
