@@ -34,7 +34,11 @@ const Login = () => {
     // Only redirect if authenticated AND auth check is complete
     // Also skip redirect if we're in the middle of a login submission
     if (isAuthenticated && !authLoading && !isSubmitting) {
-      // If there's a redirect param (recovery flow), go there instead of dashboard
+      // If there's a redirect param (recovery flow), save it and go there
+      if (redirectTo && redirectTo.includes('/checkout')) {
+        // Store the redirect for AccessBlocked page in case they get blocked
+        sessionStorage.setItem('pendingCheckoutRedirect', redirectTo);
+      }
       const destination = redirectTo || '/dashboard';
       navigate(destination, { replace: true });
     }

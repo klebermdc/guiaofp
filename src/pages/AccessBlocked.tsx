@@ -1,15 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Lock, MessageCircle, LogOut, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Lock, MessageCircle, LogOut, RefreshCw, CheckCircle2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function AccessBlocked() {
   const { logout, user, loadProfile, isAccessEnabled } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isChecking, setIsChecking] = useState(false);
   const [checkCount, setCheckCount] = useState(0);
+
+  // Check for pending checkout redirect from recovery flow
+  const pendingCheckout = sessionStorage.getItem('pendingCheckoutRedirect');
+  const redirectParam = searchParams.get('redirect');
+  
+  // If there's a pending checkout or redirect param, navigate immediately
+  useEffect(() => {
+    const checkoutPath = pendingCheckout || redirectParam;
+    if (checkoutPath && checkoutPath.includes('/checkout')) {
+      sessionStorage.removeItem('pendingCheckoutRedirect');
+      navigate(checkoutPath, { replace: true });
+    }
+  }, [pendingCheckout, redirectParam, navigate]);
 
   const whatsappNumber = '5511999999999'; // Número de suporte
   const whatsappMessage = encodeURIComponent(
@@ -58,16 +72,22 @@ export default function AccessBlocked() {
     navigate('/login');
   };
 
+  // Check if there's an abandoned cart for this user and show checkout button
+  const handleGoToCheckout = () => {
+    // Default to basic plan if we don't know which plan
+    navigate('/checkout/basic');
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full text-center">
         <CardHeader className="space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <Lock className="w-8 h-8 text-amber-500" />
+          <div className="mx-auto w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center">
+            <Lock className="w-8 h-8 text-warning" />
           </div>
           <CardTitle className="text-2xl">Acesso Pendente</CardTitle>
           <CardDescription className="text-base">
-            Seu cadastro foi realizado com sucesso! Estamos processando a liberação do seu acesso.
+            Seu cadastro foi realizado com sucesso! Complete sua compra para liberar o acesso.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -81,11 +101,21 @@ export default function AccessBlocked() {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Se você acabou de realizar um pagamento, aguarde alguns instantes. 
-            Se já contratou nosso serviço, entre em contato conosco.
+            Se você ainda não finalizou sua compra, clique no botão abaixo para ir ao checkout.
           </p>
           
           <div className="flex flex-col gap-3">
+            {/* Primary CTA - Go to Checkout */}
+            <Button 
+              variant="premium" 
+              onClick={handleGoToCheckout}
+              className="w-full"
+              size="lg"
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Finalizar Minha Compra
+            </Button>
+
             <Button 
               variant="outline" 
               onClick={handleManualCheck} 
@@ -100,7 +130,7 @@ export default function AccessBlocked() {
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Verificar acesso agora
+                  Já paguei, verificar acesso
                 </>
               )}
             </Button>
