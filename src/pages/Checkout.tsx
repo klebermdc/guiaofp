@@ -615,9 +615,21 @@ export default function Checkout() {
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Orlando Fast Pass" className="h-10" />
           </Link>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="w-4 h-4 text-green-500" />
-            Compra segura
+          <div className="flex items-center gap-4">
+            {/* Logged user indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground max-w-[150px] truncate hidden sm:block">
+                {userProfile.email}
+              </span>
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="w-4 h-4 text-green-500" />
+              <span className="hidden sm:inline">Compra segura</span>
+            </div>
           </div>
         </div>
       </header>
