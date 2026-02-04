@@ -11,7 +11,6 @@ import { PaymentGatewayManager } from './PaymentGatewayManager';
 import { PlanPricingManager } from './PlanPricingManager';
 import { TransactionsManager } from './TransactionsManager';
 import { CouponsManager } from './CouponsManager';
-import { AbandonedCartsManager } from './AbandonedCartsManager';
 import { CartRecoveryManager } from './CartRecoveryManager';
 import { UnifiedMapEditor } from './UnifiedMapEditor';
 import { MarkerIconManager } from './MarkerIconManager';
@@ -52,8 +51,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   clients: { title: 'Clientes', description: 'Gerenciar usuários e perfis', icon: Users },
   transactions: { title: 'Transações', description: 'Acompanhar pagamentos e receitas', icon: Receipt },
   coupons: { title: 'Cupons de Desconto', description: 'Criar e gerenciar promoções', icon: Tag },
-  abandoned_carts: { title: 'Carrinhos Abandonados', description: 'Visualizar leads perdidos', icon: ShoppingCart },
-  cart_recovery: { title: 'Recuperação de Leads', description: 'Enviar e-mails para recuperar vendas', icon: Mail },
+  cart_recovery: { title: 'Carrinhos Abandonados', description: 'Gerenciar leads e enviar e-mails de recuperação', icon: ShoppingCart },
   pricing: { title: 'Preços dos Planos', description: 'Configurar valores e features', icon: DollarSign },
   plans: { title: 'Acesso aos Planos', description: 'Controlar visibilidade de páginas', icon: Settings },
   menu_order: { title: 'Ordem do Menu', description: 'Reordenar itens por contexto', icon: Menu },
@@ -103,8 +101,6 @@ const AdminPanelComponent = () => {
         return <TransactionsManager />;
       case 'coupons':
         return <CouponsManager />;
-      case 'abandoned_carts':
-        return <AbandonedCartsManager />;
       case 'cart_recovery':
         return <CartRecoveryManager />;
       case 'pricing':
