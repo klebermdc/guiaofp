@@ -155,7 +155,7 @@ export default function Checkout() {
     }
   }, [plan, originalAmountCents, trackPlanView, trackBeginCheckout]);
 
-  // Track cart for both logged-in users AND anonymous visitors
+  // Track cart for both logged-in users AND anonymous visitors via backend
   useEffect(() => {
     const trackCart = async () => {
       if (!plan) return;
@@ -174,75 +174,68 @@ export default function Checkout() {
         }));
       }
 
-      // Create or update abandoned cart entry for both logged and anonymous users
-      const cartData = {
-        user_id: visitorId,
-        cart_type: plan.id,
-        cart_items: [{
-          name: plan.name,
-          type: 'plan',
-          plan_key: plan.id,
-          price_cents: plan.price * 100 + plan.priceCents,
-          features: plan.features,
-        }],
-        total_value_cents: plan.price * 100 + plan.priceCents,
-        status: 'active',
-        last_activity_at: new Date().toISOString(),
-        metadata: {
-          contact_name: '',
-          contact_email: session?.user?.email || '',
-          contact_phone: '',
-          is_anonymous: isAnonymous,
-        },
-      };
+      // Call backend function to create/update cart (bypasses RLS)
+      try {
+        const { data, error } = await supabase.functions.invoke('track-abandoned-cart', {
+          body: {
+            visitor_id: visitorId,
+            cart_type: plan.id,
+            cart_items: [{
+              name: plan.name,
+              type: 'plan',
+              plan_key: plan.id,
+              price_cents: plan.price * 100 + plan.priceCents,
+              features: plan.features,
+            }],
+            total_value_cents: plan.price * 100 + plan.priceCents,
+            metadata: {
+              contact_name: '',
+              contact_email: session?.user?.email || '',
+              contact_phone: '',
+              is_anonymous: isAnonymous,
+            },
+            action: 'create_or_update',
+          },
+        });
 
-      // Check for existing cart (by visitor ID and plan type)
-      const { data: existingCart } = await supabase
-        .from('abandoned_carts')
-        .select('id')
-        .eq('user_id', visitorId)
-        .eq('cart_type', plan.id)
-        .eq('status', 'active')
-        .single();
-
-      if (existingCart) {
-        setCartId(existingCart.id);
-        await supabase
-          .from('abandoned_carts')
-          .update({ last_activity_at: new Date().toISOString() })
-          .eq('id', existingCart.id);
-      } else {
-        const { data: newCart } = await supabase
-          .from('abandoned_carts')
-          .insert(cartData)
-          .select('id')
-          .single();
-        
-        if (newCart) {
-          setCartId(newCart.id);
+        if (error) {
+          console.error('Error tracking cart:', error);
+          return;
         }
+
+        if (data?.cart_id) {
+          setCartId(data.cart_id);
+          console.log('Cart tracked:', data.cart_id, data.action);
+        }
+      } catch (err) {
+        console.error('Failed to track cart:', err);
       }
     };
 
     trackCart();
   }, [plan]);
 
-  // Update cart metadata when form fields change (debounced)
+  // Update cart metadata when form fields change (debounced) via backend
   useEffect(() => {
     if (!cartId) return;
 
     const timeoutId = setTimeout(async () => {
-      await supabase
-        .from('abandoned_carts')
-        .update({
-          last_activity_at: new Date().toISOString(),
-          metadata: {
-            contact_name: formData.name || null,
-            contact_email: formData.email || null,
-            contact_phone: formData.phone || null,
+      try {
+        await supabase.functions.invoke('track-abandoned-cart', {
+          body: {
+            visitor_id: '', // not needed for metadata update
+            cart_id: cartId,
+            metadata: {
+              contact_name: formData.name || null,
+              contact_email: formData.email || null,
+              contact_phone: formData.phone || null,
+            },
+            action: 'update_metadata',
           },
-        })
-        .eq('id', cartId);
+        });
+      } catch (err) {
+        console.error('Failed to update cart metadata:', err);
+      }
     }, 1000); // Debounce 1 second
 
     return () => clearTimeout(timeoutId);
