@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -23,16 +23,22 @@ const Login = () => {
   
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Check for redirect parameter (used for cart recovery)
+  const redirectTo = useMemo(() => searchParams.get('redirect'), [searchParams]);
+  const isRecovery = useMemo(() => searchParams.get('recovery') === 'true', [searchParams]);
 
   useEffect(() => {
     // Only redirect if authenticated AND auth check is complete
-    // This prevents race conditions when reopening the app
     // Also skip redirect if we're in the middle of a login submission
     if (isAuthenticated && !authLoading && !isSubmitting) {
-      navigate('/dashboard', { replace: true });
+      // If there's a redirect param (recovery flow), go there instead of dashboard
+      const destination = redirectTo || '/dashboard';
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, authLoading, isSubmitting, navigate]);
+  }, [isAuthenticated, authLoading, isSubmitting, navigate, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +61,12 @@ const Login = () => {
       if (result.success) {
         toast({
           title: "Bem-vindo(a)! ✨",
-          description: "Sua área de guiamento está pronta para você.",
+          description: isRecovery ? "Finalize sua compra agora!" : "Sua área de guiamento está pronta para você.",
           duration: 2000,
         });
-        navigate('/dashboard');
+        // Redirect to checkout if recovery, otherwise dashboard
+        const destination = redirectTo || '/dashboard';
+        navigate(destination, { replace: true });
       } else {
         toast({
           title: "Erro no login",
