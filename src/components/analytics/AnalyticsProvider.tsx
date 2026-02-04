@@ -1,27 +1,20 @@
 /**
  * Analytics Provider - Componente para injetar scripts de tracking
  * 
- * CONFIGURAÇÃO:
- * 1. Defina os IDs no arquivo .env ou diretamente aqui
- * 2. Os scripts são carregados de forma assíncrona para não bloquear a página
- * 
- * IDs necessários:
- * - GA4_MEASUREMENT_ID: G-XXXXXXXXXX
- * - FB_PIXEL_ID: XXXXXXXXXXXXXXXX  
- * - GTM_CONTAINER_ID: GTM-XXXXXXX
+ * Os IDs são carregados dinamicamente do banco de dados (tracking_config)
+ * e podem ser configurados pelo painel admin em Dados & Analytics > Tracking (LP)
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { supabase } from '@/integrations/supabase/client';
 
-// Configuração dos IDs de tracking
-// IMPORTANTE: Substitua pelos seus IDs reais
-const TRACKING_CONFIG = {
-  GA4_MEASUREMENT_ID: '', // Ex: 'G-XXXXXXXXXX'
-  FB_PIXEL_ID: '', // Ex: '1234567890123456'
-  GTM_CONTAINER_ID: '', // Ex: 'GTM-XXXXXXX'
-};
+interface TrackingConfig {
+  ga4_measurement_id: string;
+  fb_pixel_id: string;
+  gtm_container_id: string;
+}
 
 interface AnalyticsProviderProps {
   children: React.ReactNode;
@@ -103,7 +96,7 @@ const loadFBPixel = (pixelId: string) => {
   noscript.id = 'fb-pixel-noscript';
   noscript.innerHTML = `
     <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/>
+    src="https://www.facebook.net/tr?id=${pixelId}&ev=PageView&noscript=1"/>
   `;
   document.body.appendChild(noscript);
 };
@@ -111,34 +104,67 @@ const loadFBPixel = (pixelId: string) => {
 export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
   const location = useLocation();
   const { trackPageView } = useAnalytics();
+  const [configLoaded, setConfigLoaded] = useState(false);
 
-  // Carrega os scripts de tracking uma vez
+  // Fetch tracking config from database and load scripts
   useEffect(() => {
-    // Só carrega em produção ou se os IDs estiverem configurados
-    const isProduction = import.meta.env.PROD;
-    
-    if (isProduction || TRACKING_CONFIG.GTM_CONTAINER_ID) {
-      loadGTM(TRACKING_CONFIG.GTM_CONTAINER_ID);
-    }
-    
-    if (isProduction || TRACKING_CONFIG.GA4_MEASUREMENT_ID) {
-      loadGA4(TRACKING_CONFIG.GA4_MEASUREMENT_ID);
-    }
-    
-    if (isProduction || TRACKING_CONFIG.FB_PIXEL_ID) {
-      loadFBPixel(TRACKING_CONFIG.FB_PIXEL_ID);
-    }
+    const loadTrackingConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tracking_config')
+          .select('config_key, config_value, is_active');
+
+        if (error) {
+          console.error('Failed to load tracking config:', error);
+          return;
+        }
+
+        const config: TrackingConfig = {
+          ga4_measurement_id: '',
+          fb_pixel_id: '',
+          gtm_container_id: '',
+        };
+
+        data?.forEach((item) => {
+          if (item.is_active && item.config_value) {
+            const key = item.config_key as keyof TrackingConfig;
+            if (key in config) {
+              config[key] = item.config_value;
+            }
+          }
+        });
+
+        // Load scripts only if IDs are configured
+        if (config.gtm_container_id) {
+          loadGTM(config.gtm_container_id);
+        }
+        if (config.ga4_measurement_id) {
+          loadGA4(config.ga4_measurement_id);
+        }
+        if (config.fb_pixel_id) {
+          loadFBPixel(config.fb_pixel_id);
+        }
+
+        setConfigLoaded(true);
+      } catch (err) {
+        console.error('Error loading tracking config:', err);
+      }
+    };
+
+    loadTrackingConfig();
   }, []);
 
   // Tracking automático de page views em mudança de rota
   useEffect(() => {
+    if (!configLoaded) return;
+
     // Pequeno delay para garantir que o título da página foi atualizado
     const timeout = setTimeout(() => {
       trackPageView(location.pathname, document.title);
     }, 100);
 
     return () => clearTimeout(timeout);
-  }, [location.pathname, trackPageView]);
+  }, [location.pathname, trackPageView, configLoaded]);
 
   return <>{children}</>;
 };
