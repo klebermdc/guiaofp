@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer, ShoppingCart, Clock } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -13,6 +13,8 @@ import { UnifiedMapEditor } from './UnifiedMapEditor';
 import { MarkerIconManager } from './MarkerIconManager';
 import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { WaitTimeAnalytics } from './WaitTimeAnalytics';
+import { AbandonedCartsManager } from './AbandonedCartsManager';
+import { PendingPaymentsManager } from './PendingPaymentsManager';
 
 export function AdminTabs() {
   return (
@@ -25,6 +27,14 @@ export function AdminTabs() {
         <TabsTrigger value="transactions" className="flex items-center gap-2">
           <Receipt className="h-4 w-4" />
           <span className="hidden sm:inline">Transações</span>
+        </TabsTrigger>
+        <TabsTrigger value="pending" className="flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          <span className="hidden sm:inline">Pendentes</span>
+        </TabsTrigger>
+        <TabsTrigger value="abandoned" className="flex items-center gap-2">
+          <ShoppingCart className="h-4 w-4" />
+          <span className="hidden sm:inline">Abandonados</span>
         </TabsTrigger>
         <TabsTrigger value="coupons" className="flex items-center gap-2">
           <Tag className="h-4 w-4" />
@@ -78,6 +88,14 @@ export function AdminTabs() {
 
       <TabsContent value="transactions">
         <TransactionsManager />
+      </TabsContent>
+
+      <TabsContent value="pending">
+        <PendingPaymentsManager />
+      </TabsContent>
+
+      <TabsContent value="abandoned">
+        <AbandonedCartsManager />
       </TabsContent>
 
       <TabsContent value="coupons">
