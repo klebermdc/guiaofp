@@ -15,6 +15,11 @@ interface AbandonedCart {
   total_value_cents: number;
   recovery_attempts: number;
   last_recovery_email_at: string | null;
+  metadata: {
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+  } | null;
 }
 
 interface CartItem {
@@ -234,29 +239,39 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const cart of abandonedCarts as AbandonedCart[]) {
       try {
-        // Fetch user profile to get email
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('email, responsible_name')
-          .eq('user_id', cart.user_id)
-          .single();
+        // Get contact info from metadata first, then fallback to profile
+        let userEmail = cart.metadata?.contact_email;
+        let userName = cart.metadata?.contact_name;
 
-        if (profileError || !profile?.email) {
-          console.log(`No email found for user ${cart.user_id}`);
+        // Fallback to profile if metadata is empty
+        if (!userEmail) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, responsible_name')
+            .eq('user_id', cart.user_id)
+            .single();
+
+          if (profile) {
+            userEmail = profile.email;
+            userName = userName || profile.responsible_name;
+          }
+        }
+
+        if (!userEmail) {
+          console.log(`No email found for cart ${cart.id}`);
           continue;
         }
 
-        const userProfile = profile as UserProfile;
-        const userName = userProfile.responsible_name || 'Viajante';
+        userName = userName || 'Viajante';
         
         // Generate recovery URL
-        const recoveryUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/checkout?recover=${cart.id}`;
+        const recoveryUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/checkout/${cart.cart_type}?recover=${cart.id}`;
 
         // Send email
         const emailResponse = await resend.emails.send({
           from: "Orlando Fast Pass <noreply@guiaofp.com.br>",
-          to: [userProfile.email!],
-          subject: `✨ ${userName}, seus itens mágicos ainda estão esperando!`,
+          to: [userEmail],
+          subject: `✨ ${userName}, seu plano Orlando Fast Pass está esperando!`,
           html: generateEmailHTML(userName, cart, recoveryUrl),
         });
 
@@ -273,7 +288,7 @@ const handler = async (req: Request): Promise<Response> => {
           })
           .eq('id', cart.id);
 
-        console.log(`Recovery email sent to ${userProfile.email} for cart ${cart.id}`);
+        console.log(`Recovery email sent to ${userEmail} for cart ${cart.id}`);
         successCount++;
 
       } catch (cartError) {

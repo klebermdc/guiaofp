@@ -131,7 +131,10 @@ export default function Checkout() {
   const finalPrice = Math.floor(finalAmountCents / 100);
   const finalCents = finalAmountCents % 100;
 
-  // Track abandoned cart
+  // State to track current cart ID
+  const [cartId, setCartId] = useState<string | null>(null);
+
+  // Track abandoned cart on page load
   useEffect(() => {
     const trackCart = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -146,7 +149,7 @@ export default function Checkout() {
         // Create or update abandoned cart entry
         const cartData = {
           user_id: session.user.id,
-          cart_type: plan.id, // 'basic' or 'premium'
+          cart_type: plan.id,
           cart_items: [{
             name: plan.name,
             type: 'plan',
@@ -157,9 +160,14 @@ export default function Checkout() {
           total_value_cents: plan.price * 100 + plan.priceCents,
           status: 'active',
           last_activity_at: new Date().toISOString(),
+          metadata: {
+            contact_name: '',
+            contact_email: session.user.email || '',
+            contact_phone: '',
+          },
         };
 
-        // Upsert cart (update if exists for this user/plan)
+        // Check for existing cart
         const { data: existingCart } = await supabase
           .from('abandoned_carts')
           .select('id')
@@ -169,20 +177,48 @@ export default function Checkout() {
           .single();
 
         if (existingCart) {
+          setCartId(existingCart.id);
           await supabase
             .from('abandoned_carts')
             .update({ last_activity_at: new Date().toISOString() })
             .eq('id', existingCart.id);
         } else {
-          await supabase
+          const { data: newCart } = await supabase
             .from('abandoned_carts')
-            .insert(cartData);
+            .insert(cartData)
+            .select('id')
+            .single();
+          
+          if (newCart) {
+            setCartId(newCart.id);
+          }
         }
       }
     };
 
     trackCart();
   }, [plan]);
+
+  // Update cart metadata when form fields change (debounced)
+  useEffect(() => {
+    if (!cartId) return;
+
+    const timeoutId = setTimeout(async () => {
+      await supabase
+        .from('abandoned_carts')
+        .update({
+          last_activity_at: new Date().toISOString(),
+          metadata: {
+            contact_name: formData.name || null,
+            contact_email: formData.email || null,
+            contact_phone: formData.phone || null,
+          },
+        })
+        .eq('id', cartId);
+    }, 1000); // Debounce 1 second
+
+    return () => clearTimeout(timeoutId);
+  }, [cartId, formData.name, formData.email, formData.phone]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
