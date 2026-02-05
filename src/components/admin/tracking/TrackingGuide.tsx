@@ -589,6 +589,104 @@ export function TrackingGuide() {
             </AccordionItem>
           </Accordion>
         </StepCard>
+
+        {/* Step 9 - Asaas Integration */}
+        <StepCard
+          number={9}
+          title="Integração Automática com Asaas (Gateway)"
+          description="Tracking server-side de compras PIX e Boleto"
+          duration="Automático"
+        >
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="asaas" className="border-none">
+              <AccordionTrigger className="text-sm py-2">Ver como funciona</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 text-sm">
+                  <div className="bg-green-500/10 border border-green-500/30 p-3 rounded">
+                    <p>
+                      <strong className="text-green-700">✅ Já está configurado!</strong> O sistema envia 
+                      automaticamente eventos de <strong>Purchase</strong> quando o pagamento é confirmado via Asaas.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="font-bold">Como funciona:</h4>
+                    <ol className="pl-4 space-y-2">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">1.</span>
+                        <span>Cliente faz pagamento via <strong>PIX ou Boleto</strong></span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">2.</span>
+                        <span>Asaas envia webhook quando o pagamento é <strong>confirmado</strong></span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">3.</span>
+                        <span>O sistema lê as configurações de tracking (sGTM URL, Facebook CAPI)</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-primary">4.</span>
+                        <span>Envia evento <strong>Purchase</strong> diretamente para:</span>
+                      </li>
+                    </ol>
+                    <div className="pl-8 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">sGTM (Stape)</Badge>
+                        <span className="text-xs text-muted-foreground">→ GA4 Enhanced Conversions</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-600">Facebook CAPI</Badge>
+                        <span className="text-xs text-muted-foreground">→ Conversions API direta</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/50 p-3 rounded space-y-2">
+                    <h4 className="font-bold">Dados enviados:</h4>
+                    <ul className="space-y-1 text-xs">
+                      <li>• <code>transaction_id</code> - ID único da transação</li>
+                      <li>• <code>value</code> - Valor pago (em R$)</li>
+                      <li>• <code>currency</code> - BRL</li>
+                      <li>• <code>payment_method</code> - pix, boleto ou credit_card</li>
+                      <li>• <code>item_id / item_name</code> - Plano comprado</li>
+                      <li>• <code>email (hashed)</code> - Email do cliente (SHA-256)</li>
+                      <li>• <code>first_name (hashed)</code> - Primeiro nome (SHA-256)</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded">
+                    <p className="text-sm">
+                      <strong className="text-amber-700">⚠️ Pré-requisitos:</strong> Para que o tracking funcione, 
+                      certifique-se de ter configurado pelo menos uma das opções:
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs">
+                      <li>• <strong>sGTM:</strong> URL do Server GTM (aba "sGTM")</li>
+                      <li>• <strong>Facebook CAPI:</strong> Pixel ID + Access Token (abas "Básico" e "CAPI")</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="font-bold">Diferença entre PIX/Boleto e Cartão:</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-muted p-2 rounded">
+                        <p className="font-medium text-xs">💳 Cartão de Crédito</p>
+                        <p className="text-xs text-muted-foreground">
+                          Tracking client-side (navegador) + server-side (webhook)
+                        </p>
+                      </div>
+                      <div className="bg-muted p-2 rounded">
+                        <p className="font-medium text-xs">📱 PIX / 📄 Boleto</p>
+                        <p className="text-xs text-muted-foreground">
+                          Tracking 100% server-side (webhook do Asaas)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </StepCard>
       </div>
 
       {/* Summary */}
@@ -596,21 +694,47 @@ export function TrackingGuide() {
         <CardHeader>
           <CardTitle className="text-base">Resumo do Fluxo de Dados</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant="outline">Navegador</Badge>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="outline">GTM Web</Badge>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="secondary">sGTM (Stape)</Badge>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <div className="flex gap-1">
-              <Badge className="bg-blue-500">GA4</Badge>
-              <Badge className="bg-blue-600">FB CAPI</Badge>
+        <CardContent className="space-y-4">
+          {/* Client-side flow */}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2 font-medium">Navegação e Cartão de Crédito (client-side):</p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Badge variant="outline">Navegador</Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Badge variant="outline">GTM Web</Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Badge variant="secondary">sGTM (Stape)</Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <div className="flex gap-1">
+                <Badge className="bg-blue-500">GA4</Badge>
+                <Badge className="bg-blue-600">FB CAPI</Badge>
+              </div>
             </div>
           </div>
+
+          {/* Server-side flow */}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2 font-medium">PIX e Boleto (server-side via Asaas):</p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Badge variant="outline">Asaas Webhook</Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Badge variant="secondary">Edge Function</Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <div className="flex gap-1">
+                <Badge variant="secondary">sGTM</Badge>
+                <Badge className="bg-blue-600">FB CAPI</Badge>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <div className="flex gap-1">
+                <Badge className="bg-blue-500">GA4</Badge>
+                <Badge className="bg-blue-600">Facebook</Badge>
+              </div>
+            </div>
+          </div>
+
           <p className="text-xs text-muted-foreground mt-3">
-            Este fluxo garante: cookies first-party, bypass de ad blockers, dados mais precisos e melhor atribuição.
+            Este fluxo garante: cookies first-party, bypass de ad blockers, dados mais precisos, 
+            melhor atribuição e <strong>tracking de PIX/Boleto</strong> via servidor.
           </p>
         </CardContent>
       </Card>
