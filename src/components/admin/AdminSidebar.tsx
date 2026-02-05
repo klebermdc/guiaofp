@@ -20,6 +20,7 @@ import {
   ShoppingCart,
   Timer,
   Mail,
+  Brain,
   type LucideIcon
 } from 'lucide-react';
 
@@ -41,7 +42,8 @@ export type AdminSection =
   | 'wait_times'
   | 'tracking'
   | 'password'
-  | 'documentation';
+  | 'documentation'
+  | 'ai_knowledge';
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
@@ -116,6 +118,12 @@ const menuGroups: MenuGroup[] = [
     items: [
       { id: 'password', icon: KeyRound, label: 'Gerador de Senhas' },
       { id: 'documentation', icon: BookOpen, label: 'Documentação' },
+    ]
+  },
+  {
+    title: 'Inteligência Artificial',
+    items: [
+      { id: 'ai_knowledge', icon: Brain, label: 'Base da Joy' },
     ]
   },
 ];

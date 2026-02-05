@@ -18,6 +18,7 @@ import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { ProjectDocumentation } from './ProjectDocumentation';
 import { WaitTimeAnalytics } from './WaitTimeAnalytics';
 import { TrackingConfigManager } from './TrackingConfigManager';
+import { AIKnowledgeBaseManager } from './AIKnowledgeBaseManager';
 import { 
   Users, 
   Receipt, 
@@ -37,6 +38,7 @@ import {
   ShoppingCart,
   Timer,
   Mail,
+  Brain,
   type LucideIcon
 } from 'lucide-react';
 
@@ -65,6 +67,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   tracking: { title: 'Tracking (LP)', description: 'Configurar Google Analytics, Facebook Pixel e GTM', icon: LayoutDashboard },
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
+  ai_knowledge: { title: 'Base da Joy (IA)', description: 'Gerenciar conhecimento da assistente virtual', icon: Brain },
 };
 
 const ADMIN_SECTION_KEY = 'admin_active_section';
@@ -129,6 +132,8 @@ const AdminPanelComponent = () => {
         return <PasswordGenerator />;
       case 'documentation':
         return <ProjectDocumentation />;
+      case 'ai_knowledge':
+        return <AIKnowledgeBaseManager />;
       default:
         return <AdminOverview />;
     }
