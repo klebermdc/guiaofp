@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer, ShoppingCart, Clock } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer, ShoppingCart, Clock, Brain } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -15,6 +15,7 @@ import AdminRestaurantsPanel from './AdminRestaurantsPanel';
 import { WaitTimeAnalytics } from './WaitTimeAnalytics';
 import { AbandonedCartsManager } from './AbandonedCartsManager';
 import { PendingPaymentsManager } from './PendingPaymentsManager';
+import { AIKnowledgeBaseManager } from './AIKnowledgeBaseManager';
 
 export function AdminTabs() {
   return (
@@ -80,6 +81,10 @@ export function AdminTabs() {
           <Timer className="h-4 w-4" />
           <span className="hidden sm:inline">Filas</span>
         </TabsTrigger>
+        <TabsTrigger value="ai-knowledge" className="flex items-center gap-2">
+          <Brain className="h-4 w-4" />
+          <span className="hidden sm:inline">IA Joy</span>
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="clients">
@@ -140,6 +145,10 @@ export function AdminTabs() {
 
       <TabsContent value="wait-times">
         <WaitTimeAnalytics />
+      </TabsContent>
+
+      <TabsContent value="ai-knowledge">
+        <AIKnowledgeBaseManager />
       </TabsContent>
     </Tabs>
   );

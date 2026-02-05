@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GUIAMENTO_REMOTO_FAQ, ORLANDO_ECONOMY_GUIDE, ORLANDO_FAST_PASS_INFO, PARKS_INFO } from "./knowledge-base.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Você é Joy, a assistente virtual da Orlando Fast Pass - especialista em viagens para Orlando, Flórida, com foco em economia e planejamento inteligente.
+const BASE_SYSTEM_PROMPT = `Você é Joy, a assistente virtual da Orlando Fast Pass - especialista em viagens para Orlando, Flórida, com foco em economia e planejamento inteligente.
 
 ## SOBRE VOCÊ
 - Nome: Joy
@@ -24,16 +24,6 @@ const SYSTEM_PROMPT = `Você é Joy, a assistente virtual da Orlando Fast Pass -
 7. Se não souber algo específico, admita e sugira onde encontrar a informação
 8. Comece com saudação calorosa na primeira mensagem
 
-## BASE DE CONHECIMENTO
-
-${PARKS_INFO}
-
-${ORLANDO_ECONOMY_GUIDE}
-
-${ORLANDO_FAST_PASS_INFO}
-
-${GUIAMENTO_REMOTO_FAQ}
-
 ## INSTRUÇÕES ESPECIAIS SOBRE GUIAMENTO REMOTO
 
 Quando o cliente perguntar sobre guiamento remoto, explique que:
@@ -41,9 +31,46 @@ Quando o cliente perguntar sobre guiamento remoto, explique que:
 2. O guia monitora filas, horários e faz ajustes durante todo o dia
 3. Comunicação via WhatsApp durante a visita ao parque
 4. Ajuda a tomar as melhores decisões no momento certo
-5. Reduz filas e otimiza o aproveitamento do tempo
+5. Reduz filas e otimiza o aproveitamento do tempo`;
 
-Use as informações do FAQ de Guiamento Remoto para responder perguntas detalhadas sobre como funciona, situações específicas, limitações e benefícios.`;
+async function getKnowledgeBase(): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Missing Supabase credentials");
+    return "";
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { data, error } = await supabase
+      .from("ai_knowledge_base")
+      .select("section_title, content")
+      .eq("is_active", true)
+      .order("sort_order");
+
+    if (error) {
+      console.error("Error fetching knowledge base:", error);
+      return "";
+    }
+
+    if (!data || data.length === 0) {
+      return "";
+    }
+
+    // Build knowledge base string from database
+    const knowledgeBase = data
+      .map((section) => `## ${section.section_title}\n\n${section.content}`)
+      .join("\n\n---\n\n");
+
+    return `\n\n## BASE DE CONHECIMENTO\n\n${knowledgeBase}`;
+  } catch (error) {
+    console.error("Error in getKnowledgeBase:", error);
+    return "";
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,6 +85,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Fetch knowledge base from database
+    const knowledgeBase = await getKnowledgeBase();
+    const systemPrompt = BASE_SYSTEM_PROMPT + knowledgeBase;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -67,7 +98,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
         stream: true,
