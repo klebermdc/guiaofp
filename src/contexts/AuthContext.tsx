@@ -238,21 +238,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadProfileForUser = useCallback(async (userId: string): Promise<TravelProfile> => {
     try {
-      // Use Promise.race with a timeout to prevent hanging
-      const profilePromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      // Retry logic for profile fetch with exponential backoff
+      const fetchProfileWithRetry = async (attempt = 1): Promise<{ data: any; error: any }> => {
+        const timeout = attempt === 1 ? 10000 : 15000; // 10s first, 15s retry
+        
+        const profilePromise = supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Profile fetch timeout')), timeout)
+        );
+        
+        try {
+          return await Promise.race([profilePromise, timeoutPromise]) as Awaited<typeof profilePromise>;
+        } catch (err) {
+          if (attempt < 2) {
+            console.log(`[Auth] Profile fetch attempt ${attempt} failed, retrying...`);
+            await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+            return fetchProfileWithRetry(attempt + 1);
+          }
+          throw err;
+        }
+      };
       
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
-      );
-      
-      const { data: profileData, error: profileError } = await Promise.race([
-        profilePromise,
-        timeoutPromise
-      ]) as Awaited<typeof profilePromise>;
+      const { data: profileData, error: profileError } = await fetchProfileWithRetry();
       
       // Contract fetch with timeout - run in parallel but don't block
       let contractData = null;
