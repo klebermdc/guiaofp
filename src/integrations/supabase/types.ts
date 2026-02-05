@@ -897,6 +897,66 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_coupons: {
+        Row: {
+          address: string | null
+          category: string | null
+          coupon_code: string | null
+          created_at: string
+          description: string | null
+          discount_value: string
+          id: string
+          is_active: boolean | null
+          location: string | null
+          partner_logo_url: string | null
+          partner_name: string
+          sort_order: number | null
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          description?: string | null
+          discount_value: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          partner_logo_url?: string | null
+          partner_name: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          description?: string | null
+          discount_value?: string
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          partner_logo_url?: string | null
+          partner_name?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       plan_page_access: {
         Row: {
           basic_visible: boolean | null

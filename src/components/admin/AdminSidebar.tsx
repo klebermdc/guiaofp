@@ -43,7 +43,8 @@ export type AdminSection =
   | 'tracking'
   | 'password'
   | 'documentation'
-  | 'ai_knowledge';
+  | 'ai_knowledge'
+  | 'partner_coupons';
 
 interface AdminSidebarProps {
   activeSection: AdminSection;
@@ -111,6 +112,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Estabelecimentos',
     items: [
       { id: 'restaurants', icon: UtensilsCrossed, label: 'Restaurantes' },
+      { id: 'partner_coupons', icon: Tag, label: 'Cupons de Parceiros' },
     ]
   },
   {
