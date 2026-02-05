@@ -246,7 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
       
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
       );
       
       const { data: profileData, error: profileError } = await Promise.race([
@@ -266,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const result = await Promise.race([
           contractPromise,
           new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Contract fetch timeout')), 2000)
+            setTimeout(() => reject(new Error('Contract fetch timeout')), 6000)
           )
         ]) as Awaited<typeof contractPromise>;
         contractData = result.data;
@@ -339,8 +339,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     isInitializingRef.current = true;
     
-    // CRITICAL: Absolute safety timeout - ALWAYS fires after 6 seconds
-    // Reduced from 8s for faster recovery
+    // CRITICAL: Absolute safety timeout - ALWAYS fires after 12 seconds
+    // Increased to allow more time for slow database connections
     const absoluteTimeout = setTimeout(() => {
       if (isMounted && !initCompletedRef.current) {
         console.warn('[Auth] Absolute safety timeout triggered');
@@ -348,14 +348,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsProfileLoading(false);
         initCompletedRef.current = true;
       }
-    }, 6000);
+    }, 12000);
 
     const initializeAuth = async () => {
       try {
-        // Fast session check with 3s timeout (reduced from 4s)
+        // Session check with 8s timeout (increased for slow connections)
         const sessionPromise = supabase.auth.getSession();
         const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) =>
-          setTimeout(() => resolve({ data: { session: null }, error: new Error('Session timeout') }), 3000)
+          setTimeout(() => resolve({ data: { session: null }, error: new Error('Session timeout') }), 8000)
         );
         
         const { data: { session: currentSession }, error } = await Promise.race([
