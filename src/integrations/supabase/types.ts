@@ -131,6 +131,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_knowledge_base: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          section_key: string
+          section_title: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          section_key: string
+          section_title: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          section_key?: string
+          section_title?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attraction_preferences: {
         Row: {
           attraction_name: string
