@@ -20,10 +20,12 @@ import {
   Key,
   TestTube,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { TrackingGuide } from './tracking/TrackingGuide';
 
 interface TrackingConfig {
   id: string;
@@ -307,8 +309,12 @@ export function TrackingConfigManager() {
       </Card>
 
       {/* Configuration Tabs */}
-      <Tabs defaultValue="basic" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="guide" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="guide" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Guia</span>
+          </TabsTrigger>
           <TabsTrigger value="basic" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Básico</span>
@@ -326,6 +332,11 @@ export function TrackingConfigManager() {
             <span className="hidden sm:inline">Avançado</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Guide Tab - Step by Step */}
+        <TabsContent value="guide">
+          <TrackingGuide />
+        </TabsContent>
 
         {/* Basic Tab */}
         <TabsContent value="basic">
