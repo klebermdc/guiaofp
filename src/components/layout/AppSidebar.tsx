@@ -81,6 +81,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   planner_manual: { path: '/planner-manual', label: 'Planejador Manual', defaultIcon: Calendar },
   conteudo: { path: '/conteudos', label: 'Conteúdos Exclusivos', defaultIcon: Sparkles },
   contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
+  cupons: { path: '/cupons', label: 'Cupons de Parceiros', defaultIcon: Ticket },
 };
 
 const guideMenuItems = [
