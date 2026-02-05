@@ -19,6 +19,7 @@ import { ProjectDocumentation } from './ProjectDocumentation';
 import { WaitTimeAnalytics } from './WaitTimeAnalytics';
 import { TrackingConfigManager } from './TrackingConfigManager';
 import { AIKnowledgeBaseManager } from './AIKnowledgeBaseManager';
+import { PartnerCouponsManager } from './PartnerCouponsManager';
 import { 
   Users, 
   Receipt, 
@@ -68,6 +69,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
   ai_knowledge: { title: 'Base da Joy (IA)', description: 'Gerenciar conhecimento da assistente virtual', icon: Brain },
+  partner_coupons: { title: 'Cupons de Parceiros', description: 'Gerenciar cupons de desconto para viagem', icon: Tag },
 };
 
 const ADMIN_SECTION_KEY = 'admin_active_section';
@@ -134,6 +136,8 @@ const AdminPanelComponent = () => {
         return <ProjectDocumentation />;
       case 'ai_knowledge':
         return <AIKnowledgeBaseManager />;
+      case 'partner_coupons':
+        return <PartnerCouponsManager />;
       default:
         return <AdminOverview />;
     }

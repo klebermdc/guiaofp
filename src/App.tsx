@@ -51,6 +51,7 @@ const RoteiroView = lazy(() => import("./pages/RoteiroView"));
 const PlannerManual = lazy(() => import("./pages/PlannerManual"));
 const DocumentWalletPage = lazy(() => import("./pages/DocumentWalletPage"));
 const TermsAndPrivacy = lazy(() => import("./pages/TermsAndPrivacy"));
+const PartnerCoupons = lazy(() => import("./pages/PartnerCoupons"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -123,6 +124,7 @@ const App = () => {
                       <Route path="/planner-manual" element={<PlannerManual />} />
                       <Route path="/carteira" element={<DocumentWalletPage />} />
                       <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
+                      <Route path="/cupons" element={<PartnerCoupons />} />
                       <Route path="/registro/:planId" element={<Register />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
