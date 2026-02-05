@@ -64,6 +64,7 @@ const pagePathMap: Record<string, string> = {
   planner_manual: '/planner-manual',
   conteudo: '/conteudos',
   contato: '/contato',
+  cupons: '/cupons',
 };
 
 
