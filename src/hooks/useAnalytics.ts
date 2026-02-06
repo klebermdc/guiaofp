@@ -60,12 +60,65 @@ const isDataLayerAvailable = () => typeof window !== 'undefined' && Array.isArra
 // Simple hash function for enhanced conversions (SHA-256 in production via sGTM)
 const hashForDataLayer = (value: string): string => {
   if (!value) return '';
-  // Normalize: lowercase, trim
   const normalized = value.toLowerCase().trim();
-  // In production, sGTM will hash this properly with SHA-256
-  // For client-side, we just send the normalized value and let sGTM handle hashing
   return normalized;
 };
+
+/**
+ * Stape-compatible helpers
+ * These replicate what WordPress plugins (GTM4WP / Stape Plugin) do automatically
+ */
+
+// Generate unique event_id for CAPI deduplication (same as Stape plugin)
+const generateEventId = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Get Facebook browser cookie (_fbp) - set by Facebook Pixel
+const getFbp = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/_fbp=([^;]+)/);
+  return match ? match[1] : null;
+};
+
+// Get Facebook click ID cookie (_fbc) - set from fbclid URL parameter
+const getFbc = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/_fbc=([^;]+)/);
+  if (match) return match[1];
+  // Fallback: build from URL fbclid parameter
+  const url = new URL(window.location.href);
+  const fbclid = url.searchParams.get('fbclid');
+  if (fbclid) {
+    return `fb.1.${Date.now()}.${fbclid}`;
+  }
+  return null;
+};
+
+// Get GA client_id from _ga cookie
+const getGaClientId = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+  return match ? match[1] : null;
+};
+
+// Build Stape-compatible context data (equivalent to what the WP plugin sends)
+const getStapeContext = () => ({
+  page_location: window.location.href,
+  page_path: window.location.pathname,
+  page_title: document.title,
+  page_referrer: document.referrer || undefined,
+  user_agent: navigator.userAgent,
+  language: navigator.language,
+  screen_resolution: `${screen.width}x${screen.height}`,
+  fbp: getFbp(),
+  fbc: getFbc(),
+  client_id: getGaClientId(),
+  event_id: generateEventId(),
+});
 
 export const useAnalytics = () => {
   /**
@@ -137,25 +190,34 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer (for sGTM processing)
+    // GTM dataLayer (for sGTM/Stape processing)
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({
         event: action,
+        event_id: ctx.event_id,
         eventCategory: category,
         eventLabel: label,
         eventValue: value,
         ...customParams,
+        // Stape context
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
       });
     }
 
-    // Facebook Pixel (custom events)
+    // Facebook Pixel (custom events) — pass eventID for CAPI dedup
     if (isFbqAvailable()) {
+      const eventId = generateEventId();
       window.fbq?.('trackCustom', action, {
         category,
         label,
         value,
         ...customParams,
-      });
+      }, { eventID: eventId });
     }
 
     if (import.meta.env.DEV) {
@@ -179,13 +241,22 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer
+    // GTM dataLayer with Stape context
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({
         event: 'page_view',
-        pagePath: path,
-        pageTitle: title,
-        pageLocation: window.location.href,
+        event_id: ctx.event_id,
+        page_path: path,
+        page_title: title,
+        page_location: ctx.page_location,
+        page_referrer: ctx.page_referrer,
+        user_agent: ctx.user_agent,
+        language: ctx.language,
+        screen_resolution: ctx.screen_resolution,
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
       });
     }
 
@@ -251,11 +322,13 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer (GA4 e-commerce format)
+    // GTM dataLayer (GA4 e-commerce format + Stape context)
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null }); // Clear previous
       window.dataLayer?.push({
         event: 'view_item',
+        event_id: ctx.event_id,
         ecommerce: {
           currency: 'BRL',
           value: priceValue,
@@ -266,6 +339,11 @@ export const useAnalytics = () => {
             quantity: 1,
           }],
         },
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
@@ -306,11 +384,13 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer
+    // GTM dataLayer + Stape context
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
       window.dataLayer?.push({
         event: 'begin_checkout',
+        event_id: ctx.event_id,
         ecommerce: {
           currency: 'BRL',
           value: priceValue,
@@ -322,6 +402,11 @@ export const useAnalytics = () => {
             quantity: 1,
           }],
         },
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
@@ -363,11 +448,13 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer
+    // GTM dataLayer + Stape context
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
       window.dataLayer?.push({
         event: 'add_payment_info',
+        event_id: ctx.event_id,
         ecommerce: {
           currency: 'BRL',
           value: priceValue,
@@ -379,6 +466,11 @@ export const useAnalytics = () => {
             quantity: 1,
           }],
         },
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
@@ -442,11 +534,13 @@ export const useAnalytics = () => {
       });
     }
 
-    // GTM dataLayer (for sGTM to process and send to CAPI)
+    // GTM dataLayer (for sGTM/Stape to process and send to CAPI)
     if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
       window.dataLayer?.push({
         event: 'purchase',
+        event_id: ctx.event_id,
         ecommerce: {
           transaction_id: transactionId,
           currency: 'BRL',
@@ -466,11 +560,18 @@ export const useAnalytics = () => {
           first_name: userData.firstName,
           last_name: userData.lastName,
         } : undefined,
+        // Stape context for CAPI dedup and attribution
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
-    // Facebook Pixel (client-side)
+    // Facebook Pixel (client-side) — pass eventID for CAPI dedup
     if (isFbqAvailable()) {
+      const eventId = generateEventId();
       window.fbq?.('track', 'Purchase', {
         content_ids: [planId],
         content_name: planName,
@@ -478,7 +579,7 @@ export const useAnalytics = () => {
         value: priceValue,
         currency: 'BRL',
         num_items: 1,
-      });
+      }, { eventID: eventId });
     }
 
     if (import.meta.env.DEV) {
@@ -499,10 +600,12 @@ export const useAnalytics = () => {
       value: leadValue,
     });
 
-    // Push user data for CAPI
+    // Push user data for CAPI with Stape context
     if (isDataLayerAvailable() && userData) {
+      const ctx = getStapeContext();
       window.dataLayer?.push({
         event: 'lead',
+        event_id: ctx.event_id,
         lead_source: source,
         lead_value: leadValue,
         user_data: {
@@ -511,6 +614,9 @@ export const useAnalytics = () => {
           first_name: userData.firstName,
           last_name: userData.lastName,
         },
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
       });
     }
 

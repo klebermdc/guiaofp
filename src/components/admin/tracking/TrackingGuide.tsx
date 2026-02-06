@@ -738,6 +738,77 @@ export function TrackingGuide() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Stape Compatibility Info */}
+      <Card className="border-purple-200 bg-purple-50/30 dark:bg-purple-950/20 dark:border-purple-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Server className="h-5 w-5 text-purple-500" />
+            Compatibilidade com Plugin Stape (Automático)
+          </CardTitle>
+          <CardDescription>
+            O sistema já envia automaticamente todos os dados que o plugin do Stape/GTM4WP enviaria no WordPress
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-background border">
+              <p className="font-semibold text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" /> event_id (deduplicação)
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                UUID único por evento para deduplicação entre Pixel client-side e CAPI server-side
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-background border">
+              <p className="font-semibold text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" /> _fbp / _fbc (cookies)
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cookies do Facebook capturados e enviados no dataLayer para atribuição CAPI
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-background border">
+              <p className="font-semibold text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" /> client_id (GA)
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                ID do cookie _ga extraído e enviado para matching no sGTM
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-background border">
+              <p className="font-semibold text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" /> user_agent + context
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                User agent, referrer, screen resolution e language enviados para qualidade do sinal
+              </p>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div>
+            <p className="text-sm font-semibold mb-2">Variáveis disponíveis no dataLayer para configurar no sGTM:</p>
+            <div className="bg-background p-3 rounded-lg border font-mono text-xs space-y-1">
+              <p><span className="text-purple-600">event_id</span> → Use como Event ID nas tags do sGTM</p>
+              <p><span className="text-purple-600">fbp</span> → Mapear para fb_browser_id no Facebook CAPI tag</p>
+              <p><span className="text-purple-600">fbc</span> → Mapear para fb_click_id no Facebook CAPI tag</p>
+              <p><span className="text-purple-600">client_id</span> → Use como Client ID na tag GA4 do sGTM</p>
+              <p><span className="text-purple-600">user_data.email</span> → User data para Enhanced Conversions</p>
+              <p><span className="text-purple-600">user_agent</span> → User agent para Facebook CAPI</p>
+              <p><span className="text-purple-600">page_location</span> → URL completa da página</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+            <p className="text-sm text-green-800 dark:text-green-200">
+              <strong>✅ Nenhum plugin adicional necessário!</strong> Todos os dados que o plugin Stape para WordPress enviaria 
+              já são enviados automaticamente pelo nosso sistema. Basta configurar as variáveis acima no container sGTM.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
