@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { generateTemporaryPassword } from "./utils/hash.ts";
+import { sendServerTrackingEvent } from "./utils/tracking.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,168 +23,26 @@ interface AsaasWebhookPayload {
   };
 }
 
-// Generate a secure temporary password
-function generateTemporaryPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  const specialChars = "!@#$%";
-  let password = "";
-  
-  // 8 alphanumeric chars
-  for (let i = 0; i < 8; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  // Add 1 special char
-  password += specialChars.charAt(Math.floor(Math.random() * specialChars.length));
-  
-  return password;
-}
+const statusMap: Record<string, string> = {
+  PENDING: "pending",
+  RECEIVED: "confirmed",
+  CONFIRMED: "confirmed",
+  RECEIVED_IN_CASH: "confirmed",
+  OVERDUE: "pending",
+  REFUNDED: "refunded",
+  REFUND_REQUESTED: "refunded",
+  CHARGEBACK_REQUESTED: "cancelled",
+  CHARGEBACK_DISPUTE: "cancelled",
+  AWAITING_CHARGEBACK_REVERSAL: "cancelled",
+  DUNNING_REQUESTED: "pending",
+  DUNNING_RECEIVED: "confirmed",
+  AWAITING_RISK_ANALYSIS: "pending",
+};
 
-// Hash data for Enhanced Conversions (SHA-256)
-async function hashData(data: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data.toLowerCase().trim());
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Send server-side tracking event (sGTM / Facebook CAPI)
-async function sendServerTrackingEvent(
-  supabase: ReturnType<typeof createClient>,
-  transaction: Record<string, unknown>,
-  paymentMethod: string
-): Promise<void> {
-  try {
-    // Fetch tracking configuration
-    const { data: trackingConfigs } = await supabase
-      .from('tracking_config')
-      .select('config_key, config_value, is_active')
-      .in('config_key', ['sgtm_url', 'fb_pixel_id', 'fb_access_token', 'fb_test_event_code']);
-
-    if (!trackingConfigs || trackingConfigs.length === 0) {
-      console.log('No tracking config found, skipping server tracking');
-      return;
-    }
-
-    const configMap: Record<string, string | null> = {};
-    trackingConfigs.forEach((c: { config_key: string; config_value: string | null; is_active: boolean }) => {
-      if (c.is_active) {
-        configMap[c.config_key] = c.config_value;
-      }
-    });
-
-    const sgtmUrl = configMap['sgtm_url'];
-    const fbPixelId = configMap['fb_pixel_id'];
-    const fbAccessToken = configMap['fb_access_token'];
-    const fbTestEventCode = configMap['fb_test_event_code'];
-
-    const email = transaction.email as string;
-    const customerName = transaction.customer_name as string;
-    const amountCents = transaction.amount_cents as number;
-    const planKey = transaction.plan_key as string;
-    const transactionId = transaction.id as string;
-
-    // Hash user data for privacy
-    const hashedEmail = email ? await hashData(email) : null;
-    const eventTime = Math.floor(Date.now() / 1000);
-
-    const planNames: Record<string, string> = {
-      basic: 'Plano Básico',
-      premium: 'Plano Premium',
-    };
-
-    // 1. Send to sGTM (if configured)
-    if (sgtmUrl) {
-      try {
-        const sgtmPayload = {
-          client_id: transactionId,
-          events: [{
-            name: 'purchase',
-            params: {
-              transaction_id: transactionId,
-              value: amountCents / 100,
-              currency: 'BRL',
-              payment_type: paymentMethod,
-              items: [{
-                item_id: planKey,
-                item_name: planNames[planKey] || planKey,
-                price: amountCents / 100,
-                quantity: 1,
-              }],
-              // User data for Enhanced Conversions
-              user_data: {
-                email_address: hashedEmail,
-                address: {
-                  first_name: customerName?.split(' ')[0] || '',
-                },
-              },
-            },
-          }],
-          user_properties: {
-            customer_name: customerName,
-            plan: planKey,
-          },
-        };
-
-        const sgtmResponse = await fetch(`${sgtmUrl}/g/collect`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sgtmPayload),
-        });
-
-        console.log(`sGTM tracking sent: ${sgtmResponse.status}`);
-      } catch (sgtmError) {
-        console.error('Error sending to sGTM:', sgtmError);
-      }
-    }
-
-    // 2. Send to Facebook CAPI (if configured)
-    if (fbPixelId && fbAccessToken) {
-      try {
-        const fbPayload = {
-          data: [{
-            event_name: 'Purchase',
-            event_time: eventTime,
-            action_source: 'website',
-            event_source_url: 'https://guiaofp.lovable.app/checkout',
-            user_data: {
-              em: hashedEmail ? [hashedEmail] : undefined,
-              fn: customerName ? [await hashData(customerName.split(' ')[0])] : undefined,
-            },
-            custom_data: {
-              currency: 'BRL',
-              value: amountCents / 100,
-              content_ids: [planKey],
-              content_type: 'product',
-              content_name: planNames[planKey] || planKey,
-              order_id: transactionId,
-              payment_method: paymentMethod,
-            },
-          }],
-          ...(fbTestEventCode ? { test_event_code: fbTestEventCode } : {}),
-        };
-
-        const fbResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${fbPixelId}/events?access_token=${fbAccessToken}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fbPayload),
-          }
-        );
-
-        const fbResult = await fbResponse.json();
-        console.log(`Facebook CAPI sent:`, fbResult);
-      } catch (fbError) {
-        console.error('Error sending to Facebook CAPI:', fbError);
-      }
-    }
-
-    console.log('Server-side tracking completed for transaction:', transactionId);
-  } catch (error) {
-    console.error('Error in server tracking:', error);
-  }
-}
+const planNames: Record<string, string> = {
+  basic: "Plano Básico",
+  premium: "Plano Premium",
+};
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -225,22 +85,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const statusMap: Record<string, string> = {
-      PENDING: "pending",
-      RECEIVED: "confirmed",
-      CONFIRMED: "confirmed",
-      RECEIVED_IN_CASH: "confirmed",
-      OVERDUE: "pending",
-      REFUNDED: "refunded",
-      REFUND_REQUESTED: "refunded",
-      CHARGEBACK_REQUESTED: "cancelled",
-      CHARGEBACK_DISPUTE: "cancelled",
-      AWAITING_CHARGEBACK_REVERSAL: "cancelled",
-      DUNNING_REQUESTED: "pending",
-      DUNNING_RECEIVED: "confirmed",
-      AWAITING_RISK_ANALYSIS: "pending",
-    };
-
     const newStatus = statusMap[payload.payment?.status || ""] || "pending";
     console.log(`Updating payment ${paymentId} to status: ${newStatus}`);
 
@@ -280,19 +124,15 @@ const handler = async (req: Request): Promise<Response> => {
     if (newStatus === "confirmed" && transaction.status !== "confirmed") {
       console.log("Payment confirmed! Starting onboarding flow...");
 
-      // 🔥 SEND SERVER-SIDE TRACKING (sGTM + Facebook CAPI)
+      // Send server-side tracking (sGTM + Facebook CAPI)
       const paymentMethod = payload.payment?.billingType === 'PIX' ? 'pix' : 
                            payload.payment?.billingType === 'BOLETO' ? 'boleto' : 'credit_card';
       await sendServerTrackingEvent(supabase, transaction, paymentMethod);
 
-      const planNames: Record<string, string> = {
-        basic: "Plano Básico",
-        premium: "Plano Premium",
-      };
       const productName = planNames[transaction.plan_key] || transaction.plan_key;
 
       // Helper to send emails via unified function
-      const sendEmail = async (type: string, userData: Record<string, unknown>, scheduleDelay?: number) => {
+      const sendEmail = async (type: string, userData: Record<string, unknown>) => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
             method: "POST",
@@ -300,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${supabaseServiceKey}`,
             },
-            body: JSON.stringify({ type, userData, scheduleDelay }),
+            body: JSON.stringify({ type, userData }),
           });
           
           if (response.ok) {
@@ -314,175 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
       };
 
-      // Helper to send admin notification email
-      const sendAdminOrderNotification = async (txData: Record<string, unknown>) => {
-        try {
-          const resendApiKey = Deno.env.get("RESEND_API_KEY");
-          if (!resendApiKey) {
-            console.error("RESEND_API_KEY not configured");
-            return;
-          }
-
-          const planNames: Record<string, string> = {
-            basic: "Planejador",
-            premium: "Com Guia",
-          };
-
-          const paymentMethods: Record<string, string> = {
-            pix: "PIX",
-            boleto: "Boleto",
-            credit_card: "Cartão de Crédito",
-          };
-
-          const planName = planNames[txData.plan_key as string] || txData.plan_key;
-          const paymentMethod = paymentMethods[txData.payment_method as string] || txData.payment_method;
-          const amountFormatted = ((txData.amount_cents as number) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-          const discountFormatted = txData.discount_amount_cents 
-            ? ((txData.discount_amount_cents as number) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-            : null;
-          const createdAt = new Date(txData.created_at as string).toLocaleString('pt-BR', { 
-            dateStyle: 'short', 
-            timeStyle: 'short',
-            timeZone: 'America/Sao_Paulo'
-          });
-
-          const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #7c3aed, #9333ea); border-radius: 12px 12px 0 0; padding: 30px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">💰 Nova Venda Realizada!</h1>
-      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Pagamento confirmado via ${paymentMethod}</p>
-    </div>
-    
-    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px;">
-      <h2 style="color: #7c3aed; margin-top: 0; font-size: 18px; border-bottom: 2px solid #f4f4f5; padding-bottom: 10px;">Dados do Cliente</h2>
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280; width: 35%;">Nome:</td>
-          <td style="padding: 8px 0; color: #1f2937; font-weight: 500;">${txData.customer_name}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Email:</td>
-          <td style="padding: 8px 0;"><a href="mailto:${txData.email}" style="color: #7c3aed;">${txData.email}</a></td>
-        </tr>
-      </table>
-      
-      <h2 style="color: #7c3aed; margin-top: 25px; font-size: 18px; border-bottom: 2px solid #f4f4f5; padding-bottom: 10px;">Dados do Pedido</h2>
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280; width: 35%;">Plano:</td>
-          <td style="padding: 8px 0; color: #1f2937; font-weight: 500;">${planName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Pagamento:</td>
-          <td style="padding: 8px 0; color: #1f2937;">${paymentMethod}</td>
-        </tr>
-        ${txData.coupon_code ? `
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Cupom:</td>
-          <td style="padding: 8px 0; color: #16a34a; font-weight: 500;">${txData.coupon_code}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Desconto:</td>
-          <td style="padding: 8px 0; color: #16a34a;">-${discountFormatted}</td>
-        </tr>
-        ` : ''}
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Valor:</td>
-          <td style="padding: 8px 0; color: #1f2937; font-weight: 700; font-size: 18px;">${amountFormatted}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Data:</td>
-          <td style="padding: 8px 0; color: #1f2937;">${createdAt}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">ID Transação:</td>
-          <td style="padding: 8px 0; color: #6b7280; font-family: monospace; font-size: 12px;">${txData.id}</td>
-        </tr>
-      </table>
-      
-      <div style="margin-top: 25px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-        <p style="margin: 0; color: #92400e; font-size: 14px;">
-          ⚡ O acesso do cliente já foi liberado automaticamente pelo sistema.
-        </p>
-      </div>
-      
-      <div style="margin-top: 25px; text-align: center;">
-        <a href="https://guiaofp.lovable.app/admin" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-          Ver no Painel Admin
-        </a>
-      </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 20px; padding: 15px; color: #6b7280; font-size: 12px;">
-      <p style="margin: 0;">Este é um email automático do sistema OFP Planejador.</p>
-      <p style="margin: 5px 0 0 0;">ID do Pagamento: ${txData.asaas_payment_id}</p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-          // Generate plain text version for better deliverability
-          const plainText = `
-NOVA VENDA REALIZADA!
-Pagamento confirmado via ${paymentMethod}
-
-DADOS DO CLIENTE:
-- Nome: ${txData.customer_name}
-- Email: ${txData.email}
-
-DADOS DO PEDIDO:
-- Plano: ${planName}
-- Pagamento: ${paymentMethod}
-${txData.coupon_code ? `- Cupom: ${txData.coupon_code}\n- Desconto: -${discountFormatted}` : ''}
-- Valor: ${amountFormatted}
-- Data: ${createdAt}
-- ID Transação: ${txData.id}
-
-O acesso do cliente já foi liberado automaticamente pelo sistema.
-
-Ver no Painel Admin: https://guiaofp.lovable.app/admin
-
----
-Este é um email automático do sistema OFP Planejador.
-ID do Pagamento: ${txData.asaas_payment_id}
-          `.trim();
-
-          const response = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${resendApiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: "OFP Planejador <contato@ofpplanejador.com>",
-              to: ["contato@ofpplanejador.com"],
-              reply_to: "contato@ofpplanejador.com",
-              subject: `Nova Venda: ${txData.customer_name} - ${planName}`,
-              html: emailHtml,
-              text: plainText,
-              headers: {
-                "X-Entity-Ref-ID": `admin-order-${Date.now()}`,
-              },
-            }),
-          });
-
-          if (response.ok) {
-            console.log("Admin order notification email sent successfully");
-          } else {
-            const errorText = await response.text();
-            console.error("Error sending admin notification:", errorText);
-          }
-        } catch (error) {
-          console.error("Error sending admin order notification:", error);
-        }
-      };
+      // Helper to send push notification
       const sendPushNotification = async (userId: string, title: string, body: string, data?: Record<string, unknown>) => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
@@ -493,12 +165,7 @@ ID do Pagamento: ${txData.asaas_payment_id}
             },
             body: JSON.stringify({
               user_ids: [userId],
-              payload: {
-                title,
-                body,
-                tag: "access-enabled",
-                data: { url: "/dashboard", ...data },
-              },
+              payload: { title, body, tag: "access-enabled", data: { url: "/dashboard", ...data } },
             }),
           });
           
@@ -511,6 +178,29 @@ ID do Pagamento: ${txData.asaas_payment_id}
           }
         } catch (error) {
           console.error(`Error sending push notification:`, error);
+        }
+      };
+
+      // Helper to send admin notification
+      const sendAdminNotification = async () => {
+        try {
+          const response = await fetch(`${supabaseUrl}/functions/v1/resend-admin-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ transactionId: transaction.id }),
+          });
+          
+          if (response.ok) {
+            console.log("Admin notification sent successfully");
+          } else {
+            const errorText = await response.text();
+            console.error("Error sending admin notification:", errorText);
+          }
+        } catch (error) {
+          console.error("Error sending admin notification:", error);
         }
       };
 
@@ -586,16 +276,16 @@ ID do Pagamento: ${txData.asaas_payment_id}
           tempPassword: tempPassword || undefined,
         });
 
-        // 5. Send push notification to inform access is enabled
+        // 5. Send push notification
         await sendPushNotification(
           authUser.id,
           "🎉 Acesso Liberado!",
-          `Olá ${transaction.customer_name.split(' ')[0]}! Seu acesso ao OFP Planejador foi ativado. Toque para começar a planejar sua viagem!`,
+          `Olá ${transaction.customer_name.split(' ')[0]}! Seu acesso ao OFP Planejador foi ativado.`,
           { plan: transaction.plan_key }
         );
 
-        // 6. Send admin notification email with order details
-        await sendAdminOrderNotification(transaction);
+        // 6. Send admin notification
+        await sendAdminNotification();
 
         console.log("Full onboarding flow completed for:", transaction.email);
       } else {
@@ -616,10 +306,10 @@ ID do Pagamento: ${txData.asaas_payment_id}
       JSON.stringify({ success: true, status: newStatus }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in asaas-webhook:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
