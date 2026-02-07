@@ -8,6 +8,9 @@ type AppRole = 'admin' | 'guide' | 'client';
 const rolesCache = new Map<string, { roles: AppRole[]; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Deduplication: share a single in-flight promise per user
+const inflightRequests = new Map<string, Promise<AppRole[]>>();
+
 export const useUserRole = () => {
   const { user } = useAuth();
   const [roles, setRoles] = useState<AppRole[]>(() => {
@@ -63,24 +66,34 @@ export const useUserRole = () => {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
+        // Deduplicate: reuse in-flight request if one exists
+        let fetchPromise = inflightRequests.get(user.id);
+        if (!fetchPromise) {
+          fetchPromise = Promise.resolve(
+            supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', user.id)
+          ).then(({ data, error }) => {
+              inflightRequests.delete(user.id);
+              if (error) throw error;
+              const roles = (data || []).map((r) => r.role as AppRole);
+              rolesCache.set(user.id, { roles, timestamp: Date.now() });
+              return roles;
+            })
+            .catch((err) => {
+              inflightRequests.delete(user.id);
+              throw err;
+            });
+          inflightRequests.set(user.id, fetchPromise);
+        }
+
+        const fetchedRoles = await fetchPromise;
 
         if (!isMounted) return;
         
-        if (!error && data) {
-          const fetchedRoles = data.map((r) => r.role as AppRole);
-          setRoles(fetchedRoles);
-          
-          // Cache the result
-          rolesCache.set(user.id, { 
-            roles: fetchedRoles, 
-            timestamp: Date.now() 
-          });
-          fetchedUserIdRef.current = user.id;
-        }
+        setRoles(fetchedRoles);
+        fetchedUserIdRef.current = user.id;
       } catch (err) {
         console.error('Error fetching user roles:', err);
       } finally {
