@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
+import { NavigationHUD } from '@/components/map/NavigationHUD';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
@@ -138,6 +139,12 @@ export default function ParkMap() {
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
+  
+  // Waze-like navigation enhancements
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [walkingSpeed, setWalkingSpeed] = useState<number | null>(null);
+  const [isOffCenter, setIsOffCenter] = useState(false);
+  const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
@@ -369,12 +376,104 @@ export default function ParkMap() {
     }
   }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
 
-  // Reset arrival sound flag when starting a new navigation
+  // Reset navigation state when starting/stopping
   useEffect(() => {
     if (!isNavigating) {
       setHasPlayedArrivalSound(false);
+      setCurrentStepIndex(0);
+      setWalkingSpeed(null);
+      setIsOffCenter(false);
+      lastPositionRef.current = null;
     }
   }, [isNavigating]);
+
+  // Calculate walking speed from GPS position changes
+  useEffect(() => {
+    if (!userPosition || !isNavigating) return;
+    
+    const now = Date.now();
+    const prev = lastPositionRef.current;
+    
+    if (prev) {
+      const dt = (now - prev.time) / 1000; // seconds
+      if (dt > 1 && dt < 30) { // Ignore stale or too-frequent updates
+        const dist = calculateStraightLineDistance(prev.pos, userPosition);
+        const speedKmh = (dist / dt) * 3.6;
+        // Filter out unrealistic speeds (> 15 km/h walking)
+        if (speedKmh < 15) {
+          setWalkingSpeed(s => s === null ? speedKmh : s * 0.7 + speedKmh * 0.3); // Smoothing
+        }
+      }
+    }
+    
+    lastPositionRef.current = { pos: userPosition, time: now };
+  }, [userPosition, isNavigating]);
+
+  // Auto-advance navigation steps based on proximity to step endpoints
+  useEffect(() => {
+    if (!isNavigating || !userPosition || routeSteps.length === 0 || navigationMode !== 'guided') return;
+    
+    const step = routeSteps[currentStepIndex] as any;
+    if (!step?.end_location) return;
+    
+    const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
+    const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
+    
+    const distToEnd = calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
+    
+    // Advance to next step when within 15m of step endpoint
+    if (distToEnd < 15 && currentStepIndex < routeSteps.length - 1) {
+      setCurrentStepIndex(prev => prev + 1);
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+    }
+  }, [userPosition, isNavigating, currentStepIndex, routeSteps, navigationMode]);
+
+  // Detect when user pans away from their position (off-center)
+  useEffect(() => {
+    if (!mapRef.current || navigationMode !== 'guided' || !userPosition) {
+      setIsOffCenter(false);
+      return;
+    }
+    
+    const listener = mapRef.current.addListener('center_changed', () => {
+      const center = mapRef.current?.getCenter();
+      if (!center || !userPosition) return;
+      const dist = calculateStraightLineDistance(
+        { lat: center.lat(), lng: center.lng() },
+        userPosition
+      );
+      setIsOffCenter(dist > 50); // More than 50m from user
+    });
+    
+    return () => google.maps.event.removeListener(listener);
+  }, [navigationMode, userPosition]);
+
+  // Open navigation in external app (Google Maps or Waze)
+  const openExternalNav = useCallback((app: 'google' | 'waze') => {
+    if (!routeInfo?.destination) return;
+    const { lat, lng } = routeInfo.destination;
+    
+    let url: string;
+    if (app === 'waze') {
+      url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+    } else {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+    }
+    
+    window.open(url, '_blank');
+  }, [routeInfo?.destination]);
+
+  // Re-center on user position
+  const recenterOnUser = useCallback(() => {
+    if (mapRef.current && userPosition) {
+      mapRef.current.panTo(userPosition);
+      mapRef.current.setZoom(19);
+      setIsOffCenter(false);
+    }
+  }, [userPosition]);
 
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
@@ -1603,8 +1702,39 @@ export default function ParkMap() {
         </div>
       </div>
 
-      {/* Navigation Panel - GPS Style with Preview/Guided modes */}
-      {isNavigating && routeInfo && (
+      {/* Waze-like HUD - Mobile Guided Mode */}
+      {isMobile && isNavigating && routeInfo && navigationMode === 'guided' && (
+        <NavigationHUD
+          destinationName={routeInfo.destinationName}
+          distance={routeInfo.distance}
+          duration={routeInfo.duration}
+          currentStepIndex={currentStepIndex}
+          steps={routeSteps.map(s => ({
+            instructions: s.instructions,
+            distance: s.distance ? { text: s.distance.text, value: s.distance.value } : undefined,
+            duration: s.duration ? { text: s.duration.text, value: s.duration.value } : undefined,
+            maneuver: (s as any).maneuver,
+          }))}
+          speed={walkingSpeed}
+          distanceToNextStep={(() => {
+            if (!userPosition || routeSteps.length === 0) return null;
+            const step = routeSteps[currentStepIndex] as any;
+            if (!step?.end_location) return null;
+            const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
+            const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
+            return calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
+          })()}
+          destination={routeInfo.destination || null}
+          userPosition={userPosition}
+          onStop={handleStopNavigation}
+          onRecenter={recenterOnUser}
+          isOffCenter={isOffCenter}
+          onOpenExternal={openExternalNav}
+        />
+      )}
+
+      {/* Navigation Panel - Preview mode OR Desktop guided mode */}
+      {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
         <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom ${isNavPanelExpanded ? 'h-auto' : 'h-16'}`}>
           <Card className="rounded-t-xl rounded-b-none border-t-2 border-blue-500 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl">
             {/* Collapse Toggle */}
@@ -1625,19 +1755,6 @@ export default function ParkMap() {
                   <span className="font-bold text-xs">{routeInfo.distance}</span>
                   <span className="text-blue-200 text-xs">|</span>
                   <span className="font-bold text-xs">{routeInfo.duration}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => {
-                      handleStopNavigation();
-                      navigate('/dashboard');
-                    }}
-                    className="text-white hover:bg-white/20 h-8 px-2 gap-1"
-                    title="Voltar ao início"
-                  >
-                    <Home className="w-4 h-4" />
-                    <span className="text-xs hidden sm:inline">Início</span>
-                  </Button>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -1672,7 +1789,6 @@ export default function ParkMap() {
                         startGuidedNavigation();
                       } else {
                         setNavigationMode('preview');
-                        // Reset map to show full route
                         if (mapRef.current && userPosition && routeInfo.destination) {
                           const bounds = new google.maps.LatLngBounds();
                           bounds.extend(userPosition);
@@ -1726,27 +1842,20 @@ export default function ParkMap() {
                   </div>
                 )}
 
-                {/* Guided Mode: Navigation info */}
-                {navigationMode === 'guided' && routeInfo?.destination && userPosition && (
+                {/* Guided Mode info (desktop only - mobile uses HUD) */}
+                {navigationMode === 'guided' && !isMobile && routeInfo?.destination && userPosition && (
                   <div className="flex flex-col items-center gap-3">
-                    {/* Distance and ETA - prominent display */}
                     <div className="flex items-center justify-center gap-6 w-full">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-white">
-                          {routeInfo.distance}
-                        </p>
+                        <p className="text-2xl font-bold text-white">{routeInfo.distance}</p>
                         <p className="text-xs text-blue-200">Distância</p>
                       </div>
                       <div className="w-px h-10 bg-white/30" />
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-white">
-                          {routeInfo.duration}
-                        </p>
+                        <p className="text-2xl font-bold text-white">{routeInfo.duration}</p>
                         <p className="text-xs text-blue-200">Tempo estimado</p>
                       </div>
                     </div>
-
-                    {/* Current instruction */}
                     {routeSteps.length > 0 && (
                       <div className="bg-white/10 rounded-lg p-3 w-full">
                         <p className="text-xs text-blue-200 mb-1 flex items-center gap-1">
@@ -1755,12 +1864,10 @@ export default function ParkMap() {
                         </p>
                         <p 
                           className="text-sm text-white font-medium"
-                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[0]?.instructions || '') }}
+                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[currentStepIndex]?.instructions || '') }}
                         />
                       </div>
                     )}
-
-                    {/* Status indicator */}
                     <p className="text-xs text-blue-200 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                       GPS ativo • Mapa gira automaticamente
