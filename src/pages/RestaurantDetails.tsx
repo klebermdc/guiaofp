@@ -36,7 +36,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { ReviewSection } from '@/components/restaurants/ReviewSection';
-import { RestaurantAvailabilityCalendar } from '@/components/restaurants/RestaurantAvailabilityCalendar';
 
 interface RestaurantData {
   id: string;
@@ -577,19 +576,6 @@ const RestaurantDetails = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Availability Calendar */}
-          {(restaurant.category === 'disney') && (
-            <RestaurantAvailabilityCalendar
-              restaurant={{
-                id: restaurant.id,
-                name: restaurant.name,
-                park: restaurant.location,
-                location: restaurant.area,
-                disney_url: restaurant.website || undefined,
-              }}
-            />
-          )}
 
           {/* Reviews Section */}
           <ReviewSection 

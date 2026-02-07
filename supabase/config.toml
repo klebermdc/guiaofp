@@ -56,6 +56,3 @@ verify_jwt = false
 
 [functions.disney-scraper]
 verify_jwt = false
-
-[functions.check-availability]
-verify_jwt = false

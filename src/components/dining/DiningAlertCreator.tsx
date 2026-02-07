@@ -1,13 +1,18 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Bell, Utensils, Search } from 'lucide-react'
+import { Bell, Utensils } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+
+const DISNEY_RESTAURANTS = [
+  { id: '90002606', name: 'Be Our Guest Restaurant', park: 'Magic Kingdom' },
+  { id: '90002660', name: "Cinderella's Royal Table", park: 'Magic Kingdom' },
+  { id: '16660079', name: 'Ohana', park: 'Polynesian Resort' },
+  { id: '90002516', name: 'Space 220', park: 'Epcot' },
+]
 
 export function DiningAlertCreator() {
   const [loading, setLoading] = useState(false)
@@ -15,25 +20,6 @@ export function DiningAlertCreator() {
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [partySize, setPartySize] = useState('4')
   const [mealTime, setMealTime] = useState('any')
-  const [searchTerm, setSearchTerm] = useState('')
-
-  const { data: restaurants = [] } = useQuery({
-    queryKey: ['restaurants-for-alerts'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('id, name, category, location')
-        .order('name')
-      if (error) throw error
-      return data
-    },
-  })
-
-  const filteredRestaurants = restaurants.filter(r =>
-    r.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const selectedRestaurantData = restaurants.find(r => r.id === selectedRestaurant)
 
   const createAlert = async () => {
     if (!selectedRestaurant || !selectedDate) {
@@ -51,12 +37,14 @@ export function DiningAlertCreator() {
         return
       }
 
+      const restaurant = DISNEY_RESTAURANTS.find(r => r.id === selectedRestaurant)
+
       const { error } = await supabase
         .from('dining_alerts')
         .insert({
           user_id: user.id,
           restaurant_id: selectedRestaurant,
-          restaurant_name: selectedRestaurantData?.name ?? '',
+          restaurant_name: restaurant?.name ?? '',
           desired_date: selectedDate.toISOString().split('T')[0],
           meal_time: mealTime,
           party_size: parseInt(partySize),
@@ -71,7 +59,6 @@ export function DiningAlertCreator() {
       setSelectedDate(undefined)
       setPartySize('4')
       setMealTime('any')
-      setSearchTerm('')
     } catch (error: any) {
       toast.error(error.message || 'Erro ao criar alerta')
     } finally {
@@ -87,46 +74,26 @@ export function DiningAlertCreator() {
           Criar Alerta de Reserva
         </CardTitle>
         <CardDescription>
-          Te avisamos por email quando uma vaga aparecer em qualquer um dos {restaurants.length} restaurantes
+          Te avisamos por email quando uma vaga aparecer
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Restaurant Selector with search */}
+        {/* Restaurant Selector */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Restaurante</label>
           <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant}>
             <SelectTrigger>
               <SelectValue placeholder="Escolha o restaurante" />
             </SelectTrigger>
-            <SelectContent className="max-h-60">
-              <div className="px-2 pb-2 sticky top-0 bg-popover">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar restaurante..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 h-8 text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              </div>
-              {filteredRestaurants.map(r => (
+            <SelectContent>
+              {DISNEY_RESTAURANTS.map(r => (
                 <SelectItem key={r.id} value={r.id}>
                   <span className="flex items-center gap-2">
-                    <Utensils className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{r.name}</span>
-                    {r.location && (
-                      <span className="text-muted-foreground text-xs truncate">— {r.location}</span>
-                    )}
+                    <Utensils className="h-3 w-3" />
+                    {r.name} — {r.park}
                   </span>
                 </SelectItem>
               ))}
-              {filteredRestaurants.length === 0 && (
-                <div className="py-4 text-center text-sm text-muted-foreground">
-                  Nenhum restaurante encontrado
-                </div>
-              )}
             </SelectContent>
           </Select>
         </div>
@@ -179,7 +146,7 @@ export function DiningAlertCreator() {
         </Button>
 
         <p className="text-xs text-muted-foreground text-center">
-          O sistema checa periodicamente. Quando encontrar uma vaga, você receberá um email imediatamente.
+          O sistema checa a cada 5 minutos. Quando encontrar uma vaga, você receberá um email imediatamente.
         </p>
       </CardContent>
     </Card>

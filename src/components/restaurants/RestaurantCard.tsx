@@ -3,11 +3,9 @@ import {
   MapPin, 
   Clock, 
   Award,
-  Heart,
-  Bell
+  Heart
 } from 'lucide-react';
 import { type Restaurant } from '@/data/restaurantsData';
-import { DiningAlertDialog } from '@/components/dining/DiningAlertDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFavoriteSlugs, useToggleFavorite, getRestaurantIdBySlug } from '@/hooks/useRestaurantFavorites';
@@ -147,7 +145,7 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
           </div>
         )}
 
-        {/* Footer com reserva e alerta */}
+        {/* Footer com reserva */}
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
           {restaurant.reservations ? (
             <span className="flex items-center text-green-600">
@@ -160,21 +158,7 @@ const RestaurantCard = ({ restaurant }: RestaurantCardProps) => {
               Sem reserva
             </span>
           )}
-          <div className="flex items-center gap-2">
-            <div onClick={(e) => e.stopPropagation()}>
-              <DiningAlertDialog
-                restaurantName={restaurant.name}
-                restaurantId={restaurant.id}
-                trigger={
-                  <button className="flex items-center gap-1 text-primary hover:text-primary/80 font-medium transition-colors">
-                    <Bell className="w-3 h-3" />
-                    Alerta
-                  </button>
-                }
-              />
-            </div>
-            <span className="text-primary font-medium">Ver detalhes →</span>
-          </div>
+          <span className="text-primary font-medium">Ver detalhes →</span>
         </div>
       </CardContent>
     </Card>
