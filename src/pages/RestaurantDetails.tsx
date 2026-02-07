@@ -584,6 +584,7 @@ const RestaurantDetails = () => {
               restaurant={{
                 id: restaurant.id,
                 name: restaurant.name,
+                slug: restaurant.slug,
                 park: restaurant.location,
                 location: restaurant.area,
                 disney_url: restaurant.website || undefined,
