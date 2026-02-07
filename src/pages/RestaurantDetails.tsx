@@ -579,12 +579,11 @@ const RestaurantDetails = () => {
           </Card>
 
           {/* Availability Calendar */}
-          {(restaurant.category === 'disney' || restaurant.reservation_required) && (
+          {(restaurant.category === 'disney') && (
             <RestaurantAvailabilityCalendar
               restaurant={{
                 id: restaurant.id,
                 name: restaurant.name,
-                slug: restaurant.slug,
                 park: restaurant.location,
                 location: restaurant.area,
                 disney_url: restaurant.website || undefined,

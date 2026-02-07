@@ -59,6 +59,3 @@ verify_jwt = false
 
 [functions.check-availability]
 verify_jwt = false
-
-[functions.check-availability-proxy]
-verify_jwt = false
