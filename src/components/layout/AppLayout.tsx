@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,11 +40,19 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isGuide, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
+  // Track if we've ever been authenticated to prevent redirect on tab switch
+  const wasAuthenticatedRef = useRef(false);
+  
+  if (isAuthenticated) {
+    wasAuthenticatedRef.current = true;
+  }
+
   // Only show loading if we're truly in an initial auth check (not returning from login)
-  // This prevents the double-loading screen after login
   const showLoading = isLoading || (isRoleLoading && !isAuthenticated);
 
-  if (!isAuthenticated && !isLoading) {
+  // Only redirect to login if NEVER authenticated and auth check is done
+  // This prevents redirect flicker when switching tabs
+  if (!isAuthenticated && !isLoading && !wasAuthenticatedRef.current) {
     return <Navigate to="/login" replace />;
   }
 
@@ -53,9 +61,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <AuthLoadingScreen />;
   }
 
-  // Wait for profile only if we're authenticated but profile is still loading
-  // Use a softer loading state - keep the layout but show skeleton in content
-  if (isProfileLoading || isRoleLoading) {
+  // CRITICAL: After initial load, NEVER unmount children for background profile refreshes.
+  // Only show loading screen if we haven't loaded yet (first time).
+  if ((isProfileLoading || isRoleLoading) && !wasAuthenticatedRef.current) {
     return <AuthLoadingScreen />;
   }
 
