@@ -586,6 +586,7 @@ const RestaurantDetails = () => {
                 name: restaurant.name,
                 park: restaurant.location,
                 location: restaurant.area,
+                disney_url: restaurant.website || undefined,
               }}
             />
           )}
