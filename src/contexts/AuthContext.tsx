@@ -430,10 +430,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
+        // Skip SIGNED_IN if it's just a session refresh for the same user
+        // This prevents unmounting the current page when switching tabs
+        if (event === 'SIGNED_IN' && newSession?.user?.id === user?.id && initCompletedRef.current) {
+          setSession(newSession);
+          return;
+        }
+        
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Only update profile for genuine auth changes (SIGNED_IN, SIGNED_OUT)
+        // Only update profile for genuine auth changes (new user or sign out)
         if (initCompletedRef.current && (event === 'SIGNED_IN' || event === 'SIGNED_OUT')) {
           if (newSession?.user) {
             setIsProfileLoading(true);
