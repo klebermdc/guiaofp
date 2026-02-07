@@ -274,6 +274,47 @@ export type Database = {
           },
         ]
       }
+      availability_cache: {
+        Row: {
+          available_times: Json | null
+          date: string
+          id: string
+          is_available: boolean | null
+          last_checked: string | null
+          meal_time: string | null
+          party_size: number | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          available_times?: Json | null
+          date: string
+          id?: string
+          is_available?: boolean | null
+          last_checked?: string | null
+          meal_time?: string | null
+          party_size?: number | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          available_times?: Json | null
+          date?: string
+          id?: string
+          is_available?: boolean | null
+          last_checked?: string | null
+          meal_time?: string | null
+          party_size?: number | null
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_cache_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_log: {
         Row: {
           available_date: string
@@ -579,6 +620,7 @@ export type Database = {
           desired_date: string
           id: string
           meal_time: string | null
+          notification_methods: Json | null
           notified_at: string | null
           party_size: number | null
           restaurant_id: string
@@ -592,6 +634,7 @@ export type Database = {
           desired_date: string
           id?: string
           meal_time?: string | null
+          notification_methods?: Json | null
           notified_at?: string | null
           party_size?: number | null
           restaurant_id: string
@@ -605,6 +648,7 @@ export type Database = {
           desired_date?: string
           id?: string
           meal_time?: string | null
+          notification_methods?: Json | null
           notified_at?: string | null
           party_size?: number | null
           restaurant_id?: string
@@ -1554,6 +1598,7 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          meal_times: string[] | null
           menu_url: string | null
           michelin: boolean | null
           must_try: string | null
@@ -1562,6 +1607,7 @@ export type Database = {
           park_id: string | null
           phone: string | null
           price_range: string | null
+          priority_level: number | null
           reservation_required: boolean | null
           slug: string
           subcategory: string | null
@@ -1586,6 +1632,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          meal_times?: string[] | null
           menu_url?: string | null
           michelin?: boolean | null
           must_try?: string | null
@@ -1594,6 +1641,7 @@ export type Database = {
           park_id?: string | null
           phone?: string | null
           price_range?: string | null
+          priority_level?: number | null
           reservation_required?: boolean | null
           slug: string
           subcategory?: string | null
@@ -1618,6 +1666,7 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          meal_times?: string[] | null
           menu_url?: string | null
           michelin?: boolean | null
           must_try?: string | null
@@ -1626,6 +1675,7 @@ export type Database = {
           park_id?: string | null
           phone?: string | null
           price_range?: string | null
+          priority_level?: number | null
           reservation_required?: boolean | null
           slug?: string
           subcategory?: string | null
@@ -2152,6 +2202,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_availability: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
