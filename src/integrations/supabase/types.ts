@@ -871,7 +871,6 @@ export type Database = {
         Row: {
           alert_id: string | null
           created_at: string
-          error_message: string | null
           id: string
           method: string | null
           sent_at: string
@@ -880,7 +879,6 @@ export type Database = {
         Insert: {
           alert_id?: string | null
           created_at?: string
-          error_message?: string | null
           id?: string
           method?: string | null
           sent_at?: string
@@ -889,7 +887,6 @@ export type Database = {
         Update: {
           alert_id?: string | null
           created_at?: string
-          error_message?: string | null
           id?: string
           method?: string | null
           sent_at?: string
