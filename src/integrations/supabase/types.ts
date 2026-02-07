@@ -274,6 +274,48 @@ export type Database = {
           },
         ]
       }
+      availability_log: {
+        Row: {
+          available_date: string
+          available_times: Json | null
+          checked_at: string
+          created_at: string
+          id: string
+          is_available: boolean | null
+          park: string | null
+          party_size: number | null
+          restaurant_id: string
+          restaurant_name: string
+          source: string | null
+        }
+        Insert: {
+          available_date: string
+          available_times?: Json | null
+          checked_at?: string
+          created_at?: string
+          id?: string
+          is_available?: boolean | null
+          park?: string | null
+          party_size?: number | null
+          restaurant_id: string
+          restaurant_name: string
+          source?: string | null
+        }
+        Update: {
+          available_date?: string
+          available_times?: Json | null
+          checked_at?: string
+          created_at?: string
+          id?: string
+          is_available?: boolean | null
+          park?: string | null
+          party_size?: number | null
+          restaurant_id?: string
+          restaurant_name?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       content_categories: {
         Row: {
           color: string | null
@@ -531,6 +573,48 @@ export type Database = {
         }
         Relationships: []
       }
+      dining_alerts: {
+        Row: {
+          created_at: string
+          desired_date: string
+          id: string
+          meal_time: string | null
+          notified_at: string | null
+          party_size: number | null
+          restaurant_id: string
+          restaurant_name: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          desired_date: string
+          id?: string
+          meal_time?: string | null
+          notified_at?: string | null
+          party_size?: number | null
+          restaurant_id: string
+          restaurant_name?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          desired_date?: string
+          id?: string
+          meal_time?: string | null
+          notified_at?: string | null
+          party_size?: number | null
+          restaurant_id?: string
+          restaurant_name?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       discount_coupons: {
         Row: {
           applicable_plans: string[] | null
@@ -782,6 +866,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      notifications_sent: {
+        Row: {
+          alert_id: string | null
+          created_at: string
+          id: string
+          method: string | null
+          sent_at: string
+          status: string | null
+        }
+        Insert: {
+          alert_id?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          sent_at?: string
+          status?: string | null
+        }
+        Update: {
+          alert_id?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          sent_at?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_sent_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "dining_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       optimal_windows: {
         Row: {

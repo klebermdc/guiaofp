@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.queue-times]
 verify_jwt = false
+
+[functions.disney-scraper]
+verify_jwt = false
