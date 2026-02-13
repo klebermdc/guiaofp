@@ -1009,6 +1009,51 @@ export type Database = {
         }
         Relationships: []
       }
+      park_map_overlays: {
+        Row: {
+          created_at: string
+          east: number
+          id: string
+          image_url: string
+          is_active: boolean
+          north: number
+          opacity: number
+          park_id: string
+          park_name: string
+          south: number
+          updated_at: string
+          west: number
+        }
+        Insert: {
+          created_at?: string
+          east: number
+          id?: string
+          image_url: string
+          is_active?: boolean
+          north: number
+          opacity?: number
+          park_id: string
+          park_name: string
+          south: number
+          updated_at?: string
+          west: number
+        }
+        Update: {
+          created_at?: string
+          east?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          north?: number
+          opacity?: number
+          park_id?: string
+          park_name?: string
+          south?: number
+          updated_at?: string
+          west?: number
+        }
+        Relationships: []
+      }
       parks: {
         Row: {
           address: string | null

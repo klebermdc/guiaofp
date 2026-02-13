@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline, GroundOverlay } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
 import { NavigationHUD } from '@/components/map/NavigationHUD';
@@ -139,6 +139,7 @@ export default function ParkMap() {
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
+  const [showMapOverlay, setShowMapOverlay] = useState(true);
   
   // Waze-like navigation enhancements
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -221,6 +222,23 @@ export default function ParkMap() {
         .eq('park_id', parksTableId);
 
       if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch park map overlays (official park map images)
+  const { data: mapOverlays = [] } = useQuery({
+    queryKey: ['park-map-overlays', selectedPark.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('park_map_overlays')
+        .select('*')
+        .eq('park_id', selectedPark.id)
+        .eq('is_active', true);
+      if (error) {
+        console.error('Error fetching map overlays:', error);
+        return [];
+      }
       return data;
     },
   });
@@ -1312,6 +1330,21 @@ export default function ParkMap() {
               setSelectedPOI(null);
             }}
           >
+            {/* Park map overlays (official park maps) */}
+            {isMapLoaded && showMapOverlay && mapOverlays.map((overlay) => (
+              <GroundOverlay
+                key={overlay.id}
+                url={overlay.image_url}
+                bounds={{
+                  north: overlay.north,
+                  south: overlay.south,
+                  east: overlay.east,
+                  west: overlay.west,
+                }}
+                opacity={overlay.opacity}
+              />
+            ))}
+
             {/* User location marker */}
             {userPosition && isMapLoaded && (
               <Marker
@@ -1608,6 +1641,18 @@ export default function ParkMap() {
               <Satellite className="w-5 h-5" />
             )}
           </Button>
+          {/* Park Map Overlay Toggle */}
+          {mapOverlays.length > 0 && (
+            <Button
+              variant={showMapOverlay ? "default" : "secondary"}
+              size="icon"
+              className="h-10 w-10 shadow-lg"
+              onClick={() => setShowMapOverlay(!showMapOverlay)}
+              title={showMapOverlay ? 'Esconder mapa oficial' : 'Mostrar mapa oficial'}
+            >
+              <Sparkles className="w-5 h-5" />
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="icon"
