@@ -6,6 +6,48 @@ const PLAN_NAMES: Record<string, string> = {
   premium: 'Plano Premium',
 };
 
+const PLAN_VARIANTS: Record<string, string> = {
+  basic: 'Self-Service',
+  premium: 'Com Guia',
+};
+
+/**
+ * Build enriched e-commerce item (espelho do client-side buildEcommerceItem)
+ * Mantém paridade total com src/hooks/useAnalytics.ts
+ */
+const buildEcommerceItem = (planKey: string, amountCents: number) => ({
+  item_id: planKey,
+  item_name: PLAN_NAMES[planKey] || planKey,
+  item_category: 'Plano de Viagem',
+  item_category2: PLAN_VARIANTS[planKey] || planKey,
+  item_brand: 'Orlando Fast Pass',
+  item_variant: planKey,
+  price: amountCents / 100,
+  quantity: 1,
+});
+
+/**
+ * Build user_data block for sGTM/CAPI (espelho do client-side buildBuyerData)
+ * Dados hasheados em SHA-256 para Enhanced Conversions
+ */
+const buildHashedUserData = async (email: string, customerName: string) => {
+  const hashedEmail = email ? await hashData(email) : null;
+  const nameParts = customerName?.split(' ') || [];
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  return {
+    em: hashedEmail ? [hashedEmail] : undefined,
+    fn: firstName ? [await hashData(firstName)] : undefined,
+    ln: lastName ? [await hashData(lastName)] : undefined,
+    // Dados não-hasheados para sGTM processar internamente
+    email_raw: email,
+    first_name_raw: firstName,
+    last_name_raw: lastName,
+    country: 'BR',
+  };
+};
+
 // Send server-side tracking event (sGTM / Facebook CAPI)
 export async function sendServerTrackingEvent(
   supabase: ReturnType<typeof createClient>,
@@ -42,8 +84,8 @@ export async function sendServerTrackingEvent(
     const planKey = transaction.plan_key as string;
     const transactionId = transaction.id as string;
 
-    // Hash user data for privacy
-    const hashedEmail = email ? await hashData(email) : null;
+    // Build enriched product item (same structure as client-side)
+    const ecommerceItem = buildEcommerceItem(planKey, amountCents);
     const eventTime = Math.floor(Date.now() / 1000);
 
     // 1. Send to sGTM (if configured)
@@ -58,16 +100,13 @@ export async function sendServerTrackingEvent(
               value: amountCents / 100,
               currency: 'BRL',
               payment_type: paymentMethod,
-              items: [{
-                item_id: planKey,
-                item_name: PLAN_NAMES[planKey] || planKey,
-                price: amountCents / 100,
-                quantity: 1,
-              }],
+              items: [ecommerceItem],
               user_data: {
-                email_address: hashedEmail,
+                email_address: email ? await hashData(email) : undefined,
                 address: {
                   first_name: customerName?.split(' ')[0] || '',
+                  last_name: customerName?.split(' ').slice(1).join(' ') || '',
+                  country: 'BR',
                 },
               },
             },
@@ -93,6 +132,8 @@ export async function sendServerTrackingEvent(
     // 2. Send to Facebook CAPI (if configured)
     if (fbPixelId && fbAccessToken) {
       try {
+        const hashedUserData = await buildHashedUserData(email, customerName);
+
         const fbPayload = {
           data: [{
             event_name: 'Purchase',
@@ -100,17 +141,27 @@ export async function sendServerTrackingEvent(
             action_source: 'website',
             event_source_url: 'https://guiaofp.lovable.app/checkout',
             user_data: {
-              em: hashedEmail ? [hashedEmail] : undefined,
-              fn: customerName ? [await hashData(customerName.split(' ')[0])] : undefined,
+              em: hashedUserData.em,
+              fn: hashedUserData.fn,
+              ln: hashedUserData.ln,
+              country: ['br'],
             },
             custom_data: {
               currency: 'BRL',
               value: amountCents / 100,
               content_ids: [planKey],
               content_type: 'product',
-              content_name: PLAN_NAMES[planKey] || planKey,
+              content_name: ecommerceItem.item_name,
+              content_category: ecommerceItem.item_category,
+              contents: [{
+                id: ecommerceItem.item_id,
+                quantity: ecommerceItem.quantity,
+                item_price: ecommerceItem.price,
+                delivery_category: 'digital',
+              }],
               order_id: transactionId,
               payment_method: paymentMethod,
+              num_items: 1,
             },
           }],
           ...(fbTestEventCode ? { test_event_code: fbTestEventCode } : {}),
