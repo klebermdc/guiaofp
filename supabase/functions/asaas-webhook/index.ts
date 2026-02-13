@@ -125,9 +125,15 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Payment confirmed! Starting onboarding flow...");
 
       // Send server-side tracking (sGTM + Facebook CAPI)
+      // Skip if credit card — already tracked client-side to avoid duplication
       const paymentMethod = payload.payment?.billingType === 'PIX' ? 'pix' : 
                            payload.payment?.billingType === 'BOLETO' ? 'boleto' : 'credit_card';
-      await sendServerTrackingEvent(supabase, transaction, paymentMethod);
+      
+      if (paymentMethod !== 'credit_card') {
+        await sendServerTrackingEvent(supabase, transaction, paymentMethod);
+      } else {
+        console.log('Skipping server tracking for credit card (already tracked client-side)');
+      }
 
       const productName = planNames[transaction.plan_key] || transaction.plan_key;
 

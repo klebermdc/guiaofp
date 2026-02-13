@@ -15,7 +15,7 @@ const PLAN_VARIANTS: Record<string, string> = {
  * Build enriched e-commerce item (espelho do client-side buildEcommerceItem)
  * Mantém paridade total com src/hooks/useAnalytics.ts
  */
-const buildEcommerceItem = (planKey: string, amountCents: number) => ({
+const buildEcommerceItem = (planKey: string, amountCents: number, couponCode?: string, discountCents?: number) => ({
   item_id: planKey,
   item_name: PLAN_NAMES[planKey] || planKey,
   item_category: 'Plano de Viagem',
@@ -24,13 +24,20 @@ const buildEcommerceItem = (planKey: string, amountCents: number) => ({
   item_variant: planKey,
   price: amountCents / 100,
   quantity: 1,
+  ...(couponCode ? { coupon: couponCode } : {}),
+  ...(discountCents && discountCents > 0 ? { discount: discountCents / 100 } : {}),
 });
 
 /**
  * Build user_data block for sGTM/CAPI (espelho do client-side buildBuyerData)
  * Dados hasheados em SHA-256 para Enhanced Conversions
  */
-const buildHashedUserData = async (email: string, customerName: string) => {
+const buildHashedUserData = async (
+  email: string,
+  customerName: string,
+  phone?: string | null,
+  postalCode?: string | null
+) => {
   const hashedEmail = email ? await hashData(email) : null;
   const nameParts = customerName?.split(' ') || [];
   const firstName = nameParts[0] || '';
@@ -40,12 +47,24 @@ const buildHashedUserData = async (email: string, customerName: string) => {
     em: hashedEmail ? [hashedEmail] : undefined,
     fn: firstName ? [await hashData(firstName)] : undefined,
     ln: lastName ? [await hashData(lastName)] : undefined,
+    ph: phone ? [await hashData(phone.replace(/\D/g, ''))] : undefined,
+    zp: postalCode ? [await hashData(postalCode.replace(/\D/g, ''))] : undefined,
     // Dados não-hasheados para sGTM processar internamente
     email_raw: email,
     first_name_raw: firstName,
     last_name_raw: lastName,
+    phone_raw: phone || undefined,
     country: 'BR',
   };
+};
+
+/**
+ * Extract tracking context (fbp, fbc, client_id, etc.) saved during checkout
+ */
+const getTrackingContext = (metadata: Record<string, unknown> | null) => {
+  if (!metadata) return null;
+  const ctx = metadata.tracking_context as Record<string, string | null> | undefined;
+  return ctx || null;
 };
 
 // Send server-side tracking event (sGTM / Facebook CAPI)
@@ -83,16 +102,29 @@ export async function sendServerTrackingEvent(
     const amountCents = transaction.amount_cents as number;
     const planKey = transaction.plan_key as string;
     const transactionId = transaction.id as string;
+    const couponCode = (transaction.coupon_code as string) || undefined;
+    const discountCents = (transaction.discount_amount_cents as number) || 0;
+    const metadata = (transaction.metadata as Record<string, unknown>) || null;
+
+    // Extract buyer details from metadata
+    const phone = (metadata?.phone as string) || null;
+    const postalCode = (metadata?.postal_code as string) || null;
+
+    // Extract browser context saved during checkout
+    const trackingCtx = getTrackingContext(metadata);
 
     // Build enriched product item (same structure as client-side)
-    const ecommerceItem = buildEcommerceItem(planKey, amountCents);
+    const ecommerceItem = buildEcommerceItem(planKey, amountCents, couponCode, discountCents);
     const eventTime = Math.floor(Date.now() / 1000);
+
+    // Generate event_id for deduplication (use stored one if available)
+    const eventId = trackingCtx?.event_id || crypto.randomUUID();
 
     // 1. Send to sGTM (if configured)
     if (sgtmUrl) {
       try {
         const sgtmPayload = {
-          client_id: transactionId,
+          client_id: trackingCtx?.client_id || transactionId,
           events: [{
             name: 'purchase',
             params: {
@@ -100,13 +132,17 @@ export async function sendServerTrackingEvent(
               value: amountCents / 100,
               currency: 'BRL',
               payment_type: paymentMethod,
+              coupon: couponCode || undefined,
               items: [ecommerceItem],
+              event_id: eventId,
               user_data: {
                 email_address: email ? await hashData(email) : undefined,
+                phone_number: phone ? await hashData(phone) : undefined,
                 address: {
                   first_name: customerName?.split(' ')[0] || '',
                   last_name: customerName?.split(' ').slice(1).join(' ') || '',
                   country: 'BR',
+                  postal_code: postalCode || undefined,
                 },
               },
             },
@@ -115,6 +151,11 @@ export async function sendServerTrackingEvent(
             customer_name: customerName,
             plan: planKey,
           },
+          // Pass browser context for attribution
+          ...(trackingCtx?.user_agent ? { user_agent: trackingCtx.user_agent } : {}),
+          ...(trackingCtx?.page_location ? { page_location: trackingCtx.page_location } : {}),
+          ...(trackingCtx?.fbp ? { fbp: trackingCtx.fbp } : {}),
+          ...(trackingCtx?.fbc ? { fbc: trackingCtx.fbc } : {}),
         };
 
         const sgtmResponse = await fetch(`${sgtmUrl}/g/collect`, {
@@ -132,19 +173,26 @@ export async function sendServerTrackingEvent(
     // 2. Send to Facebook CAPI (if configured)
     if (fbPixelId && fbAccessToken) {
       try {
-        const hashedUserData = await buildHashedUserData(email, customerName);
+        const hashedUserData = await buildHashedUserData(email, customerName, phone, postalCode);
 
         const fbPayload = {
           data: [{
             event_name: 'Purchase',
             event_time: eventTime,
+            event_id: eventId,
             action_source: 'website',
-            event_source_url: 'https://guiaofp.lovable.app/checkout',
+            event_source_url: trackingCtx?.page_location || 'https://guiaofp.lovable.app/checkout',
             user_data: {
               em: hashedUserData.em,
               fn: hashedUserData.fn,
               ln: hashedUserData.ln,
+              ph: hashedUserData.ph,
+              zp: hashedUserData.zp,
               country: ['br'],
+              // Pass browser identifiers for attribution
+              fbp: trackingCtx?.fbp || undefined,
+              fbc: trackingCtx?.fbc || undefined,
+              client_user_agent: trackingCtx?.user_agent || undefined,
             },
             custom_data: {
               currency: 'BRL',
@@ -162,6 +210,8 @@ export async function sendServerTrackingEvent(
               order_id: transactionId,
               payment_method: paymentMethod,
               num_items: 1,
+              ...(couponCode ? { coupon: couponCode } : {}),
+              ...(discountCents > 0 ? { discount: discountCents / 100 } : {}),
             },
           }],
           ...(fbTestEventCode ? { test_event_code: fbTestEventCode } : {}),
