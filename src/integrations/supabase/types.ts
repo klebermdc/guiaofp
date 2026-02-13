@@ -1976,6 +1976,10 @@ export type Database = {
       }
       user_documents: {
         Row: {
+          ai_extracted_dates: Json | null
+          ai_validated_at: string | null
+          ai_validation_message: string | null
+          ai_validation_status: string | null
           created_at: string
           document_name: string
           document_type: string
@@ -1986,6 +1990,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_extracted_dates?: Json | null
+          ai_validated_at?: string | null
+          ai_validation_message?: string | null
+          ai_validation_status?: string | null
           created_at?: string
           document_name: string
           document_type: string
@@ -1996,6 +2004,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_extracted_dates?: Json | null
+          ai_validated_at?: string | null
+          ai_validation_message?: string | null
+          ai_validation_status?: string | null
           created_at?: string
           document_name?: string
           document_type?: string
