@@ -15,6 +15,7 @@ interface PaymentRequest {
   customerName: string;
   cpf?: string;
   cpfCnpj?: string;
+  phone?: string;
   planKey: string;
   amountCents: number;
   originalAmountCents?: number;
@@ -39,6 +40,14 @@ interface PaymentRequest {
   };
   termsAccepted?: boolean;
   termsVersion?: string;
+  trackingContext?: {
+    fbp?: string | null;
+    fbc?: string | null;
+    client_id?: string | null;
+    event_id?: string | null;
+    user_agent?: string | null;
+    page_location?: string | null;
+  };
 }
 
 async function createOrGetCustomer(email: string, name: string, cpf: string): Promise<string> {
@@ -234,6 +243,13 @@ const handler = async (req: Request): Promise<Response> => {
       asaas_boleto_url: payment.bankSlipUrl,
       coupon_code: payload.couponCode || null,
       discount_amount_cents: payload.discountAmountCents || 0,
+      metadata: {
+        phone: payload.phone || payload.creditCardHolderInfo?.phone || null,
+        cpf: cpf?.replace(/\D/g, '') || null,
+        postal_code: payload.creditCardHolderInfo?.postalCode?.replace(/\D/g, '') || null,
+        original_amount_cents: payload.originalAmountCents || payload.amountCents,
+        tracking_context: payload.trackingContext || null,
+      },
     }).select('id').single();
 
     if (insertError) {

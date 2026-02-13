@@ -435,11 +435,22 @@ export default function Checkout() {
         };
       }
 
+      // Capture browser context for server-side CAPI deduplication
+      const getFbpCookie = () => document.cookie.match(/_fbp=([^;]+)/)?.[1] || null;
+      const getFbcCookie = () => {
+        const match = document.cookie.match(/_fbc=([^;]+)/);
+        if (match) return match[1];
+        const fbclid = new URL(window.location.href).searchParams.get('fbclid');
+        return fbclid ? `fb.1.${Date.now()}.${fbclid}` : null;
+      };
+      const getGaCid = () => document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/)?.[1] || null;
+
       const response = await supabase.functions.invoke('create-asaas-payment', {
         body: {
           customerName: userProfile.name,
           email: userProfile.email,
           cpfCnpj: formData.cpf.replace(/\D/g, ''),
+          phone: (formData.phone || userProfile.phone || '').replace(/\D/g, ''),
           planKey: plan.id,
           amountCents: finalAmountCents,
           originalAmountCents,
@@ -458,6 +469,15 @@ export default function Checkout() {
           termsAccepted: true,
           termsVersion: TERMS_VERSION,
           userId: userProfile.id,
+          // Browser context for server-side CAPI deduplication
+          trackingContext: {
+            fbp: getFbpCookie(),
+            fbc: getFbcCookie(),
+            client_id: getGaCid(),
+            event_id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            user_agent: navigator.userAgent,
+            page_location: window.location.href,
+          },
         },
       });
 
