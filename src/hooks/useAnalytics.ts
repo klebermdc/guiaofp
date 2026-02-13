@@ -34,14 +34,70 @@ interface AnalyticsEvent {
   [key: string]: unknown;
 }
 
-// E-commerce item
+// E-commerce item (GA4 spec completo)
 interface EcommerceItem {
   item_id: string;
   item_name: string;
   item_category?: string;
+  item_category2?: string;
+  item_brand?: string;
+  item_variant?: string;
   price?: number;
   quantity?: number;
+  coupon?: string;
+  discount?: number;
 }
+
+// Full buyer data for dataLayer
+export interface BuyerData {
+  email?: string;
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  cpf?: string;
+}
+
+// Build enriched e-commerce item with full product data
+const buildEcommerceItem = (
+  planId: string,
+  planName: string,
+  priceValue: number,
+  coupon?: string,
+  discount?: number
+): EcommerceItem => ({
+  item_id: planId,
+  item_name: planName,
+  item_category: 'Plano de Viagem',
+  item_category2: planId === 'premium' ? 'Com Guia' : 'Self-Service',
+  item_brand: 'Orlando Fast Pass',
+  item_variant: planId,
+  price: priceValue,
+  quantity: 1,
+  ...(coupon ? { coupon } : {}),
+  ...(discount ? { discount: discount / 100 } : {}),
+});
+
+// Build buyer user_data block for dataLayer (GA4 Enhanced Conversions + CAPI)
+const buildBuyerData = (buyer?: BuyerData) => {
+  if (!buyer) return undefined;
+  return {
+    email: buyer.email,
+    phone_number: buyer.phone,
+    first_name: buyer.first_name,
+    last_name: buyer.last_name,
+    address: {
+      city: buyer.city,
+      region: buyer.state,
+      country: buyer.country || 'BR',
+      postal_code: buyer.postal_code,
+    },
+  };
+};
 
 // Declare global types for tracking scripts
 declare global {
@@ -305,40 +361,32 @@ export const useAnalytics = () => {
   /**
    * View Item (E-commerce)
    */
-  const trackPlanView = useCallback((planId: string, planName: string, price: number) => {
+  const trackPlanView = useCallback((planId: string, planName: string, price: number, buyer?: BuyerData) => {
     const priceValue = price / 100;
+    const item = buildEcommerceItem(planId, planName, priceValue);
 
     // GA4
     if (isGtagAvailable()) {
       window.gtag?.('event', 'view_item', {
         currency: 'BRL',
         value: priceValue,
-        items: [{
-          item_id: planId,
-          item_name: planName,
-          price: priceValue,
-          quantity: 1,
-        }],
+        items: [item],
       });
     }
 
     // GTM dataLayer (GA4 e-commerce format + Stape context)
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
-      window.dataLayer?.push({ ecommerce: null }); // Clear previous
+      window.dataLayer?.push({ ecommerce: null });
       window.dataLayer?.push({
         event: 'view_item',
         event_id: ctx.event_id,
         ecommerce: {
           currency: 'BRL',
           value: priceValue,
-          items: [{
-            item_id: planId,
-            item_name: planName,
-            price: priceValue,
-            quantity: 1,
-          }],
+          items: [item],
         },
+        user_data: buildBuyerData(buyer),
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
@@ -366,8 +414,9 @@ export const useAnalytics = () => {
   /**
    * Begin Checkout
    */
-  const trackBeginCheckout = useCallback((planId: string, planName: string, price: number, coupon?: string) => {
+  const trackBeginCheckout = useCallback((planId: string, planName: string, price: number, coupon?: string, buyer?: BuyerData) => {
     const priceValue = price / 100;
+    const item = buildEcommerceItem(planId, planName, priceValue, coupon);
 
     // GA4
     if (isGtagAvailable()) {
@@ -375,12 +424,7 @@ export const useAnalytics = () => {
         currency: 'BRL',
         value: priceValue,
         coupon: coupon,
-        items: [{
-          item_id: planId,
-          item_name: planName,
-          price: priceValue,
-          quantity: 1,
-        }],
+        items: [item],
       });
     }
 
@@ -395,13 +439,9 @@ export const useAnalytics = () => {
           currency: 'BRL',
           value: priceValue,
           coupon: coupon,
-          items: [{
-            item_id: planId,
-            item_name: planName,
-            price: priceValue,
-            quantity: 1,
-          }],
+          items: [item],
         },
+        user_data: buildBuyerData(buyer),
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
@@ -430,8 +470,9 @@ export const useAnalytics = () => {
   /**
    * Add Payment Info
    */
-  const trackAddPaymentInfo = useCallback((planId: string, planName: string, price: number, paymentMethod: string) => {
+  const trackAddPaymentInfo = useCallback((planId: string, planName: string, price: number, paymentMethod: string, coupon?: string, buyer?: BuyerData) => {
     const priceValue = price / 100;
+    const item = buildEcommerceItem(planId, planName, priceValue, coupon);
 
     // GA4
     if (isGtagAvailable()) {
@@ -439,12 +480,7 @@ export const useAnalytics = () => {
         currency: 'BRL',
         value: priceValue,
         payment_type: paymentMethod,
-        items: [{
-          item_id: planId,
-          item_name: planName,
-          price: priceValue,
-          quantity: 1,
-        }],
+        items: [item],
       });
     }
 
@@ -459,13 +495,10 @@ export const useAnalytics = () => {
           currency: 'BRL',
           value: priceValue,
           payment_type: paymentMethod,
-          items: [{
-            item_id: planId,
-            item_name: planName,
-            price: priceValue,
-            quantity: 1,
-          }],
+          coupon: coupon,
+          items: [item],
         },
+        user_data: buildBuyerData(buyer),
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
@@ -499,20 +532,22 @@ export const useAnalytics = () => {
     planName: string,
     price: number,
     paymentMethod: string,
-    userData?: UserData
+    coupon?: string,
+    buyer?: BuyerData
   ) => {
     const priceValue = price / 100;
+    const item = buildEcommerceItem(planId, planName, priceValue, coupon);
+    const buyerDataBlock = buildBuyerData(buyer);
 
     // Set user data for enhanced conversions if provided
-    if (userData?.email) {
-      // GA4 Enhanced Conversions
+    if (buyer?.email) {
       if (isGtagAvailable()) {
         window.gtag?.('set', 'user_data', {
-          email: hashForDataLayer(userData.email),
-          phone_number: userData.phone ? hashForDataLayer(userData.phone) : undefined,
+          email: hashForDataLayer(buyer.email),
+          phone_number: buyer.phone ? hashForDataLayer(buyer.phone) : undefined,
           address: {
-            first_name: userData.firstName ? hashForDataLayer(userData.firstName) : undefined,
-            last_name: userData.lastName ? hashForDataLayer(userData.lastName) : undefined,
+            first_name: buyer.first_name ? hashForDataLayer(buyer.first_name) : undefined,
+            last_name: buyer.last_name ? hashForDataLayer(buyer.last_name) : undefined,
           },
         });
       }
@@ -525,12 +560,8 @@ export const useAnalytics = () => {
         currency: 'BRL',
         value: priceValue,
         payment_type: paymentMethod,
-        items: [{
-          item_id: planId,
-          item_name: planName,
-          price: priceValue,
-          quantity: 1,
-        }],
+        coupon: coupon,
+        items: [item],
       });
     }
 
@@ -546,21 +577,10 @@ export const useAnalytics = () => {
           currency: 'BRL',
           value: priceValue,
           payment_type: paymentMethod,
-          items: [{
-            item_id: planId,
-            item_name: planName,
-            price: priceValue,
-            quantity: 1,
-          }],
+          coupon: coupon,
+          items: [item],
         },
-        // User data for CAPI (sGTM will hash and send)
-        user_data: userData ? {
-          email: userData.email,
-          phone: userData.phone,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-        } : undefined,
-        // Stape context for CAPI dedup and attribution
+        user_data: buyerDataBlock,
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
