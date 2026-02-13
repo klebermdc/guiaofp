@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, FileText, Trash2, ExternalLink, Loader2 } from 'lucide-react';
+import { Upload, FileText, Trash2, ExternalLink, Loader2, ScanSearch, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ interface UploadedTicket {
   document_type: string;
   file_url: string;
   uploaded_at: string;
+  ai_validation_status: string | null;
+  ai_validation_message: string | null;
 }
 
 export const TicketUploadContainer = () => {
@@ -80,7 +82,7 @@ export const TicketUploadContainer = () => {
         .getPublicUrl(fileName);
 
       // Save to database
-      const { error: dbError } = await supabase
+      const { data: insertedDoc, error: dbError } = await supabase
         .from('user_documents')
         .insert({
           user_id: user.id,
@@ -88,16 +90,37 @@ export const TicketUploadContainer = () => {
           document_type: 'ingresso',
           file_url: urlData.publicUrl,
           file_size: file.size
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) throw dbError;
 
       toast({
         title: "Ingresso enviado! 🎟️",
-        description: "Seu ingresso foi salvo na carteira de documentos.",
+        description: "Analisando datas com IA...",
       });
 
       loadTickets();
+
+      // Auto-analyze ticket with AI
+      if (insertedDoc) {
+        try {
+          const { data: aiResult } = await supabase.functions.invoke('analyze-ticket', {
+            body: { documentId: insertedDoc.id },
+          });
+          if (aiResult?.status === 'warning') {
+            toast({
+              title: "⚠️ Atenção com seu ingresso!",
+              description: aiResult.message,
+              variant: "destructive",
+            });
+          }
+          loadTickets();
+        } catch {
+          // Silent fail for AI analysis
+        }
+      }
     } catch (error) {
       console.error('Error uploading ticket:', error);
       toast({
@@ -190,10 +213,23 @@ export const TicketUploadContainer = () => {
               className="flex items-center justify-between p-3 bg-muted rounded-lg"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <FileText className="w-5 h-5 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium truncate">
-                  {ticket.document_name}
-                </span>
+                <div className="relative">
+                  <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                  {ticket.ai_validation_status === 'valid' && (
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 absolute -bottom-1 -right-1" />
+                  )}
+                  {ticket.ai_validation_status === 'warning' && (
+                    <AlertTriangle className="w-3 h-3 text-amber-500 absolute -bottom-1 -right-1" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <span className="text-sm font-medium truncate block">
+                    {ticket.document_name}
+                  </span>
+                  {ticket.ai_validation_message && ticket.ai_validation_status === 'warning' && (
+                    <span className="text-xs text-amber-600 line-clamp-1">{ticket.ai_validation_message}</span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button

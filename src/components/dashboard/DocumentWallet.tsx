@@ -14,7 +14,11 @@ import {
   Eye,
   Plus,
   X,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  CircleAlert,
+  ScanSearch
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,6 +52,10 @@ interface UserDocument {
   file_url: string;
   file_size: number | null;
   uploaded_at: string;
+  ai_validation_status: string | null;
+  ai_validation_message: string | null;
+  ai_extracted_dates: any | null;
+  ai_validated_at: string | null;
 }
 
 const DOCUMENT_TYPES = [
@@ -59,6 +67,36 @@ const DOCUMENT_TYPES = [
   { value: 'other', label: 'Outro Documento', icon: FileText, color: 'text-muted-foreground' },
 ];
 
+const ANALYZABLE_TYPES = ['park_ticket', 'ingresso'];
+
+const ValidationBadge = ({ status, message }: { status: string | null; message: string | null }) => {
+  if (!status || status === 'pending') return null;
+
+  const config = {
+    valid: { icon: CheckCircle2, label: 'Validado', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+    warning: { icon: AlertTriangle, label: 'Atenção', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+    error: { icon: CircleAlert, label: 'Verificar', className: 'bg-red-500/10 text-red-600 border-red-500/20' },
+  }[status] || { icon: CircleAlert, label: 'Desconhecido', className: 'bg-muted text-muted-foreground' };
+
+  const Icon = config.icon;
+
+  return (
+    <div className="mt-2">
+      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium ${config.className}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {config.label}
+      </div>
+      {message && (
+        <p className={`text-xs mt-1 leading-relaxed ${
+          status === 'warning' ? 'text-amber-600' : status === 'error' ? 'text-red-500' : 'text-emerald-600'
+        }`}>
+          {message}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const DocumentWalletComponent = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<UserDocument[]>([]);
@@ -68,6 +106,7 @@ const DocumentWalletComponent = () => {
   const [selectedType, setSelectedType] = useState<string>('');
   const [deleteDoc, setDeleteDoc] = useState<UserDocument | null>(null);
   const [viewingDoc, setViewingDoc] = useState<string | null>(null);
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -93,6 +132,46 @@ const DocumentWalletComponent = () => {
       setIsLoading(false);
     }
   }, [user]);
+
+  const analyzeTicket = useCallback(async (documentId: string) => {
+    setAnalyzingIds(prev => new Set(prev).add(documentId));
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-ticket', {
+        body: { documentId },
+      });
+
+      if (error) throw error;
+
+      if (data?.status === 'warning') {
+        toast.warning('⚠️ Atenção com seu ingresso!', {
+          description: data.message,
+          duration: 8000,
+        });
+      } else if (data?.status === 'valid') {
+        toast.success('✅ Ingresso validado!', {
+          description: data.message,
+          duration: 5000,
+        });
+      } else if (data?.status === 'error') {
+        toast.info('📋 Verificação manual necessária', {
+          description: data.message,
+          duration: 5000,
+        });
+      }
+
+      // Reload to show updated AI status
+      await loadDocuments();
+    } catch {
+      toast.error('Erro ao analisar documento');
+    } finally {
+      setAnalyzingIds(prev => {
+        const next = new Set(prev);
+        next.delete(documentId);
+        return next;
+      });
+    }
+  }, [loadDocuments]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,7 +202,7 @@ const DocumentWalletComponent = () => {
         .getPublicUrl(fileName);
 
       // Save document record
-      const { error: dbError } = await supabase
+      const { data: insertedDoc, error: dbError } = await supabase
         .from('user_documents')
         .insert({
           user_id: user.id,
@@ -131,14 +210,21 @@ const DocumentWalletComponent = () => {
           document_name: file.name,
           file_url: urlData.publicUrl,
           file_size: file.size,
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) throw dbError;
 
       toast.success('Documento enviado com sucesso!');
       setShowUploadModal(false);
       setSelectedType('');
-      loadDocuments();
+      await loadDocuments();
+
+      // Auto-analyze if it's a park ticket
+      if (insertedDoc && ANALYZABLE_TYPES.includes(selectedType)) {
+        analyzeTicket(insertedDoc.id);
+      }
     } catch {
       toast.error('Erro ao enviar documento');
     } finally {
@@ -197,8 +283,34 @@ const DocumentWalletComponent = () => {
     );
   }
 
+  // Check if there are any warnings
+  const warnings = documents.filter(d => d.ai_validation_status === 'warning');
+
   return (
     <>
+      {/* Warning Alert Banner */}
+      {warnings.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-700 dark:text-amber-400 text-sm">
+                {warnings.length === 1 ? '1 ingresso precisa de atenção' : `${warnings.length} ingressos precisam de atenção`}
+              </p>
+              {warnings.map(w => (
+                <p key={w.id} className="text-xs text-amber-600 dark:text-amber-400/80 mt-1">
+                  📄 {w.document_name}: {w.ai_validation_message}
+                </p>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <Card variant="premium">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -234,6 +346,8 @@ const DocumentWalletComponent = () => {
               {documents.map((doc) => {
                 const typeInfo = getDocTypeInfo(doc.document_type);
                 const Icon = typeInfo.icon;
+                const isAnalyzing = analyzingIds.has(doc.id);
+                const canAnalyze = ANALYZABLE_TYPES.includes(doc.document_type);
                 
                 return (
                   <motion.div
@@ -241,50 +355,80 @@ const DocumentWalletComponent = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -100 }}
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg group"
+                    className="p-3 bg-muted/50 rounded-lg group"
                   >
-                    <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${typeInfo.color}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{doc.document_name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="secondary" className="text-xs">
-                          {typeInfo.label}
-                        </Badge>
-                        {doc.file_size && (
-                          <span>{formatFileSize(doc.file_size)}</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${typeInfo.color}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{doc.document_name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Badge variant="secondary" className="text-xs">
+                            {typeInfo.label}
+                          </Badge>
+                          {doc.file_size && (
+                            <span>{formatFileSize(doc.file_size)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {canAnalyze && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isAnalyzing}
+                            onClick={() => analyzeTicket(doc.id)}
+                            title="Analisar com IA"
+                          >
+                            {isAnalyzing ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <ScanSearch className="w-4 h-4" />
+                            )}
+                          </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setViewingDoc(doc.file_url)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          asChild
+                        >
+                          <a href={doc.file_url} download target="_blank" rel="noopener noreferrer">
+                            <Download className="w-4 h-4" />
+                          </a>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteDoc(doc)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setViewingDoc(doc.file_url)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <a href={doc.file_url} download target="_blank" rel="noopener noreferrer">
-                          <Download className="w-4 h-4" />
-                        </a>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteDoc(doc)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+
+                    {/* AI Validation Result */}
+                    {isAnalyzing && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Analisando documento com IA...</span>
+                      </div>
+                    )}
+                    <ValidationBadge 
+                      status={doc.ai_validation_status} 
+                      message={doc.ai_validation_message} 
+                    />
                   </motion.div>
                 );
               })}
@@ -341,6 +485,15 @@ const DocumentWalletComponent = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {selectedType && ANALYZABLE_TYPES.includes(selectedType) && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <ScanSearch className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-primary/80">
+                      A IA irá analisar automaticamente as datas do ingresso e comparar com seu perfil de viagem.
+                    </p>
+                  </div>
+                )}
 
                 {selectedType && (
                   <div className="space-y-2">
