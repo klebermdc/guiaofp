@@ -10,22 +10,27 @@ import {
   Heart, 
   Sun,
   Loader2,
-  ChevronRight
+  Sparkles,
+  Trophy,
+  Star
 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const checklistCategories = {
   documents: {
     title: 'Documentos',
     icon: FileText,
+    emoji: '📄',
+    gradient: 'from-blue-500/20 to-cyan-500/20',
+    iconColor: 'text-blue-400',
+    ringColor: 'stroke-blue-400',
     items: [
       { id: 'passport', label: 'Passaporte válido', required: true },
       { id: 'visa', label: 'Visto americano válido', required: true },
@@ -42,6 +47,10 @@ const checklistCategories = {
   luggage: {
     title: 'Mala de Viagem',
     icon: Backpack,
+    emoji: '🎒',
+    gradient: 'from-amber-500/20 to-orange-500/20',
+    iconColor: 'text-amber-400',
+    ringColor: 'stroke-amber-400',
     items: [
       { id: 'sunscreen', label: 'Protetor solar', required: true },
       { id: 'hat', label: 'Boné ou chapéu', required: false },
@@ -61,6 +70,10 @@ const checklistCategories = {
   apps: {
     title: 'Aplicativos',
     icon: Phone,
+    emoji: '📱',
+    gradient: 'from-violet-500/20 to-purple-500/20',
+    iconColor: 'text-violet-400',
+    ringColor: 'stroke-violet-400',
     items: [
       { id: 'mde', label: 'My Disney Experience instalado', required: true },
       { id: 'mde_logged', label: 'My Disney Experience logado', required: true },
@@ -76,6 +89,10 @@ const checklistCategories = {
   airport: {
     title: 'Aeroporto',
     icon: Plane,
+    emoji: '✈️',
+    gradient: 'from-sky-500/20 to-indigo-500/20',
+    iconColor: 'text-sky-400',
+    ringColor: 'stroke-sky-400',
     items: [
       { id: 'online_checkin', label: 'Check-in online realizado', required: true },
       { id: 'boarding_pass', label: 'Cartão de embarque (digital ou impresso)', required: true },
@@ -90,6 +107,10 @@ const checklistCategories = {
   health: {
     title: 'Saúde',
     icon: Heart,
+    emoji: '❤️',
+    gradient: 'from-rose-500/20 to-pink-500/20',
+    iconColor: 'text-rose-400',
+    ringColor: 'stroke-rose-400',
     items: [
       { id: 'prescription', label: 'Receitas médicas (em inglês se possível)', required: false },
       { id: 'prescription_meds', label: 'Medicamentos de uso contínuo', required: false },
@@ -104,6 +125,10 @@ const checklistCategories = {
   kids: {
     title: 'Crianças',
     icon: Baby,
+    emoji: '👶',
+    gradient: 'from-emerald-500/20 to-teal-500/20',
+    iconColor: 'text-emerald-400',
+    ringColor: 'stroke-emerald-400',
     items: [
       { id: 'stroller', label: 'Carrinho de bebê (se aplicável)', required: false },
       { id: 'diapers', label: 'Fraldas suficientes', required: false },
@@ -118,6 +143,10 @@ const checklistCategories = {
   parkDay: {
     title: 'Dia no Parque',
     icon: Sun,
+    emoji: '🎢',
+    gradient: 'from-yellow-500/20 to-amber-500/20',
+    iconColor: 'text-yellow-400',
+    ringColor: 'stroke-yellow-400',
     items: [
       { id: 'phone_charged', label: 'Celular 100% carregado', required: true },
       { id: 'powerbank_charged', label: 'Carregador portátil carregado', required: true },
@@ -138,6 +167,10 @@ const checklistCategories = {
   photography: {
     title: 'Fotografia',
     icon: Camera,
+    emoji: '📸',
+    gradient: 'from-fuchsia-500/20 to-purple-500/20',
+    iconColor: 'text-fuchsia-400',
+    ringColor: 'stroke-fuchsia-400',
     items: [
       { id: 'camera', label: 'Câmera carregada', required: false },
       { id: 'memory_card', label: 'Cartão de memória com espaço', required: false },
@@ -150,6 +183,39 @@ const checklistCategories = {
 };
 
 type CategoryKey = keyof typeof checklistCategories;
+
+// SVG circular progress ring
+const ProgressRing = ({ progress, size = 52, strokeWidth = 4, className }: { 
+  progress: number; size?: number; strokeWidth?: number; className?: string 
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className={cn("transform -rotate-90", className)}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="hsl(var(--muted))"
+        strokeWidth={strokeWidth}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        className={cn("transition-all duration-700 ease-out", className)}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+};
 
 const Checklists = () => {
   const { travelProfile, updateTravelProfile, isLoading } = useAuth();
@@ -197,6 +263,18 @@ const Checklists = () => {
     return Object.values(checklistCategories).flatMap(cat => cat.items).length;
   };
 
+  const getCompletedCategories = () => {
+    return Object.keys(checklistCategories).filter(
+      key => getCategoryProgress(key as CategoryKey) === 100
+    ).length;
+  };
+
+  const totalProgress = getTotalProgress();
+  const totalChecked = getTotalChecked();
+  const totalItems = getTotalItems();
+  const completedCategories = getCompletedCategories();
+  const totalCategories = Object.keys(checklistCategories).length;
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -211,38 +289,58 @@ const Checklists = () => {
     <AppLayout>
       <SavingIndicator isSaving={isSaving} />
       
-      <div className="space-y-6 pb-24">
-        {/* Header */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/20">
-                <CheckCircle2 className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-xl text-foreground">Checklists de Viagem</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Organize tudo para sua viagem
-                </p>
+      <div className="space-y-5 pb-24">
+        {/* Hero Header with big progress ring */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-card via-card to-muted/30 border border-border p-5 sm:p-6">
+          {/* Subtle background glow */}
+          <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative flex items-center gap-5">
+            {/* Big progress ring */}
+            <div className="relative flex-shrink-0">
+              <ProgressRing progress={totalProgress} size={80} strokeWidth={6} className="stroke-primary" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-foreground leading-none">{totalProgress}%</span>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground font-medium">Progresso Total</span>
-                <span className="text-primary font-bold">{getTotalChecked()}/{getTotalItems()} itens</span>
-              </div>
-              <Progress value={getTotalProgress()} className="h-3" />
-              <p className="text-center text-lg font-bold text-primary">{getTotalProgress()}% completo</p>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Categories Accordion */}
-        <Accordion type="single" collapsible className="space-y-3">
-          {(Object.entries(checklistCategories) as [CategoryKey, typeof checklistCategories[CategoryKey]][]).map(([key, category]) => {
-            const Icon = category.icon;
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-5 h-5 text-secondary" />
+                <h1 className="text-lg sm:text-xl font-bold text-foreground">Checklists</h1>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {totalProgress === 100 
+                  ? '🎉 Tudo pronto para a viagem!' 
+                  : `${totalChecked} de ${totalItems} itens prontos`
+                }
+              </p>
+              
+              {/* Stats row */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 bg-muted/50 rounded-full px-3 py-1">
+                  <Trophy className="w-3.5 h-3.5 text-secondary" />
+                  <span className="text-xs font-medium text-foreground">
+                    {completedCategories}/{totalCategories} categorias
+                  </span>
+                </div>
+                {totalProgress > 0 && totalProgress < 100 && (
+                  <div className="flex items-center gap-1.5 bg-muted/50 rounded-full px-3 py-1">
+                    <Star className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Faltam {totalItems - totalChecked}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <Accordion type="single" collapsible className="space-y-2.5">
+          {(Object.entries(checklistCategories) as [CategoryKey, typeof checklistCategories[CategoryKey]][]).map(([key, category], index) => {
             const progress = getCategoryProgress(key);
             const checkedCount = getCategoryCheckedCount(key);
             const totalCount = category.items.length;
@@ -252,78 +350,113 @@ const Checklists = () => {
               <AccordionItem 
                 key={key} 
                 value={key}
-                className="border border-border rounded-xl overflow-hidden bg-card"
+                className="border-0 rounded-xl overflow-hidden"
               >
-                <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/50 [&[data-state=open]]:bg-muted/30">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      "p-2.5 rounded-lg",
-                      isComplete ? "bg-green-500/20" : "bg-primary/20"
-                    )}>
-                      <Icon className={cn(
-                        "w-5 h-5",
-                        isComplete ? "text-green-500" : "text-primary"
-                      )} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{category.title}</span>
-                        {isComplete && (
-                          <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full font-medium">
-                            ✓ Completo
-                          </span>
-                        )}
+                <AccordionTrigger 
+                  className={cn(
+                    "px-4 py-3.5 hover:no-underline rounded-xl transition-all duration-200",
+                    "bg-gradient-to-r border border-border/60",
+                    isComplete 
+                      ? "from-emerald-500/10 to-green-500/5 border-emerald-500/20" 
+                      : category.gradient,
+                    "[&[data-state=open]]:rounded-b-none [&[data-state=open]]:border-b-0"
+                  )}
+                >
+                  <div className="flex items-center gap-3.5 flex-1">
+                    {/* Mini progress ring with emoji */}
+                    <div className="relative flex-shrink-0">
+                      <ProgressRing 
+                        progress={progress} 
+                        size={44} 
+                        strokeWidth={3} 
+                        className={isComplete ? 'stroke-emerald-400' : category.ringColor} 
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-base leading-none">{isComplete ? '✅' : category.emoji}</span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-muted-foreground">
-                          {checkedCount}/{totalCount} itens
+                    </div>
+
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground text-[15px]">{category.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={cn(
+                          "text-xs font-medium",
+                          isComplete ? "text-emerald-400" : "text-muted-foreground"
+                        )}>
+                          {isComplete ? 'Completo!' : `${checkedCount}/${totalCount} itens`}
                         </span>
-                        <div className="flex-1 max-w-[100px]">
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                        <span className="text-sm font-medium text-primary">{progress}%</span>
+                        {!isComplete && progress > 0 && (
+                          <span className="text-xs font-bold text-primary">{progress}%</span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-1 pt-2">
-                    {category.items.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleItem(item.id)}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-                          checkedItems[item.id] 
-                            ? "bg-green-500/10 hover:bg-green-500/20" 
-                            : "bg-muted/30 hover:bg-muted/50"
-                        )}
-                      >
-                        <Checkbox 
-                          checked={checkedItems[item.id] || false}
-                          className={cn(
-                            "h-5 w-5",
-                            checkedItems[item.id] && "bg-green-500 border-green-500"
-                          )}
-                        />
-                        <span className={cn(
-                          "flex-1 text-sm",
-                          checkedItems[item.id] 
-                            ? "text-green-500 line-through" 
-                            : "text-foreground"
-                        )}>
-                          {item.label}
-                        </span>
-                        {item.required && !checkedItems[item.id] && (
-                          <span className="text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full">
-                            Obrigatório
-                          </span>
-                        )}
-                        {checkedItems[item.id] && (
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
-                        )}
-                      </div>
-                    ))}
+                
+                <AccordionContent className={cn(
+                  "border border-t-0 border-border/60 rounded-b-xl",
+                  isComplete ? "border-emerald-500/20" : ""
+                )}>
+                  <div className="p-2 sm:p-3 space-y-1">
+                    {category.items.map((item, itemIndex) => {
+                      const isChecked = checkedItems[item.id] || false;
+                      return (
+                        <motion.div
+                          key={item.id}
+                          initial={false}
+                          animate={isChecked ? { scale: [1, 1.01, 1] } : {}}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <button
+                            onClick={() => toggleItem(item.id)}
+                            className={cn(
+                              "w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left",
+                              "active:scale-[0.98]",
+                              isChecked 
+                                ? "bg-emerald-500/8" 
+                                : "hover:bg-muted/40"
+                            )}
+                          >
+                            <div className={cn(
+                              "flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200",
+                              isChecked 
+                                ? "bg-emerald-500 border-emerald-500" 
+                                : "border-muted-foreground/40"
+                            )}>
+                              <AnimatePresence>
+                                {isChecked && (
+                                  <motion.div
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+
+                            <span className={cn(
+                              "flex-1 text-sm transition-all duration-200",
+                              isChecked 
+                                ? "text-muted-foreground line-through" 
+                                : "text-foreground"
+                            )}>
+                              {item.label}
+                            </span>
+
+                            {item.required && !isChecked && (
+                              <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider bg-destructive/15 text-destructive px-2 py-0.5 rounded-full">
+                                Obrigatório
+                              </span>
+                            )}
+                          </button>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
