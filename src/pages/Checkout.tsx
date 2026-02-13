@@ -183,8 +183,16 @@ export default function Checkout() {
   // Track view_item e begin_checkout quando a página carrega
   useEffect(() => {
     if (plan && userProfile) {
-      trackPlanView(plan.id, plan.name, originalAmountCents);
-      trackBeginCheckout(plan.id, plan.name, originalAmountCents);
+      const buyer = {
+        email: userProfile.email,
+        phone: userProfile.phone,
+        first_name: userProfile.name?.split(' ')[0],
+        last_name: userProfile.name?.split(' ').slice(1).join(' '),
+        full_name: userProfile.name,
+        country: 'BR',
+      };
+      trackPlanView(plan.id, plan.name, originalAmountCents, buyer);
+      trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
       // Update abandoned cart with user's actual info
       supabase.functions.invoke('track-abandoned-cart', {
@@ -395,7 +403,18 @@ export default function Checkout() {
 
     setIsProcessing(true);
 
-    trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod);
+    const buyer = {
+      email: userProfile.email,
+      phone: formData.phone || userProfile.phone,
+      first_name: userProfile.name?.split(' ')[0],
+      last_name: userProfile.name?.split(' ').slice(1).join(' '),
+      full_name: userProfile.name,
+      postal_code: formData.cardHolderCep?.replace(/\D/g, ''),
+      cpf: formData.cpf?.replace(/\D/g, ''),
+      country: 'BR',
+    };
+
+    trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod, appliedCoupon?.code, buyer);
 
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
@@ -464,7 +483,7 @@ export default function Checkout() {
         .eq('status', 'active');
 
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
-        trackPurchase(data.transactionId, plan.id, plan.name, finalAmountCents, 'credit_card');
+        trackPurchase(data.transactionId, plan.id, plan.name, finalAmountCents, 'credit_card', appliedCoupon?.code, buyer);
         toast.success('Pagamento aprovado! Redirecionando...');
         navigate('/login?payment=success');
       } else {
