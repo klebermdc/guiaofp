@@ -1297,12 +1297,14 @@ export default function ParkMap() {
             center={selectedPark.center}
             zoom={selectedPark.zoom}
             options={{
-              mapTypeId: mapType,
+              mapTypeId: mapType === 'satellite' ? 'hybrid' : 'roadmap',
               mapTypeControl: false,
               streetViewControl: false,
               fullscreenControl: false,
               zoomControl: false,
               gestureHandling: 'greedy',
+              tilt: mapType === 'satellite' ? 45 : 0,
+              heading: 0,
             }}
             onLoad={onMapLoad}
             onClick={(e) => {
