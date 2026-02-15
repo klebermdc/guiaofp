@@ -94,7 +94,12 @@ export const CreatePremiumClient = ({ onClientCreated }: CreatePremiumClientProp
         },
       });
 
-      if (createError) throw createError;
+      if (createError) {
+        const errorMsg = typeof createError === 'object' && 'message' in createError 
+          ? (createError as Error).message 
+          : 'Erro ao conectar com o servidor';
+        throw new Error(errorMsg);
+      }
       if (createResult?.error) throw new Error(createResult.error);
 
       toast.success('Cliente Premium criado com sucesso!', {
