@@ -507,63 +507,55 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                 <CardContent className="pt-6 space-y-6">
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-semibold">Quando será sua viagem?</h2>
-                    <p className="text-muted-foreground text-sm mt-1">Selecione ida e volta</p>
+                    <p className="text-muted-foreground text-sm mt-1">Toque na data de ida e depois na data de volta</p>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data de Ida</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn("w-full pl-3 text-left h-11", !field.value && "text-muted-foreground")}
-                                >
-                                  {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < new Date()} />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  {/* Range display */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className={cn(
+                      "rounded-lg border p-3 text-center transition-colors",
+                      watchedValues.startDate ? "border-primary bg-primary/5" : "border-dashed border-muted-foreground/30"
+                    )}>
+                      <p className="text-xs text-muted-foreground mb-1">✈️ Ida</p>
+                      <p className={cn("font-semibold text-sm", !watchedValues.startDate && "text-muted-foreground")}>
+                        {watchedValues.startDate ? format(watchedValues.startDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                      </p>
+                    </div>
+                    <div className={cn(
+                      "rounded-lg border p-3 text-center transition-colors",
+                      watchedValues.endDate ? "border-primary bg-primary/5" : "border-dashed border-muted-foreground/30"
+                    )}>
+                      <p className="text-xs text-muted-foreground mb-1">🏠 Volta</p>
+                      <p className={cn("font-semibold text-sm", !watchedValues.endDate && "text-muted-foreground")}>
+                        {watchedValues.endDate ? format(watchedValues.endDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
+                      </p>
+                    </div>
+                  </div>
 
-                    <FormField
-                      control={form.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data de Volta</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn("w-full pl-3 text-left h-11", !field.value && "text-muted-foreground")}
-                                >
-                                  {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(d) => d < (form.getValues("startDate") || new Date())} />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                  {/* Single range calendar */}
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="range"
+                      selected={
+                        watchedValues.startDate
+                          ? { from: watchedValues.startDate, to: watchedValues.endDate || undefined }
+                          : undefined
+                      }
+                      onSelect={(range) => {
+                        form.setValue("startDate", range?.from as Date, { shouldValidate: true });
+                        form.setValue("endDate", range?.to as Date, { shouldValidate: true });
+                      }}
+                      disabled={(d) => d < new Date()}
+                      numberOfMonths={1}
+                      locale={ptBR}
+                      className="p-3 pointer-events-auto rounded-lg border"
                     />
+                  </div>
+
+                  {/* Form error messages */}
+                  <div className="flex gap-4">
+                    <FormField control={form.control} name="startDate" render={() => <FormItem><FormMessage /></FormItem>} />
+                    <FormField control={form.control} name="endDate" render={() => <FormItem><FormMessage /></FormItem>} />
                   </div>
 
                   {watchedValues.startDate && watchedValues.endDate && (
