@@ -6,11 +6,16 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CalendarIcon, ChevronLeft, ChevronRight, Users, Wallet, Compass, 
-  Plus, Minus, Car, Ticket, Loader2, Save, Check, CreditCard, Hotel
+  Plus, Minus, Car, Ticket, Loader2, Save, Check, CreditCard, Hotel,
+  Heart, Sparkles, ListOrdered, ClipboardList
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TicketUploadSection } from "./TicketUploadSection";
 import { HotelSection } from "./HotelSection";
+import { HealthStep } from "./steps/HealthStep";
+import { SpecialDetailsStep } from "./steps/SpecialDetailsStep";
+import { PriorityStep } from "./steps/PriorityStep";
+import { SummaryStep } from "./steps/SummaryStep";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -103,6 +108,22 @@ const questionnaireSchema = z.object({
   hotelCheckIn: z.string(),
   hotelCheckOut: z.string(),
   hotelVoucherUrl: z.string(),
+  // Step 9: Health & Restrictions
+  dietaryRestrictions: z.array(z.string()),
+  dietaryOther: z.string(),
+  physicalLimitations: z.array(z.string()),
+  fears: z.array(z.string()),
+  // Step 10: Special Details
+  specialOccasions: z.array(z.string()),
+  birthdayDate: z.string(),
+  birthdayPerson: z.string(),
+  occasionOther: z.string(),
+  heatPreference: z.enum(["love_heat", "need_breaks", "avoid_peak"]),
+  rainPreference: z.enum(["continue_normally", "prefer_indoor"]),
+  groupEnergy: z.enum(["early_birds", "normal", "night_owls"]),
+  sleepPreference: z.enum(["early", "normal", "late"]),
+  // Step 11: Priorities
+  attractionPriorities: z.array(z.string()),
 });
 
 export type QuestionnaireFormData = z.infer<typeof questionnaireSchema>;
@@ -112,7 +133,7 @@ interface QuestionnaireWizardProps {
   isLoading?: boolean;
 }
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 12;
 
 const stepConfig = [
   { title: "Datas da Viagem", icon: CalendarIcon },
@@ -123,6 +144,10 @@ const stepConfig = [
   { title: "Parques e Atividades", icon: Ticket },
   { title: "Ingressos Disney", icon: CreditCard },
   { title: "Hospedagem", icon: Hotel },
+  { title: "Saúde e Restrições", icon: Heart },
+  { title: "Detalhes Especiais", icon: Sparkles },
+  { title: "Suas Prioridades", icon: ListOrdered },
+  { title: "Resumo Final", icon: ClipboardList },
 ];
 
 const budgetOptions = [
@@ -250,6 +275,22 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           hotelCheckIn: typeof (parsed as any).hotelCheckIn === "string" ? (parsed as any).hotelCheckIn : "",
           hotelCheckOut: typeof (parsed as any).hotelCheckOut === "string" ? (parsed as any).hotelCheckOut : "",
           hotelVoucherUrl: typeof (parsed as any).hotelVoucherUrl === "string" ? (parsed as any).hotelVoucherUrl : "",
+          // Step 9
+          dietaryRestrictions: normalizeStringArray((parsed as any).dietaryRestrictions),
+          dietaryOther: typeof (parsed as any).dietaryOther === "string" ? (parsed as any).dietaryOther : "",
+          physicalLimitations: normalizeStringArray((parsed as any).physicalLimitations),
+          fears: normalizeStringArray((parsed as any).fears),
+          // Step 10
+          specialOccasions: normalizeStringArray((parsed as any).specialOccasions),
+          birthdayDate: typeof (parsed as any).birthdayDate === "string" ? (parsed as any).birthdayDate : "",
+          birthdayPerson: typeof (parsed as any).birthdayPerson === "string" ? (parsed as any).birthdayPerson : "",
+          occasionOther: typeof (parsed as any).occasionOther === "string" ? (parsed as any).occasionOther : "",
+          heatPreference: typeof (parsed as any).heatPreference === "string" ? (parsed as any).heatPreference : "need_breaks",
+          rainPreference: typeof (parsed as any).rainPreference === "string" ? (parsed as any).rainPreference : "prefer_indoor",
+          groupEnergy: typeof (parsed as any).groupEnergy === "string" ? (parsed as any).groupEnergy : "normal",
+          sleepPreference: typeof (parsed as any).sleepPreference === "string" ? (parsed as any).sleepPreference : "normal",
+          // Step 11
+          attractionPriorities: normalizeStringArray((parsed as any).attractionPriorities),
         };
 
         // Persist sanitized draft so the user doesn't get stuck in a crash loop
@@ -299,6 +340,22 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
       hotelCheckIn: "",
       hotelCheckOut: "",
       hotelVoucherUrl: "",
+      // Step 9 defaults
+      dietaryRestrictions: [],
+      dietaryOther: "",
+      physicalLimitations: [],
+      fears: [],
+      // Step 10 defaults
+      specialOccasions: [],
+      birthdayDate: "",
+      birthdayPerson: "",
+      occasionOther: "",
+      heatPreference: "need_breaks" as const,
+      rainPreference: "prefer_indoor" as const,
+      groupEnergy: "normal" as const,
+      sleepPreference: "normal" as const,
+      // Step 11 defaults
+      attractionPriorities: [],
     },
   });
 
@@ -376,6 +433,18 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
         break;
       case 8:
         // Step 8 has no required validation - user can skip or complete hotel section
+        fieldsToValidate = [];
+        break;
+      case 9:
+        fieldsToValidate = [];
+        break;
+      case 10:
+        fieldsToValidate = [];
+        break;
+      case 11:
+        fieldsToValidate = [];
+        break;
+      case 12:
         fieldsToValidate = [];
         break;
     }
@@ -941,6 +1010,30 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
                   />
                 </CardContent>
               </Card>
+            )}
+
+            {/* Step 9: Health & Restrictions */}
+            {currentStep === 9 && (
+              <HealthStep form={form} watchedValues={watchedValues} />
+            )}
+
+            {/* Step 10: Special Details */}
+            {currentStep === 10 && (
+              <SpecialDetailsStep form={form} watchedValues={watchedValues} />
+            )}
+
+            {/* Step 11: Priorities */}
+            {currentStep === 11 && (
+              <PriorityStep form={form} watchedValues={watchedValues} />
+            )}
+
+            {/* Step 12: Summary */}
+            {currentStep === 12 && (
+              <SummaryStep
+                form={form}
+                watchedValues={watchedValues}
+                onEditStep={(step: number) => setCurrentStep(step)}
+              />
             )}
           </motion.div>
         </AnimatePresence>
