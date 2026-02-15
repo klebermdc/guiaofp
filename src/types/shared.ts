@@ -77,8 +77,6 @@ export interface ClientProfile {
   concerns?: string | null;
   special_requests?: string | null;
   has_my_disney_experience?: boolean | null;
-  disney_email?: string | null;
-  disney_password?: string | null;
   checklist_items?: Json | null;
   authorize_guide_access?: boolean | null;
   is_locked?: boolean | null;

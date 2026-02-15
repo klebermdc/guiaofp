@@ -1342,8 +1342,6 @@ export type Database = {
           concerns: string | null
           created_at: string | null
           departure_date: string | null
-          disney_email: string | null
-          disney_password: string | null
           email: string | null
           expectations: string | null
           food_allergies: string | null
@@ -1384,8 +1382,6 @@ export type Database = {
           concerns?: string | null
           created_at?: string | null
           departure_date?: string | null
-          disney_email?: string | null
-          disney_password?: string | null
           email?: string | null
           expectations?: string | null
           food_allergies?: string | null
@@ -1426,8 +1422,6 @@ export type Database = {
           concerns?: string | null
           created_at?: string | null
           departure_date?: string | null
-          disney_email?: string | null
-          disney_password?: string | null
           email?: string | null
           expectations?: string | null
           food_allergies?: string | null

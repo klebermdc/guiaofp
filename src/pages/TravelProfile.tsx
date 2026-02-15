@@ -943,7 +943,7 @@ interface DisneyAppSectionProps {
 }
 
 function DisneyAppSection({ travelProfile, handleFieldChange }: DisneyAppSectionProps) {
-  const [showPassword, setShowPassword] = useState(false);
+  
   
   // Detect if user is on mobile
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -1021,35 +1021,9 @@ function DisneyAppSection({ travelProfile, handleFieldChange }: DisneyAppSection
 
       {travelProfile.hasMyDisneyExperience && (
         <>
-          <div className="space-y-2">
-            <Label>E-mail de login do My Disney Experience</Label>
-            <Input
-              type="email"
-              placeholder="seu-email@exemplo.com"
-              value={travelProfile.disneyEmail || ''}
-              onChange={(e) => handleFieldChange({ disneyEmail: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Senha do My Disney Experience</Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={travelProfile.disneyPassword || ''}
-                onChange={(e) => handleFieldChange({ disneyPassword: e.target.value })}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Estas informações são compartilhadas apenas com seu guia autorizado para configuração do app.
+          <div className="p-4 bg-muted rounded-lg space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Por segurança, credenciais Disney não são armazenadas no sistema. Compartilhe suas credenciais diretamente com seu guia via canal seguro (WhatsApp, etc.) quando necessário.
             </p>
           </div>
 
