@@ -95,12 +95,26 @@ export const CreatePremiumClient = ({ onClientCreated }: CreatePremiumClientProp
       });
 
       if (createError) {
-        const errorMsg = typeof createError === 'object' && 'message' in createError 
-          ? (createError as Error).message 
-          : 'Erro ao conectar com o servidor';
+        // Parse the actual error from the edge function response
+        let errorMsg = 'Erro ao conectar com o servidor. Tente novamente.';
+        if (typeof createError === 'object' && 'message' in createError) {
+          const msg = (createError as Error).message;
+          if (msg.includes('non-2xx')) {
+            errorMsg = 'Erro no servidor ao criar cliente. Verifique os dados e tente novamente.';
+          } else {
+            errorMsg = msg;
+          }
+        }
         throw new Error(errorMsg);
       }
-      if (createResult?.error) throw new Error(createResult.error);
+      if (createResult?.error) {
+        // Map known backend errors to friendly messages
+        const backendError = createResult.error;
+        if (backendError.includes('já está cadastrado') || backendError.includes('already been registered')) {
+          throw new Error('Este email já está cadastrado no sistema.');
+        }
+        throw new Error(backendError);
+      }
 
       toast.success('Cliente Premium criado com sucesso!', {
         description: sendWelcomeEmail 
