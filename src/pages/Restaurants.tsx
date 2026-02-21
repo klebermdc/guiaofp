@@ -67,6 +67,7 @@ interface Restaurant {
   tips: string | null;
   must_try: string | null;
   area: string | null;
+  image_url: string | null;
 }
 
 // Extended parks with emojis for display
@@ -449,6 +450,19 @@ const Restaurants = () => {
                         className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                         onClick={() => navigate(`/restaurante/${restaurant.slug}`)}
                       >
+                        {/* Restaurant Image */}
+                        {restaurant.image_url && (
+                          <div className="h-36 overflow-hidden">
+                            <img 
+                              src={restaurant.image_url}
+                              alt={restaurant.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                         <CardContent className="p-4 space-y-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
