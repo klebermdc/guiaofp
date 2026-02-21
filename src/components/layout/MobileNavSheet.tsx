@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { 
   Ticket,
@@ -81,7 +82,6 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
   { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },
-  { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
 
@@ -122,6 +122,7 @@ interface MobileNavSheetProps {
 }
 
 export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
+  const navigate = useNavigate();
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
   const { getSortedPages, isTravelModeVisible, isLoading } = usePlanPageAccess();
@@ -269,9 +270,10 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
           transition={{ delay: 0.4 }}
         >
           <motion.button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               onOpenChange(false);
+              navigate('/login');
             }}
             whileTap={{ scale: 0.98 }}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors min-h-[44px]"

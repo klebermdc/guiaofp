@@ -307,10 +307,10 @@ const Dashboard = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
                   <div className="text-center sm:text-left">
                     <h3 className="font-display text-xl sm:text-2xl font-bold mb-1 sm:mb-2">
-                      {t('dashboard.needHelp.title')}
+                      Está com dificuldade?
                     </h3>
                     <p className="text-primary-foreground/80 text-sm sm:text-base">
-                      {guideName} {t('dashboard.needHelp.subtitle')}
+                      Nos mande um WhatsApp que será respondido de seg a sexta no horário comercial.
                     </p>
                   </div>
                   <motion.a 

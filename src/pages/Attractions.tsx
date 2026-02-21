@@ -452,10 +452,9 @@ export default function Attractions() {
           </Card>
         </div>
 
-        {/* Generate Itinerary Card with Attention Message */}
+        {/* Attention Message */}
         <Card className="bg-gradient-to-r from-amber-500/10 via-primary/5 to-transparent border-amber-500/30">
-          <CardContent className="p-4 space-y-3">
-            {/* Attention Message */}
+          <CardContent className="p-4">
             <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
               <div className="p-1.5 bg-amber-500/20 rounded-full shrink-0 mt-0.5">
                 <Sparkles className="w-4 h-4 text-amber-600" />
@@ -465,47 +464,15 @@ export default function Attractions() {
                   ⚠️ Atenção para gerar o melhor roteiro:
                 </p>
                 <ul className="text-muted-foreground space-y-1 text-xs">
-                  <li>• O <Link to="/perfil-viagem" className="text-primary hover:underline font-medium">Perfil de Viagem</Link> deve estar o mais completo possível</li>
+                  <li>• O <Link to="/perfil" className="text-primary hover:underline font-medium">Perfil de Viagem</Link> deve estar o mais completo possível</li>
                   <li>• Selecione as atrações desejadas nos respectivos parques abaixo</li>
                 </ul>
               </div>
             </div>
-            
-            {/* Generate Button Row */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-full">
-                  <Route className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">{t('attractions.generateItinerary')}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedAttractions.length > 0 
-                      ? `${selectedAttractions.length} atrações selecionadas`
-                      : t('attractions.subtitle')}
-                  </p>
-                </div>
-              </div>
-              <Button 
-                onClick={handleGenerateItinerary}
-                disabled={isGenerating || selectedAttractions.length === 0}
-                className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('attractions.generating')}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {t('attractions.generateItinerary')}
-                  </>
-                )}
-              </Button>
-            </div>
           </CardContent>
         </Card>
+
+
 
         {/* Parks Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
