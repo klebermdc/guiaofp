@@ -152,7 +152,7 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
         date,
         time_slot: timeSlot,
         item_type: determineItemType(draggedItem),
-        item_id: draggedItem.id || null,
+        item_id: (draggedItem.id && !draggedItem.id.startsWith('custom-')) ? draggedItem.id : null,
         item_name: draggedItem.name,
         category: determineCategory(draggedItem),
         color: determineColor(draggedItem),
