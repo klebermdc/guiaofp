@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Upload, Trash2, Plus, Save, Search, Image as ImageIcon, Loader2, Phone, Globe, MapPin, DollarSign, Star, Edit2, X, AlertTriangle, Navigation } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -44,6 +46,7 @@ const AdminRestaurantsPanel = () => {
   const [newImageUrl, setNewImageUrl] = useState('');
   const [editForm, setEditForm] = useState<Partial<Restaurant>>({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newRestaurantName, setNewRestaurantName] = useState('');
 
@@ -94,6 +97,62 @@ const AdminRestaurantsPanel = () => {
     setNewImages([]);
     setIsEditing(false);
   };
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedRestaurant) return;
+
+    setIsUploading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${selectedRestaurant.id}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('admin-content')
+          .upload(fileName, file, { contentType: file.type, upsert: false });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Erro ao enviar ${file.name}: ${uploadError.message}`);
+          continue;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('admin-content')
+          .getPublicUrl(fileName);
+
+        if (publicUrlData?.publicUrl) {
+          uploadedUrls.push(publicUrlData.publicUrl);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        const maxOrder = currentImages.length > 0
+          ? Math.max(...currentImages.map(img => img.display_order)) + 1
+          : 0;
+
+        for (let i = 0; i < uploadedUrls.length; i++) {
+          await addImageMutation.mutateAsync({
+            restaurantId: selectedRestaurant.id,
+            imageUrl: uploadedUrls[i],
+            displayOrder: maxOrder + i,
+          });
+        }
+
+        toast.success(`${uploadedUrls.length} foto(s) enviada(s) com sucesso!`);
+      }
+    } catch (err) {
+      console.error('File upload error:', err);
+      toast.error('Erro ao fazer upload das fotos');
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  }, [selectedRestaurant, currentImages, addImageMutation]);
 
   const handleAddImage = () => {
     if (newImageUrl.trim() && selectedRestaurant) {
@@ -855,20 +914,30 @@ const AdminRestaurantsPanel = () => {
 
                       {/* File Upload */}
                       <div className="mb-6">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-all">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:bg-muted/50 transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-10 h-10 text-muted-foreground mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                              <span className="font-semibold">Clique para fazer upload</span> ou arraste e solte
-                            </p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG ou WEBP</p>
+                            {isUploading ? (
+                              <>
+                                <Loader2 className="w-10 h-10 text-primary mb-2 animate-spin" />
+                                <p className="text-sm text-muted-foreground font-semibold">Enviando fotos...</p>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-10 h-10 text-muted-foreground mb-2" />
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-semibold">Clique para fazer upload</span> ou arraste e solte
+                                </p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG ou WEBP</p>
+                              </>
+                            )}
                           </div>
                           <input
                             type="file"
                             accept="image/*"
                             multiple
                             className="hidden"
-                            onChange={() => {}}
+                            onChange={handleFileUpload}
+                            disabled={isUploading}
                           />
                         </label>
                       </div>
