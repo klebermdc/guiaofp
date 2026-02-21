@@ -8,17 +8,17 @@ const corsHeaders = {
 function buildSearchQuery(name: string, category: string | null): string {
   switch (category) {
     case 'disney':
-      return `${name} Walt Disney World dining`
+      return `${name} Walt Disney World restaurant photo`
     case 'universal':
-      return `${name} Universal Orlando dining`
+      return `${name} Universal Orlando restaurant photo`
     case 'seaworld':
-      return `${name} SeaWorld Orlando`
+      return `${name} SeaWorld Orlando photo`
     case 'busch-gardens':
-      return `${name} Busch Gardens Tampa`
+      return `${name} Busch Gardens Tampa photo`
     case 'fora-parques':
-      return `${name} restaurant Orlando FL`
+      return `${name} restaurant Orlando FL photo`
     default:
-      return `${name} restaurant Orlando`
+      return `${name} restaurant Orlando photo`
   }
 }
 
@@ -34,9 +34,36 @@ function isValidRestaurantImage(url: string): boolean {
     'badge', 'sprite', 'pixel', '1x1', 'spacer', 'blank',
     'transparent', 'universal-orlando-resort-color-logo', 'wdw.svg',
     'unsplash', 'pexels', 'shutterstock', 'istock',
+    'avatar', 'profile-pic', 'user-icon', 'gravatar',
+    'ad-banner', 'advertisement', 'promo-banner',
+    'tripadvisor-logo', 'yelp-logo', 'google-logo',
   ]
   if (lower.includes('width=1') || lower.includes('w=1')) return false
+  // Must be an image file or image CDN
+  const hasImageExt = /\.(jpg|jpeg|png|webp|avif)/i.test(lower)
+  const isImageCdn = lower.includes('/resize/') || lower.includes('/dam/') || 
+    lower.includes('cloudinary') || lower.includes('imgix') || 
+    lower.includes('cdn') || lower.includes('media')
+  if (!hasImageExt && !isImageCdn) return false
   return !blacklist.some(b => lower.includes(b))
+}
+
+function extractImageFromMarkdown(markdown: string): string | null {
+  if (!markdown) return null
+  // Match markdown image syntax ![alt](url) and HTML img tags
+  const patterns = [
+    /!\[[^\]]*\]\((https?:\/\/[^)]+)\)/g,
+    /<img[^>]+src=["'](https?:\/\/[^"']+)["']/gi,
+  ]
+  for (const pattern of patterns) {
+    let match
+    while ((match = pattern.exec(markdown)) !== null) {
+      if (isValidRestaurantImage(match[1])) {
+        return match[1]
+      }
+    }
+  }
+  return null
 }
 
 async function findImageViaSearch(name: string, category: string | null, apiKey: string): Promise<string | null> {
@@ -48,7 +75,13 @@ async function findImageViaSearch(name: string, category: string | null, apiKey:
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query, limit: 3 }),
+      body: JSON.stringify({
+        query,
+        limit: 5,
+        scrapeOptions: {
+          formats: ['markdown'],
+        },
+      }),
     })
 
     if (!response.ok) {
@@ -61,13 +94,20 @@ async function findImageViaSearch(name: string, category: string | null, apiKey:
     const results = data?.data || []
 
     for (const result of results) {
-      // Try ogImage from metadata
+      // 1. Try ogImage from metadata
       const ogImage = result?.metadata?.ogImage
       if (ogImage && isValidRestaurantImage(ogImage)) return ogImage
 
-      // Try og:image
       const ogImage2 = result?.metadata?.['og:image']
       if (ogImage2 && isValidRestaurantImage(ogImage2)) return ogImage2
+
+      // 2. Try twitter:image
+      const twitterImage = result?.metadata?.['twitter:image']
+      if (twitterImage && isValidRestaurantImage(twitterImage)) return twitterImage
+
+      // 3. Extract from markdown content
+      const mdImage = extractImageFromMarkdown(result?.markdown)
+      if (mdImage) return mdImage
     }
 
     return null
@@ -152,8 +192,8 @@ Deno.serve(async (req) => {
         console.log(`⚠️ No image: ${r.name}`)
       }
 
-      // 500ms between searches
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // 1s between searches to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
 
     return new Response(JSON.stringify({
