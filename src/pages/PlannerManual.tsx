@@ -385,6 +385,34 @@ const PlannerManual = () => {
     }
   }, [plannerData, plannerItems, toast]);
 
+  // Add custom item directly from time slot
+  const handleAddCustomItem = useCallback(async (date: string, timeSlot: string, name: string) => {
+    if (!plannerData?.id) return;
+    
+    const customItem: LibraryItem = {
+      id: `custom-${Date.now()}`,
+      name,
+      type: 'activity',
+      category: 'atividade',
+      color: '#14B8A6',
+      icon: '📝',
+    };
+
+    try {
+      await handleDrop(customItem, date, timeSlot);
+      toast({
+        title: 'Item adicionado!',
+        description: `"${name}" foi adicionado ao roteiro.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao adicionar',
+        description: 'Não foi possível adicionar o item.',
+        variant: 'destructive'
+      });
+    }
+  }, [plannerData?.id, handleDrop, toast]);
+
   // Share planner
   const handleShare = useCallback(async () => {
     if (!plannerData) return;
@@ -557,6 +585,7 @@ const PlannerManual = () => {
                   onReorder={handleReorder}
                   onToggleComplete={toggleCompleted}
                   onUpdateItem={handleUpdateItem}
+                  onAddCustomItem={handleAddCustomItem}
                   highlightedSlotOverride={highlightedSlot}
                 />
               ) : (

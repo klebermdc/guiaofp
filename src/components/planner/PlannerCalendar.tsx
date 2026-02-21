@@ -54,6 +54,7 @@ interface PlannerCalendarProps {
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;
   onToggleComplete?: (itemId: string) => void;
   onUpdateItem?: (itemId: string, updates: Partial<PlannerItem>) => Promise<void>;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
   highlightedSlotOverride?: string | null;
 }
 
@@ -104,6 +105,7 @@ export const PlannerCalendar = ({
   onReorder,
   onToggleComplete,
   onUpdateItem,
+  onAddCustomItem,
   highlightedSlotOverride,
 }: PlannerCalendarProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -224,6 +226,7 @@ export const PlannerCalendar = ({
               onRemove={onRemove}
               onToggleComplete={onToggleComplete}
               onEdit={handleEditItem}
+              onAddCustomItem={onAddCustomItem}
             highlightedSlot={highlightedSlotOverride ?? highlightedSlot}
             />
           ))}
@@ -249,9 +252,10 @@ interface DayRowProps {
   highlightedSlot: string | null;
   onToggleComplete?: (itemId: string) => void;
   onEdit?: (item: PlannerItem) => void;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
 }
 
-const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, onEdit, highlightedSlot }: DayRowProps) => {
+const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, onEdit, onAddCustomItem, highlightedSlot }: DayRowProps) => {
   const parsedDate = parseISO(date);
   const isWeekendDay = isWeekend(parsedDate);
   const dayOfWeek = format(parsedDate, 'EEEE', { locale: ptBR });
@@ -300,6 +304,7 @@ const DayRow = ({ date, dayNumber, items, onRemove, onToggleComplete, onEdit, hi
             onRemove={onRemove}
             onToggleComplete={onToggleComplete}
             onEdit={onEdit}
+            onAddCustomItem={onAddCustomItem}
             isHighlighted={highlightedSlot === `date-${date}-slot-${slot.id}`}
           />
         ))}
@@ -316,16 +321,27 @@ interface TimeSlotDropZoneProps {
   onRemove: (itemId: string) => void;
   onToggleComplete?: (itemId: string) => void;
   onEdit?: (item: PlannerItem) => void;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
   isHighlighted?: boolean;
 }
 
-const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdit, isHighlighted }: TimeSlotDropZoneProps) => {
+const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdit, onAddCustomItem, isHighlighted }: TimeSlotDropZoneProps) => {
   // Format: date-YYYY-MM-DD-slot-slotId (matching PlannerManual's expected format)
   const dropId = `date-${date}-slot-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({
     id: dropId,
     data: { date, timeSlot: slot.id },
   });
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [customName, setCustomName] = useState('');
+
+  const handleAddCustom = async () => {
+    if (!customName.trim() || !onAddCustomItem) return;
+    await onAddCustomItem(date, slot.id, customName.trim());
+    setCustomName('');
+    setIsAdding(false);
+  };
 
   const sortedItems = [...items].sort((a, b) => a.order_index - b.order_index);
 
@@ -345,9 +361,50 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdi
         <div className="flex items-center gap-1.5">
           <span className="text-sm">{slot.icon}</span>
           <span className="text-xs font-medium text-foreground">{slot.label}</span>
+          <div className="ml-auto">
+            {onAddCustomItem && !isAdding && (
+              <button
+                onClick={() => setIsAdding(true)}
+                className="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                title="Adicionar item personalizado"
+              >
+                <Pencil className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-[10px] text-muted-foreground">{slot.hours}</p>
       </div>
+
+      {/* Inline custom item input */}
+      {isAdding && (
+        <div className="flex items-center gap-1 mb-2">
+          <input
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddCustom();
+              if (e.key === 'Escape') { setIsAdding(false); setCustomName(''); }
+            }}
+            placeholder="Nome da atividade..."
+            className="flex-1 h-6 px-2 text-[11px] rounded border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            autoFocus
+          />
+          <button
+            onClick={handleAddCustom}
+            disabled={!customName.trim()}
+            className="p-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            <Check className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => { setIsAdding(false); setCustomName(''); }}
+            className="p-0.5 rounded hover:bg-muted text-muted-foreground"
+          >
+            <span className="text-xs">✕</span>
+          </button>
+        </div>
+      )}
 
       {/* Items */}
       <SortableContext
@@ -356,7 +413,7 @@ const TimeSlotDropZone = ({ date, slot, items, onRemove, onToggleComplete, onEdi
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-1.5">
-          {sortedItems.length === 0 ? (
+          {sortedItems.length === 0 && !isAdding ? (
             <div className="flex items-center justify-center py-4">
               <p className="text-[10px] text-muted-foreground/60">
                 Arraste itens aqui

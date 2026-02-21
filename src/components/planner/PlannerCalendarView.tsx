@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { format, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Check, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { Trash2, Check, ChevronLeft, ChevronRight, Star, Pencil, Plus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ interface PlannerCalendarViewProps {
   onRemoveItem: (itemId: string) => Promise<void>;
   onToggleComplete: (itemId: string) => Promise<void>;
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => Promise<void>;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
 }
 
 const TIME_SLOTS = [
@@ -59,7 +61,8 @@ export const PlannerCalendarView = ({
   isLoading,
   onRemoveItem,
   onToggleComplete,
-  onReorder
+  onReorder,
+  onAddCustomItem,
 }: PlannerCalendarViewProps) => {
   const [visibleDayIndex, setVisibleDayIndex] = useState(0);
 
@@ -167,6 +170,7 @@ export const PlannerCalendarView = ({
                 groupedItems={groupedItems}
                 onRemoveItem={onRemoveItem}
                 onToggleComplete={onToggleComplete}
+                onAddCustomItem={onAddCustomItem}
               />
             ))}
           </div>
@@ -181,6 +185,7 @@ export const PlannerCalendarView = ({
                 groupedItems={groupedItems}
                 onRemoveItem={onRemoveItem}
                 onToggleComplete={onToggleComplete}
+                onAddCustomItem={onAddCustomItem}
               />
             ))}
           </div>
@@ -197,9 +202,10 @@ interface DayColumnProps {
   groupedItems: Record<string, Record<string, PlannerItem[]>>;
   onRemoveItem: (itemId: string) => Promise<void>;
   onToggleComplete: (itemId: string) => Promise<void>;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
 }
 
-const DayColumn = ({ day, dayIndex, groupedItems, onRemoveItem, onToggleComplete }: DayColumnProps) => {
+const DayColumn = ({ day, dayIndex, groupedItems, onRemoveItem, onToggleComplete, onAddCustomItem }: DayColumnProps) => {
   const dateKey = format(day, 'yyyy-MM-dd');
   const dayItems = groupedItems[dateKey] || { morning: [], afternoon: [], evening: [] };
   const totalItems = Object.values(dayItems).flat().length;
@@ -230,6 +236,7 @@ const DayColumn = ({ day, dayIndex, groupedItems, onRemoveItem, onToggleComplete
             items={dayItems[slot.id] || []}
             onRemoveItem={onRemoveItem}
             onToggleComplete={onToggleComplete}
+            onAddCustomItem={onAddCustomItem}
           />
         ))}
       </CardContent>
@@ -244,11 +251,21 @@ interface TimeSlotDropZoneProps {
   items: PlannerItem[];
   onRemoveItem: (itemId: string) => Promise<void>;
   onToggleComplete: (itemId: string) => Promise<void>;
+  onAddCustomItem?: (date: string, timeSlot: string, name: string) => Promise<void>;
 }
 
-const TimeSlotDropZone = ({ date, slot, items, onRemoveItem, onToggleComplete }: TimeSlotDropZoneProps) => {
+const TimeSlotDropZone = ({ date, slot, items, onRemoveItem, onToggleComplete, onAddCustomItem }: TimeSlotDropZoneProps) => {
   const dropId = `date-${date}-slot-${slot.id}`;
   const { setNodeRef, isOver } = useDroppable({ id: dropId });
+  const [isAdding, setIsAdding] = useState(false);
+  const [customName, setCustomName] = useState('');
+
+  const handleAddCustom = async () => {
+    if (!customName.trim() || !onAddCustomItem) return;
+    await onAddCustomItem(date, slot.id, customName.trim());
+    setCustomName('');
+    setIsAdding(false);
+  };
 
   return (
     <div
@@ -266,9 +283,47 @@ const TimeSlotDropZone = ({ date, slot, items, onRemoveItem, onToggleComplete }:
         <span className="text-[10px] text-muted-foreground/60">
           {slot.hours}
         </span>
+        <div className="ml-auto">
+          {onAddCustomItem && !isAdding && (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+              title="Adicionar item personalizado"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {items.length === 0 ? (
+      {/* Inline custom item input */}
+      {isAdding && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <Input
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddCustom()}
+            placeholder="Nome da atividade..."
+            className="h-7 text-xs flex-1"
+            autoFocus
+          />
+          <button
+            onClick={handleAddCustom}
+            disabled={!customName.trim()}
+            className="p-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => { setIsAdding(false); setCustomName(''); }}
+            className="p-1 rounded hover:bg-muted text-muted-foreground"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {items.length === 0 && !isAdding ? (
         <div className="h-16 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
           <p className="text-xs text-muted-foreground">
             Arraste itens aqui

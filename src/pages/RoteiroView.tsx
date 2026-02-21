@@ -7,8 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, Users, MapPin, Clock, Utensils, Lightbulb,
   DollarSign, Loader2, Sparkles, ChevronDown, ChevronUp, Castle,
-  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw
+  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw, Download
 } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -143,6 +145,105 @@ export default function RoteiroView() {
     }
   };
 
+  // Export itinerary as PDF
+  const handleExportPDF = () => {
+    if (!itinerary || !generated) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(30, 64, 175);
+    doc.text(itinerary.title || 'Meu Roteiro Orlando', pageWidth / 2, 20, { align: 'center' });
+
+    // Dates
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    const dateRange = `${format(new Date(itinerary.start_date), 'dd/MM/yyyy')} - ${format(new Date(itinerary.end_date), 'dd/MM/yyyy')} (${itinerary.total_days} dias)`;
+    doc.text(dateRange, pageWidth / 2, 28, { align: 'center' });
+
+    let yPosition = 40;
+
+    generated.days.forEach((day) => {
+      // Check page break
+      if (yPosition > doc.internal.pageSize.getHeight() - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      // Day header
+      doc.setFontSize(14);
+      doc.setTextColor(30, 64, 175);
+      doc.text(`Dia ${day.day_number} - ${day.title}`, 14, yPosition);
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(day.date, 14, yPosition + 6);
+      yPosition += 12;
+
+      // Activities table
+      const tableData = day.activities.map(act => [
+        act.time,
+        act.title,
+        act.location,
+        `${act.duration_minutes}min`,
+      ]);
+
+      if (tableData.length > 0) {
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Horário', 'Atividade', 'Local', 'Duração']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [30, 64, 175], textColor: 255, fontSize: 9 },
+          bodyStyles: { fontSize: 9, cellPadding: 3 },
+          margin: { left: 14, right: 14 },
+        });
+        yPosition = (doc as any).lastAutoTable.finalY + 5;
+      }
+
+      // Meals
+      if (day.meals && day.meals.length > 0) {
+        const mealData = day.meals.map(meal => [
+          meal.time,
+          mealTypeLabels[meal.type] || meal.type,
+          meal.restaurant,
+          meal.location,
+        ]);
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Horário', 'Refeição', 'Restaurante', 'Local']],
+          body: mealData,
+          theme: 'striped',
+          headStyles: { fillColor: [234, 88, 12], textColor: 255, fontSize: 9 },
+          bodyStyles: { fontSize: 9, cellPadding: 3 },
+          margin: { left: 14, right: 14 },
+        });
+        yPosition = (doc as any).lastAutoTable.finalY + 10;
+      } else {
+        yPosition += 5;
+      }
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(
+        `Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | Guia Orlando Mágico`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`roteiro-personalizado-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('PDF do roteiro baixado com sucesso!');
+  };
+
   // Auto-generate if no itinerary exists
   useEffect(() => {
     if (itinerary && !itinerary.generated_itinerary && !isGenerating) {
@@ -215,10 +316,16 @@ export default function RoteiroView() {
               </div>
             </div>
             {generated && (
-              <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
-                Regenerar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                  <Download className={`w-4 h-4 mr-2`} />
+                  PDF
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
+                  Regenerar
+                </Button>
+              </div>
             )}
           </div>
 
