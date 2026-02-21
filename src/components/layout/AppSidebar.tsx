@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { 
   LayoutDashboard, 
@@ -61,7 +61,6 @@ const iconMap: Record<string, React.ElementType> = {
 const staticMenuItems = [
   { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },
   { icon: Heart, label: 'Meus Favoritos', path: '/favoritos', pageKey: 'favoritos' },
-  { icon: CreditCard, label: 'Meu Plano', path: '/plano', pageKey: 'plano' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
 
@@ -92,6 +91,7 @@ const guideMenuItems = [
 
 const AppSidebarComponent = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout, planTier } = useAuth();
   const { isGuide } = useUserRole();
   const { pageAccess, isLoading, getSortedPages, isTravelModeVisible } = usePlanPageAccess();
@@ -204,7 +204,10 @@ const AppSidebarComponent = () => {
           <div className="p-4 border-t border-sidebar-border">
             <Button
               variant="ghost"
-              onClick={logout}
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <LogOut size={20} />

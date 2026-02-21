@@ -363,25 +363,6 @@ const TravelProfile = () => {
                           </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label>Seu guia</Label>
-                          <RadioGroup
-                            value={travelProfile.guideName}
-                            onValueChange={(value) => handleFieldChange({ guideName: value })}
-                          >
-                            <div className="flex gap-4">
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Rafael" id="guide-rafael" />
-                                <Label htmlFor="guide-rafael">Rafael</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="Kleber" id="guide-kleber" />
-                                <Label htmlFor="guide-kleber">Kleber</Label>
-                              </div>
-                            </div>
-                          </RadioGroup>
-                        </div>
-
                         <div className="space-y-4">
                           <Label>Quais parques pretende visitar?</Label>
                           
