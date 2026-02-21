@@ -63,7 +63,11 @@ const convertToCardFormat = (restaurant: Restaurant): StaticRestaurant => {
     reservations: restaurant.reservation_required || false,
     michelin: restaurant.michelin || false,
     featured: restaurant.featured || false,
-    images: restaurant.image_url ? [restaurant.image_url] : [],
+    images: restaurant.images && restaurant.images.length > 0
+      ? restaurant.images.map(img => img.image_url)
+      : restaurant.image_url
+        ? [restaurant.image_url]
+        : [],
     menu: {
       appetizers: [],
       mainCourses: restaurant.must_try ? [restaurant.must_try] : [],

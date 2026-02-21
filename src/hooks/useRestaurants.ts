@@ -55,19 +55,29 @@ export interface Restaurant {
   menu_items?: RestaurantMenuItem[];
 }
 
-// Fetch all restaurants
+// Fetch all restaurants with their first image
 export function useRestaurants() {
   return useQuery({
     queryKey: ['restaurants'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('restaurants')
-        .select('*')
+        .select('*, restaurant_images(id, image_url, display_order)')
         .order('featured', { ascending: false })
         .order('name');
 
       if (error) throw error;
-      return data as Restaurant[];
+      return data.map((r: any) => ({
+        ...r,
+        images: (r.restaurant_images || []).map((img: any) => ({
+          id: img.id,
+          restaurant_id: r.id,
+          image_url: img.image_url,
+          display_order: img.display_order,
+          created_at: '',
+        })),
+        restaurant_images: undefined,
+      })) as Restaurant[];
     },
   });
 }
