@@ -185,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
         : '';
 
     console.log(
-      `WhatsApp ${result.success ? 'sent' : 'failed'} to ${targetPhone.substring(0, 8)}...${providerStatus ? ` (provider_status=${providerStatus})` : ''}`
+      `WhatsApp ${result.success ? 'sent' : 'failed'} to ***-***-${targetPhone.slice(-4)}${providerStatus ? ` (provider_status=${providerStatus})` : ''}`
     );
 
     return new Response(
@@ -199,7 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
           typeof result.provider_response === 'object' && result.provider_response
             ? (result.provider_response as UtalkResponse).token ?? null
             : null,
-        to_phone_masked: targetPhone.substring(0, 8) + '...',
+        to_phone_masked: '***-***-' + targetPhone.slice(-4),
       }),
       { 
         status: result.success ? 200 : 500, 

@@ -50,6 +50,23 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("visitor_id is required");
     }
 
+    // Validate visitor_id format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(visitor_id)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid visitor_id format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate total_value_cents is reasonable (max R$50k = 5000000 cents)
+    if (total_value_cents && (total_value_cents < 0 || total_value_cents > 5000000)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid cart value" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Action: Update metadata only (when user fills form fields)
     if (action === 'update_metadata' && cart_id) {
       const { error } = await supabase
