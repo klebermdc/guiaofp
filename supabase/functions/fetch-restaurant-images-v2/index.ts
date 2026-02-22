@@ -33,6 +33,7 @@ function isValidRestaurantImage(url: string): boolean {
     'instagram', 'youtube', 'tiktok', 'google-play', 'app-store',
     'badge', 'sprite', 'pixel', '1x1', 'spacer', 'blank',
     'transparent', 'universal-orlando-resort-color-logo', 'wdw.svg',
+    'logo-b.png', 'logo-w.png', 'universalorlando.com/webdata/k2/en/us/files/Images/gds/',
     'unsplash', 'pexels', 'shutterstock', 'istock',
     'avatar', 'profile-pic', 'user-icon', 'gravatar',
     'ad-banner', 'advertisement', 'promo-banner',
