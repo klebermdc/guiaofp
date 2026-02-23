@@ -1,5 +1,6 @@
 import { useState, memo, useEffect } from 'react';
 import { Pencil, X, Check, Loader2, Palette, Type } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,6 +74,7 @@ const EditButtonComponent = ({
   forceShow,
 }: EditButtonProps) => {
   const { content, canEdit, saveContent, isSaving } = useEditableContent(pageKey, sectionKey);
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<EditFormData>({
     title: '',
@@ -152,6 +154,11 @@ const EditButtonComponent = ({
       setIsOpen(false);
     }
   };
+
+  // CRITICAL: Never show for non-authenticated users
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const showButton = forceShow || canEdit;
 
