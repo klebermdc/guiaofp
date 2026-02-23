@@ -13,6 +13,7 @@ import { SavingIndicator } from '@/components/ui/saving-indicator';
 import { ItineraryModal } from '@/components/itinerary/ItineraryModal';
 import { AttractionNoteField } from '@/components/attractions/AttractionNoteField';
 import { useGenerateItinerary } from '@/hooks/useGenerateItinerary';
+import { SEO } from '@/components/SEO';
 import { useAttractions, type Attraction } from '@/hooks/useAttractions';
 import { 
   Sparkles, 
@@ -402,6 +403,7 @@ export default function Attractions() {
 
   return (
     <AppLayout>
+      <SEO title="Atrações Desejadas" description="Descubra as melhores atrações dos parques de Orlando e planeje seu roteiro." />
       <SavingIndicator isSaving={saving} />
       <div className="space-y-6">
         {/* Header */}
