@@ -1,682 +1,793 @@
-import { useEffect, useState, forwardRef, useCallback, memo } from 'react';
+import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useParallax, useElementInView } from '@/hooks/useParallax';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
-import { LanguageSelector } from '@/components/LanguageSelector';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
-import { EditButton } from '@/components/admin/EditButton';
-import { preloadPageContent } from '@/hooks/useEditableContent';
 import { useScrollTracking, useAnalytics } from '@/hooks/useAnalytics';
 import { TrackableButton } from '@/components/analytics';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
   Crown,
-  MapPin,
   CheckCircle2,
-  Route,
-  Users,
-  Play,
+  ArrowRight,
   Star,
   MessageCircle,
-  Clock,
-  ArrowRight,
-  Map,
-  Zap,
-  Calendar,
   ChevronDown,
+  Shield,
+  X,
+  Sparkles,
+  Menu,
+  XIcon,
 } from 'lucide-react';
 
-// Import images
-import heroCastle from '@/assets/landing/hero-castle.jpg';
-import familyPark from '@/assets/landing/family-park.jpg';
-import featureCoaster from '@/assets/landing/feature-coaster.jpg';
 import logo from '@/assets/logo.png';
+import heroCastle from '@/assets/landing/hero-castle.jpg';
 
-// Preload landing page content in background (runs once)
-preloadPageContent('landing');
+// ─── Animated Section (fade-in on scroll) ────────────────────────────────────
+const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-interface AnimatedCardProps {
-  children: React.ReactNode;
-  delay?: number;
-  className?: string;
-}
-
-const AnimatedCard = memo(forwardRef<HTMLDivElement, AnimatedCardProps>(
-  ({ children, delay = 0, className = '' }, _ref) => {
-    const { ref, isInView } = useElementInView(0.1);
-    
-    return (
-      <div
-        ref={ref}
-        className={`transition-all duration-700 ${className}`}
-        style={{
-          opacity: isInView ? 1 : 0,
-          transform: isInView ? 'translateY(0)' : 'translateY(40px)',
-          transitionDelay: `${delay}ms`,
-        }}
-      >
-        {children}
-      </div>
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
+      { threshold: 0.1 }
     );
-  }
-));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
-AnimatedCard.displayName = 'AnimatedCard';
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${className}`}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
+        transitionDelay: `${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+});
+AnimatedSection.displayName = 'AnimatedSection';
 
+// ─── Counter Animation ───────────────────────────────────────────────────────
+const AnimatedCounter = ({ end, suffix = '', duration = 2000 }: { end: number; suffix?: string; duration?: number }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = Date.now();
+          const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * end));
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+};
+
+// ─── WhatsApp link ───────────────────────────────────────────────────────────
 const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
 
 const Landing = () => {
-  const { t } = useLanguage();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { trackCTAClick } = useAnalytics();
-  
-  // Ativa o tracking automático de scroll depth (25%, 50%, 75%, 90%, 100%)
+
   useScrollTracking();
-  
-  const heroParallax = useParallax({ speed: 0.3, direction: 'down' });
-  const floatParallax = useParallax({ speed: 0.15, direction: 'up' });
-  
-  // Check if user is admin/guide to show edit buttons
+
+  // Scroll listener for navbar
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Admin check
+  useEffect(() => {
+    const checkAdmin = async () => {
       if (user) {
         const { supabase } = await import('@/integrations/supabase/client');
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
+        const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
         const roles = data?.map(r => r.role) || [];
         setIsAdminUser(roles.includes('admin') || roles.includes('guide'));
       }
     };
-    checkAdminStatus();
+    checkAdmin();
   }, [user]);
-  
-  // Safety timeout: if auth takes too long, show content anyway
+
+  // Safety timeout
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!showContent) {
-        setShowContent(true);
-      }
-    }, 3000);
-    
-    return () => clearTimeout(timeout);
+    const t = setTimeout(() => { if (!showContent) setShowContent(true); }, 3000);
+    return () => clearTimeout(t);
   }, [showContent]);
-  
-  // Redirect authenticated users to dashboard (but not admins who may want to edit)
+
+  // Redirect auth users
   useEffect(() => {
     if (!authLoading && isAuthenticated && !isAdminUser) {
-      // Wait a bit for admin check before redirecting
-      const timeout = setTimeout(() => {
-        if (!isAdminUser) {
-          navigate('/dashboard', { replace: true });
-        }
-      }, 500);
-      return () => clearTimeout(timeout);
+      const t = setTimeout(() => { if (!isAdminUser) navigate('/dashboard', { replace: true }); }, 500);
+      return () => clearTimeout(t);
     } else if (!authLoading) {
       setShowContent(true);
     }
   }, [authLoading, isAuthenticated, isAdminUser, navigate]);
-  
-  // Show loading only briefly while checking auth
-  if (authLoading && !showContent) {
-    return <AuthLoadingScreen />;
-  }
-  
-  const scrollToSection = (id: string) => {
+
+  if (authLoading && !showContent) return <AuthLoadingScreen />;
+
+  const scrollTo = (id: string) => {
+    setMobileMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const navLinks = [
+    { label: 'Como funciona', id: 'como-funciona' },
+    { label: 'Funcionalidades', id: 'funcionalidades' },
+    { label: 'Planos', id: 'planos' },
+    { label: 'FAQ', id: 'faq' },
+  ];
+
   return (
-    <div className="min-h-screen bg-background font-body overflow-x-hidden">
-      {/* Floating Header */}
-      <header className="fixed top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-4 z-50">
-        <div className="max-w-6xl mx-auto bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between shadow-soft">
-          <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Orlando Fast Pass Planejador" 
-              className="h-10 sm:h-14 md:h-16 w-auto object-contain"
-            />
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="hidden sm:block">
-              <LanguageSelector />
-            </div>
+    <div className="min-h-screen bg-background font-body overflow-x-hidden scroll-smooth">
+      <SEO
+        title="OFP Planejador — Roteiro Inteligente para Orlando"
+        description="Planeje sua viagem a Orlando com roteiros personalizados, guia de restaurantes, mapa interativo e muito mais. Para famílias brasileiras."
+        url="/"
+      />
+
+      {/* ═══ NAVBAR ═══ */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-soft' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <img src={logo} alt="Orlando Fast Pass" className="h-10 sm:h-12 w-auto object-contain" />
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map(l => (
+              <button key={l.id} onClick={() => scrollTo(l.id)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {l.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex items-center gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground px-2 sm:px-4 min-h-[44px]">
-                {t('common.login')}
-              </Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground">Entrar</Button>
             </Link>
-            <Button 
-              size="sm" 
-              className="gradient-primary text-primary-foreground rounded-lg sm:rounded-xl px-3 sm:px-4 min-h-[44px] text-xs sm:text-sm"
-              onClick={() => scrollToSection('planos')}
-            >
-              <span className="hidden xs:inline">Ver planos</span>
-              <span className="xs:hidden">Planos</span>
+            <Button size="sm" className="gradient-gold text-secondary-foreground rounded-xl px-5" onClick={() => scrollTo('planos')}>
+              Começar agora
             </Button>
           </div>
-        </div>
-      </header>
 
-      {/* Hero Section - Full Screen with Parallax Image */}
-      <section className="min-h-screen relative overflow-hidden">
-        {/* Parallax Background Image */}
-        <div 
-          className="absolute inset-0 scale-110"
-          style={{ transform: `translateY(${heroParallax}px) scale(1.1)` }}
-        >
-          <img 
-            src={heroCastle} 
-            alt="Magical castle with fireworks" 
-            className="w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/30" />
-
-        {/* Floating Elements with Parallax */}
-        <div 
-          className="absolute top-32 left-10 w-20 h-20 bg-secondary/30 rounded-full blur-2xl"
-          style={{ transform: `translateY(${floatParallax * 2}px)` }}
-        />
-        <div 
-          className="absolute top-48 right-16 w-32 h-32 bg-accent/20 rounded-full blur-3xl"
-          style={{ transform: `translateY(${floatParallax * 1.5}px)` }}
-        />
-        <div 
-          className="absolute bottom-40 left-1/4 w-24 h-24 bg-primary/20 rounded-full blur-2xl"
-          style={{ transform: `translateY(${floatParallax * 2.5}px)` }}
-        />
-
-        <div className="relative min-h-screen flex flex-col justify-end pb-16 px-4">
-          <div className="max-w-4xl mx-auto text-center relative">
-            {/* Edit Button for Hero - admin/guide only */}
-            {isAdminUser && (
-              <EditButton 
-                pageKey="landing" 
-                sectionKey="hero"
-                className="absolute -top-2 -right-2"
-                fallback={{
-                  title: 'Menos filas.',
-                  subtitle: 'Mais magia.',
-                  description: 'Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.',
-                  badgeText: '✨ Planejador Inteligente de Parques',
-                  buttonText: 'Escolher meu plano',
-                }}
-              />
-            )}
-            <Badge className="mb-4 sm:mb-6 bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm animate-fade-in">
-              ✨ Planejador Inteligente de Parques
-            </Badge>
-
-            <h1 
-              className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-4 sm:mb-6 drop-shadow-lg animate-fade-in px-2"
-              style={{ animationDelay: '0.1s' }}
-            >
-              Menos filas.
-              <br />
-              <span className="text-secondary">
-                Mais magia.
-              </span>
-            </h1>
-
-            <p 
-              className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8 sm:mb-10 drop-shadow animate-fade-in px-4"
-              style={{ animationDelay: '0.2s' }}
-            >
-              Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
-            </p>
-
-            <div 
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 animate-fade-in px-4"
-              style={{ animationDelay: '0.3s' }}
-            >
-              <TrackableButton 
-                size="lg" 
-                className="gradient-gold text-secondary-foreground rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg shadow-gold group hover:scale-105 transition-transform w-full sm:w-auto"
-                onClick={() => scrollToSection('planos')}
-                trackingName="cta_hero_ver_planos"
-                trackingLocation="hero"
-              >
-                Escolher meu plano
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </TrackableButton>
-              <TrackableButton 
-                size="lg" 
-                variant="outline" 
-                className="rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:scale-105 transition-transform w-full sm:w-auto"
-                onClick={() => scrollToSection('como-funciona')}
-                trackingName="cta_hero_como_funciona"
-                trackingLocation="hero"
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Como funciona
-              </TrackableButton>
-            </div>
-
-            {/* Stats with stagger animation */}
-            <div 
-              className="flex items-center justify-center gap-2 sm:gap-4 md:gap-8 text-center animate-fade-in flex-wrap px-2"
-              style={{ animationDelay: '0.4s' }}
-            >
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 hover:bg-white/20 transition-colors">
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">500+</p>
-                <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Famílias</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 hover:bg-white/20 transition-colors">
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">7</p>
-                <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Parques</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center gap-1 sm:gap-2 hover:bg-white/20 transition-colors">
-                <div>
-                  <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">5.0</p>
-                  <p className="text-[10px] sm:text-xs md:text-sm text-white/70">Avaliação</p>
-                </div>
-                <Star className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-secondary text-secondary" />
-              </div>
-            </div>
-          </div>
-
-          {/* Scroll Indicator */}
-          <button 
-            onClick={() => scrollToSection('como-funciona')}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/70 animate-bounce hover:text-white transition-colors"
-          >
-            <ChevronDown className="w-8 h-8" />
+          {/* Mobile hamburger */}
+          <button className="md:hidden text-foreground p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <XIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-      </section>
 
-      {/* How It Works - Bento Grid with Scroll Animations */}
-      <section id="como-funciona" className="py-16 sm:py-24 px-3 sm:px-4">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedCard className="text-center mb-10 sm:mb-16 relative">
-            {isAdminUser && (
-              <EditButton 
-                pageKey="landing" 
-                sectionKey="how_it_works"
-                className="absolute top-0 right-0"
-                fallback={{
-                  title: 'Como funciona',
-                  subtitle: 'Simples e poderoso',
-                }}
-              />
-            )}
-            <p className="text-accent font-medium mb-2 text-sm sm:text-base">Simples e poderoso</p>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
-              Como funciona
-            </h2>
-          </AnimatedCard>
-
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            {/* Step 1 - Large with Image */}
-            <AnimatedCard delay={100} className="md:col-span-2">
-              <Card className="overflow-hidden group hover:shadow-glow transition-all duration-500">
-                <div className="grid md:grid-cols-2 h-full">
-                  <CardContent className="p-5 sm:p-8 flex flex-col justify-center order-2 md:order-1">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-accent/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
-                    </div>
-                    <p className="text-accent text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 1</p>
-                    <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
-                      Monte seu perfil
-                    </h3>
-                    <p className="text-muted-foreground text-sm sm:text-base">
-                      Datas, tamanho do grupo, preferências e estilo de viagem. Tudo em minutos.
-                    </p>
-                  </CardContent>
-                  <div className="relative h-40 sm:h-48 md:h-auto overflow-hidden order-1 md:order-2">
-                    <img 
-                      src={familyPark} 
-                      alt="Família no parque" 
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-card md:bg-gradient-to-r" />
-                  </div>
-                </div>
-              </Card>
-            </AnimatedCard>
-
-            {/* Step 2 */}
-            <AnimatedCard delay={200}>
-              <Card className="bg-gradient-to-br from-secondary/10 to-transparent border-secondary/20 overflow-hidden hover:shadow-gold transition-all duration-500 h-full group">
-                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[200px] sm:min-h-[280px]">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-secondary/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-                    <Star className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
-                  </div>
-                  <div className="mt-auto">
-                    <p className="text-secondary text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 2</p>
-                    <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
-                      Escolha as atrações
-                    </h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
-                      Marque tudo que quer fazer em cada parque.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
-
-            {/* Step 3 with Illustration */}
-            <AnimatedCard delay={300}>
-              <Card className="overflow-hidden hover:shadow-soft transition-all duration-500 relative h-full group">
-                <img 
-                  src={featureCoaster} 
-                  alt="Montanha-russa" 
-                  className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 group-hover:scale-110 transition-all duration-700"
-                  loading="lazy"
-                />
-                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[200px] sm:min-h-[280px] relative">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-                    <Route className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                  </div>
-                  <div className="mt-auto">
-                    <p className="text-primary text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 3</p>
-                    <h3 className="font-display text-lg sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
-                      Gere seu roteiro
-                    </h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
-                      IA cria a melhor sequência para você.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
-
-            {/* Step 4 - Large */}
-            <AnimatedCard delay={400} className="md:col-span-2">
-              <Card className="bg-gradient-to-br from-success/10 to-transparent border-success/20 overflow-hidden hover:shadow-soft transition-all duration-500 group">
-                <CardContent className="p-5 sm:p-8 flex flex-col h-full min-h-[180px] sm:min-h-[280px]">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-success/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-success" />
-                  </div>
-                  <div className="mt-auto">
-                    <p className="text-success text-xs sm:text-sm font-medium mb-1 sm:mb-2">Passo 4</p>
-                    <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
-                      Aproveite sem stress
-                    </h3>
-                    <p className="text-muted-foreground text-sm sm:text-base">
-                      Menos tempo na fila, mais tempo criando memórias. Simples assim.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
-          </div>
-        </div>
-      </section>
-
-      {/* Plans Section with Animations */}
-      <section id="planos" className="py-12 sm:py-24 px-3 sm:px-4 bg-card/50">
-        <div className="max-w-5xl mx-auto">
-          <AnimatedCard className="text-center mb-16">
-            <p className="text-accent font-medium mb-2">Escolha seu caminho</p>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
-              Dois jeitos de planejar
-            </h2>
-          </AnimatedCard>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Basic Plan */}
-            <AnimatedCard delay={100}>
-              <Card className="relative overflow-hidden hover:shadow-card hover:-translate-y-2 transition-all duration-500 h-full">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
-                      <Map className="w-7 h-7 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-display text-xl font-bold text-foreground">
-                        Planejador
-                      </h3>
-                      <p className="text-sm text-muted-foreground">Autonomia total</p>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-4 mb-8">
-                    {[
-                      'Perfil de viagem completo',
-                      'Seleção de atrações',
-                      'Mapa dos parques',
-                      'Checklist de viagem',
-                      'Roteiro com dicas gerais',
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
-                        <span className="text-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-3xl font-bold text-foreground">R$49</span>
-                      <span className="text-lg text-muted-foreground">,90</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground italic">
-                      "Você planeja. O sistema organiza."
-                    </p>
-                  </div>
-
-                  <Link to="/registro/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
-                    <Button variant="outline" className="w-full h-12 rounded-xl hover:scale-[1.02] transition-transform">
-                      Começar agora
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
-
-            {/* Premium Plan */}
-            <AnimatedCard delay={200}>
-              <Card className="relative overflow-hidden border-secondary/50 shadow-gold hover:shadow-lg hover:-translate-y-2 transition-all duration-500 h-full">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent" />
-                <CardContent className="p-8">
-                  <Badge className="absolute top-4 right-4 bg-gradient-to-r from-secondary to-accent text-white border-0">
-                    Popular
-                  </Badge>
-
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-14 h-14 rounded-2xl gradient-gold flex items-center justify-center">
-                      <Crown className="w-7 h-7 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-display text-xl font-bold text-foreground">
-                        Com Guia
-                      </h3>
-                      <p className="text-sm text-muted-foreground">Experiência premium</p>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-4 mb-8">
-                    {[
-                      'Tudo do Planejador +',
-                      'Roteiro otimizado por horário',
-                      'Ajustes em tempo real',
-                      'Suporte via WhatsApp',
-                      'Guia humano dedicado',
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <Crown className="w-5 h-5 text-secondary flex-shrink-0" />
-                        <span className="text-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className="text-sm text-muted-foreground italic mb-6">
-                    "Você aproveita. O guia decide."
-                  </p>
-
-                  <a 
-                    href={WHATSAPP_PREMIUM_LINK}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                    onClick={() => trackCTAClick('cta_plano_premium_whatsapp', 'pricing')}
-                  >
-                    <Button className="w-full h-14 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white hover:scale-[1.02] transition-transform shadow-lg">
-                      <MessageCircle className="w-5 h-5 mr-2" />
-                      Falar com consultor
-                    </Button>
-                  </a>
-                  
-                  <div className="flex items-center justify-center gap-2 mt-4">
-                    <Badge variant="outline" className="bg-secondary/10 border-secondary/30 text-secondary text-xs px-3 py-1">
-                      <Users className="w-3 h-3 mr-1" />
-                      Atendimento Personalizado
-                    </Badge>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Consultoria especializada via WhatsApp
-                  </p>
-                </CardContent>
-              </Card>
-            </AnimatedCard>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid with Stagger */}
-      <section className="py-12 sm:py-24 px-3 sm:px-4">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedCard className="text-center mb-16">
-            <p className="text-accent font-medium mb-2">Tudo que você precisa</p>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
-              Ferramentas incluídas
-            </h2>
-          </AnimatedCard>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { icon: Calendar, label: 'Agenda', desc: 'Organize cada dia' },
-              { icon: MapPin, label: 'Mapas', desc: 'Visualize o parque' },
-              { icon: Play, label: 'Vídeos', desc: 'Dicas exclusivas' },
-              { icon: CheckCircle2, label: 'Checklist', desc: 'Nada esquecido' },
-              { icon: Star, label: 'Atrações', desc: 'Escolha favoritas' },
-              { icon: Route, label: 'Roteiro', desc: 'Gerado por IA' },
-              { icon: Clock, label: 'Filas', desc: 'Tempo otimizado' },
-              { icon: MessageCircle, label: 'Suporte', desc: 'Ajuda quando precisar' },
-            ].map((item, i) => (
-              <AnimatedCard key={i} delay={i * 50}>
-                <Card className="group hover:shadow-card hover:-translate-y-2 transition-all duration-300 h-full">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 group-hover:scale-110 transition-all">
-                      <item.icon className="w-6 h-6 text-accent" />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-1">{item.label}</h3>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
-                  </CardContent>
-                </Card>
-              </AnimatedCard>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 pb-4 animate-fadeIn">
+            {navLinks.map(l => (
+              <button key={l.id} onClick={() => scrollTo(l.id)} className="block w-full text-left py-3 text-foreground border-b border-border/20">
+                {l.label}
+              </button>
             ))}
+            <div className="flex gap-3 mt-4">
+              <Link to="/login" className="flex-1">
+                <Button variant="outline" className="w-full">Entrar</Button>
+              </Link>
+              <Button className="flex-1 gradient-gold text-secondary-foreground" onClick={() => scrollTo('planos')}>
+                Começar
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        )}
+      </header>
 
-      {/* Social Proof */}
-      <section className="py-12 sm:py-24 px-3 sm:px-4 bg-card/50">
-        <AnimatedCard className="max-w-4xl mx-auto text-center">
-          <div className="flex justify-center gap-1 mb-6">
-            {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className="w-8 h-8 fill-secondary text-secondary animate-fade-in" 
-                style={{ animationDelay: `${i * 100}ms` }}
-              />
-            ))}
+      {/* ═══ BLOCO 1 — HERO ═══ */}
+      <section className="min-h-screen relative overflow-hidden flex items-end pb-12 sm:pb-20">
+        <img
+          src={heroCastle}
+          alt="Castelo da Cinderela iluminado"
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="eager"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
+
+        <div className="relative w-full max-w-4xl mx-auto text-center px-4 sm:px-6">
+          {/* Shimmer badge */}
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-secondary/40 bg-secondary/10 backdrop-blur-sm animate-fadeIn">
+            <Sparkles className="w-4 h-4 text-secondary" />
+            <span className="text-sm font-medium text-secondary">Planejador Inteligente de Parques</span>
           </div>
-          <blockquote className="font-display text-2xl md:text-3xl text-foreground mb-6">
-            "A sequência de atrações fez todo sentido — aproveitamos muito mais do que imaginávamos!"
-          </blockquote>
-          <p className="text-muted-foreground">— Família Santos, São Paulo</p>
-        </AnimatedCard>
-      </section>
 
-      {/* Final CTA with Parallax */}
-      <section className="py-16 sm:py-32 px-3 sm:px-4 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-primary" />
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{ transform: `translateY(${floatParallax * 0.5}px)` }}
-        >
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-secondary/30 rounded-full blur-3xl" />
-        </div>
+          <h1
+            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-6 animate-fadeIn"
+            style={{ animationDelay: '0.1s' }}
+          >
+            <span className="text-white">Menos filas.</span>
+            <br />
+            <span className="text-secondary">Mais magia.</span>
+          </h1>
 
-        <AnimatedCard className="max-w-3xl mx-auto text-center relative">
-          {isAdminUser && (
-            <EditButton 
-              pageKey="landing" 
-              sectionKey="cta"
-              className="absolute top-0 right-0"
-              fallback={{
-                title: 'Pronto para sua melhor viagem?',
-                description: 'Comece agora e transforme seu dia de parque.',
-                buttonText: 'Criar meu roteiro grátis',
-              }}
-            />
-          )}
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
-            Pronto para sua
-            <br />melhor viagem?
-          </h2>
-          <p className="text-xl text-primary-foreground/80 mb-10">
-            Comece agora e transforme seu dia de parque.
+          <p
+            className="text-lg sm:text-xl text-white/85 max-w-2xl mx-auto mb-8 animate-fadeIn"
+            style={{ animationDelay: '0.2s' }}
+          >
+            Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
           </p>
 
-          <Link to="/login">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 rounded-2xl px-10 h-14 text-lg shadow-lg hover:scale-105 transition-transform">
-              Criar meu roteiro grátis
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
-        </AnimatedCard>
+          <div
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 animate-fadeIn"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <TrackableButton
+              size="lg"
+              className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group hover:scale-105 transition-transform w-full sm:w-auto font-bold"
+              onClick={() => scrollTo('planos')}
+              trackingName="cta_hero_planos"
+              trackingLocation="hero"
+            >
+              ✨ Escolher meu plano
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </TrackableButton>
+            <TrackableButton
+              size="lg"
+              variant="outline"
+              className="rounded-2xl px-8 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+              onClick={() => scrollTo('como-funciona')}
+              trackingName="cta_hero_como_funciona"
+              trackingLocation="hero"
+            >
+              ▷ Como funciona
+            </TrackableButton>
+          </div>
+
+          {/* Social proof badges */}
+          <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+            <div className="flex items-center gap-1.5 text-white/80 text-sm">
+              <Star className="w-4 h-4 fill-secondary text-secondary" />
+              <span>5.0 no Google</span>
+            </div>
+            <div className="w-px h-4 bg-white/30 hidden sm:block" />
+            <div className="flex items-center gap-1.5 text-white/80 text-sm">
+              <span>👨‍👩‍👧</span>
+              <span>500+ famílias</span>
+            </div>
+            <div className="w-px h-4 bg-white/30 hidden sm:block" />
+            <div className="flex items-center gap-1.5 text-white/80 text-sm">
+              <Shield className="w-4 h-4" />
+              <span>Garantia 7 dias</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <button
+          onClick={() => scrollTo('prova-social')}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 animate-bounce"
+          aria-label="Rolar para baixo"
+        >
+          <ChevronDown className="w-8 h-8" />
+        </button>
       </section>
 
-      {/* Minimal Footer */}
-      <footer className="py-8 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="Orlando Fast Pass Planejador" 
-              className="h-12 w-auto object-contain"
-            />
+      {/* ═══ BLOCO 2 — NÚMEROS / PROVA SOCIAL ═══ */}
+      <section id="prova-social" className="py-16 sm:py-20 px-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { emoji: '🏰', value: 500, suffix: '+', label: 'Famílias planejadas' },
+            { emoji: '🎢', value: 7, suffix: '', label: 'Parques cobertos' },
+            { emoji: '⭐', value: 5, suffix: '.0', label: 'Avaliação média' },
+            { emoji: '📅', value: 3, suffix: '+', label: 'Anos de experiência' },
+          ].map((item, i) => (
+            <AnimatedSection key={i} delay={i * 100}>
+              <Card className="text-center bg-card/80 backdrop-blur-sm border-border/50 hover:border-secondary/30 transition-all duration-300">
+                <CardContent className="p-6">
+                  <span className="text-3xl mb-2 block">{item.emoji}</span>
+                  <p className="text-3xl sm:text-4xl font-bold text-secondary font-display">
+                    <AnimatedCounter end={item.value} suffix={item.suffix} />
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">{item.label}</p>
+                </CardContent>
+              </Card>
+            </AnimatedSection>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 3 — FUNCIONALIDADES ═══ */}
+      <section id="funcionalidades" className="py-16 sm:py-24 px-4">
+        <div className="max-w-6xl mx-auto">
+          <AnimatedSection className="text-center mb-14">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Tudo que você precisa para uma viagem perfeita
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Não é um PDF estático. É uma plataforma viva que te guia do planejamento até o último dia.
+            </p>
+          </AnimatedSection>
+
+          <div className="space-y-16 sm:space-y-24">
+            {[
+              {
+                badge: '🔥 Mais usado',
+                icon: '📅',
+                title: 'Roteiro Personalizado para Sua Família',
+                text: 'Informe sua data, grupo e parques desejados. O planejador monta um roteiro otimizado considerando filas, horários de shows e o perfil do seu grupo — tudo automaticamente.',
+              },
+              {
+                badge: '📖 Completo',
+                icon: '📖',
+                title: 'Guia de Viagem em Português',
+                text: 'Tudo que você precisa saber sobre cada parque: dicas de chegada, estratégias por área, o que não pode perder e como economizar tempo e dinheiro.',
+              },
+              {
+                badge: '✅ Essencial',
+                icon: '✅',
+                title: 'Checklists que Guiam Cada Etapa',
+                text: 'Da mala ao retorno para casa. Listas organizadas por momento da viagem para que nada seja esquecido — especialmente com crianças.',
+              },
+              {
+                badge: '🗺️ Interativo',
+                icon: '🗺️',
+                title: 'Mapa Interativo em Tempo Real',
+                text: 'Veja todas as atrações, restaurantes e banheiros no mapa. Planeje sua rota dentro do parque e não perca tempo procurando atrações.',
+              },
+              {
+                badge: '🍽️ Popular',
+                icon: '🍽️',
+                title: '279 Restaurantes Organizados',
+                text: 'Escolha onde comer sem improviso, com restaurantes organizados por parque, tipo de comida e faixa de preço. Nunca mais pague caro em lugar ruim.',
+              },
+              {
+                badge: '📁 Prático',
+                icon: '📁',
+                title: 'Carteira de Documentos Digital',
+                text: 'Ingressos, vouchers de hotel, passagens aéreas e muito mais — tudo num só lugar, acessível offline dentro dos parques.',
+              },
+              {
+                badge: '🎟️ Exclusivo',
+                icon: '🎟️',
+                title: 'Cupons e Descontos Exclusivos',
+                text: 'Economia real durante a viagem com cupons de parceiros selecionados. Transporte, restaurantes e muito mais.',
+              },
+            ].map((feature, i) => (
+              <AnimatedSection key={i} delay={100}>
+                <div className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
+                  {/* Mockup placeholder */}
+                  <div className="flex-1 w-full">
+                    <div className="relative bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl p-6 sm:p-8 aspect-video flex items-center justify-center overflow-hidden group hover:border-secondary/30 transition-all duration-500">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <span className="text-6xl sm:text-7xl">{feature.icon}</span>
+                    </div>
+                  </div>
+                  {/* Text */}
+                  <div className="flex-1 w-full">
+                    <Badge className="mb-3 bg-secondary/10 text-secondary border-secondary/30 text-xs">{feature.badge}</Badge>
+                    <h3 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">{feature.title}</h3>
+                    <p className="text-muted-foreground text-base sm:text-lg leading-relaxed">{feature.text}</p>
+                  </div>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 4 — DEPOIMENTOS ═══ */}
+      <section className="py-16 sm:py-24 px-4 bg-card/50">
+        <div className="max-w-6xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+              O que as famílias dizem
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                initial: 'M',
+                color: 'bg-primary',
+                name: 'Mayara Miranda Reis',
+                text: 'O planejador mudou completamente a forma como organizamos nossa viagem. Conseguimos aproveitar muito mais com as crianças sem ficar perdidas.',
+              },
+              {
+                initial: 'R',
+                color: 'bg-blue-600',
+                name: 'Rafael Gomes',
+                text: 'Fui pela primeira vez e senti como se conhecesse os parques há anos. O roteiro foi certeiro, economizamos horas de fila.',
+              },
+              {
+                initial: 'C',
+                color: 'bg-emerald-600',
+                name: 'Carlos Bacha',
+                text: 'Incrível como tudo fica mais claro com o planejador. Cada detalhe pensado para brasileiros que não conhecem o sistema americano.',
+              },
+            ].map((t, i) => (
+              <AnimatedSection key={i} delay={i * 150}>
+                <Card className="h-full bg-card/80 backdrop-blur-sm border-border/50 hover:border-secondary/20 transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} className="w-4 h-4 fill-secondary text-secondary" />
+                      ))}
+                    </div>
+                    <p className="text-foreground/90 mb-6 leading-relaxed italic">"{t.text}"</p>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm`}>
+                        {t.initial}
+                      </div>
+                      <span className="font-medium text-foreground">{t.name}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </AnimatedSection>
+            ))}
+          </div>
+
+          <AnimatedSection className="text-center mt-8">
+            <Badge variant="outline" className="text-muted-foreground border-border/50">
+              🔒 Depoimentos verificados de clientes reais
+            </Badge>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 5 — AUTORIDADE ═══ */}
+      <section className="py-16 sm:py-24 px-4">
+        <div className="max-w-5xl mx-auto">
+          <AnimatedSection>
+            <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-8 sm:p-12">
+                <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                  <div className="flex-shrink-0">
+                    <img src={logo} alt="Orlando Fast Pass" className="h-24 sm:h-32 w-auto object-contain" loading="lazy" />
+                  </div>
+                  <div>
+                    <p className="text-secondary font-semibold text-sm uppercase tracking-widest mb-2">Quem está por trás</p>
+                    <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-4">
+                      Somos a Orlando Fast Pass.
+                    </h2>
+                    <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-6">
+                      Há mais de 3 anos ajudando famílias brasileiras a aproveitarem Orlando sem erros, sem correria e sem frustração. Todo o conteúdo do planejador vem da prática real dentro dos parques — não de teoria ou de cópias de sites estrangeiros.
+                    </p>
+                    <ul className="space-y-3">
+                      {[
+                        'Equipe que vive nos parques',
+                        'Conteúdo 100% em português',
+                        'Atualizado com cada mudança dos parques',
+                        'Pensado para famílias brasileiras',
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-foreground">
+                          <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 6 — COMPARAÇÃO ═══ */}
+      <section id="como-funciona" className="py-16 sm:py-24 px-4 bg-card/50">
+        <div className="max-w-5xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+              A diferença que o planejador faz
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <AnimatedSection delay={100}>
+              <Card className="h-full border-destructive/30 bg-destructive/5">
+                <CardContent className="p-6 sm:p-8">
+                  <h3 className="font-display text-xl font-bold text-destructive mb-6 flex items-center gap-2">
+                    <X className="w-6 h-6" />
+                    Sem OFP Planejador
+                  </h3>
+                  <ul className="space-y-4">
+                    {[
+                      'Informações soltas pela internet',
+                      'Decisões inseguras e improvisadas',
+                      'Tempo perdido procurando atrações',
+                      'Estresse com as crianças no parque',
+                      'Gastos desnecessários com o que não vale',
+                      'Filas longas por falta de estratégia',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-muted-foreground">
+                        <X className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </AnimatedSection>
+
+            <AnimatedSection delay={200}>
+              <Card className="h-full border-success/30 bg-success/5 shadow-[0_0_30px_hsl(152_69%_45%/0.1)]">
+                <CardContent className="p-6 sm:p-8">
+                  <h3 className="font-display text-xl font-bold text-success mb-6 flex items-center gap-2">
+                    <CheckCircle2 className="w-6 h-6" />
+                    Com OFP Planejador
+                  </h3>
+                  <ul className="space-y-4">
+                    {[
+                      'Estratégia clara desde o primeiro dia',
+                      'Tudo centralizado numa só plataforma',
+                      'Mais atrações aproveitadas por dia',
+                      'Menos filas com roteiro inteligente',
+                      'Viagem muito mais tranquila e organizada',
+                      'Família feliz e sem imprevistos',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3 text-foreground">
+                        <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 7 — OFERTA / PREÇO ═══ */}
+      <section id="planos" className="py-16 sm:py-24 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 gradient-primary opacity-90" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-secondary/20 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto text-center">
+          <AnimatedSection>
+            <p className="text-white/60 uppercase tracking-widest text-sm mb-4 font-medium">Investimento</p>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+              Sua viagem vai custar milhares de dólares.
+            </h2>
+            <p className="text-secondary text-xl sm:text-2xl font-semibold mb-6">
+              O OFP Planejador custa menos que um lanche dentro do parque.
+            </p>
+            <p className="text-white/70 max-w-xl mx-auto mb-10">
+              Se o conhecimento de anos vivendo isso não vale esse valor, nada mais vai valer.
+            </p>
+
+            {/* Pricing cards */}
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10">
+              {/* Basic */}
+              <AnimatedSection delay={100}>
+                <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white h-full">
+                  <CardContent className="p-6 sm:p-8">
+                    <h3 className="font-display text-xl font-bold mb-2">Planejador</h3>
+                    <p className="text-white/60 text-sm mb-6">Autonomia total para planejar</p>
+                    <div className="mb-6">
+                      <span className="text-white/40 line-through text-lg">R$ 197</span>
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-4xl sm:text-5xl font-bold text-secondary">R$ 97</span>
+                      </div>
+                      <Badge className="mt-2 bg-secondary/20 text-secondary border-secondary/30 text-xs">🔥 Oferta por tempo limitado</Badge>
+                    </div>
+                    <ul className="space-y-3 mb-8 text-left">
+                      {['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos'].map((f, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/90">
+                          <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to="/registro/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
+                      <Button className="w-full h-14 rounded-xl gradient-gold text-secondary-foreground font-bold text-base hover:scale-[1.02] transition-transform shadow-gold">
+                        🚀 Quero acesso imediato
+                      </Button>
+                    </Link>
+                    <p className="text-xs text-white/50 mt-3">✅ Acesso imediato • ✅ Funciona no celular • ✅ 7 dias de garantia</p>
+                  </CardContent>
+                </Card>
+              </AnimatedSection>
+
+              {/* Premium */}
+              <AnimatedSection delay={200}>
+                <Card className="bg-white/10 backdrop-blur-sm border-secondary/40 text-white h-full relative">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent rounded-t-xl" />
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground border-0 px-4">
+                    ⭐ Popular
+                  </Badge>
+                  <CardContent className="p-6 sm:p-8 pt-8">
+                    <h3 className="font-display text-xl font-bold mb-2">Com Guia</h3>
+                    <p className="text-white/60 text-sm mb-6">Experiência premium completa</p>
+                    <div className="mb-6">
+                      <p className="text-white/60 text-sm mb-1">Consultoria personalizada</p>
+                      <p className="text-lg text-white/80 italic">"Você aproveita. O guia decide."</p>
+                    </div>
+                    <ul className="space-y-3 mb-8 text-left">
+                      {['Tudo do Planejador +', 'Roteiro otimizado por horário', 'Ajustes em tempo real', 'Suporte via WhatsApp', 'Guia humano dedicado'].map((f, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-white/90">
+                          <Crown className="w-4 h-4 text-secondary flex-shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <a href={WHATSAPP_PREMIUM_LINK} target="_blank" rel="noopener noreferrer" className="block" onClick={() => trackCTAClick('cta_plano_premium', 'pricing')}>
+                      <Button className="w-full h-14 rounded-xl bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white font-bold text-base hover:scale-[1.02] transition-transform">
+                        <MessageCircle className="w-5 h-5 mr-2" />
+                        Falar com consultor
+                      </Button>
+                    </a>
+                    <p className="text-xs text-white/50 mt-3">Atendimento personalizado via WhatsApp</p>
+                  </CardContent>
+                </Card>
+              </AnimatedSection>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 8 — GARANTIA ═══ */}
+      <section className="py-16 sm:py-20 px-4">
+        <div className="max-w-3xl mx-auto">
+          <AnimatedSection>
+            <Card className="border-secondary/30 bg-card/80 backdrop-blur-sm">
+              <CardContent className="p-8 sm:p-12">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="flex-shrink-0">
+                    <div className="w-20 h-20 rounded-2xl gradient-gold flex items-center justify-center shadow-gold">
+                      <Shield className="w-10 h-10 text-secondary-foreground" />
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                      Garantia Total de 7 Dias
+                    </h2>
+                    <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-4">
+                      Teste o OFP Planejador por 7 dias completos. Se por qualquer motivo não fizer sentido para a sua viagem, devolvemos 100% do seu dinheiro. Simples assim. Sem perguntas, sem letras miúdas.
+                    </p>
+                    <Badge className="bg-success/10 text-success border-success/30">💚 Zero risco para você</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 9 — FAQ ═══ */}
+      <section id="faq" className="py-16 sm:py-24 px-4 bg-card/50">
+        <div className="max-w-3xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+              ❓ Perguntas Frequentes
+            </h2>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <Accordion type="single" collapsible className="space-y-3">
+              {[
+                {
+                  q: 'Isso substitui o guia virtual?',
+                  a: 'O OFP Planejador não substitui o guia virtual, ele complementa. Ele te dá autonomia para planejar, entender e decidir com segurança. Para quem contrata guiamento remoto, o planejador deixa tudo ainda mais organizado e eficiente.',
+                },
+                {
+                  q: 'Funciona para primeira viagem?',
+                  a: 'Sim, principalmente para primeira viagem. O planejador foi pensado para quem não conhece Orlando, explicando tudo de forma simples, organizada e sem termos confusos.',
+                },
+                {
+                  q: 'Funciona com crianças?',
+                  a: 'Funciona muito bem com crianças. O roteiro é adaptável ao ritmo da família, evita correria desnecessária e ajuda a escolher atrações, horários e restaurantes mais adequados.',
+                },
+                {
+                  q: 'Posso usar durante a viagem?',
+                  a: 'Sim. O OFP Planejador foi feito para ser usado antes e durante a viagem, direto do celular, inclusive dentro dos parques.',
+                },
+                {
+                  q: 'O conteúdo é atualizado?',
+                  a: 'Sim. O conteúdo é constantemente atualizado com base em mudanças dos parques, filas, sistemas como Lightning Lane e experiências reais da equipe.',
+                },
+                {
+                  q: 'Preciso saber inglês?',
+                  a: 'Não. Todo o conteúdo do OFP Planejador está em português, pensado para brasileiros que querem viajar com mais segurança e tranquilidade.',
+                },
+              ].map((item, i) => (
+                <AccordionItem key={i} value={`faq-${i}`} className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl px-6 overflow-hidden">
+                  <AccordionTrigger className="text-foreground font-semibold text-left hover:no-underline py-5">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed pb-5">
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 10 — CTA FINAL ═══ */}
+      <section className="py-20 sm:py-32 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(262_60%_30%)] via-[hsl(262_50%_20%)] to-[hsl(280_60%_15%)]" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+        </div>
+
+        <AnimatedSection className="relative max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            Planejar Orlando não precisa ser estressante.
+          </h2>
+          <p className="text-secondary text-xl sm:text-2xl font-semibold mb-10">
+            Tenha tudo organizado, estratégico e claro antes mesmo de embarcar.
+          </p>
+          <TrackableButton
+            size="lg"
+            className="gradient-gold text-secondary-foreground rounded-2xl px-10 h-16 text-lg font-bold shadow-gold hover:scale-105 transition-transform animate-pulse-glow"
+            onClick={() => scrollTo('planos')}
+            trackingName="cta_final"
+            trackingLocation="footer_cta"
+          >
+            ✨ Quero planejar minha viagem com segurança
+          </TrackableButton>
+          <div className="flex items-center justify-center gap-1 mt-8">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-5 h-5 fill-secondary text-secondary" />
+            ))}
+          </div>
+          <p className="text-white/70 mt-2 text-sm">Mais de 500 famílias já planejaram com o OFP</p>
+        </AnimatedSection>
+      </section>
+
+      {/* ═══ RODAPÉ ═══ */}
+      <footer className="py-8 sm:py-12 px-4 border-t border-border">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <img src={logo} alt="Orlando Fast Pass" className="h-10 w-auto object-contain" loading="lazy" />
+            <span className="text-sm text-muted-foreground">Menos filas. Mais magia.</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a 
-              href="https://wa.me/5511966144493" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Suporte
-            </a>
-            <a 
-              href="https://wa.me/message/2US6I4NWQWLDD1" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Comercial
-            </a>
-            <span>© 2025</span>
+            <button onClick={() => scrollTo('planos')} className="hover:text-foreground transition-colors">Planos</button>
+            <a href="https://wa.me/5511966144493" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Contato</a>
+            <Link to="/termos-e-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
           </div>
+          <p className="text-xs text-muted-foreground">© 2026 Orlando Fast Pass. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>
