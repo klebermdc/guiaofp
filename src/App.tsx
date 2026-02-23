@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TravelModeProvider } from "@/contexts/TravelModeContext";
@@ -131,6 +131,7 @@ const App = () => {
                       <Route path="/roteiro-personalizado/questionario" element={<RoteiroQuestionario />} />
                       <Route path="/roteiro-personalizado/:id" element={<RoteiroView />} />
                       <Route path="/planner-manual" element={<PlannerManual />} />
+                      <Route path="/planejador-manual" element={<Navigate to="/planner-manual" replace />} />
                       <Route path="/carteira" element={<DocumentWalletPage />} />
                       <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
                       <Route path="/cupons" element={<PartnerCoupons />} />

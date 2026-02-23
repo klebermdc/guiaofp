@@ -109,6 +109,12 @@ type NavigationMode = 'preview' | 'guided';
 export default function ParkMap() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+
+  // Set page title
+  useEffect(() => {
+    document.title = "Mapa do Parque | Orlando Fast Pass";
+  }, []);
+
   const mapRef = useRef<google.maps.Map | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const headingWatchIdRef = useRef<number | null>(null);
