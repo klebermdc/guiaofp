@@ -179,7 +179,7 @@ const Landing = () => {
       {/* ═══ NAVBAR ═══ */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-soft' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <img src={logo} alt="Orlando Fast Pass" className="h-10 sm:h-12 w-auto object-contain" />
+          <img src={logo} alt="Orlando Fast Pass" className="h-10 sm:h-12 w-auto object-contain" width="48" height="48" />
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6">
