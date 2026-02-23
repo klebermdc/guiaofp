@@ -377,7 +377,7 @@ const Landing = () => {
                 badge: '🧩 Flexível',
                 image: featurePlanner,
                 title: 'Planejador Manual com Biblioteca Completa',
-                text: 'Monte seu roteiro do seu jeito com drag-and-drop. Escolha entre parques, restaurantes, compras e atividades de uma biblioteca completa de tudo o que fazer em Orlando.',
+                text: 'Monte seu roteiro do seu jeito, arrastando e soltando atividades. Escolha entre parques, restaurantes, compras e atividades de uma biblioteca completa de tudo o que fazer em Orlando.',
               },
               {
                 badge: '📖 Completo',
