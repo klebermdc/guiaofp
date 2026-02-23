@@ -395,7 +395,7 @@ const Landing = () => {
                 badge: '🗺️ Interativo',
                 image: featureMapa,
                 title: 'Mapa Interativo em Tempo Real',
-                text: 'Veja todas as atrações, restaurantes e banheiros no mapa. Planeje sua rota dentro do parque e não perca tempo procurando atrações.',
+                text: 'Veja todas as atrações, restaurantes e banheiros no mapa com GPS integrado para te levar até cada ponto. Planeje sua rota dentro do parque e não perca tempo procurando atrações.',
               },
               {
                 badge: '🍽️ Popular',
