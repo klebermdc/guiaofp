@@ -370,7 +370,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!isMounted) return;
         
         if (error) {
-          console.warn('[Auth] Session check failed:', error.message);
+          // Silently ignore refresh token errors when no valid session exists
+          const isRefreshTokenError = error.message?.includes('Refresh Token') || error.message?.includes('refresh_token');
+          if (isRefreshTokenError) {
+            console.log('[Auth] No valid session found, continuing as unauthenticated');
+          } else {
+            console.warn('[Auth] Session check failed:', error.message);
+          }
           setIsLoading(false);
           initCompletedRef.current = true;
           return;

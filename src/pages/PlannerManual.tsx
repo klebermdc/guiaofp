@@ -504,7 +504,7 @@ const PlannerManual = () => {
   return (
     <AppLayout>
       <SEO 
-        title="Planejador Manual | Guia Orlando Mágico"
+        title="Planejador Manual"
         description="Monte seu roteiro dia a dia arrastando atrações, restaurantes e atividades"
       />
       

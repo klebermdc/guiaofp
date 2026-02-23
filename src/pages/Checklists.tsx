@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { 
   CheckCircle2, 
   FileText, 
@@ -287,6 +288,7 @@ const Checklists = () => {
 
   return (
     <AppLayout>
+      <SEO title="Checklists" description="Listas de verificação para garantir que você não esqueça nada na sua viagem." />
       <SavingIndicator isSaving={isSaving} />
       
       <div className="space-y-5 pb-24">
