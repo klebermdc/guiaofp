@@ -314,26 +314,41 @@ const Landing = () => {
       </section>
 
       {/* ═══ BLOCO 2 — NÚMEROS / PROVA SOCIAL ═══ */}
-      <section id="prova-social" className="py-16 sm:py-20 px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { emoji: '🏰', value: 500, suffix: '+', label: 'Famílias planejadas' },
-            { emoji: '🎢', value: 7, suffix: '', label: 'Parques cobertos' },
-            { emoji: '⭐', value: 5, suffix: '.0', label: 'Avaliação média' },
-            { emoji: '📅', value: 8, suffix: '+', label: 'Anos de experiência' },
-          ].map((item, i) => (
-            <AnimatedSection key={i} delay={i * 100}>
-              <Card className="text-center bg-card/80 backdrop-blur-sm border-border/50 hover:border-secondary/30 transition-all duration-300">
-                <CardContent className="p-6">
-                  <span className="text-3xl mb-2 block">{item.emoji}</span>
-                  <p className="text-3xl sm:text-4xl font-bold text-secondary font-display">
+      <section id="prova-social" className="py-20 sm:py-28 px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative">
+          <AnimatedSection className="text-center mb-12">
+            <p className="text-secondary font-semibold text-sm uppercase tracking-widest mb-3">Números que falam</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
+              Por que famílias confiam no <span className="text-secondary">OFP</span>
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6">
+            {[
+              { emoji: '🏰', value: 500, suffix: '+', label: 'Famílias planejadas', highlight: true },
+              { emoji: '🎢', value: 7, suffix: '', label: 'Parques cobertos', highlight: false },
+              { emoji: '⭐', value: 5, suffix: '.0', label: 'Avaliação média', highlight: false },
+              { emoji: '📅', value: 8, suffix: '+', label: 'Anos de experiência', highlight: false },
+            ].map((item, i) => (
+              <AnimatedSection key={i} delay={i * 120}>
+                <div
+                  className={`group relative text-center rounded-2xl p-6 sm:p-8 transition-all duration-500 hover:-translate-y-1 ${
+                    item.highlight
+                      ? 'bg-gradient-to-br from-secondary/15 to-secondary/5 border-2 border-secondary/40 shadow-gold hover:shadow-[0_8px_40px_hsl(38_92%_50%/0.35)]'
+                      : 'bg-card/60 backdrop-blur-sm border border-border/50 hover:border-secondary/30 hover:shadow-glow'
+                  }`}
+                >
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
+                  <span className="text-4xl sm:text-5xl block mb-4 group-hover:scale-110 transition-transform duration-300">{item.emoji}</span>
+                  <p className="text-4xl sm:text-5xl font-bold text-secondary font-display tracking-tight mb-1">
                     <AnimatedCounter end={item.value} suffix={item.suffix} />
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">{item.label}</p>
-                </CardContent>
-              </Card>
-            </AnimatedSection>
-          ))}
+                  <p className="text-sm sm:text-base text-muted-foreground font-medium">{item.label}</p>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
         </div>
       </section>
 
