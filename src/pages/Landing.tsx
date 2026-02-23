@@ -30,14 +30,14 @@ import {
 
 import logo from '@/assets/logo.png';
 import heroCastle from '@/assets/landing/hero-castle.jpg';
-import featureRoteiro from '@/assets/landing/feature-roteiro.jpg';
-import featureGuia from '@/assets/landing/feature-guia.jpg';
-import featureChecklist from '@/assets/landing/feature-checklist.jpg';
-import featureMapa from '@/assets/landing/feature-mapa.jpg';
-import featureRestaurantes from '@/assets/landing/feature-restaurantes.jpg';
-import featureDocumentos from '@/assets/landing/feature-documentos.jpg';
-import featureCupons from '@/assets/landing/feature-cupons.jpg';
-import featurePlanner from '@/assets/landing/feature-planner.jpg';
+import featureRoteiro from '@/assets/landing/feature-roteiro.png';
+import featureGuia from '@/assets/landing/feature-guia.png';
+import featureChecklist from '@/assets/landing/feature-checklist.png';
+import featureMapa from '@/assets/landing/feature-mapa.png';
+import featureRestaurantes from '@/assets/landing/feature-restaurantes.png';
+import featureDocumentos from '@/assets/landing/feature-documentos.png';
+import featureCupons from '@/assets/landing/feature-cupons.png';
+import featurePlanner from '@/assets/landing/feature-planner.png';
 
 // ─── Animated Section (fade-in on scroll) ────────────────────────────────────
 const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
