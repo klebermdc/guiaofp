@@ -37,6 +37,7 @@ import featureMapa from '@/assets/landing/feature-mapa.jpg';
 import featureRestaurantes from '@/assets/landing/feature-restaurantes.jpg';
 import featureDocumentos from '@/assets/landing/feature-documentos.jpg';
 import featureCupons from '@/assets/landing/feature-cupons.jpg';
+import featurePlanner from '@/assets/landing/feature-planner.jpg';
 
 // ─── Animated Section (fade-in on scroll) ────────────────────────────────────
 const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
@@ -371,6 +372,12 @@ const Landing = () => {
                 image: featureRoteiro,
                 title: 'Roteiro Personalizado para Sua Família',
                 text: 'Informe sua data, grupo e parques desejados. O planejador monta um roteiro otimizado considerando filas, horários de shows e o perfil do seu grupo — tudo automaticamente.',
+              },
+              {
+                badge: '🧩 Flexível',
+                image: featurePlanner,
+                title: 'Planejador Manual com Biblioteca Completa',
+                text: 'Monte seu roteiro do seu jeito com drag-and-drop. Escolha entre parques, restaurantes, compras e atividades de uma biblioteca completa de tudo o que fazer em Orlando.',
               },
               {
                 badge: '📖 Completo',
