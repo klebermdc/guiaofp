@@ -478,12 +478,12 @@ export default function Attractions() {
 
         {/* Parks Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-2 rounded-xl">
+          <TabsList className="w-full overflow-x-auto flex-nowrap sm:flex-wrap h-auto gap-1 bg-muted/50 p-2 rounded-xl justify-start">
             {parks.map(park => (
               <TabsTrigger 
                 key={park.id} 
                 value={park.id}
-                className="flex items-center gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background"
+                className="flex items-center gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background shrink-0"
               >
                 <park.icon className="w-4 h-4" />
                 <span className="hidden sm:inline">{park.name}</span>

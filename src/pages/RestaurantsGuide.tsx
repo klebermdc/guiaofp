@@ -33,8 +33,11 @@ const inferRestaurantCategory = (
   restaurant: Restaurant,
   parkName?: string
 ): 'disney' | 'universal' | 'fora-parques' => {
-  const explicit = restaurant.category as 'disney' | 'universal' | 'fora-parques' | null;
+  const explicit = restaurant.category as string | null;
   if (explicit === 'disney' || explicit === 'universal' || explicit === 'fora-parques') return explicit;
+
+  // Map other explicit categories
+  if (explicit === 'seaworld' || explicit === 'busch-gardens') return 'fora-parques';
 
   if (!parkName) return 'fora-parques';
   if (DISNEY_PARK_NAMES.has(parkName)) return 'disney';

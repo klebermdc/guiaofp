@@ -155,12 +155,13 @@ const OrlandoAssistantComponent = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed right-6 z-50 h-16 w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white",
+          "fixed z-50 h-14 w-14 lg:h-16 lg:w-16 rounded-full shadow-lg transition-all duration-300 overflow-hidden border-4 border-white",
           !isOpen && "animate-pulse",
           isOpen && "scale-0 opacity-0"
         )}
         style={{ 
-          bottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 6rem), 6rem)',
+          bottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 5.5rem), 5.5rem)',
+          right: '0.75rem',
         }}
       >
         <img 
@@ -177,11 +178,11 @@ const OrlandoAssistantComponent = () => {
       {/* Chat Window - accounts for safe area */}
       <div
         className={cn(
-          "fixed right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] rounded-2xl bg-background border shadow-2xl transition-all duration-300 overflow-hidden",
+          "fixed right-3 lg:right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] rounded-2xl bg-background border shadow-2xl transition-all duration-300 overflow-hidden",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
         )}
         style={{ 
-          bottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 6rem), 6rem)',
+          bottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 5.5rem), 5.5rem)',
           height: "min(600px, calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8rem))" 
         }}
       >

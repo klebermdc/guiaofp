@@ -200,11 +200,11 @@ const Landing = () => {
 
         <div className="relative min-h-screen flex flex-col justify-end pb-16 px-4">
           <div className="max-w-4xl mx-auto text-center relative">
-            {/* Edit Button for Hero */}
+            {/* Edit Button for Hero - desktop only */}
             <EditButton 
               pageKey="landing" 
               sectionKey="hero"
-              className="absolute -top-2 -right-2"
+              className="absolute -top-2 -right-2 hidden lg:block"
               forceShow={isAdminUser}
               fallback={{
                 title: 'Menos filas.',
@@ -300,11 +300,11 @@ const Landing = () => {
       <section id="como-funciona" className="py-16 sm:py-24 px-3 sm:px-4">
         <div className="max-w-6xl mx-auto">
           <AnimatedCard className="text-center mb-10 sm:mb-16 relative">
-            {/* Edit Button for How It Works */}
+            {/* Edit Button for How It Works - desktop only */}
             <EditButton 
               pageKey="landing" 
               sectionKey="how_it_works"
-              className="absolute top-0 right-0"
+              className="absolute top-0 right-0 hidden lg:block"
               forceShow={isAdminUser}
               fallback={{
                 title: 'Como funciona',
@@ -418,7 +418,7 @@ const Landing = () => {
       </section>
 
       {/* Plans Section with Animations */}
-      <section id="planos" className="py-24 px-4 bg-card/50">
+      <section id="planos" className="py-12 sm:py-24 px-3 sm:px-4 bg-card/50">
         <div className="max-w-5xl mx-auto">
           <AnimatedCard className="text-center mb-16">
             <p className="text-accent font-medium mb-2">Escolha seu caminho</p>
@@ -549,7 +549,7 @@ const Landing = () => {
       </section>
 
       {/* Features Grid with Stagger */}
-      <section className="py-24 px-4">
+      <section className="py-12 sm:py-24 px-3 sm:px-4">
         <div className="max-w-6xl mx-auto">
           <AnimatedCard className="text-center mb-16">
             <p className="text-accent font-medium mb-2">Tudo que você precisa</p>
@@ -586,7 +586,7 @@ const Landing = () => {
       </section>
 
       {/* Social Proof */}
-      <section className="py-24 px-4 bg-card/50">
+      <section className="py-12 sm:py-24 px-3 sm:px-4 bg-card/50">
         <AnimatedCard className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center gap-1 mb-6">
             {[...Array(5)].map((_, i) => (
@@ -605,7 +605,7 @@ const Landing = () => {
       </section>
 
       {/* Final CTA with Parallax */}
-      <section className="py-32 px-4 relative overflow-hidden">
+      <section className="py-16 sm:py-32 px-3 sm:px-4 relative overflow-hidden">
         <div className="absolute inset-0 gradient-primary" />
         <div 
           className="absolute inset-0 pointer-events-none"
@@ -616,11 +616,11 @@ const Landing = () => {
         </div>
 
         <AnimatedCard className="max-w-3xl mx-auto text-center relative">
-          {/* Edit Button for CTA */}
+          {/* Edit Button for CTA - desktop only */}
           <EditButton 
             pageKey="landing" 
             sectionKey="cta"
-            className="absolute top-0 right-0"
+            className="absolute top-0 right-0 hidden lg:block"
             forceShow={isAdminUser}
             fallback={{
               title: 'Pronto para sua melhor viagem?',
