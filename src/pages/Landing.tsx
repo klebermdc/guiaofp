@@ -30,6 +30,13 @@ import {
 
 import logo from '@/assets/logo.png';
 import heroCastle from '@/assets/landing/hero-castle.jpg';
+import featureRoteiro from '@/assets/landing/feature-roteiro.jpg';
+import featureGuia from '@/assets/landing/feature-guia.jpg';
+import featureChecklist from '@/assets/landing/feature-checklist.jpg';
+import featureMapa from '@/assets/landing/feature-mapa.jpg';
+import featureRestaurantes from '@/assets/landing/feature-restaurantes.jpg';
+import featureDocumentos from '@/assets/landing/feature-documentos.jpg';
+import featureCupons from '@/assets/landing/feature-cupons.jpg';
 
 // ─── Animated Section (fade-in on scroll) ────────────────────────────────────
 const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
@@ -346,54 +353,54 @@ const Landing = () => {
             {[
               {
                 badge: '🔥 Mais usado',
-                icon: '📅',
+                image: featureRoteiro,
                 title: 'Roteiro Personalizado para Sua Família',
                 text: 'Informe sua data, grupo e parques desejados. O planejador monta um roteiro otimizado considerando filas, horários de shows e o perfil do seu grupo — tudo automaticamente.',
               },
               {
                 badge: '📖 Completo',
-                icon: '📖',
+                image: featureGuia,
                 title: 'Guia de Viagem em Português',
                 text: 'Tudo que você precisa saber sobre cada parque: dicas de chegada, estratégias por área, o que não pode perder e como economizar tempo e dinheiro.',
               },
               {
                 badge: '✅ Essencial',
-                icon: '✅',
+                image: featureChecklist,
                 title: 'Checklists que Guiam Cada Etapa',
                 text: 'Da mala ao retorno para casa. Listas organizadas por momento da viagem para que nada seja esquecido — especialmente com crianças.',
               },
               {
                 badge: '🗺️ Interativo',
-                icon: '🗺️',
+                image: featureMapa,
                 title: 'Mapa Interativo em Tempo Real',
                 text: 'Veja todas as atrações, restaurantes e banheiros no mapa. Planeje sua rota dentro do parque e não perca tempo procurando atrações.',
               },
               {
                 badge: '🍽️ Popular',
-                icon: '🍽️',
+                image: featureRestaurantes,
                 title: '279 Restaurantes Organizados',
                 text: 'Escolha onde comer sem improviso, com restaurantes organizados por parque, tipo de comida e faixa de preço. Nunca mais pague caro em lugar ruim.',
               },
               {
                 badge: '📁 Prático',
-                icon: '📁',
+                image: featureDocumentos,
                 title: 'Carteira de Documentos Digital',
                 text: 'Ingressos, vouchers de hotel, passagens aéreas e muito mais — tudo num só lugar, acessível offline dentro dos parques.',
               },
               {
                 badge: '🎟️ Exclusivo',
-                icon: '🎟️',
+                image: featureCupons,
                 title: 'Cupons e Descontos Exclusivos',
                 text: 'Economia real durante a viagem com cupons de parceiros selecionados. Transporte, restaurantes e muito mais.',
               },
             ].map((feature, i) => (
               <AnimatedSection key={i} delay={100}>
                 <div className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
-                  {/* Mockup placeholder */}
+                  {/* Feature image */}
                   <div className="flex-1 w-full">
-                    <div className="relative bg-card/60 backdrop-blur-sm border border-border/50 rounded-2xl p-6 sm:p-8 aspect-video flex items-center justify-center overflow-hidden group hover:border-secondary/30 transition-all duration-500">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <span className="text-6xl sm:text-7xl">{feature.icon}</span>
+                    <div className="relative rounded-2xl overflow-hidden group hover:shadow-glow transition-all duration-500 border border-border/50 hover:border-secondary/30">
+                      <img src={feature.image} alt={feature.title} className="w-full aspect-video object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   </div>
                   {/* Text */}
