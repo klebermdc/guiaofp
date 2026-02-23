@@ -320,7 +320,7 @@ const Landing = () => {
             { emoji: '🏰', value: 500, suffix: '+', label: 'Famílias planejadas' },
             { emoji: '🎢', value: 7, suffix: '', label: 'Parques cobertos' },
             { emoji: '⭐', value: 5, suffix: '.0', label: 'Avaliação média' },
-            { emoji: '📅', value: 3, suffix: '+', label: 'Anos de experiência' },
+            { emoji: '📅', value: 8, suffix: '+', label: 'Anos de experiência' },
           ].map((item, i) => (
             <AnimatedSection key={i} delay={i * 100}>
               <Card className="text-center bg-card/80 backdrop-blur-sm border-border/50 hover:border-secondary/30 transition-all duration-300">
@@ -491,7 +491,7 @@ const Landing = () => {
                       Somos a Orlando Fast Pass.
                     </h2>
                     <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-6">
-                      Há mais de 3 anos ajudando famílias brasileiras a aproveitarem Orlando sem erros, sem correria e sem frustração. Todo o conteúdo do planejador vem da prática real dentro dos parques — não de teoria ou de cópias de sites estrangeiros.
+                      Há mais de 8 anos ajudando famílias brasileiras a aproveitarem Orlando sem erros, sem correria e sem frustração. Todo o conteúdo do planejador vem da prática real dentro dos parques — não de teoria ou de cópias de sites estrangeiros.
                     </p>
                     <ul className="space-y-3">
                       {[
