@@ -138,6 +138,17 @@ const Landing = () => {
     checkAdmin();
   }, [user]);
 
+  // Preload hero image dynamically (Vite-hashed URL)
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = heroCastle;
+    link.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, []);
+
   // Safety timeout
   useEffect(() => {
     const t = setTimeout(() => { if (!showContent) setShowContent(true); }, 3000);
