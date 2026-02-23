@@ -11,8 +11,8 @@ interface SEOProps {
 
 const DEFAULT_TITLE = 'Orlando Fast Pass Planejador - Roteiros Inteligentes para Parques';
 const DEFAULT_DESCRIPTION = 'Planeje sua viagem para os parques de Orlando com roteiros inteligentes. Menos filas, mais magia!';
-const DEFAULT_IMAGE = '/logo-512.png';
-const BASE_URL = 'https://guiaofp.lovable.app';
+const DEFAULT_IMAGE = 'https://ofpplanejador.com/logo-512.png';
+const BASE_URL = 'https://ofpplanejador.com';
 
 /**
  * SEO component for managing page metadata
@@ -45,6 +45,15 @@ export function SEO({
       }
       element.setAttribute(attribute, content);
     };
+
+    // Update or create canonical link
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', pageUrl);
 
     // Update standard meta tags
     updateMetaTag('meta[name="description"]', description);

@@ -169,12 +169,13 @@ export default function PartnerCoupons() {
         {/* Empty State */}
         {!isLoading && (!filteredCoupons || filteredCoupons.length === 0) && (
           <div className="text-center py-12">
-            <Ticket className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-medium mb-1">Nenhum cupom encontrado</h3>
-            <p className="text-sm text-muted-foreground">
-              {searchTerm || selectedCategory 
-                ? 'Tente ajustar seus filtros'
-                : 'Novos cupons serão adicionados em breve!'}
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary/10 flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-secondary" />
+            </div>
+            <Badge className="mb-3 bg-secondary/20 text-secondary border-secondary/30">Em breve</Badge>
+            <h3 className="text-lg font-medium mb-1">Novos cupons a caminho!</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+              Estamos fechando parcerias exclusivas para você economizar na sua viagem. Volte em breve!
             </p>
           </div>
         )}
