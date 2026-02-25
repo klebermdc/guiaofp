@@ -28,6 +28,27 @@ export function WaitTimeAnalytics() {
     }
   });
 
+  // Fetch total count of wait time records
+  const { data: totalCount } = useQuery({
+    queryKey: ['wait-time-count', selectedPark, dateRange],
+    queryFn: async () => {
+      const startDate = format(subDays(new Date(), parseInt(dateRange)), 'yyyy-MM-dd');
+      
+      let query = supabase
+        .from('wait_time_records')
+        .select('id', { count: 'exact', head: true })
+        .gte('date', startDate);
+      
+      if (selectedPark !== 'all') {
+        query = query.eq('park_name', selectedPark);
+      }
+      
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
   // Fetch wait time records summary
   const { data: recordsSummary, isLoading: loadingRecords } = useQuery({
     queryKey: ['wait-time-summary', selectedPark, dateRange],
@@ -36,7 +57,7 @@ export function WaitTimeAnalytics() {
       
       let query = supabase
         .from('wait_time_records')
-        .select('*')
+        .select('id, attraction_name, park_name, wait_time_minutes, date, timestamp, status')
         .gte('date', startDate)
         .order('timestamp', { ascending: false });
       
@@ -44,7 +65,8 @@ export function WaitTimeAnalytics() {
         query = query.eq('park_name', selectedPark);
       }
       
-      const { data, error } = await query.limit(500);
+      // Fetch up to 5000 records for charts/stats
+      const { data, error } = await query.limit(5000);
       if (error) throw error;
       return data;
     }
@@ -74,7 +96,7 @@ export function WaitTimeAnalytics() {
 
   // Calculate stats
   const stats = {
-    totalRecords: recordsSummary?.length || 0,
+    totalRecords: totalCount || recordsSummary?.length || 0,
     uniqueAttractions: new Set(recordsSummary?.map(r => r.attraction_name) || []).size,
     uniqueParks: new Set(recordsSummary?.map(r => r.park_name) || []).size,
     avgWaitTime: recordsSummary?.length 
