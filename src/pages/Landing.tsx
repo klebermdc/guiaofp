@@ -30,14 +30,17 @@ import {
 
 import logo from '@/assets/logo.png';
 import heroCastle from '@/assets/landing/hero-castle.jpg';
-import featureRoteiro from '@/assets/landing/feature-roteiro.png';
+import featureResumo from '@/assets/landing/feature-resumo.png';
 import featureGuia from '@/assets/landing/feature-guia.png';
 import featureChecklist from '@/assets/landing/feature-checklist.png';
 import featureMapa from '@/assets/landing/feature-mapa.png';
+import featureParques from '@/assets/landing/feature-parques.png';
+import featureLightningLane from '@/assets/landing/feature-lightninglane.png';
+import featureRoteiroIA from '@/assets/landing/feature-roteiro-ia.png';
 import featureRestaurantes from '@/assets/landing/feature-restaurantes.png';
 import featureDocumentos from '@/assets/landing/feature-documentos.png';
 import featureCupons from '@/assets/landing/feature-cupons.png';
-import featurePlanner from '@/assets/landing/feature-planner.png';
+import featureDashboard from '@/assets/landing/feature-dashboard.png';
 
 // ─── Animated Section (fade-in on scroll) ────────────────────────────────────
 const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
@@ -70,39 +73,6 @@ const AnimatedSection = memo(({ children, className = '', delay = 0 }: { childre
   );
 });
 AnimatedSection.displayName = 'AnimatedSection';
-
-// ─── Counter Animation ───────────────────────────────────────────────────────
-const AnimatedCounter = ({ end, suffix = '', duration = 2000 }: { end: number; suffix?: string; duration?: number }) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const startTime = Date.now();
-          const animate = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.floor(eased * end));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [end, duration]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-};
 
 // ─── WhatsApp link ───────────────────────────────────────────────────────────
 const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
@@ -173,8 +143,7 @@ const Landing = () => {
   };
 
   const navLinks = [
-    { label: 'Como funciona', id: 'como-funciona' },
-    { label: 'Funcionalidades', id: 'funcionalidades' },
+    { label: 'O que tem acesso', id: 'funcionalidades' },
     { label: 'Planos', id: 'planos' },
     { label: 'FAQ', id: 'faq' },
   ];
@@ -255,23 +224,22 @@ const Landing = () => {
           </div>
 
           <h1
-            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-6 animate-fadeIn"
+            className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 animate-fadeIn text-white"
             style={{ animationDelay: '0.1s' }}
           >
-            <span className="text-white">Menos filas.</span>
-            <br />
-            <span className="text-secondary">Mais magia.</span>
+            Tudo o que você precisa para planejar Orlando,{' '}
+            <span className="text-secondary">organizado em um único lugar.</span>
           </h1>
 
           <p
             className="text-lg sm:text-xl text-white/85 max-w-2xl mx-auto mb-8 animate-fadeIn"
             style={{ animationDelay: '0.2s' }}
           >
-            Roteiros inteligentes que transformam seu dia de parque em uma experiência inesquecível.
+            Mapas inteligentes, roteiros personalizados, guias completos, checklists e suporte real para você aproveitar os parques do jeito certo.
           </p>
 
           <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 animate-fadeIn"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 animate-fadeIn"
             style={{ animationDelay: '0.3s' }}
           >
             <TrackableButton
@@ -281,23 +249,18 @@ const Landing = () => {
               trackingName="cta_hero_planos"
               trackingLocation="hero"
             >
-              ✨ Escolher meu plano
+              ✨ Quero planejar minha viagem agora
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </TrackableButton>
-            <TrackableButton
-              size="lg"
-              variant="outline"
-              className="rounded-2xl px-8 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
-              onClick={() => scrollTo('como-funciona')}
-              trackingName="cta_hero_como_funciona"
-              trackingLocation="hero"
-            >
-              ▷ Como funciona
             </TrackableButton>
           </div>
 
+          {/* Microcopy */}
+          <p className="text-white/60 text-sm animate-fadeIn" style={{ animationDelay: '0.35s' }}>
+            Acesso imediato • Sem mensalidade • Cancelamento garantido
+          </p>
+
           {/* Social proof badges */}
-          <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap animate-fadeIn mt-6" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center gap-1.5 text-white/80 text-sm">
               <Star className="w-4 h-4 fill-secondary text-secondary" />
               <span>5.0 no Google</span>
@@ -317,7 +280,7 @@ const Landing = () => {
 
         {/* Scroll indicator */}
         <button
-          onClick={() => scrollTo('prova-social')}
+          onClick={() => scrollTo('identificacao')}
           className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 animate-bounce"
           aria-label="Rolar para baixo"
         >
@@ -325,106 +288,138 @@ const Landing = () => {
         </button>
       </section>
 
-      {/* ═══ BLOCO 2 — NÚMEROS / PROVA SOCIAL ═══ */}
-      <section id="prova-social" className="py-20 sm:py-28 px-4 relative">
+      {/* ═══ BLOCO 2 — IDENTIFICAÇÃO (DOR) ═══ */}
+      <section id="identificacao" className="py-20 sm:py-28 px-4 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background pointer-events-none" />
-        <div className="max-w-6xl mx-auto relative">
+        <div className="max-w-4xl mx-auto relative">
           <AnimatedSection className="text-center mb-12">
-            <p className="text-secondary font-semibold text-sm uppercase tracking-widest mb-3">Números que falam</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-              Por que famílias confiam no <span className="text-secondary">OFP</span>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Você se identifica com alguma dessas situações?
             </h2>
           </AnimatedSection>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6">
+          <div className="grid sm:grid-cols-2 gap-4 sm:gap-5 mb-10">
             {[
-              { emoji: '🏰', value: 500, suffix: '+', label: 'Famílias planejadas', highlight: true },
-              { emoji: '🎢', value: 7, suffix: '', label: 'Parques cobertos', highlight: false },
-              { emoji: '⭐', value: 5, suffix: '.0', label: 'Avaliação média', highlight: false },
-              { emoji: '📅', value: 8, suffix: '+', label: 'Anos de experiência', highlight: false },
-            ].map((item, i) => (
-              <AnimatedSection key={i} delay={i * 120}>
-                <div
-                  className={`group relative text-center rounded-2xl p-6 sm:p-8 transition-all duration-500 hover:-translate-y-1 ${
-                    item.highlight
-                      ? 'bg-gradient-to-br from-secondary/15 to-secondary/5 border-2 border-secondary/40 shadow-gold hover:shadow-[0_8px_40px_hsl(38_92%_50%/0.35)]'
-                      : 'bg-card/60 backdrop-blur-sm border border-border/50 hover:border-secondary/30 hover:shadow-glow'
-                  }`}
-                >
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none" />
-                  <span className="text-4xl sm:text-5xl block mb-4 group-hover:scale-110 transition-transform duration-300">{item.emoji}</span>
-                  <p className="text-4xl sm:text-5xl font-bold text-secondary font-display tracking-tight mb-1">
-                    <AnimatedCounter end={item.value} suffix={item.suffix} />
-                  </p>
-                  <p className="text-sm sm:text-base text-muted-foreground font-medium">{item.label}</p>
-                </div>
+              'Medo de errar o roteiro',
+              'Não saber quais atrações priorizar',
+              'Confusão com Lightning Lane / Multi Pass',
+              'Perder tempo andando sem estratégia',
+              'Assistir dezenas de vídeos e continuar inseguro',
+            ].map((pain, i) => (
+              <AnimatedSection key={i} delay={i * 100}>
+                <Card className="bg-destructive/5 border-destructive/20 hover:border-destructive/40 transition-all">
+                  <CardContent className="p-5 flex items-center gap-4">
+                    <X className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <span className="text-foreground font-medium">{pain}</span>
+                  </CardContent>
+                </Card>
               </AnimatedSection>
             ))}
           </div>
+
+          <AnimatedSection className="text-center" delay={500}>
+            <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto italic">
+              Se você sente que sua viagem está cara demais para ser deixada no improviso, continua aqui. 👇
+            </p>
+          </AnimatedSection>
         </div>
       </section>
 
-      {/* ═══ BLOCO 3 — FUNCIONALIDADES ═══ */}
+      {/* ═══ BLOCO 3 — SOLUÇÃO ═══ */}
+      <section className="py-16 sm:py-24 px-4 bg-card/50">
+        <div className="max-w-5xl mx-auto">
+          <AnimatedSection className="text-center mb-10">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+              O OFP Planejador é o seu <span className="text-secondary">painel de controle</span> da viagem para Orlando.
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Não é PDF. Não é curso. É uma ferramenta viva, prática e feita para ser usada antes e durante a viagem.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection delay={200}>
+            <div className="relative rounded-2xl overflow-hidden border border-border/50 shadow-glow max-w-3xl mx-auto">
+              <img src={featureDashboard} alt="Dashboard do OFP Planejador" className="w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent" />
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ═══ BLOCO 4 — O QUE VOCÊ TEM ACESSO (FUNCIONALIDADES) ═══ */}
       <section id="funcionalidades" className="py-16 sm:py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <AnimatedSection className="text-center mb-14">
+            <p className="text-secondary font-semibold text-sm uppercase tracking-widest mb-3">Valor empilhado</p>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Tudo que você precisa para uma viagem perfeita
+              O que você tem acesso
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Não é um PDF estático. É uma plataforma viva que te guia do planejamento até o último dia.
+              Justifique cada centavo antes mesmo de ver o preço. Veja tudo que está incluído.
             </p>
           </AnimatedSection>
 
           <div className="space-y-16 sm:space-y-24">
             {[
               {
-                badge: '🔥 Mais usado',
-                image: featureRoteiro,
-                title: 'Roteiro Personalizado para Sua Família',
-                text: 'Informe sua data, grupo e parques desejados. O planejador monta um roteiro otimizado considerando filas, horários de shows e o perfil do seu grupo — tudo automaticamente.',
-              },
-              {
-                badge: '🧩 Flexível',
-                image: featurePlanner,
-                title: 'Planejador Manual com Biblioteca Completa',
-                text: 'Monte seu roteiro do seu jeito, arrastando e soltando atividades. Escolha entre parques, restaurantes, compras e atividades de uma biblioteca completa de tudo o que fazer em Orlando.',
-              },
-              {
                 badge: '📖 Completo',
-                image: featureGuia,
-                title: 'Guia de Viagem em Português',
-                text: 'Tudo que você precisa saber sobre cada parque: dicas de chegada, estratégias por área, o que não pode perder e como economizar tempo e dinheiro.',
+                image: featureResumo,
+                title: 'Resumo de Orlando',
+                text: 'Tudo o que você precisa saber antes de ir, sem enrolação. Nunca foi para Orlando? Sem problema! Aqui você encontra tudo: documentação, dicas de economia, navegação rápida por tema.',
               },
               {
-                badge: '✅ Essencial',
+                badge: '🧭 Essencial',
+                image: featureGuia,
+                title: 'Guia Completo de Viagem',
+                text: 'Transporte, aeroporto, compras, parques, emergências, tudo organizado. Locomoção, mochila do parque, outlets, dicas dos parques Universal e Disney — sem enrolação.',
+              },
+              {
+                badge: '✅ Prático',
                 image: featureChecklist,
-                title: 'Checklists que Guiam Cada Etapa',
-                text: 'Da mala ao retorno para casa. Listas organizadas por momento da viagem para que nada seja esquecido — especialmente com crianças.',
+                title: 'Checklists Inteligentes',
+                text: 'Nada esquecido. Nada improvisado. Documentos, mala de viagem, aeroporto, saúde, crianças, fotografia — tudo organizado em categorias com progresso visual.',
               },
               {
                 badge: '🗺️ Interativo',
                 image: featureMapa,
-                title: 'Mapa Interativo em Tempo Real',
-                text: 'Veja todas as atrações, restaurantes e banheiros no mapa com GPS integrado para te levar até cada ponto. Planeje sua rota dentro do parque e não perca tempo procurando atrações.',
+                title: 'Mapa Interativo dos Parques',
+                text: 'Veja todas as atrações, restaurantes e banheiros no mapa com GPS integrado. Planeje sua rota dentro do parque e não perca tempo procurando atrações. Tempo de espera ao vivo.',
+              },
+              {
+                badge: '🏰 Detalhado',
+                image: featureParques,
+                title: 'Guia Completo dos Parques',
+                text: 'Disney, Universal, SeaWorld, aquáticos e muito mais. Informações, dicas e vídeos de todos os parques de Orlando, organizados por categoria.',
+              },
+              {
+                badge: '⚡ Estratégico',
+                image: featureLightningLane,
+                title: 'Lightning Lane & Multi Pass',
+                text: 'Explicado passo a passo, com estratégia real de quem usa todo dia. Conceitos, tipos de passes, preços por parque e tutoriais práticos.',
+              },
+              {
+                badge: '🤖 Powered by AI',
+                image: featureRoteiroIA,
+                title: 'Roteiro Personalizado com IA',
+                text: 'Dia a dia adaptado ao seu grupo, ritmo e preferências. Responda algumas perguntas e nossa inteligência artificial criará um roteiro exclusivo para sua viagem, otimizado e personalizado.',
               },
               {
                 badge: '🍽️ Popular',
                 image: featureRestaurantes,
-                title: '279 Restaurantes Organizados',
-                text: 'Escolha onde comer sem improviso, com restaurantes organizados por parque, tipo de comida e faixa de preço. Nunca mais pague caro em lugar ruim.',
+                title: 'Guia Completo de Restaurantes',
+                text: 'Escolha onde comer sem improviso, com restaurantes organizados por parque, fora dos parques, tipo de comida e faixa de preço. 279 restaurantes catalogados.',
               },
               {
-                badge: '📁 Prático',
+                badge: '📁 Seguro',
                 image: featureDocumentos,
-                title: 'Carteira de Documentos Digital',
-                text: 'Ingressos, vouchers de hotel, passagens aéreas e muito mais — tudo num só lugar, acessível offline dentro dos parques.',
+                title: 'Carteira de Documentos',
+                text: 'Ingressos, vouchers e tudo em um só lugar. Seus vouchers e comprovantes acessíveis offline dentro dos parques.',
               },
               {
                 badge: '🎟️ Exclusivo',
                 image: featureCupons,
-                title: 'Cupons e Descontos Exclusivos',
-                text: 'Economia real durante a viagem com cupons de parceiros selecionados. Transporte, restaurantes e muito mais.',
+                title: 'Cupons de Parceiros',
+                text: 'Economia real durante a viagem. Descontos exclusivos para usar durante sua viagem com parceiros selecionados.',
               },
             ].map((feature, i) => (
               <AnimatedSection key={i} delay={100}>
@@ -449,65 +444,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ═══ BLOCO 4 — DEPOIMENTOS ═══ */}
-      <section className="py-16 sm:py-24 px-4 bg-card/50">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
-              O que as famílias dizem
-            </h2>
-          </AnimatedSection>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                initial: 'M',
-                color: 'bg-primary',
-                name: 'Mayara Miranda Reis',
-                text: 'O planejador mudou completamente a forma como organizamos nossa viagem. Conseguimos aproveitar muito mais com as crianças sem ficar perdidas.',
-              },
-              {
-                initial: 'R',
-                color: 'bg-blue-600',
-                name: 'Rafael Gomes',
-                text: 'Fui pela primeira vez e senti como se conhecesse os parques há anos. O roteiro foi certeiro, economizamos horas de fila.',
-              },
-              {
-                initial: 'C',
-                color: 'bg-emerald-600',
-                name: 'Carlos Bacha',
-                text: 'Incrível como tudo fica mais claro com o planejador. Cada detalhe pensado para brasileiros que não conhecem o sistema americano.',
-              },
-            ].map((t, i) => (
-              <AnimatedSection key={i} delay={i * 150}>
-                <Card className="h-full bg-card/80 backdrop-blur-sm border-border/50 hover:border-secondary/20 transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} className="w-4 h-4 fill-secondary text-secondary" />
-                      ))}
-                    </div>
-                    <p className="text-foreground/90 mb-6 leading-relaxed italic">"{t.text}"</p>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm`}>
-                        {t.initial}
-                      </div>
-                      <span className="font-medium text-foreground">{t.name}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </AnimatedSection>
-            ))}
-          </div>
-
-          <AnimatedSection className="text-center mt-8">
-            <Badge variant="outline" className="text-muted-foreground border-border/50">
-              🔒 Depoimentos verificados de clientes reais
-            </Badge>
-          </AnimatedSection>
-        </div>
-      </section>
-
       {/* ═══ BLOCO 5 — AUTORIDADE ═══ */}
       <section className="py-16 sm:py-24 px-4">
         <div className="max-w-5xl mx-auto">
@@ -524,7 +460,7 @@ const Landing = () => {
                       Somos a Orlando Fast Pass.
                     </h2>
                     <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-6">
-                      Há mais de 8 anos ajudando famílias brasileiras a aproveitarem Orlando sem erros, sem correria e sem frustração. Todo o conteúdo do planejador vem da prática real dentro dos parques — não de teoria ou de cópias de sites estrangeiros.
+                      Há mais de 8 anos ajudando famílias brasileiras a aproveitarem Orlando sem erros, sem correria e sem frustração. Todo o conteúdo do planejador vem da prática real dentro dos parques — não de teoria.
                     </p>
                     <ul className="space-y-3">
                       {[
@@ -547,7 +483,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ═══ BLOCO 6 — COMPARAÇÃO ═══ */}
+      {/* ═══ BLOCO 6 — COMPARAÇÃO (Antes x Depois) ═══ */}
       <section id="como-funciona" className="py-16 sm:py-24 px-4 bg-card/50">
         <div className="max-w-5xl mx-auto">
           <AnimatedSection className="text-center mb-12">
@@ -568,10 +504,9 @@ const Landing = () => {
                     {[
                       'Informações soltas pela internet',
                       'Decisões inseguras e improvisadas',
-                      'Tempo perdido procurando atrações',
+                      'Tempo perdido andando sem estratégia',
                       'Estresse com as crianças no parque',
-                      'Gastos desnecessários com o que não vale',
-                      'Filas longas por falta de estratégia',
+                      'Gastos desnecessários',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3 text-muted-foreground">
                         <X className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
@@ -596,8 +531,7 @@ const Landing = () => {
                       'Tudo centralizado numa só plataforma',
                       'Mais atrações aproveitadas por dia',
                       'Menos filas com roteiro inteligente',
-                      'Viagem muito mais tranquila e organizada',
-                      'Família feliz e sem imprevistos',
+                      'Viagem muito mais tranquila',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3 text-foreground">
                         <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
@@ -717,10 +651,10 @@ const Landing = () => {
                   </div>
                   <div>
                     <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
-                      Garantia Total de 7 Dias
+                      Teste por 7 dias.
                     </h2>
                     <p className="text-muted-foreground text-base sm:text-lg leading-relaxed mb-4">
-                      Teste o OFP Planejador por 7 dias completos. Se por qualquer motivo não fizer sentido para a sua viagem, devolvemos 100% do seu dinheiro. Simples assim. Sem perguntas, sem letras miúdas.
+                      Se não fizer sentido para você, devolvemos seu dinheiro. Simples assim. Sem letras miúdas.
                     </p>
                     <Badge className="bg-success/10 text-success border-success/30">💚 Zero risco para você</Badge>
                   </div>
