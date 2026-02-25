@@ -218,7 +218,7 @@ const Landing = () => {
 
         <div className="relative w-full max-w-4xl mx-auto text-center px-4 sm:px-6">
           {/* Hero logo */}
-          <img src={logo} alt="OFP Planejador" className="h-28 sm:h-36 md:h-44 w-auto object-contain mx-auto mb-8 animate-fadeIn drop-shadow-2xl" />
+          <img src={logo} alt="OFP Planejador" className="h-56 sm:h-72 md:h-[22rem] w-auto object-contain mx-auto mb-8 animate-fadeIn drop-shadow-2xl" />
 
           {/* Shimmer badge */}
           <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-secondary/40 bg-secondary/10 backdrop-blur-sm animate-fadeIn">
