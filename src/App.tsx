@@ -138,6 +138,7 @@ const App = () => {
                       <Route path="/cupons" element={<PartnerCoupons />} />
                       <Route path="/resumo-orlando" element={<OrlandoSummary />} />
                       <Route path="/guia-mini-viajante" element={<GuiaMiniViajante />} />
+                      <Route path="/guia_mini_viajante" element={<Navigate to="/guia-mini-viajante" replace />} />
                       <Route path="/registro/:planId" element={<Register />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
