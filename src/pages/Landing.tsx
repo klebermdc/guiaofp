@@ -159,7 +159,7 @@ const Landing = () => {
       {/* ═══ NAVBAR ═══ */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-soft' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <img src={logo} alt="Orlando Fast Pass" className="h-10 sm:h-12 w-auto object-contain" width="48" height="48" />
+          <img src={logo} alt="Orlando Fast Pass" className="h-20 sm:h-24 w-auto object-contain" width="96" height="96" />
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6">
@@ -217,6 +217,9 @@ const Landing = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
 
         <div className="relative w-full max-w-4xl mx-auto text-center px-4 sm:px-6">
+          {/* Hero logo */}
+          <img src={logo} alt="OFP Planejador" className="h-28 sm:h-36 md:h-44 w-auto object-contain mx-auto mb-8 animate-fadeIn drop-shadow-2xl" />
+
           {/* Shimmer badge */}
           <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-secondary/40 bg-secondary/10 backdrop-blur-sm animate-fadeIn">
             <Sparkles className="w-4 h-4 text-secondary" />
