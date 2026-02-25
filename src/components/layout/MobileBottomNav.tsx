@@ -66,6 +66,7 @@ const pagePathMap: Record<string, string> = {
   contato: '/contato',
   cupons: '/cupons',
   resumo_orlando: '/resumo-orlando',
+  guia_mini_viajante: '/guia-mini-viajante',
 };
 
 
