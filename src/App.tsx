@@ -53,6 +53,7 @@ const DocumentWalletPage = lazy(() => import("./pages/DocumentWalletPage"));
 const TermsAndPrivacy = lazy(() => import("./pages/TermsAndPrivacy"));
 const PartnerCoupons = lazy(() => import("./pages/PartnerCoupons"));
 const OrlandoSummary = lazy(() => import("./pages/OrlandoSummary"));
+const GuiaMiniViajante = lazy(() => import("./pages/GuiaMiniViajante"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -136,6 +137,7 @@ const App = () => {
                       <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
                       <Route path="/cupons" element={<PartnerCoupons />} />
                       <Route path="/resumo-orlando" element={<OrlandoSummary />} />
+                      <Route path="/guia-mini-viajante" element={<GuiaMiniViajante />} />
                       <Route path="/registro/:planId" element={<Register />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
