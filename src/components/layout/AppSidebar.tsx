@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { Sparkles } from 'lucide-react';
 import { 
-  LayoutDashboard, 
+  Home, 
   User, 
   Calendar, 
   MessageCircle, 
@@ -39,7 +39,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 // Icon mapping for dynamic menu
 const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard,
+  Home,
   User,
   Star,
   Calendar,
@@ -70,7 +70,7 @@ const staticMenuItems = [
 
 // Page key to path and label mapping
 const pageConfig: Record<string, { path: string; label: string; defaultIcon: React.ElementType }> = {
-  dashboard: { path: '/dashboard', label: 'Início', defaultIcon: LayoutDashboard },
+  dashboard: { path: '/dashboard', label: 'Início', defaultIcon: Home },
   perfil: { path: '/perfil', label: 'Perfil da Viagem', defaultIcon: User },
   atracoes: { path: '/atracoes', label: 'Atrações Desejadas', defaultIcon: Ticket },
   agenda: { path: '/agenda', label: 'Agenda do Guiamento', defaultIcon: Calendar },
