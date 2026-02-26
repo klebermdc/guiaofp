@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
+import { Sparkles } from 'lucide-react';
 import { 
   LayoutDashboard, 
   User, 
@@ -61,6 +62,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
+  { icon: Sparkles, label: 'Top 3 nos Parques', path: '/top3', pageKey: 'top3' },
   { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },
   { icon: Heart, label: 'Meus Favoritos', path: '/favoritos', pageKey: 'favoritos' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
