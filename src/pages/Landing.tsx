@@ -157,51 +157,11 @@ const Landing = () => {
 
       {/* ═══ NAVBAR ═══ */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-soft' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <img src={logo} alt="Orlando Fast Pass" className="h-20 sm:h-24 w-auto object-contain" width="96" height="96" />
-
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map(l => (
-              <button key={l.id} onClick={() => scrollTo(l.id)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {l.label}
-              </button>
-            ))}
-          </nav>
-
-          <div className="hidden md:flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="outline" size="sm" className="border-secondary/50 text-secondary hover:bg-secondary/10 font-bold px-6">Entrar</Button>
-            </Link>
-            <Button size="sm" className="gradient-gold text-secondary-foreground rounded-xl px-5" onClick={() => scrollTo('planos')}>
-              Começar agora
-            </Button>
-          </div>
-
-          {/* Mobile hamburger */}
-          <button className="md:hidden text-foreground p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <XIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-end">
+          <Link to="/login">
+            <Button variant="outline" size="sm" className="border-secondary/50 text-secondary hover:bg-secondary/10 font-bold px-6">Entrar</Button>
+          </Link>
         </div>
-
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border/50 px-4 pb-4 animate-fadeIn">
-            {navLinks.map(l => (
-              <button key={l.id} onClick={() => scrollTo(l.id)} className="block w-full text-left py-3 text-foreground border-b border-border/20">
-                {l.label}
-              </button>
-            ))}
-            <div className="flex gap-3 mt-4">
-              <Link to="/login" className="flex-1">
-                <Button variant="outline" className="w-full">Entrar</Button>
-              </Link>
-              <Button className="flex-1 gradient-gold text-secondary-foreground" onClick={() => scrollTo('planos')}>
-                Começar
-              </Button>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* ═══ BLOCO 1 — HERO ═══ */}
