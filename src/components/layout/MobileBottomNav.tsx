@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { PrefetchLink } from '@/components/PrefetchLink';
 import { motion } from 'framer-motion';
 import { 
-  LayoutDashboard, 
+  Home, 
   User, 
   Calendar, 
   Zap,
@@ -30,7 +30,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 
 // Icon mapping for dynamic menu
 const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard,
+  Home,
   User,
   Star,
   Calendar,
@@ -95,7 +95,7 @@ const MobileBottomNavComponent = () => {
     })
     .slice(0, 4) // Max 4 items in bottom nav
     .map((page) => {
-      const IconComponent = iconMap[page.page_icon] || LayoutDashboard;
+      const IconComponent = iconMap[page.page_icon] || Home;
       return {
         icon: IconComponent,
         label: page.page_name,
@@ -107,7 +107,7 @@ const MobileBottomNavComponent = () => {
   // Fallback to default items while loading
   const navItems = isLoading || bottomNavItems.length === 0 
     ? [
-        { icon: LayoutDashboard, label: 'Início', path: '/dashboard', pageKey: 'dashboard' },
+        { icon: Home, label: 'Início', path: '/dashboard', pageKey: 'dashboard' },
         { icon: User, label: 'Perfil', path: '/perfil', pageKey: 'perfil' },
         { icon: Zap, label: 'Multi Pass', path: '/multipass', pageKey: 'multipass' },
         { icon: Calendar, label: 'Agenda', path: '/agenda', pageKey: 'agenda' },
