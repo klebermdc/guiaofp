@@ -157,9 +157,11 @@ const Landing = () => {
 
       {/* ═══ NAVBAR ═══ */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-end">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-end">
           <Link to="/login">
-            <Button variant="outline" size="sm" className="border-secondary/50 text-secondary hover:bg-secondary/10 font-bold px-6">Entrar</Button>
+            <Button size="lg" className="bg-gradient-to-r from-secondary to-amber-400 text-primary-foreground hover:from-amber-400 hover:to-secondary font-bold px-8 py-3 text-base rounded-full shadow-lg shadow-secondary/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-secondary/40">
+              Entrar
+            </Button>
           </Link>
         </div>
       </header>
