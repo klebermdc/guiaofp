@@ -22,7 +22,8 @@ import {
   FileText,
   Route,
   UtensilsCrossed,
-  Wallet
+  Wallet,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -81,6 +82,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
 
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
+  { icon: Sparkles, label: 'Top 3 nos Parques', path: '/top3', pageKey: 'top3' },
   { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },
   { icon: Star, label: 'Pós-Viagem', path: '/pos-viagem', pageKey: 'pos-viagem' },
 ];
