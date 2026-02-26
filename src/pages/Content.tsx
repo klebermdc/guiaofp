@@ -299,7 +299,10 @@ const Content = () => {
     );
     
     if (parkCategory) {
-      return contents.filter(c => c.category_id === parkCategory.id);
+      return contents.filter(c => 
+        c.category_id === parkCategory.id && 
+        !c.title.toLowerCase().startsWith('banheiro')
+      );
     }
     
     return [];
