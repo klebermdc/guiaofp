@@ -143,7 +143,6 @@ const Landing = () => {
   };
 
   const navLinks = [
-    { label: 'O que tem acesso', id: 'funcionalidades' },
     { label: 'Planos', id: 'planos' },
     { label: 'FAQ', id: 'faq' },
   ];
@@ -172,7 +171,7 @@ const Landing = () => {
 
           <div className="hidden md:flex items-center gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">Entrar</Button>
+              <Button variant="outline" size="sm" className="border-secondary/50 text-secondary hover:bg-secondary/10 font-bold px-6">Entrar</Button>
             </Link>
             <Button size="sm" className="gradient-gold text-secondary-foreground rounded-xl px-5" onClick={() => scrollTo('planos')}>
               Começar agora
@@ -259,19 +258,14 @@ const Landing = () => {
 
           {/* Microcopy */}
           <p className="text-white/60 text-sm animate-fadeIn" style={{ animationDelay: '0.35s' }}>
-            Acesso imediato • Sem mensalidade • Cancelamento garantido
+            Acesso imediato • Sem mensalidade • Garantia de 7 dias
           </p>
 
           {/* Social proof badges */}
           <div className="flex items-center justify-center gap-3 sm:gap-6 flex-wrap animate-fadeIn mt-6" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center gap-1.5 text-white/80 text-sm">
-              <Star className="w-4 h-4 fill-secondary text-secondary" />
-              <span>5.0 no Google</span>
-            </div>
-            <div className="w-px h-4 bg-white/30 hidden sm:block" />
-            <div className="flex items-center gap-1.5 text-white/80 text-sm">
               <span>👨‍👩‍👧</span>
-              <span>500+ famílias</span>
+              <span>1500+ famílias atendidas</span>
             </div>
             <div className="w-px h-4 bg-white/30 hidden sm:block" />
             <div className="flex items-center gap-1.5 text-white/80 text-sm">
@@ -581,12 +575,12 @@ const Landing = () => {
                     <div className="mb-6">
                       <span className="text-white/40 line-through text-lg">R$ 197</span>
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl sm:text-5xl font-bold text-secondary">R$ 97</span>
+                        <span className="text-4xl sm:text-5xl font-bold text-secondary">R$ 99</span>
                       </div>
                       <Badge className="mt-2 bg-secondary/20 text-secondary border-secondary/30 text-xs">🔥 Oferta por tempo limitado</Badge>
                     </div>
                     <ul className="space-y-3 mb-8 text-left">
-                      {['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos'].map((f, i) => (
+                      {['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos', 'Cupons de parceiros'].map((f, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-white/90">
                           <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                           <span>{f}</span>
@@ -598,40 +592,28 @@ const Landing = () => {
                         🚀 Quero acesso imediato
                       </Button>
                     </Link>
-                    <p className="text-xs text-white/50 mt-3">✅ Acesso imediato • ✅ Funciona no celular • ✅ 7 dias de garantia</p>
+                    <div className="flex flex-col items-center gap-1 mt-3 text-xs text-white/50">
+                      <span>✅ Acesso imediato</span>
+                      <span>✅ Funciona no celular</span>
+                      <span>✅ 7 dias de garantia</span>
+                    </div>
                   </CardContent>
                 </Card>
               </AnimatedSection>
 
-              {/* Premium */}
+              {/* Premium - Falar com consultor */}
               <AnimatedSection delay={200}>
-                <Card className="bg-white/10 backdrop-blur-sm border-secondary/40 text-white h-full relative">
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary to-accent rounded-t-xl" />
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground border-0 px-4">
-                    ⭐ Popular
-                  </Badge>
-                  <CardContent className="p-6 sm:p-8 pt-8">
-                    <h3 className="font-display text-xl font-bold mb-2">Com Guia</h3>
-                    <p className="text-white/60 text-sm mb-6">Experiência premium completa</p>
-                    <div className="mb-6">
-                      <p className="text-white/60 text-sm mb-1">Consultoria personalizada</p>
-                      <p className="text-lg text-white/80 italic">"Você aproveita. O guia decide."</p>
-                    </div>
-                    <ul className="space-y-3 mb-8 text-left">
-                      {['Tudo do Planejador +', 'Roteiro otimizado por horário', 'Ajustes em tempo real', 'Suporte via WhatsApp', 'Guia humano dedicado'].map((f, i) => (
-                        <li key={i} className="flex items-center gap-2 text-sm text-white/90">
-                          <Crown className="w-4 h-4 text-secondary flex-shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
+                <Card className="bg-white/10 backdrop-blur-sm border-secondary/40 text-white h-full relative flex items-center justify-center">
+                  <CardContent className="p-6 sm:p-8 text-center">
+                    <Crown className="w-12 h-12 text-secondary mx-auto mb-4" />
+                    <h3 className="font-display text-xl font-bold mb-2">Quer um guia dedicado?</h3>
+                    <p className="text-white/60 text-sm mb-6">Consultoria personalizada com roteiro otimizado, ajustes em tempo real e suporte via WhatsApp.</p>
                     <a href={WHATSAPP_PREMIUM_LINK} target="_blank" rel="noopener noreferrer" className="block" onClick={() => trackCTAClick('cta_plano_premium', 'pricing')}>
                       <Button className="w-full h-14 rounded-xl bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white font-bold text-base hover:scale-[1.02] transition-transform">
                         <MessageCircle className="w-5 h-5 mr-2" />
                         Falar com consultor
                       </Button>
                     </a>
-                    <p className="text-xs text-white/50 mt-3">Atendimento personalizado via WhatsApp</p>
                   </CardContent>
                 </Card>
               </AnimatedSection>
@@ -748,7 +730,7 @@ const Landing = () => {
               <Star key={i} className="w-5 h-5 fill-secondary text-secondary" />
             ))}
           </div>
-          <p className="text-white/70 mt-2 text-sm">Mais de 500 famílias já planejaram com o OFP</p>
+          <p className="text-white/70 mt-2 text-sm">Mais de 1500 famílias já planejaram com o OFP</p>
         </AnimatedSection>
       </section>
 
