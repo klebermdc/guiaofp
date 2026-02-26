@@ -156,7 +156,7 @@ const Landing = () => {
       />
 
       {/* ═══ NAVBAR ═══ */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-soft' : 'bg-transparent'}`}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-end">
           <Link to="/login">
             <Button variant="outline" size="sm" className="border-secondary/50 text-secondary hover:bg-secondary/10 font-bold px-6">Entrar</Button>
