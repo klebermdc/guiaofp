@@ -116,7 +116,7 @@ const GuiaMiniViajante = () => {
 
           <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
             <Badge className="mb-6 bg-white/20 text-white border-white/30 backdrop-blur-sm text-sm px-4 py-1.5">
-              <Baby className="w-4 h-4 mr-1" /> Para famílias com bebês e crianças
+              <Baby className="w-4 h-4 mr-1" /> Viajar com Crianças
             </Badge>
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white mb-4 drop-shadow-lg">
               Guia Mini Viajante
