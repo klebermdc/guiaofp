@@ -6,7 +6,7 @@ import { NavigationHUD } from '@/components/map/NavigationHUD';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
-import { TravelModeTop3 } from '@/components/travel-mode/TravelModeTop3';
+
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -992,45 +992,59 @@ export default function ParkMap() {
     }
   };
 
-  // Handle Top 3 navigation - find POI/restaurant by name and navigate to it
-  const handleTop3Navigate = useCallback((locationName: string) => {
-    const normalizedSearch = locationName.toLowerCase().trim();
+  // Handle search param from Top3 page navigation
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get('search');
+    const parkParam = params.get('park');
     
-    // Search in restaurant POIs first
-    const matchingPOI = currentParkPOIs.find(poi => 
-      poi.name.toLowerCase().includes(normalizedSearch) || 
-      normalizedSearch.includes(poi.name.toLowerCase())
-    );
-    
-    if (matchingPOI) {
-      setSelectedPOI(matchingPOI);
-      handleNavigateToAttraction(matchingPOI.position);
-      toast.success(`📍 ${matchingPOI.name}`, {
-        description: 'Localizado no mapa! Ative o GPS para traçar rota.',
-      });
-      return;
-    }
-    
-    // Search in attractions
-    if (dbAttractions) {
-      const matchingAttraction = dbAttractions.find((a) => 
-        a.name.toLowerCase().includes(normalizedSearch) || 
-        normalizedSearch.includes(a.name.toLowerCase())
-      );
-      if (matchingAttraction) {
-        handleNavigateToAttraction(matchingAttraction.position);
-        toast.success(`📍 ${matchingAttraction.name}`, {
-          description: 'Localizado no mapa!',
-        });
-        return;
+    if (parkParam) {
+      const targetPark = PARKS.find(p => p.id === parkParam);
+      if (targetPark && targetPark.id !== selectedPark.id) {
+        setSelectedPark(targetPark);
       }
     }
     
-    // Fallback - show toast with search suggestion
-    toast.info(`🔍 "${locationName}"`, {
-      description: 'Local não encontrado no mapa. Tente buscar na barra lateral.',
-    });
-  }, [currentParkPOIs, handleNavigateToAttraction]);
+    if (searchParam && currentParkPOIs.length > 0) {
+      const normalizedSearch = searchParam.toLowerCase().trim();
+      
+      const matchingPOI = currentParkPOIs.find(poi => 
+        poi.name.toLowerCase().includes(normalizedSearch) || 
+        normalizedSearch.includes(poi.name.toLowerCase())
+      );
+      
+      if (matchingPOI) {
+        setSelectedPOI(matchingPOI);
+        handleNavigateToAttraction(matchingPOI.position);
+        toast.success(`📍 ${matchingPOI.name}`, {
+          description: 'Localizado no mapa! Ative o GPS para traçar rota.',
+        });
+        // Clear search param
+        window.history.replaceState({}, '', '/mapa');
+        return;
+      }
+      
+      if (dbAttractions) {
+        const matchingAttraction = dbAttractions.find((a) => 
+          a.name.toLowerCase().includes(normalizedSearch) || 
+          normalizedSearch.includes(a.name.toLowerCase())
+        );
+        if (matchingAttraction) {
+          handleNavigateToAttraction(matchingAttraction.position);
+          toast.success(`📍 ${matchingAttraction.name}`, {
+            description: 'Localizado no mapa!',
+          });
+          window.history.replaceState({}, '', '/mapa');
+          return;
+        }
+      }
+      
+      toast.info(`🔍 "${searchParam}"`, {
+        description: 'Local não encontrado no mapa. Tente buscar na barra lateral.',
+      });
+      window.history.replaceState({}, '', '/mapa');
+    }
+  }, [currentParkPOIs, dbAttractions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshWaitTimes = () => {
     fetchWaitTimes(selectedPark.id);
@@ -2390,12 +2404,6 @@ export default function ParkMap() {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
 
-      {/* Travel Mode Top 3 Recommendations */}
-      <TravelModeTop3
-        parkId={selectedPark.id}
-        parkName={selectedPark.name}
-        onNavigateToLocation={handleTop3Navigate}
-      />
 
       {/* Menu Modal - Rendered at root level for proper z-index */}
       <AnimatePresence>
