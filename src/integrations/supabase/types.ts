@@ -1968,6 +1968,60 @@ export type Database = {
         }
         Relationships: []
       }
+      travel_mode_top3: {
+        Row: {
+          area: string
+          category: string
+          created_at: string
+          description: string
+          emoji: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_name: string
+          location: string
+          park_id: string
+          park_name: string
+          price: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          category: string
+          created_at?: string
+          description: string
+          emoji?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_name: string
+          location: string
+          park_id: string
+          park_name: string
+          price?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          category?: string
+          created_at?: string
+          description?: string
+          emoji?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_name?: string
+          location?: string
+          park_id?: string
+          park_name?: string
+          price?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           ai_extracted_dates: Json | null
