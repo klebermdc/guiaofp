@@ -1376,8 +1376,8 @@ export default function ParkMap() {
               setSelectedPOI(null);
             }}
           >
-            {/* User location marker */}
-            {userPosition && isMapLoaded && (
+            {/* User location marker - hidden in guided mode (Waze arrow takes over) */}
+            {userPosition && isMapLoaded && navigationMode !== 'guided' && (
               <Marker
                 position={userPosition}
                 icon={getUserMarkerIcon()}
