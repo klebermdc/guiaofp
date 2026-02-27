@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, memo } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,7 +95,7 @@ const ColorCard = ({ title, emoji, borderColor, bgColor, children }: {
 // ─── Main Page ────────────────────────────────────
 const GuiaMiniViajante = () => {
   return (
-    <>
+    <AppLayout>
       <SEO
         title="Guia Criança OFP | Orlando Fast Pass"
         description="Guia completo para famílias que viajam com bebês e crianças. Documentação, bagagem, farmacinha, alimentação e mais."
@@ -629,7 +630,7 @@ const GuiaMiniViajante = () => {
 
         </div>
       </div>
-    </>
+    </AppLayout>
   );
 };
 
