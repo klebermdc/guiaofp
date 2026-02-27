@@ -118,12 +118,16 @@ const TravelModeTop3Component = ({ parkId, parkName, onNavigateToLocation }: Tra
     queryFn: async () => {
       const { data, error } = await supabase
         .from('travel_mode_top3')
-        .select('*')
+        .select('*, restaurants:restaurant_id(latitude, longitude, slug)')
         .eq('park_id', parkId)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return data as Top3Row[];
+      return (data ?? []).map((item: any) => ({
+        ...item,
+        restaurant_latitude: item.restaurants?.latitude ?? null,
+        restaurant_longitude: item.restaurants?.longitude ?? null,
+      })) as Top3Row[];
     },
     enabled: isTravelMode,
   });
