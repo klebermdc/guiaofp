@@ -123,21 +123,15 @@ const handler = async (req: Request): Promise<Response> => {
     // If payment is confirmed, handle the full onboarding flow
     if (newStatus === "confirmed" && transaction.status !== "confirmed") {
       console.log("Payment confirmed! Starting onboarding flow...");
+      const startTime = Date.now();
 
-      // Send server-side tracking (sGTM + Facebook CAPI)
-      // Skip if credit card — already tracked client-side to avoid duplication
       const paymentMethod = payload.payment?.billingType === 'PIX' ? 'pix' : 
                            payload.payment?.billingType === 'BOLETO' ? 'boleto' : 'credit_card';
       
-      if (paymentMethod !== 'credit_card') {
-        await sendServerTrackingEvent(supabase, transaction, paymentMethod);
-      } else {
-        console.log('Skipping server tracking for credit card (already tracked client-side)');
-      }
-
       const productName = planNames[transaction.plan_key] || transaction.plan_key;
 
-      // Helper to send emails via unified function
+      // ===== Helper functions (with individual try/catch) =====
+      
       const sendEmail = async (type: string, userData: Record<string, unknown>) => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/send-purchase-emails`, {
@@ -148,19 +142,17 @@ const handler = async (req: Request): Promise<Response> => {
             },
             body: JSON.stringify({ type, userData }),
           });
-          
+          const text = await response.text();
           if (response.ok) {
-            console.log(`${type} email sent successfully`);
+            console.log(`✅ ${type} email sent`);
           } else {
-            const errorText = await response.text();
-            console.error(`Error sending ${type} email:`, errorText);
+            console.error(`❌ ${type} email failed:`, text);
           }
         } catch (error) {
-          console.error(`Error sending ${type} email:`, error);
+          console.error(`❌ ${type} email error:`, error);
         }
       };
 
-      // Helper to send push notification
       const sendPushNotification = async (userId: string, title: string, body: string, data?: Record<string, unknown>) => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
@@ -174,20 +166,17 @@ const handler = async (req: Request): Promise<Response> => {
               payload: { title, body, tag: "access-enabled", data: { url: "/dashboard", ...data } },
             }),
           });
-          
+          const text = await response.text();
           if (response.ok) {
-            const result = await response.json();
-            console.log(`Push notification sent successfully:`, result);
+            console.log(`✅ Push notification sent`);
           } else {
-            const errorText = await response.text();
-            console.error(`Error sending push notification:`, errorText);
+            console.error(`❌ Push notification failed:`, text);
           }
         } catch (error) {
-          console.error(`Error sending push notification:`, error);
+          console.error(`❌ Push notification error:`, error);
         }
       };
 
-      // Helper to send admin notification
       const sendAdminNotification = async () => {
         try {
           const response = await fetch(`${supabaseUrl}/functions/v1/resend-admin-notification`, {
@@ -198,31 +187,39 @@ const handler = async (req: Request): Promise<Response> => {
             },
             body: JSON.stringify({ transactionId: transaction.id }),
           });
-          
+          const text = await response.text();
           if (response.ok) {
-            console.log("Admin notification sent successfully");
+            console.log("✅ Admin notification sent");
           } else {
-            const errorText = await response.text();
-            console.error("Error sending admin notification:", errorText);
+            console.error("❌ Admin notification failed:", text);
           }
         } catch (error) {
-          console.error("Error sending admin notification:", error);
+          console.error("❌ Admin notification error:", error);
         }
       };
 
-      // 1. Send purchase confirmation email immediately
-      await sendEmail("purchase-confirmation", {
-        email: transaction.email,
-        name: transaction.customer_name,
-        product: productName,
-      });
+      const sendTracking = async () => {
+        try {
+          if (paymentMethod !== 'credit_card') {
+            await sendServerTrackingEvent(supabase, transaction, paymentMethod);
+            console.log('✅ Server tracking sent');
+          } else {
+            console.log('⏭️ Skipping server tracking for credit card (already tracked client-side)');
+          }
+        } catch (error) {
+          console.error('❌ Server tracking error:', error);
+        }
+      };
 
-      // Check if user already exists
+      // ===== PHASE 1: CRITICAL PATH (sequential — must succeed) =====
+      // These operations depend on each other and are essential for user access
+
+      // 1a. Check if user already exists
       const { data: usersData } = await supabase.auth.admin.listUsers();
       let authUser = usersData?.users?.find(u => u.email === transaction.email);
       let tempPassword: string | null = null;
 
-      // 2. Create user if doesn't exist
+      // 1b. Create user if doesn't exist
       if (!authUser) {
         console.log("Creating new user account for:", transaction.email);
         tempPassword = generateTemporaryPassword();
@@ -239,27 +236,15 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         if (createError) {
-          console.error("Error creating user:", createError);
+          console.error("❌ Error creating user:", createError);
         } else {
           authUser = newUser.user;
-          console.log("User created successfully:", authUser?.id);
-
-          // Update transaction with user info
-          await supabase
-            .from("transactions")
-            .update({
-              user_id: authUser?.id,
-              metadata: {
-                ...((transaction.metadata as object) || {}),
-                userCreatedAt: new Date().toISOString(),
-              },
-            })
-            .eq("id", transaction.id);
+          console.log("✅ User created:", authUser?.id);
         }
       }
 
       if (authUser?.id) {
-        // 3. Enable access and set plan tier
+        // 1c. Enable access and set plan tier (CRITICAL — must happen before anything else)
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
@@ -270,41 +255,77 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("user_id", authUser.id);
 
         if (profileError) {
-          console.error("Error updating profile:", profileError);
+          console.error("❌ Error updating profile:", profileError);
         } else {
-          console.log("User access enabled for:", transaction.email);
+          console.log("✅ User access enabled for:", transaction.email);
         }
 
-        // 4. Send access-granted email with or without temp password
-        await sendEmail("access-granted", {
-          email: transaction.email,
-          name: transaction.customer_name,
-          tempPassword: tempPassword || undefined,
+        // 1d. Update transaction with user info
+        try {
+          await supabase
+            .from("transactions")
+            .update({
+              user_id: authUser.id,
+              metadata: {
+                ...((transaction.metadata as object) || {}),
+                userCreatedAt: new Date().toISOString(),
+              },
+            })
+            .eq("id", transaction.id);
+        } catch (err) {
+          console.error("❌ Error updating transaction with user ID:", err);
+        }
+
+        // ===== PHASE 2: PARALLEL — all independent operations at once =====
+        // None of these should block each other. If one fails, the others still run.
+        console.log("Starting parallel operations...");
+        
+        const parallelResults = await Promise.allSettled([
+          sendEmail("purchase-confirmation", {
+            email: transaction.email,
+            name: transaction.customer_name,
+            product: productName,
+          }),
+          sendEmail("access-granted", {
+            email: transaction.email,
+            name: transaction.customer_name,
+            tempPassword: tempPassword || undefined,
+          }),
+          sendPushNotification(
+            authUser.id,
+            "🎉 Acesso Liberado!",
+            `Olá ${transaction.customer_name.split(' ')[0]}! Seu acesso ao OFP Planejador foi ativado.`,
+            { plan: transaction.plan_key }
+          ),
+          sendAdminNotification(),
+          sendTracking(),
+        ]);
+
+        // Log summary of parallel results
+        const labels = ['purchase-email', 'access-email', 'push', 'admin-notif', 'tracking'];
+        parallelResults.forEach((result, i) => {
+          if (result.status === 'rejected') {
+            console.error(`❌ ${labels[i]} rejected:`, result.reason);
+          }
         });
 
-        // 5. Send push notification
-        await sendPushNotification(
-          authUser.id,
-          "🎉 Acesso Liberado!",
-          `Olá ${transaction.customer_name.split(' ')[0]}! Seu acesso ao OFP Planejador foi ativado.`,
-          { plan: transaction.plan_key }
-        );
-
-        // 6. Send admin notification
-        await sendAdminNotification();
-
-        console.log("Full onboarding flow completed for:", transaction.email);
+        const elapsed = Date.now() - startTime;
+        console.log(`✅ Full onboarding completed for ${transaction.email} in ${elapsed}ms`);
       } else {
         console.log("Could not process user, storing for manual activation:", transaction.email);
-        await supabase
-          .from("transactions")
-          .update({
-            metadata: {
-              ...((transaction.metadata as object) || {}),
-              pendingActivation: true,
-            },
-          })
-          .eq("id", transaction.id);
+        try {
+          await supabase
+            .from("transactions")
+            .update({
+              metadata: {
+                ...((transaction.metadata as object) || {}),
+                pendingActivation: true,
+              },
+            })
+            .eq("id", transaction.id);
+        } catch (err) {
+          console.error("❌ Error marking pending activation:", err);
+        }
       }
     }
 
