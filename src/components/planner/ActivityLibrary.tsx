@@ -6,9 +6,9 @@ import { Search, GripVertical, Clock, MapPin, Loader2, UtensilsCrossed, External
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useRestaurantFavorites } from '@/hooks/useRestaurantFavorites';
+import { fetchLibraryDataParallel } from '@/hooks/useCachedQueries';
 
 export interface LibraryItem {
   id: string;
@@ -60,42 +60,7 @@ const getCategoryStyle = (category: string) => {
   return CATEGORY_STYLES[category.toLowerCase()] || { bg: 'bg-muted/50', text: 'text-foreground', border: 'border-border' };
 };
 
-// Fetch functions
-const fetchParks = async () => {
-  const { data, error } = await supabase
-    .from('parks')
-    .select('id, name, slug, color, typical_visit_duration')
-    .order('name');
-  if (error) throw error;
-  return data;
-};
-
-const fetchRestaurants = async () => {
-  const { data, error } = await supabase
-    .from('restaurants')
-    .select('id, name, color, area, park_id, cuisine, description, menu_url, must_try, tips, type, parks(name, slug, color)')
-    .order('name');
-  if (error) throw error;
-  return data;
-};
-
-const fetchShopping = async () => {
-  const { data, error } = await supabase
-    .from('shopping')
-    .select('id, name, color, category, average_visit_duration')
-    .order('name');
-  if (error) throw error;
-  return data;
-};
-
-const fetchActivities = async () => {
-  const { data, error } = await supabase
-    .from('activities')
-    .select('id, name, color, category, duration')
-    .order('name');
-  if (error) throw error;
-  return data;
-};
+// Removed individual fetch functions - now using fetchLibraryDataParallel from useCachedQueries
 
 // Helper to determine category info
 const getCategoryInfo = (item: any, type: string, parks: any[]) => {
@@ -174,32 +139,22 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRestaurantType, setSelectedRestaurantType] = useState<string>('all');
 
-  // Fetch data
-  const { data: parks = [], isLoading: loadingParks } = useQuery({ 
-    queryKey: ['parks'], 
-    queryFn: fetchParks,
-    staleTime: 5 * 60 * 1000,
+  // Fetch all library data in a single parallel query
+  const { data: libraryData, isLoading: loadingLibrary } = useQuery({
+    queryKey: ['library-data'],
+    queryFn: fetchLibraryDataParallel,
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - static data
   });
-  const { data: restaurants = [], isLoading: loadingRestaurants } = useQuery({ 
-    queryKey: ['restaurants'], 
-    queryFn: fetchRestaurants,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: shopping = [], isLoading: loadingShopping } = useQuery({ 
-    queryKey: ['shopping'], 
-    queryFn: fetchShopping,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: activities = [], isLoading: loadingActivities } = useQuery({ 
-    queryKey: ['activities'], 
-    queryFn: fetchActivities,
-    staleTime: 5 * 60 * 1000,
-  });
+
+  const parks = libraryData?.parks || [];
+  const restaurants = libraryData?.restaurants || [];
+  const shopping = libraryData?.shopping || [];
+  const activities = libraryData?.activities || [];
 
   // Fetch user favorites
   const { data: favoriteRestaurants = [], isLoading: loadingFavorites } = useRestaurantFavorites();
 
-  const isLoading = loadingParks || loadingRestaurants || loadingShopping || loadingActivities || loadingFavorites;
+  const isLoading = loadingLibrary || loadingFavorites;
 
   // Transform data to LibraryItem format
   const transformedItems = useMemo(() => {
