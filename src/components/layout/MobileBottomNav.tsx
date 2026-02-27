@@ -19,7 +19,8 @@ import {
   UtensilsCrossed,
   Star,
   Sparkles,
-  Ticket
+  Ticket,
+  FerrisWheel
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MobileNavSheet } from './MobileNavSheet';
@@ -46,6 +47,7 @@ const iconMap: Record<string, React.ElementType> = {
   Headphones,
   Route,
   UtensilsCrossed,
+  FerrisWheel,
 };
 
 // Page key to path mapping
