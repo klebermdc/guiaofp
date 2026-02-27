@@ -82,7 +82,7 @@ const pageConfig: Record<string, { path: string; label: string; defaultIcon: Rea
   restaurantes: { path: '/guia-restaurantes', label: 'Guia de Restaurantes', defaultIcon: UtensilsCrossed },
   roteiro_personalizado: { path: '/roteiro-personalizado', label: 'Roteiro Personalizado', defaultIcon: Route },
   planner_manual: { path: '/planner-manual', label: 'Planejador Manual', defaultIcon: Calendar },
-  conteudo: { path: '/conteudos', label: 'Parques', defaultIcon: FerrisWheel },
+  conteudo: { path: '/conteudos', label: 'Guia dos Parques', defaultIcon: FerrisWheel },
   contato: { path: '/contato', label: 'Falar com Guia', defaultIcon: MessageCircle },
   cupons: { path: '/cupons', label: 'Cupons de Parceiros', defaultIcon: Ticket },
   resumo_orlando: { path: '/resumo-orlando', label: 'Resumo de Orlando', defaultIcon: Map },
