@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
@@ -34,53 +35,26 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
-interface Plan {
-  id: string;
-  name: string;
-  subtitle: string;
-  price: number;
-  priceCents: number;
-  features: string[];
-  icon: typeof Map | typeof Crown;
-}
-
-const plans: Record<string, Plan> = {
-  basic: {
-    id: 'basic',
-    name: 'Planejador',
-    subtitle: 'Autonomia total',
-    price: 49,
-    priceCents: 90,
-    features: [
-      'Perfil de viagem completo',
-      'Seleção de atrações',
-      'Mapa dos parques',
-      'Checklist de viagem',
-      'Roteiro com dicas gerais',
-    ],
-    icon: Map,
-  },
-  premium: {
-    id: 'premium',
-    name: 'Com Guia',
-    subtitle: 'Experiência premium',
-    price: 149,
-    priceCents: 90,
-    features: [
-      'Tudo do Planejador +',
-      'Roteiro otimizado por horário',
-      'Ajustes em tempo real',
-      'Suporte via WhatsApp',
-      'Guia humano dedicado',
-    ],
-    icon: Crown,
-  },
+const planIcons: Record<string, typeof Map | typeof Crown> = {
+  basic: Map,
+  premium: Crown,
 };
 
 export default function Register() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const plan = plans[planId || 'basic'];
+  const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
+
+  const planKey = planId || 'basic';
+  const dbPlan = dbPlans?.[planKey];
+  const plan = dbPlan ? {
+    id: dbPlan.plan_key,
+    name: dbPlan.plan_name,
+    subtitle: dbPlan.subtitle || '',
+    features: dbPlan.features,
+    icon: planIcons[dbPlan.plan_key] || Map,
+    price_cents: dbPlan.price_cents,
+  } : null;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -193,10 +167,10 @@ export default function Register() {
               name: plan.name,
               type: 'plan',
               plan_key: plan.id,
-              price_cents: plan.price * 100 + plan.priceCents,
+              price_cents: plan.price_cents,
               features: plan.features,
             }] : [],
-            total_value_cents: plan ? plan.price * 100 + plan.priceCents : 0,
+            total_value_cents: plan ? plan.price_cents : 0,
             metadata: {
               contact_name: formData.name,
               contact_email: formData.email,
@@ -222,6 +196,17 @@ export default function Register() {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoadingPlans) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!plan) {
     return (
@@ -283,7 +268,7 @@ export default function Register() {
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold">
-                  R${plan.price}<span className="text-sm">,{plan.priceCents.toString().padStart(2, '0')}</span>
+                  {formatPriceBRL(plan.price_cents).formatted}
                 </p>
               </div>
             </div>
