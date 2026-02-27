@@ -157,11 +157,6 @@ const GuiaMiniViajante = () => {
                   <p className="text-sm text-foreground/80">23kg, entregue no balcão; acesso apenas no destino final; ideal para líquidos acima de 100ml</p>
                 </ColorCard>
               </div>
-              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm font-semibold text-amber-300 flex items-center gap-2">
-                  💡 No método Mini Viajante, a proposta é que tudo caiba na mala de mão!
-                </p>
-              </div>
             </section>
           </AnimatedSection>
 
