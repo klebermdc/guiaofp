@@ -547,25 +547,7 @@ const GuiaMiniViajante = () => {
             </section>
           </AnimatedSection>
 
-          {/* ═══════════════ 13. MENSAGEM FINAL ═══════════════ */}
-          <AnimatedSection delay={100}>
-            <section className="pb-12">
-              <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/15 via-pink-500/10 to-blue-500/10 overflow-hidden">
-                <CardContent className="pt-8 pb-8 text-center">
-                  <span className="text-5xl mb-4 block">💜</span>
-                  <p className="text-lg text-foreground/90 leading-relaxed max-w-2xl mx-auto italic">
-                    "Preparar uma viagem em família exige tempo, pesquisa e carinho. Espero que este guia tenha ajudado a clarear escolhas e simplificar sua organização. Desejo que suas próximas viagens sejam leves, tranquilas e cheias de boas memórias."
-                  </p>
-                  <p className="mt-4 text-2xl">💜✈️</p>
-                  <Link to="/dashboard">
-                    <Button className="mt-6" variant="premium" size="lg">
-                      Voltar ao Dashboard <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </section>
-          </AnimatedSection>
+
 
         </div>
       </div>
