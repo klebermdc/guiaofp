@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useRestaurantFavorites } from '@/hooks/useRestaurantFavorites';
 import { fetchLibraryDataParallel } from '@/hooks/useCachedQueries';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { SkeletonCard } from '@/components/ui/skeleton-card';
 
 export interface LibraryItem {
   id: string;
@@ -133,6 +135,111 @@ const RESTAURANT_TYPES = [
   { id: 'table-service', label: 'Mesa', icon: '🍷' },
   { id: 'signature', label: 'Signature', icon: '⭐' },
 ] as const;
+// Paginated items list with infinite scroll and skeletons
+const ActivityItemsList = ({
+  isLoading,
+  filteredItems,
+  selectedTab,
+  searchQuery,
+  setSearchQuery,
+  onDragStart,
+}: {
+  isLoading: boolean;
+  filteredItems: LibraryItem[];
+  selectedTab: string;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  onDragStart?: (item: LibraryItem) => void;
+}) => {
+  // Determine page size based on item type
+  const pageSize = selectedTab === 'restaurants' ? 20 : 30;
+
+  const { visibleItems, loadMoreRef, hasMore, totalCount, visibleCount } = useInfiniteScroll({
+    items: filteredItems,
+    pageSize,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 min-h-0 overflow-auto">
+        <div className="p-3">
+          <SkeletonCard count={6} variant="compact" className="grid-cols-1" />
+        </div>
+      </div>
+    );
+  }
+
+  if (filteredItems.length === 0) {
+    return (
+      <div className="flex-1 min-h-0 overflow-auto">
+        <div className="p-3">
+          <div className="text-center py-12">
+            {selectedTab === 'favorites' && !searchQuery ? (
+              <>
+                <Heart className="h-10 w-10 mx-auto mb-3 text-rose-400/50" />
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Nenhum favorito ainda
+                </p>
+                <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+                  Adicione restaurantes aos favoritos no Guia de Restaurantes para vê-los aqui
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-4xl mb-2 block">🔍</span>
+                <p className="text-sm text-muted-foreground">
+                  Nenhum resultado encontrado
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs text-primary hover:underline mt-2"
+                  >
+                    Limpar busca
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 min-h-0 overflow-auto">
+      <div className="p-3 space-y-2 pb-6">
+        {/* Show favorites header when on favorites tab */}
+        {selectedTab === 'favorites' && (
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+            <Heart className="h-4 w-4 text-rose-500" />
+            <span className="text-xs font-medium text-foreground">
+              Seus restaurantes favoritos ({filteredItems.length})
+            </span>
+          </div>
+        )}
+        {visibleItems.map(item => (
+          <DraggableActivityItem
+            key={`${item.type}-${item.id}`}
+            item={item}
+            onDragStart={onDragStart}
+          />
+        ))}
+        
+        {/* Infinite scroll sentinel */}
+        {hasMore && (
+          <div ref={loadMoreRef} className="flex items-center justify-center py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-xs text-muted-foreground ml-2">
+              {visibleCount} de {totalCount}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
   const [selectedTab, setSelectedTab] = useState<string>('all');
@@ -403,63 +510,14 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
       )}
 
       {/* Items List */}
-      <div className="flex-1 min-h-0 overflow-auto">
-        <div className="p-3 space-y-2 pb-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12">
-              {selectedTab === 'favorites' && !searchQuery ? (
-                <>
-                  <Heart className="h-10 w-10 mx-auto mb-3 text-rose-400/50" />
-                  <p className="text-sm font-medium text-foreground mb-1">
-                    Nenhum favorito ainda
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
-                    Adicione restaurantes aos favoritos no Guia de Restaurantes para vê-los aqui
-                  </p>
-                </>
-              ) : (
-                <>
-                  <span className="text-4xl mb-2 block">🔍</span>
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum resultado encontrado
-                  </p>
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="text-xs text-primary hover:underline mt-2"
-                    >
-                      Limpar busca
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* Show favorites header when on favorites tab */}
-              {selectedTab === 'favorites' && (
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-                  <Heart className="h-4 w-4 text-rose-500" />
-                  <span className="text-xs font-medium text-foreground">
-                    Seus restaurantes favoritos ({filteredItems.length})
-                  </span>
-                </div>
-              )}
-              {filteredItems.map(item => (
-                <DraggableActivityItem
-                  key={`${item.type}-${item.id}`}
-                  item={item}
-                  onDragStart={onDragStart}
-                />
-              ))}
-            </>
-          )}
-        </div>
-      </div>
+      <ActivityItemsList
+        isLoading={isLoading}
+        filteredItems={filteredItems}
+        selectedTab={selectedTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onDragStart={onDragStart}
+      />
 
       {/* Footer Tip */}
       <div className="p-3 border-t border-border bg-gradient-to-t from-muted/30 to-transparent">

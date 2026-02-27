@@ -31,6 +31,8 @@ import { SEO } from '@/components/SEO';
 import { cn } from '@/lib/utils';
 import { TemplateGalleryModal } from '@/components/planner/TemplateGalleryModal';
 import { PlannerTemplate } from '@/data/plannerTemplates';
+import { PlannerProvider } from '@/contexts/PlannerContext';
+import { SkeletonPlannerDay } from '@/components/ui/skeleton-card';
 
 const PlannerManual = () => {
   const { user, travelProfile } = useAuth();
@@ -491,17 +493,15 @@ const PlannerManual = () => {
   if (plannerLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Carregando seu roteiro...</p>
-          </div>
+        <div className="space-y-4 p-4">
+          <SkeletonPlannerDay count={3} />
         </div>
       </AppLayout>
     );
   }
 
   return (
+    <PlannerProvider>
     <AppLayout>
       <SEO 
         title="Planejador Manual"
@@ -572,9 +572,7 @@ const PlannerManual = () => {
               )}
             >
               {itemsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
+                <SkeletonPlannerDay count={2} />
               ) : plannerData ? (
                 <PlannerCalendar
                   startDate={plannerData.start_date}
@@ -657,6 +655,7 @@ const PlannerManual = () => {
         )}
       </DndContext>
     </AppLayout>
+    </PlannerProvider>
   );
 };
 
