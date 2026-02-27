@@ -39,6 +39,10 @@ interface Top3Row {
   sort_order: number;
   park_id: string;
   park_name: string;
+  restaurant_id: string | null;
+  restaurant_latitude: number | null;
+  restaurant_longitude: number | null;
+  restaurant_slug: string | null;
 }
 
 // Only parks that have Top 3 content
@@ -127,11 +131,16 @@ const Top3Page = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('travel_mode_top3')
-        .select('*')
+        .select('*, restaurants:restaurant_id(latitude, longitude, slug)')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return data as Top3Row[];
+      return (data ?? []).map((item: any) => ({
+        ...item,
+        restaurant_latitude: item.restaurants?.latitude ?? null,
+        restaurant_longitude: item.restaurants?.longitude ?? null,
+        restaurant_slug: item.restaurants?.slug ?? null,
+      })) as Top3Row[];
     },
   });
 
@@ -147,8 +156,11 @@ const Top3Page = () => {
     : [];
 
   const handleNavigateToMap = useCallback((item: Top3Row) => {
-    // Navigate to the map with the park and search for the location
-    navigate(`/mapa?park=${item.park_id}&search=${encodeURIComponent(item.location)}`);
+    if (item.restaurant_latitude && item.restaurant_longitude) {
+      navigate(`/mapa?park=${item.park_id}&lat=${item.restaurant_latitude}&lng=${item.restaurant_longitude}&search=${encodeURIComponent(item.location)}`);
+    } else {
+      navigate(`/mapa?park=${item.park_id}&search=${encodeURIComponent(item.location)}`);
+    }
   }, [navigate]);
 
   const categoryMeta = CATEGORIES[activeCategory];

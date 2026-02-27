@@ -2007,6 +2007,7 @@ export type Database = {
           park_id: string
           park_name: string
           price: string | null
+          restaurant_id: string | null
           sort_order: number
           updated_at: string
         }
@@ -2024,6 +2025,7 @@ export type Database = {
           park_id: string
           park_name: string
           price?: string | null
+          restaurant_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -2041,10 +2043,19 @@ export type Database = {
           park_id?: string
           park_name?: string
           price?: string | null
+          restaurant_id?: string | null
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "travel_mode_top3_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_documents: {
         Row: {
