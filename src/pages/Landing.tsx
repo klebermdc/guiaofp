@@ -264,8 +264,8 @@ const Landing = () => {
               'Confusão com Lightning Lane / Multi Pass',
               'Perder tempo andando sem estratégia',
               'Assistir dezenas de vídeos e continuar inseguro',
-            ].map((pain, i) => (
-              <AnimatedSection key={i} delay={i * 100}>
+            ].map((pain, i, arr) => (
+              <AnimatedSection key={i} delay={i * 100} className={arr.length % 2 !== 0 && i === arr.length - 1 ? 'sm:col-span-2 sm:max-w-md sm:mx-auto' : ''}>
                 <Card className="bg-destructive/5 border-destructive/20 hover:border-destructive/40 transition-all">
                   <CardContent className="p-5 flex items-center gap-4">
                     <X className="w-5 h-5 text-destructive flex-shrink-0" />
