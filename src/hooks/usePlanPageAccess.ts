@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface PageAccess {
   id: string;
@@ -23,6 +24,7 @@ let pageAccessCache: { data: PageAccess[]; timestamp: number } | null = null;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - this data rarely changes
 
 export function usePlanPageAccess() {
+  const { isAuthenticated } = useAuth();
   const [pageAccess, setPageAccess] = useState<PageAccess[]>(() => {
     // Initialize from cache if available
     if (pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL) {
@@ -41,7 +43,7 @@ export function usePlanPageAccess() {
 
   const fetchPageAccess = useCallback(async (force = false) => {
     // Skip if we have valid cache and not forcing refresh
-    if (!force && pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL) {
+    if (!force && pageAccessCache && Date.now() - pageAccessCache.timestamp < CACHE_TTL && pageAccessCache.data.length > 0) {
       if (isFetched.current) return;
       setPageAccess(pageAccessCache.data);
       setIsLoading(false);
@@ -56,11 +58,14 @@ export function usePlanPageAccess() {
         .select("*")
         .order("sort_order", { ascending: true });
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         setPageAccess(data as PageAccess[]);
         // Update cache
         pageAccessCache = { data: data as PageAccess[], timestamp: Date.now() };
         isFetched.current = true;
+      } else if (!error && data && data.length === 0) {
+        // Empty result - don't cache, might be auth not ready
+        isFetched.current = false;
       }
     } catch (err) {
       console.error('Error fetching page access:', err);
@@ -70,11 +75,11 @@ export function usePlanPageAccess() {
   }, []);
 
   useEffect(() => {
-    // Only fetch once on mount to avoid duplicate calls
-    if (!isFetched.current) {
+    // Re-fetch when auth state changes or if not yet fetched
+    if (isAuthenticated && !isFetched.current) {
       fetchPageAccess();
     }
-  }, [fetchPageAccess]);
+  }, [fetchPageAccess, isAuthenticated]);
 
   const updatePageAccess = async (
     id: string,
