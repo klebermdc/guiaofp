@@ -357,6 +357,30 @@ export type Database = {
         }
         Relationships: []
       }
+      cache_entries: {
+        Row: {
+          created_at: string | null
+          data: Json
+          expires_at: string
+          hit_count: number | null
+          key: string
+        }
+        Insert: {
+          created_at?: string | null
+          data: Json
+          expires_at: string
+          hit_count?: number | null
+          key: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          expires_at?: string
+          hit_count?: number | null
+          key?: string
+        }
+        Relationships: []
+      }
       content_categories: {
         Row: {
           color: string | null
@@ -2307,6 +2331,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_cache: { Args: never; Returns: undefined }
       cleanup_old_availability: { Args: never; Returns: undefined }
       has_role: {
         Args: {
