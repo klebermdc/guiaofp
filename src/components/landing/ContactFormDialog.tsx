@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MessageCircle, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Send, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ContactFormDialogProps {
   open: boolean;
@@ -19,7 +20,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -29,24 +30,33 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
 
     setSending(true);
 
-    // Build WhatsApp message with form data
-    const text = `Olá! Meu nome é ${name.trim()}.\nEmail: ${email.trim()}\n\n${message.trim()}`;
-    const whatsappUrl = `https://wa.me/5511966144493?text=${encodeURIComponent(text)}`;
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: name.trim(),
+          email: email.trim(),
+          message: message.trim(),
+        },
+      });
 
-    // Open WhatsApp in new tab
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      if (error) throw error;
 
-    setSending(false);
-    setSent(true);
+      setSent(true);
+      toast.success('Mensagem enviada com sucesso!');
 
-    // Reset after a moment
-    setTimeout(() => {
-      setSent(false);
-      setName('');
-      setEmail('');
-      setMessage('');
-      onOpenChange(false);
-    }, 2000);
+      setTimeout(() => {
+        setSent(false);
+        setName('');
+        setEmail('');
+        setMessage('');
+        onOpenChange(false);
+      }, 2500);
+    } catch (err) {
+      console.error('Error sending contact:', err);
+      toast.error('Erro ao enviar mensagem. Tente novamente.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -54,11 +64,11 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <MessageCircle className="w-5 h-5 text-primary" />
+            <Mail className="w-5 h-5 text-primary" />
             Fale Conosco
           </DialogTitle>
           <DialogDescription>
-            Preencha o formulário abaixo e entraremos em contato via WhatsApp.
+            Preencha o formulário abaixo e entraremos em contato por email.
           </DialogDescription>
         </DialogHeader>
 
@@ -66,7 +76,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
           <div className="py-8 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
             <p className="font-semibold text-foreground">Mensagem enviada!</p>
-            <p className="text-sm text-muted-foreground">Redirecionando para o WhatsApp...</p>
+            <p className="text-sm text-muted-foreground">Entraremos em contato em breve.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +120,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
 
             <Button type="submit" className="w-full gap-2" disabled={sending}>
               <Send className="w-4 h-4" />
-              Enviar via WhatsApp
+              {sending ? 'Enviando...' : 'Enviar Mensagem'}
             </Button>
           </form>
         )}
