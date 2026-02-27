@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback, memo } from 'react';
+import { ContactFormDialog } from '@/components/landing/ContactFormDialog';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -83,6 +84,7 @@ const Landing = () => {
   const [showContent, setShowContent] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { trackCTAClick } = useAnalytics();
 
@@ -688,12 +690,14 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('planos')} className="hover:text-foreground transition-colors">Planos</button>
-            <a href="https://wa.me/5511966144493" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Contato</a>
+            <button onClick={() => setContactOpen(true)} className="hover:text-foreground transition-colors">Contato</button>
             <Link to="/termos-e-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
           </div>
           <p className="text-xs text-muted-foreground">© 2026 Orlando Fast Pass. Todos os direitos reservados.</p>
         </div>
       </footer>
+
+      <ContactFormDialog open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 };
