@@ -255,39 +255,7 @@ const GuiaMiniViajante = () => {
             </section>
           </AnimatedSection>
 
-          {/* ═══════════════ 5. DOCUMENTAÇÃO ═══════════════ */}
-          <AnimatedSection delay={100}>
-            <section>
-              <SectionTitle emoji="📋" title="Documentação" />
-              <Accordion type="single" collapsible className="space-y-2">
-                {[
-                  { value: 'mercosul', icon: '🌎', title: 'Países do Mercosul', content: 'RG é suficiente para viagens dentro do Mercosul. Verifique se a foto do documento ainda corresponde à aparência atual da criança. Se viajar apenas com um dos pais, é necessária autorização do outro responsável.' },
-                  { value: 'outros', icon: '✈️', title: 'Outros Países', content: 'Passaporte obrigatório. Alguns destinos exigem visto ou formulários adicionais. Passaporte infantil tem validade reduzida conforme a idade da criança.' },
-                  { value: 'emissao', icon: '📋', title: 'Emissão de Passaporte e Autorizações', content: 'Emissão online pela Polícia Federal + agendamento presencial. Autorização judicial ou extrajudicial (com firma reconhecida). Opção de Autorização Eletrônica de Viagem disponível.' },
-                  { value: 'visto', icon: '🇺🇸', title: 'Visto Americano para Bebê', content: 'Formulário DS-160 + pagamento de taxa. Menores de 14 anos podem não precisar de entrevista. Visto geralmente válido por 10 anos.' },
-                  { value: 'vacina', icon: '💉', title: 'Cartão de Vacinação', content: 'Carteira de Vacinação Digital via ConecteSUS. Salve certificados offline — Febre Amarela e COVID incluídos.' },
-                  { value: 'pcd', icon: '♿', title: 'Condições Específicas (Autismo, TDAH)', content: 'Considerados PCD por lei. Acompanhantes podem ter desconto de até 80% nas passagens. Formulários MEDIF ou FREMEC junto às companhias aéreas.' },
-                ].map(item => (
-                  <AccordionItem key={item.value} value={item.value} className="border border-border/50 rounded-xl px-4 bg-card/50">
-                    <AccordionTrigger className="text-left">
-                      <span className="flex items-center gap-2">
-                        <span className="text-xl">{item.icon}</span>
-                        <span className="font-semibold">{item.title}</span>
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <p className="text-foreground/80 text-sm leading-relaxed">{item.content}</p>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-                <p className="text-sm text-red-300 font-semibold flex items-center gap-2">
-                  ⚠️ Desconto de até 80% nas passagens para acompanhantes de PCD!
-                </p>
-              </div>
-            </section>
-          </AnimatedSection>
+
 
           {/* ═══════════════ 6. TRANSPORTE E CONFORTO ═══════════════ */}
           <AnimatedSection delay={100}>
