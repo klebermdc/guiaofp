@@ -96,7 +96,7 @@ const GuiaMiniViajante = () => {
   return (
     <>
       <SEO
-        title="Guia Mini Viajante | Orlando Fast Pass"
+        title="Guia Criança OFP | Orlando Fast Pass"
         description="Guia completo para famílias que viajam com bebês e crianças. Documentação, bagagem, farmacinha, alimentação e mais."
       />
 
@@ -119,7 +119,7 @@ const GuiaMiniViajante = () => {
               <Baby className="w-4 h-4 mr-1" /> Viajar com Crianças
             </Badge>
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white mb-4 drop-shadow-lg">
-              Guia Mini Viajante
+              Guia Criança OFP
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
               Troca por Viajar com Crianças — passo a passo para viajar leve, prática e preparada
