@@ -30,50 +30,12 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
 
-interface Plan {
-  id: string;
-  name: string;
-  subtitle: string;
-  price: number;
-  priceCents: number;
-  features: string[];
-  icon: typeof Map | typeof Crown;
-  gradient?: boolean;
-}
-
-const plans: Record<string, Plan> = {
-  basic: {
-    id: 'basic',
-    name: 'Planejador',
-    subtitle: 'Autonomia total',
-    price: 49,
-    priceCents: 90,
-    features: [
-      'Perfil de viagem completo',
-      'Seleção de atrações',
-      'Mapa dos parques',
-      'Checklist de viagem',
-      'Roteiro com dicas gerais',
-    ],
-    icon: Map,
-  },
-  premium: {
-    id: 'premium',
-    name: 'Com Guia',
-    subtitle: 'Experiência premium',
-    price: 149,
-    priceCents: 90,
-    features: [
-      'Tudo do Planejador +',
-      'Roteiro otimizado por horário',
-      'Ajustes em tempo real',
-      'Suporte via WhatsApp',
-      'Guia humano dedicado',
-    ],
-    icon: Crown,
-    gradient: true,
-  },
+// Plan icons map
+const planIcons: Record<string, typeof Map | typeof Crown> = {
+  basic: Map,
+  premium: Crown,
 };
 
 type PaymentMethod = 'pix' | 'boleto' | 'credit_card';
@@ -104,8 +66,21 @@ interface UserProfile {
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const plan = plans[planId || 'basic'];
   const { trackBeginCheckout, trackAddPaymentInfo, trackPurchase, trackPlanView } = useAnalytics();
+  const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
+
+  // Derive plan from DB data
+  const planKey = planId || 'basic';
+  const dbPlan = dbPlans?.[planKey];
+  const plan = dbPlan ? {
+    id: dbPlan.plan_key,
+    name: dbPlan.plan_name,
+    subtitle: dbPlan.subtitle || '',
+    features: dbPlan.features,
+    icon: planIcons[dbPlan.plan_key] || Map,
+    gradient: dbPlan.plan_key === 'premium',
+    price_cents: dbPlan.price_cents,
+  } : null;
 
   // User state
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -136,8 +111,8 @@ export default function Checkout() {
     cardName: '',
   });
 
-  // Calculate amounts
-  const originalAmountCents = plan ? plan.price * 100 + plan.priceCents : 0;
+  // Calculate amounts from DB price
+  const originalAmountCents = plan?.price_cents || 0;
   const discountAmountCents = appliedCoupon?.discountAmount || 0;
   const finalAmountCents = Math.max(0, originalAmountCents - discountAmountCents);
   const finalPrice = Math.floor(finalAmountCents / 100);
@@ -203,10 +178,10 @@ export default function Checkout() {
             name: plan.name,
             type: 'plan',
             plan_key: plan.id,
-            price_cents: plan.price * 100 + plan.priceCents,
+            price_cents: plan.price_cents,
             features: plan.features,
           }],
-          total_value_cents: plan.price * 100 + plan.priceCents,
+          total_value_cents: plan.price_cents,
           metadata: {
             contact_name: userProfile.name,
             contact_email: userProfile.email,
@@ -283,7 +258,7 @@ export default function Checkout() {
     toast.info('Cupom removido');
   };
 
-  if (isLoadingUser) {
+  if (isLoadingUser || isLoadingPlans) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -1028,7 +1003,7 @@ export default function Checkout() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Plano {plan.name}</span>
-                    <span className="text-foreground">R${plan.price},{plan.priceCents.toString().padStart(2, '0')}</span>
+                    <span className="text-foreground">{formatPriceBRL(originalAmountCents).formatted}</span>
                   </div>
                   
                   {appliedCoupon && (
@@ -1044,7 +1019,7 @@ export default function Checkout() {
                     <div className="text-right">
                       {appliedCoupon && (
                         <span className="text-sm text-muted-foreground line-through mr-2">
-                          R${plan.price},{plan.priceCents.toString().padStart(2, '0')}
+                          {formatPriceBRL(originalAmountCents).formatted}
                         </span>
                       )}
                       <span className="text-2xl font-bold text-foreground">R${finalPrice}</span>

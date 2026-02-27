@@ -42,6 +42,7 @@ import featureRestaurantes from '@/assets/landing/feature-restaurantes.png';
 import featureDocumentos from '@/assets/landing/feature-documentos.png';
 import featureCupons from '@/assets/landing/feature-cupons.png';
 import featureDashboard from '@/assets/landing/feature-dashboard.png';
+import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
 
 // ─── Animated Section (fade-in on scroll) ────────────────────────────────────
 const AnimatedSection = memo(({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
@@ -87,6 +88,7 @@ const Landing = () => {
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { trackCTAClick } = useAnalytics();
+  const { data: dbPlans } = usePlanPricing();
 
   useScrollTracking();
 
@@ -537,14 +539,16 @@ const Landing = () => {
                     <h3 className="font-display text-xl font-bold mb-2">Planejador</h3>
                     <p className="text-white/60 text-sm mb-6">Autonomia total para planejar</p>
                     <div className="mb-6">
-                      <span className="text-white/40 line-through text-lg">R$ 197</span>
+                     <span className="text-white/40 line-through text-lg">R$ 197</span>
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl sm:text-5xl font-bold text-secondary">R$ 99</span>
+                        <span className="text-4xl sm:text-5xl font-bold text-secondary">
+                          {dbPlans?.basic ? formatPriceBRL(dbPlans.basic.price_cents).formatted : 'R$97,00'}
+                        </span>
                       </div>
                       <Badge className="mt-2 bg-secondary/20 text-secondary border-secondary/30 text-xs">🔥 Oferta por tempo limitado</Badge>
                     </div>
                     <ul className="space-y-3 mb-8 text-left">
-                      {['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos', 'Cupons de parceiros'].map((f, i) => (
+                      {(dbPlans?.basic?.features || ['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos', 'Cupons de parceiros']).map((f, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-white/90">
                           <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                           <span>{f}</span>
