@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import {
-  Crown,
+  
   CheckCircle2,
   ArrowRight,
   Star,
@@ -527,7 +527,7 @@ const Landing = () => {
             </p>
 
             {/* Pricing cards */}
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10">
+            <div className="max-w-lg mx-auto mb-10">
               {/* Basic */}
               <AnimatedSection delay={100}>
                 <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white h-full">
@@ -559,23 +559,6 @@ const Landing = () => {
                       <span>✅ Funciona no celular</span>
                       <span>✅ 7 dias de garantia</span>
                     </div>
-                  </CardContent>
-                </Card>
-              </AnimatedSection>
-
-              {/* Premium - Falar com consultor */}
-              <AnimatedSection delay={200}>
-                <Card className="bg-white/10 backdrop-blur-sm border-secondary/40 text-white h-full relative flex items-center justify-center">
-                  <CardContent className="p-6 sm:p-8 text-center">
-                    <Crown className="w-12 h-12 text-secondary mx-auto mb-4" />
-                    <h3 className="font-display text-xl font-bold mb-2">Quer um guia dedicado?</h3>
-                    <p className="text-white/60 text-sm mb-6">Consultoria personalizada com roteiro otimizado, ajustes em tempo real e suporte via WhatsApp.</p>
-                    <a href={WHATSAPP_PREMIUM_LINK} target="_blank" rel="noopener noreferrer" className="block" onClick={() => trackCTAClick('cta_plano_premium', 'pricing')}>
-                      <Button className="w-full h-14 rounded-xl bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white font-bold text-base hover:scale-[1.02] transition-transform">
-                        <MessageCircle className="w-5 h-5 mr-2" />
-                        Falar com consultor
-                      </Button>
-                    </a>
                   </CardContent>
                 </Card>
               </AnimatedSection>
