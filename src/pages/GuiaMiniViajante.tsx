@@ -137,31 +137,7 @@ const GuiaMiniViajante = () => {
 
         <div className="max-w-6xl mx-auto px-4 py-12 space-y-16">
 
-          {/* ═══════════════ 2. INFORMAÇÕES IMPORTANTES ═══════════════ */}
-          <AnimatedSection>
-            <section id="info-section">
-              <SectionTitle emoji="💡" title="Informações Importantes" />
-              <Card className="border-2 border-purple-500/30 bg-purple-500/10">
-                <CardContent className="pt-6 space-y-4">
-                  <p className="text-foreground/90 leading-relaxed">
-                    Este guia foi criado para transformar o planejamento de viagem em família em algo <strong>leve, prático e sem estresse</strong>. 
-                    Aqui você encontra tudo o que precisa — desde documentação e bagagem até farmacinha, alimentação e um cronograma final de prontidão.
-                  </p>
-                  <div className="flex flex-wrap gap-3">
-                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-sm px-3 py-1">
-                      💜 Comunidade Exclusiva
-                    </Badge>
-                    <Badge className="bg-pink-500/20 text-pink-300 border-pink-500/30 text-sm px-3 py-1">
-                      ✨ Sua opinião é essencial
-                    </Badge>
-                    <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-sm px-3 py-1">
-                      🤝 Suporte disponível
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          </AnimatedSection>
+
 
           {/* ═══════════════ 3. BAGAGENS ═══════════════ */}
           <AnimatedSection delay={100}>
