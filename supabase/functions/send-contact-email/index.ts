@@ -31,7 +31,7 @@ serve(async (req) => {
     // Send notification email to the guide/admin
     const { error: sendError } = await resend.emails.send({
       from: "Orlando Fast Pass <contato@orlandofastpass.com.br>",
-      to: ["contato@orlandofastpass.com.br"],
+      to: ["contato@ofpplanejador.com"],
       replyTo: email,
       subject: `Novo contato via site: ${name}`,
       html: `
