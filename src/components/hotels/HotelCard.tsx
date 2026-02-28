@@ -10,6 +10,7 @@ interface HotelCardProps {
   isSelected: boolean;
   canSelect: boolean;
   onToggleCompare: (hotel: Hotel) => void;
+  imageOverride?: string;
 }
 
 const StarRating = ({ stars }: { stars: number }) => {
@@ -39,13 +40,13 @@ const AmenityIcon = ({ show, icon: Icon, label }: { show: boolean; icon: any; la
   );
 };
 
-export function HotelCard({ hotel, isSelected, canSelect, onToggleCompare }: HotelCardProps) {
+export function HotelCard({ hotel, isSelected, canSelect, onToggleCompare, imageOverride }: HotelCardProps) {
   return (
     <Card variant="interactive" className="overflow-hidden group">
       {/* Image */}
       <div className="relative h-40 overflow-hidden">
         <img
-          src={hotel.imageUrl}
+          src={imageOverride || hotel.imageUrl}
           alt={hotel.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
