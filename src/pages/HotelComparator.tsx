@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Search, SlidersHorizontal, X, GitCompareArrows, AlertTriangle, Hotel as HotelIcon, ChevronUp } from 'lucide-react';
-import { useHotelImages } from '@/hooks/useHotelImages';
+
 
 type SortOption = 'price-asc' | 'price-desc' | 'stars' | 'name';
 
@@ -22,7 +22,7 @@ const sortLabels: Record<SortOption, string> = {
 };
 
 const HotelComparator = () => {
-  const { getImageUrl, isLoading: imagesLoading } = useHotelImages();
+  
   const [search, setSearch] = useState('');
   const [selectedRegions, setSelectedRegions] = useState<HotelRegion[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<HotelCategory[]>([]);
@@ -286,7 +286,7 @@ const HotelComparator = () => {
               isSelected={!!compareList.find((h) => h.id === hotel.id)}
               canSelect={compareList.length < 3}
               onToggleCompare={toggleCompare}
-              imageOverride={getImageUrl(hotel.id, hotel.imageUrl)}
+              
             />
           ))}
         </div>
@@ -311,7 +311,7 @@ const HotelComparator = () => {
               <div className="bg-card border border-border shadow-glow rounded-2xl p-3 flex items-center gap-3 max-w-md w-full">
                 <div className="flex -space-x-2">
                   {compareList.map((h) => (
-                    <img key={h.id} src={getImageUrl(h.id, h.imageUrl)} alt={h.name} className="w-10 h-10 rounded-full border-2 border-background object-cover" />
+                    <img key={h.id} src={h.imageUrl} alt={h.name} className="w-10 h-10 rounded-full border-2 border-background object-cover" />
                   ))}
                 </div>
                 <div className="flex-1 min-w-0">
