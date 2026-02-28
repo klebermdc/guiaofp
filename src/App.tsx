@@ -56,6 +56,7 @@ const OrlandoSummary = lazy(() => import("./pages/OrlandoSummary"));
 const GuiaMiniViajante = lazy(() => import("./pages/GuiaMiniViajante"));
 const Top3 = lazy(() => import("./pages/Top3"));
 const HotelComparator = lazy(() => import("./pages/HotelComparator"));
+const TransportGuide = lazy(() => import("./pages/TransportGuide"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -143,6 +144,7 @@ const App = () => {
                       <Route path="/guia_mini_viajante" element={<Navigate to="/guia-mini-viajante" replace />} />
                       <Route path="/top3" element={<Top3 />} />
                       <Route path="/hoteis" element={<HotelComparator />} />
+                      <Route path="/transporte" element={<TransportGuide />} />
                       <Route path="/registro/:planId" element={<Register />} />
                       <Route path="/checkout/:planId" element={<Checkout />} />
                       <Route path="/admin" element={<Admin />} />
