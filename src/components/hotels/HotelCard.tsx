@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Hotel, categoryLabels, categoryColors } from '@/data/hotelsData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,15 +42,19 @@ const AmenityIcon = ({ show, icon: Icon, label }: { show: boolean; icon: any; la
 };
 
 export function HotelCard({ hotel, isSelected, canSelect, onToggleCompare, imageOverride }: HotelCardProps) {
+  const [imgError, setImgError] = useState(false);
+  const fallbackImg = `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80`;
+  
   return (
     <Card variant="interactive" className="overflow-hidden group">
       {/* Image */}
       <div className="relative h-40 overflow-hidden">
         <img
-          src={imageOverride || hotel.imageUrl}
+          src={imgError ? fallbackImg : (imageOverride || hotel.imageUrl)}
           alt={hotel.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          onError={() => setImgError(true)}
         />
         <div className="absolute top-2 left-2 flex gap-1.5">
           <Badge className={`text-[10px] font-semibold ${categoryColors[hotel.category]}`}>
