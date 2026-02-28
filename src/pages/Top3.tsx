@@ -12,6 +12,24 @@ import docesImg from '@/assets/travel-mode/top3-doces.jpg';
 import restaurantesImg from '@/assets/travel-mode/top3-restaurantes.jpg';
 import snacksImg from '@/assets/travel-mode/top3-snacks.jpg';
 
+import top3MagicKingdom from '@/assets/parks/top3-magic-kingdom.jpg';
+import top3Epcot from '@/assets/parks/top3-epcot.jpg';
+import top3HollywoodStudios from '@/assets/parks/top3-hollywood-studios.jpg';
+import top3AnimalKingdom from '@/assets/parks/top3-animal-kingdom.jpg';
+import top3UniversalStudios from '@/assets/parks/top3-universal-studios.jpg';
+import top3IslandsOfAdventure from '@/assets/parks/top3-islands-of-adventure.jpg';
+import top3EpicUniverse from '@/assets/parks/top3-epic-universe.jpg';
+
+const parkImages: Record<string, string> = {
+  'dd6b79b8-d934-4e15-8967-1f1af1911fef': top3MagicKingdom,
+  '03e87b8e-7467-4121-971b-91826dd55bec': top3Epcot,
+  'ffdca010-b62c-40cc-98ee-37a853da037d': top3HollywoodStudios,
+  '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': top3AnimalKingdom,
+  'c63c98b3-1cef-4d90-8142-0a68331907e1': top3UniversalStudios,
+  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': top3IslandsOfAdventure,
+  'ba562b14-26bf-4b12-a13d-2aa7df43297e': top3EpicUniverse,
+};
+
 type Top3Category = 'doces' | 'restaurantes' | 'snacks';
 
 const categoryImages: Record<Top3Category, string> = {
@@ -201,6 +219,7 @@ const Top3Page = () => {
                 <div className="grid grid-cols-2 gap-3">
                   {availableParks.map((park) => {
                     const parkItems = allItems.filter(i => i.park_id === park.id);
+                    const parkImg = parkImages[park.id];
                     return (
                       <motion.button
                         key={park.id}
@@ -208,16 +227,19 @@ const Top3Page = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => setSelectedParkId(park.id)}
-                        className="relative bg-card rounded-2xl border border-border/50 p-4 text-left shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
+                        className="relative rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all group h-36 sm:h-40"
                       >
-                        <div className="flex flex-col gap-2">
-                          <span className="text-2xl">🏰</span>
-                          <h3 className="text-sm font-semibold text-foreground leading-tight">{park.name}</h3>
-                          <span className="text-xs text-muted-foreground">
+                        {parkImg && (
+                          <img src={parkImg} alt={park.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3 text-left">
+                          <h3 className="text-sm font-bold text-white leading-tight">{park.name}</h3>
+                          <span className="text-[11px] text-white/70">
                             {parkItems.length} recomendações
                           </span>
                         </div>
-                        <ChevronRight className="absolute top-1/2 right-3 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                        <ChevronRight className="absolute top-1/2 right-2 -translate-y-1/2 w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
                       </motion.button>
                     );
                   })}
