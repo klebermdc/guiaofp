@@ -99,8 +99,8 @@ export const PARK_INFO: ParkInfo[] = [
       },
       {
         icon: '💡',
-        title: 'Use o Genie+',
-        description: 'Para atrações como Space Mountain, Big Thunder e Jungle Cruise, o Lightning Lane vale muito a pena.',
+        title: 'Use o Multi Pass',
+        description: 'Para atrações como Space Mountain, Big Thunder e Jungle Cruise, o Lightning Lane Multi Pass vale muito a pena.',
         type: 'dica'
       },
       {
