@@ -159,10 +159,10 @@ export const PARK_INFO: ParkInfo[] = [
     ],
     tips: [
       {
-        icon: '🎢',
-        title: 'Virtual Queue Essencial',
-        description: 'Guardians of the Galaxy requer Virtual Queue. Entre às 7h da manhã pelo app!',
-        type: 'alerta'
+        icon: '⏰',
+        title: 'Chegue Cedo no Epcot',
+        description: 'Vá direto para Test Track ou Frozen Ever After na abertura — as filas crescem rápido após 10h.',
+        type: 'tempo'
       },
       {
         icon: '🍷',
