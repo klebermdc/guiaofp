@@ -343,7 +343,7 @@ export const PARK_INFO: ParkInfo[] = [
       { name: 'Kilimanjaro Safaris', type: 'ride', thrillLevel: 1, mustDo: true, lightningLane: true, tip: 'Vá logo cedo!' },
       { name: 'Expedition Everest', type: 'ride', thrillLevel: 4, heightRequired: '112cm', mustDo: true, lightningLane: true },
       { name: 'Na\'vi River Journey', type: 'ride', thrillLevel: 1, mustDo: true, lightningLane: true },
-      { name: 'DINOSAUR', type: 'ride', thrillLevel: 3, heightRequired: '102cm', mustDo: false, lightningLane: true },
+      
     ],
     areas: ['Oasis', 'Discovery Island', 'Africa', 'Asia', 'DinoLand U.S.A.', 'Pandora – The World of Avatar'],
     diningTips: ['Satu\'li Canteen (Pandora - excelente!)', 'Flame Tree Barbecue', 'Yak & Yeti'],
