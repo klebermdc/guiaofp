@@ -150,14 +150,14 @@ const parkData = {
       "Kali River Rapids",
       "Finding Nemo: The Big Blue… and Beyond!",
       "Expedition Everest",
-      
+      "DINOSAUR",
       "Kilimanjaro Safaris"
     ],
     strategy: {
       grupo1Tip: "Animal Kingdom não possui restrição de grupos! Você pode escolher qualquer atração.",
       grupo2Tip: "Priorize Na'vi River Journey, Kilimanjaro Safaris e Expedition Everest.",
       dayTip: "Agende Avatar Flight of Passage próximo à Na'vi River Journey. Festival of the Lion King é imperdível!",
-      order: ["Pandora → Safari → Lion King → Everest → Kali River"]
+      order: ["Pandora → Safari → Lion King → Everest → Kali River → Dinosaur"]
     }
   }
 };
