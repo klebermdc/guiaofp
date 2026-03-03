@@ -141,9 +141,9 @@ const Content = () => {
     };
   }, [user]);
 
-  // Normalize name for fuzzy matching (remove ™®, lowercase, trim)
+  // Normalize name for fuzzy matching (remove ™®, punctuation, lowercase, trim)
   const normalizeName = (name: string) => 
-    name.toLowerCase().replace(/[™®©"]/g, '').replace(/\s+/g, ' ').trim();
+    name.toLowerCase().replace(/[™®©"'`:\/\-–—()!.,]/g, '').replace(/\s+/g, ' ').trim();
 
   // Find avg wait time for an attraction using fuzzy matching
   const getAvgWaitTime = (attractionName: string): number | null => {
