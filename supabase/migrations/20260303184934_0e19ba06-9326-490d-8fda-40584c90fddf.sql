@@ -1,0 +1,1 @@
+DELETE FROM public.attractions WHERE id = '0fd91461-5093-4c20-99ed-05bbec6d1e03';
