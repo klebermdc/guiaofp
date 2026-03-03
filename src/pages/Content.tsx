@@ -309,11 +309,15 @@ const Content = () => {
   };
 
   // Filter parks by category and search
+  const HIDDEN_PARK_IDS = ['legoland', 'aquatica', 'discovery-cove', 'blizzard-beach', 'typhoon-lagoon', 'volcano-bay'];
+
   const filteredParks = useMemo(() => {
     let parks = activeCategory === 'all' 
       ? PARK_INFO 
       : getParksByCategory(activeCategory);
     
+    parks = parks.filter(park => !HIDDEN_PARK_IDS.includes(park.id));
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       parks = parks.filter(park => 
@@ -411,7 +415,7 @@ const Content = () => {
                 className="cursor-pointer px-3 py-1.5 text-sm"
                 onClick={() => setActiveCategory('all')}
               >
-                Todos ({PARK_INFO.length})
+                Todos ({PARK_INFO.filter(p => !HIDDEN_PARK_IDS.includes(p.id)).length})
               </Badge>
               {parkCategories.map((cat) => (
                 <Badge
