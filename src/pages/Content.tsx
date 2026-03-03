@@ -300,8 +300,7 @@ const Content = () => {
     
     if (parkCategory) {
       return contents.filter(c => 
-        c.category_id === parkCategory.id && 
-        c.type === 'video'
+        c.category_id === parkCategory.id
       );
     }
     
