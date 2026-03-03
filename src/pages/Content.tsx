@@ -34,7 +34,6 @@ import {
 import stardustRacersImg from '@/assets/attractions/stardust-racers.jpg';
 import marioKartImg from '@/assets/attractions/mario-kart.jpg';
 import ministryBattleImg from '@/assets/attractions/ministry-battle.jpg';
-import ripRideRockitImg from '@/assets/attractions/rip-ride-rockit.jpg';
 import revengeMummyImg from '@/assets/attractions/revenge-mummy.jpg';
 import etAdventureImg from '@/assets/attractions/et-adventure.jpg';
 
@@ -43,7 +42,6 @@ const ATTRACTION_THUMBNAILS: Record<string, string> = {
   'Stardust Racers': stardustRacersImg,
   "Mario Kart: Bowser's Challenge": marioKartImg,
   'Harry Potter and the Battle at the Ministry': ministryBattleImg,
-  'Hollywood Rip Ride Rockit': ripRideRockitImg,
   'Revenge of the Mummy': revengeMummyImg,
   'E.T. Adventure': etAdventureImg,
 };
@@ -168,12 +166,36 @@ const Content = () => {
       return;
     }
 
+    const buildAverages = (
+      rows: Array<{ attraction_name: string; avg_wait_time?: number | null; wait_time_minutes?: number | null }>,
+      key: 'avg_wait_time' | 'wait_time_minutes'
+    ) => {
+      const totals: Record<string, { sum: number; count: number }> = {};
+
+      rows.forEach((row) => {
+        const value = row[key];
+        if (value != null) {
+          if (!totals[row.attraction_name]) {
+            totals[row.attraction_name] = { sum: 0, count: 0 };
+          }
+          totals[row.attraction_name].sum += Number(value);
+          totals[row.attraction_name].count++;
+        }
+      });
+
+      const averages: Record<string, number> = {};
+      Object.entries(totals).forEach(([name, { sum, count }]) => {
+        averages[name] = Math.round(sum / count);
+      });
+
+      return averages;
+    };
+
     const fetchAvgWaitTimes = async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const startDate = thirtyDaysAgo.toISOString().split('T')[0];
 
-      // Try exact match first, then fuzzy match for park names
       const parkNameVariants: Record<string, string> = {
         'Universal Studios': 'Universal Studios Florida',
         'SeaWorld': 'SeaWorld Orlando',
@@ -181,35 +203,32 @@ const Content = () => {
       };
       const queryParkName = parkNameVariants[selectedPark.name] || selectedPark.name;
 
-      const { data, error } = await supabase
-        .from('daily_analytics')
-        .select('attraction_name, avg_wait_time')
-        .eq('park_name', queryParkName)
-        .gte('date', startDate);
+      const [{ data: dailyData, error: dailyError }, { data: recordsData, error: recordsError }] = await Promise.all([
+        supabase
+          .from('daily_analytics')
+          .select('attraction_name, avg_wait_time')
+          .eq('park_name', queryParkName)
+          .gte('date', startDate),
+        supabase
+          .from('wait_time_records')
+          .select('attraction_name, wait_time_minutes')
+          .eq('park_name', queryParkName)
+          .gte('date', startDate)
+          .not('wait_time_minutes', 'is', null),
+      ]);
 
-      if (error) {
-        console.error('Error fetching avg wait times:', error);
-        return;
+      if (dailyError) {
+        console.error('Error fetching daily analytics wait times:', dailyError);
+      }
+      if (recordsError) {
+        console.error('Error fetching wait time records:', recordsError);
       }
 
-      if (data && data.length > 0) {
-        const totals: Record<string, { sum: number; count: number }> = {};
-        data.forEach(row => {
-          if (row.avg_wait_time != null) {
-            if (!totals[row.attraction_name]) {
-              totals[row.attraction_name] = { sum: 0, count: 0 };
-            }
-            totals[row.attraction_name].sum += Number(row.avg_wait_time);
-            totals[row.attraction_name].count++;
-          }
-        });
+      const fromDaily = dailyData?.length ? buildAverages(dailyData, 'avg_wait_time') : {};
+      const fromRecords = recordsData?.length ? buildAverages(recordsData, 'wait_time_minutes') : {};
 
-        const averages: Record<string, number> = {};
-        Object.entries(totals).forEach(([name, { sum, count }]) => {
-          averages[name] = Math.round(sum / count);
-        });
-        setAvgWaitTimes(averages);
-      }
+      // Prefer daily_analytics when available, fallback to raw records for missing attractions
+      setAvgWaitTimes({ ...fromRecords, ...fromDaily });
     };
 
     fetchAvgWaitTimes();
