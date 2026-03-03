@@ -317,7 +317,7 @@ export const PARK_INFO: ParkInfo[] = [
         icon: '⛰️',
         title: 'Everest: Fila Single',
         description: 'A Single Rider Line do Expedition Everest costuma ser bem mais rápida.',
-        type: 'economia'
+        type: 'dica'
       },
       {
         icon: '🦜',
