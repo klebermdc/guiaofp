@@ -143,6 +143,24 @@ const Content = () => {
     };
   }, [user]);
 
+  // Normalize name for fuzzy matching (remove ™®, lowercase, trim)
+  const normalizeName = (name: string) => 
+    name.toLowerCase().replace(/[™®©"]/g, '').replace(/\s+/g, ' ').trim();
+
+  // Find avg wait time for an attraction using fuzzy matching
+  const getAvgWaitTime = (attractionName: string): number | null => {
+    const normalized = normalizeName(attractionName);
+    for (const [key, value] of Object.entries(avgWaitTimes)) {
+      const normalizedKey = normalizeName(key);
+      if (normalizedKey === normalized || 
+          normalizedKey.includes(normalized) || 
+          normalized.includes(normalizedKey)) {
+        return value;
+      }
+    }
+    return null;
+  };
+
   // Fetch 30-day average wait times for selected park
   useEffect(() => {
     if (!selectedPark) {
@@ -155,10 +173,18 @@ const Content = () => {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const startDate = thirtyDaysAgo.toISOString().split('T')[0];
 
+      // Try exact match first, then fuzzy match for park names
+      const parkNameVariants: Record<string, string> = {
+        'Universal Studios': 'Universal Studios Florida',
+        'SeaWorld': 'SeaWorld Orlando',
+        'Busch Gardens': 'Busch Gardens Tampa',
+      };
+      const queryParkName = parkNameVariants[selectedPark.name] || selectedPark.name;
+
       const { data, error } = await supabase
         .from('daily_analytics')
         .select('attraction_name, avg_wait_time')
-        .eq('park_name', selectedPark.name)
+        .eq('park_name', queryParkName)
         .gte('date', startDate);
 
       if (error) {
@@ -703,18 +729,21 @@ const Content = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
-                            {avgWaitTimes[attraction.name] != null && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <Clock className="h-3 w-3 text-muted-foreground" />
-                                <span className={`font-medium ${
-                                  avgWaitTimes[attraction.name] > 60 ? 'text-red-500' : 
-                                  avgWaitTimes[attraction.name] > 30 ? 'text-yellow-500' : 
-                                  'text-green-500'
-                                }`}>
-                                  {avgWaitTimes[attraction.name]} min
-                                </span>
-                              </div>
-                            )}
+                            {(() => {
+                              const waitTime = getAvgWaitTime(attraction.name);
+                              return waitTime != null ? (
+                                <div className="flex items-center gap-1 text-xs">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className={`font-medium ${
+                                    waitTime > 60 ? 'text-red-500' : 
+                                    waitTime > 30 ? 'text-yellow-500' : 
+                                    'text-green-500'
+                                  }`}>
+                                    {waitTime} min
+                                  </span>
+                                </div>
+                              ) : null;
+                            })()}
                             {attraction.heightRequired && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Ruler className="h-3 w-3" />
