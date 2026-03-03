@@ -675,7 +675,7 @@ export const PARK_INFO: ParkInfo[] = [
       {
         icon: '🦁',
         title: 'Safári pela Manhã',
-        description: 'Os animais estão mais ativos nas primeiras horas. Faça o Serengeti Safari cedo.',
+        description: 'Os animais estão mais ativos nas primeiras horas. Faça o Serengeti Safari cedo (é pago à parte).',
         type: 'dica'
       },
       {
