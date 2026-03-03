@@ -104,6 +104,7 @@ const Content = () => {
   const [activeCategory, setActiveCategory] = useState<ParkCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'info' | 'videos'>('info');
+  const [avgWaitTimes, setAvgWaitTimes] = useState<Record<string, number>>({});
 
   const parkCategories = getCategories();
 
@@ -141,6 +142,52 @@ const Content = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Fetch 30-day average wait times for selected park
+  useEffect(() => {
+    if (!selectedPark) {
+      setAvgWaitTimes({});
+      return;
+    }
+
+    const fetchAvgWaitTimes = async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('daily_analytics')
+        .select('attraction_name, avg_wait_time')
+        .eq('park_name', selectedPark.name)
+        .gte('date', startDate);
+
+      if (error) {
+        console.error('Error fetching avg wait times:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const totals: Record<string, { sum: number; count: number }> = {};
+        data.forEach(row => {
+          if (row.avg_wait_time != null) {
+            if (!totals[row.attraction_name]) {
+              totals[row.attraction_name] = { sum: 0, count: 0 };
+            }
+            totals[row.attraction_name].sum += Number(row.avg_wait_time);
+            totals[row.attraction_name].count++;
+          }
+        });
+
+        const averages: Record<string, number> = {};
+        Object.entries(totals).forEach(([name, { sum, count }]) => {
+          averages[name] = Math.round(sum / count);
+        });
+        setAvgWaitTimes(averages);
+      }
+    };
+
+    fetchAvgWaitTimes();
+  }, [selectedPark]);
 
   // Auto-open video from URL parameter
   useEffect(() => {
@@ -656,6 +703,18 @@ const Content = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
+                            {avgWaitTimes[attraction.name] != null && (
+                              <div className="flex items-center gap-1 text-xs">
+                                <Clock className="h-3 w-3 text-muted-foreground" />
+                                <span className={`font-medium ${
+                                  avgWaitTimes[attraction.name] > 60 ? 'text-red-500' : 
+                                  avgWaitTimes[attraction.name] > 30 ? 'text-yellow-500' : 
+                                  'text-green-500'
+                                }`}>
+                                  ~{avgWaitTimes[attraction.name]} min
+                                </span>
+                              </div>
+                            )}
                             {attraction.heightRequired && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Ruler className="h-3 w-3" />
