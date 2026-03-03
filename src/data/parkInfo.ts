@@ -369,7 +369,6 @@ export const PARK_INFO: ParkInfo[] = [
     highlights: [
       'Harry Potter and the Escape from Gringotts',
       'Revenge of the Mummy',
-      'Hollywood Rip Ride Rockit',
       'Transformers: The Ride',
       'Diagon Alley'
     ],
@@ -378,12 +377,6 @@ export const PARK_INFO: ParkInfo[] = [
         icon: '🧙',
         title: 'Diagon Alley Oculto',
         description: 'A entrada para Diagon Alley é escondida propositalmente. Procure a parede de tijolos!',
-        type: 'dica'
-      },
-      {
-        icon: '🎢',
-        title: 'Rip Ride Rockit',
-        description: 'Você escolhe a música! Há músicas secretas com códigos especiais.',
         type: 'dica'
       },
       {
@@ -414,7 +407,6 @@ export const PARK_INFO: ParkInfo[] = [
     topAttractions: [
       { name: 'Harry Potter and the Escape from Gringotts', type: 'ride', thrillLevel: 3, heightRequired: '107cm', mustDo: true },
       { name: 'Revenge of the Mummy', type: 'ride', thrillLevel: 4, heightRequired: '122cm', mustDo: true, tip: 'Montanha-russa indoor no escuro!' },
-      { name: 'Hollywood Rip Ride Rockit', type: 'ride', thrillLevel: 5, heightRequired: '130cm', mustDo: true },
       { name: 'Transformers: The Ride 3D', type: 'ride', thrillLevel: 3, heightRequired: '102cm', mustDo: true },
       { name: 'E.T. Adventure', type: 'ride', thrillLevel: 1, mustDo: true, tip: 'Atração clássica e nostálgica!' },
     ],
