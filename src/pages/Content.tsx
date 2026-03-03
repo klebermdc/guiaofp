@@ -711,7 +711,7 @@ const Content = () => {
                                   avgWaitTimes[attraction.name] > 30 ? 'text-yellow-500' : 
                                   'text-green-500'
                                 }`}>
-                                  ~{avgWaitTimes[attraction.name]} min
+                                  {avgWaitTimes[attraction.name]} min
                                 </span>
                               </div>
                             )}
