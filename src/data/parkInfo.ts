@@ -689,12 +689,6 @@ export const PARK_INFO: ParkInfo[] = [
         title: 'Congo River Rapids',
         description: 'Atração aquática que MOLHA muito. Guarde para o final ou leve roupa extra.',
         type: 'dica'
-      },
-      {
-        icon: '🍺',
-        title: 'Cerveja Gratuita',
-        description: 'Adultos ganham 2 cervejas gratuitas por dia no parque!',
-        type: 'economia'
       }
     ],
     topAttractions: [
