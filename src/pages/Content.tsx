@@ -203,29 +203,42 @@ const Content = () => {
       };
       const queryParkName = parkNameVariants[selectedPark.name] || selectedPark.name;
 
-      const [{ data: dailyData, error: dailyError }, { data: recordsData, error: recordsError }] = await Promise.all([
+      // Get attraction names for targeted query on wait_time_records
+      const attractionNames = selectedPark.topAttractions.map(a => a.name);
+
+      const [{ data: dailyData, error: dailyError }, ...recordsResults] = await Promise.all([
         supabase
           .from('daily_analytics')
           .select('attraction_name, avg_wait_time')
           .eq('park_name', queryParkName)
           .gte('date', startDate),
-        supabase
-          .from('wait_time_records')
-          .select('attraction_name, wait_time_minutes')
-          .eq('park_name', queryParkName)
-          .gte('date', startDate)
-          .not('wait_time_minutes', 'is', null),
+        // Query wait_time_records per attraction to avoid 1000-row limit
+        ...attractionNames.map(name =>
+          supabase
+            .from('wait_time_records')
+            .select('attraction_name, wait_time_minutes')
+            .eq('park_name', queryParkName)
+            .ilike('attraction_name', `%${name.replace(/[%_]/g, '')}%`)
+            .gte('date', startDate)
+            .not('wait_time_minutes', 'is', null)
+            .limit(500)
+        ),
       ]);
 
       if (dailyError) {
         console.error('Error fetching daily analytics wait times:', dailyError);
       }
-      if (recordsError) {
-        console.error('Error fetching wait time records:', recordsError);
-      }
+
+      // Merge all wait_time_records results
+      const allRecords: Array<{ attraction_name: string; wait_time_minutes: number | null }> = [];
+      recordsResults.forEach((result: any) => {
+        if (!result.error && result.data) {
+          allRecords.push(...result.data);
+        }
+      });
 
       const fromDaily = dailyData?.length ? buildAverages(dailyData, 'avg_wait_time') : {};
-      const fromRecords = recordsData?.length ? buildAverages(recordsData, 'wait_time_minutes') : {};
+      const fromRecords = allRecords.length ? buildAverages(allRecords, 'wait_time_minutes') : {};
 
       // Prefer daily_analytics when available, fallback to raw records for missing attractions
       setAvgWaitTimes({ ...fromRecords, ...fromDaily });
@@ -773,6 +786,13 @@ const Content = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                    {/* 30-day average observation */}
+                    <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-muted/40 border border-border/50">
+                      <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground">
+                        Os tempos de fila exibidos são uma <span className="font-medium text-foreground/70">média dos últimos 30 dias</span>, com dados compilados diariamente para maior precisão.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
