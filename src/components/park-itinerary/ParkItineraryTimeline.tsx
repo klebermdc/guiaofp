@@ -200,10 +200,10 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
               <div className="space-y-1">
                 {itinerary.items.map((item, idx) => (
                   <div key={idx} className="flex gap-3 relative">
-                    {/* Time dot */}
+                    {/* Order number */}
                     <div className="flex flex-col items-center shrink-0 z-10">
                       <div className="text-[10px] text-muted-foreground font-mono w-[46px] text-right pr-1">
-                        {item.time}
+                        {idx + 1}º
                       </div>
                     </div>
 
