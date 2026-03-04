@@ -8,9 +8,11 @@ import { toast } from 'sonner';
 
 interface ItineraryItem {
   order: number;
+  time: string;
   name: string;
   area: string;
   type: 'ride' | 'show' | 'experience' | 'meet' | 'meal' | 'break';
+  duration_min: number;
   tip: string;
   icon: string;
 }
@@ -193,10 +195,10 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
               <div className="space-y-1">
                 {itinerary.items.map((item, idx) => (
                   <div key={idx} className="flex gap-3 relative">
-                    {/* Order number */}
+                    {/* Time dot */}
                     <div className="flex flex-col items-center shrink-0 z-10">
                       <div className="text-[10px] text-muted-foreground font-mono w-[46px] text-right pr-1">
-                        {idx + 1}º
+                        {item.time}
                       </div>
                     </div>
 

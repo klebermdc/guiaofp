@@ -257,9 +257,11 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
   "items": [
     {
       "order": 1,
+      "time": "09:00",
       "name": "Nome da Atração",
       "area": "Área do Parque",
       "type": "ride|show|experience|meet|meal|break",
+      "duration_min": 15,
       "tip": "Dica curta e relevante",
       "icon": "emoji relevante"
     }
@@ -267,7 +269,7 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
   "tips": ["Dica geral 1", "Dica geral 2"]
 }
 
-NÃO inclua campos de tempo (time, duration_min, estimated_duration). Foque apenas na ORDEM otimizada.
+NÃO inclua estimativas de tempo de fila. Foque na ordem otimizada com horários sugeridos e duração de cada atividade.
 Inclua de 15-25 itens incluindo pausas para refeição e descanso.`;
 
     const userMessage = `ATRAÇÕES ABERTAS NO ${parkName.toUpperCase()} HOJE:
