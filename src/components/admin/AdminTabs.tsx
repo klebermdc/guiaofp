@@ -17,6 +17,7 @@ import { AbandonedCartsManager } from './AbandonedCartsManager';
 import { PendingPaymentsManager } from './PendingPaymentsManager';
 import { AIKnowledgeBaseManager } from './AIKnowledgeBaseManager';
 import { TravelModeTop3Manager } from './TravelModeTop3Manager';
+import { AIItineraryPromptManager } from './AIItineraryPromptManager';
 
 export function AdminTabs() {
   return (
