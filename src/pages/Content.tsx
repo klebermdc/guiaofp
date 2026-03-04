@@ -747,7 +747,7 @@ const Content = () => {
                               <span className="font-medium text-sm">{attraction.name}</span>
                               {attraction.mustDo && (
                                 <Badge variant="default" className="text-[10px] px-1.5 py-0">
-                                  Must-Do
+                                  Deve Fazer
                                 </Badge>
                               )}
                               {attraction.lightningLane && (
