@@ -174,8 +174,10 @@ const Landing = () => {
       <section className="min-h-screen relative overflow-hidden flex items-end pb-12 sm:pb-20">
         <img
           src={heroCastle}
-          alt="Castelo da Cinderela iluminado"
+          alt="Castelo da Cinderela iluminado à noite no Magic Kingdom, Orlando"
           className="absolute inset-0 w-full h-full object-cover"
+          width={1920}
+          height={1080}
           loading="eager"
           fetchPriority="high"
         />
@@ -328,60 +330,70 @@ const Landing = () => {
                 badge: '📖 Completo',
                 image: featureResumo,
                 title: 'Resumo de Orlando',
+                alt: 'Tela do resumo de Orlando com informações essenciais para turistas brasileiros',
                 text: 'Tudo o que você precisa saber antes de ir, sem enrolação. Nunca foi para Orlando? Sem problema! Aqui você encontra tudo: documentação, dicas de economia, navegação rápida por tema.',
               },
               {
                 badge: '🧭 Essencial',
                 image: featureGuia,
                 title: 'Guia Completo de Viagem',
+                alt: 'Guia completo de viagem para Orlando com dicas de transporte e compras',
                 text: 'Transporte, aeroporto, compras, parques, emergências, tudo organizado. Locomoção, mochila do parque, outlets, dicas dos parques Universal e Disney — sem enrolação.',
               },
               {
                 badge: '✅ Prático',
                 image: featureChecklist,
                 title: 'Checklists Inteligentes',
+                alt: 'Checklist inteligente com categorias de documentos, mala e saúde para viagem',
                 text: 'Nada esquecido. Nada improvisado. Documentos, mala de viagem, aeroporto, saúde, crianças, fotografia — tudo organizado em categorias com progresso visual.',
               },
               {
                 badge: '🗺️ Interativo',
                 image: featureMapa,
                 title: 'Mapa Interativo dos Parques',
+                alt: 'Mapa interativo dos parques de Orlando com GPS e tempo de espera ao vivo',
                 text: 'Veja todas as atrações, restaurantes e banheiros no mapa com GPS integrado. Planeje sua rota dentro do parque e não perca tempo procurando atrações. Tempo de espera ao vivo.',
               },
               {
                 badge: '🏰 Detalhado',
                 image: featureParques,
                 title: 'Guia Completo dos Parques',
+                alt: 'Guia dos parques Disney, Universal e SeaWorld com informações detalhadas',
                 text: 'Disney, Universal, SeaWorld, aquáticos e muito mais. Informações, dicas e vídeos de todos os parques de Orlando, organizados por categoria.',
               },
               {
                 badge: '⚡ Estratégico',
                 image: featureLightningLane,
                 title: 'Lightning Lane & Multi Pass',
+                alt: 'Tutorial passo a passo do Lightning Lane e Multi Pass da Disney',
                 text: 'Explicado passo a passo, com estratégia real de quem usa todo dia. Conceitos, tipos de passes, preços por parque e tutoriais práticos.',
               },
               {
                 badge: '🤖 Powered by AI',
                 image: featureRoteiroIA,
                 title: 'Roteiro Personalizado com IA',
+                alt: 'Roteiro personalizado gerado por inteligência artificial para parques de Orlando',
                 text: 'Dia a dia adaptado ao seu grupo, ritmo e preferências. Responda algumas perguntas e nossa inteligência artificial criará um roteiro exclusivo para sua viagem, otimizado e personalizado.',
               },
               {
                 badge: '🍽️ Popular',
                 image: featureRestaurantes,
                 title: 'Guia Completo de Restaurantes',
+                alt: 'Guia de restaurantes em Orlando organizados por parque e tipo de comida',
                 text: 'Escolha onde comer sem improviso, com restaurantes organizados por parque, fora dos parques, tipo de comida e faixa de preço. 279 restaurantes catalogados.',
               },
               {
                 badge: '📁 Seguro',
                 image: featureDocumentos,
                 title: 'Carteira de Documentos',
+                alt: 'Carteira digital de documentos e vouchers acessível offline nos parques',
                 text: 'Ingressos, vouchers e tudo em um só lugar. Seus vouchers e comprovantes acessíveis offline dentro dos parques.',
               },
               {
                 badge: '🎟️ Exclusivo',
                 image: featureCupons,
                 title: 'Cupons de Parceiros',
+                alt: 'Cupons de desconto exclusivos para compras e restaurantes em Orlando',
                 text: 'Economia real durante a viagem. Descontos exclusivos para usar durante sua viagem com parceiros selecionados.',
               },
             ].map((feature, i) => (
