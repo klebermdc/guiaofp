@@ -29,6 +29,7 @@ import {
   getParksByCategory,
   getParkById 
 } from '@/data/parkInfo';
+import { ParkItineraryTimeline } from '@/components/park-itinerary/ParkItineraryTimeline';
 
 // Import attraction thumbnails
 import stardustRacersImg from '@/assets/attractions/stardust-racers.jpg';
@@ -796,6 +797,9 @@ const Content = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* AI Park Itinerary */}
+                <ParkItineraryTimeline parkName={selectedPark.name} />
 
                 {/* Areas */}
                 {selectedPark.areas && (
