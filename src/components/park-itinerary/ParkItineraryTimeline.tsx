@@ -183,14 +183,8 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
           <div className="space-y-4">
             {/* Strategy header */}
             <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-semibold">{itinerary.title}</span>
-                <Badge variant="outline" className="text-xs">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {itinerary.estimated_duration}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">{itinerary.strategy}</p>
+              <span className="text-sm font-semibold">{itinerary.title}</span>
+              <p className="text-xs text-muted-foreground mt-1">{itinerary.strategy}</p>
             </div>
 
             {/* Timeline */}
