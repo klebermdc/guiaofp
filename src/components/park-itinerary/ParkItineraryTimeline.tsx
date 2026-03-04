@@ -2,17 +2,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, Clock, MapPin, RotateCcw, Zap } from 'lucide-react';
+import { Sparkles, Loader2, MapPin, RotateCcw, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface ItineraryItem {
   order: number;
-  time: string;
   name: string;
   area: string;
   type: 'ride' | 'show' | 'experience' | 'meet' | 'meal' | 'break';
-  duration_min: number;
   tip: string;
   icon: string;
 }
@@ -20,7 +18,7 @@ interface ItineraryItem {
 interface ItineraryData {
   title: string;
   strategy: string;
-  estimated_duration: string;
+  
   items: ItineraryItem[];
   tips: string[];
 }
@@ -185,14 +183,8 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
           <div className="space-y-4">
             {/* Strategy header */}
             <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-semibold">{itinerary.title}</span>
-                <Badge variant="outline" className="text-xs">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {itinerary.estimated_duration}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">{itinerary.strategy}</p>
+              <span className="text-sm font-semibold">{itinerary.title}</span>
+              <p className="text-xs text-muted-foreground mt-1">{itinerary.strategy}</p>
             </div>
 
             {/* Timeline */}
@@ -201,10 +193,10 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
               <div className="space-y-1">
                 {itinerary.items.map((item, idx) => (
                   <div key={idx} className="flex gap-3 relative">
-                    {/* Time dot */}
+                    {/* Order number */}
                     <div className="flex flex-col items-center shrink-0 z-10">
                       <div className="text-[10px] text-muted-foreground font-mono w-[46px] text-right pr-1">
-                        {item.time}
+                        {idx + 1}º
                       </div>
                     </div>
 
@@ -234,9 +226,6 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
                                 <MapPin className="h-2.5 w-2.5" />
                                 {item.area}
                               </span>
-                            )}
-                            {item.duration_min > 0 && (
-                              <span>{item.duration_min} min</span>
                             )}
                           </div>
                           {item.tip && (
