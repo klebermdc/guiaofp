@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesManager } from './CategoriesManager';
-import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer, ShoppingCart, Clock, Brain, Sparkles } from 'lucide-react';
+import { Users, FileVideo, FolderOpen, KeyRound, Settings, CreditCard, DollarSign, Receipt, Tag, MapPin, Palette, UtensilsCrossed, Timer, ShoppingCart, Clock, Brain, Sparkles, Wand2 } from 'lucide-react';
 import { ContentManager } from './ContentManager';
 import { ClientsManager } from './ClientsManager';
 import { PasswordGenerator } from './PasswordGenerator';
@@ -91,6 +91,10 @@ export function AdminTabs() {
           <Sparkles className="h-4 w-4" />
           <span className="hidden sm:inline">Top 3</span>
         </TabsTrigger>
+        <TabsTrigger value="itinerary-prompt" className="flex items-center gap-2">
+          <Wand2 className="h-4 w-4" />
+          <span className="hidden sm:inline">IA Roteiro</span>
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="clients">
@@ -159,6 +163,10 @@ export function AdminTabs() {
 
       <TabsContent value="top3">
         <TravelModeTop3Manager />
+      </TabsContent>
+
+      <TabsContent value="itinerary-prompt">
+        <AIItineraryPromptManager />
       </TabsContent>
     </Tabs>
   );
