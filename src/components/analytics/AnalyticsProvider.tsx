@@ -161,14 +161,8 @@ const loadFBPixel = (pixelId: string) => {
   `;
   document.head.appendChild(script);
 
-  // NoScript fallback
-  const noscript = document.createElement('noscript');
-  noscript.id = 'fb-pixel-noscript';
-  noscript.innerHTML = `
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.net/tr?id=${pixelId}&ev=PageView&noscript=1"/>
-  `;
-  document.body.appendChild(noscript);
+  // FB Pixel NoScript fallback removed — dynamically created <noscript> elements
+  // render their children as visible DOM nodes, causing a white rectangle on mobile.
 };
 
 // Push sGTM config to dataLayer for server-side processing
