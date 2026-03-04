@@ -402,7 +402,7 @@ const Landing = () => {
                   {/* Feature image */}
                   <div className="flex-1 w-full">
                     <div className="relative rounded-2xl overflow-hidden group hover:shadow-glow transition-all duration-500 border border-border/50 hover:border-secondary/30">
-                      <img src={feature.image} alt={feature.title} className="w-full aspect-video object-cover" loading="lazy" />
+                      <img src={feature.image} alt={feature.alt || feature.title} className="w-full aspect-video object-cover" loading="lazy" />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   </div>
