@@ -253,6 +253,7 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
 {
   "title": "Roteiro Otimizado - [Nome do Parque]",
   "strategy": "Breve descrição da estratégia (1-2 frases)",
+  "estimated_duration": "Xh",
   "closed_attractions": ["lista de atrações fechadas hoje"],
   "items": [
     {

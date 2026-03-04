@@ -235,6 +235,9 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
                                 {item.area}
                               </span>
                             )}
+                            {item.duration_min > 0 && (
+                              <span>{item.duration_min} min</span>
+                            )}
                           </div>
                           {item.tip && (
                             <p className="text-[11px] text-muted-foreground/80 mt-1 italic">
