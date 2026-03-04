@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications & Asset Caching
 // NOTE: Bump CACHE_VERSION when changing caching logic to force clients to refresh.
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
