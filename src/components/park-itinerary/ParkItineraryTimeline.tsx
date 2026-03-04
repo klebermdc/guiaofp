@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 
 interface ItineraryItem {
   order: number;
-  time: string;
   name: string;
   area: string;
   type: 'ride' | 'show' | 'experience' | 'meet' | 'meal' | 'break';
