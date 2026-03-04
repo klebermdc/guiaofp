@@ -263,7 +263,6 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
       "area": "Área do Parque",
       "type": "ride|show|experience|meet|meal|break",
       "duration_min": 15,
-      "expected_wait": 10,
       "tip": "Dica curta e relevante",
       "icon": "emoji relevante"
     }
