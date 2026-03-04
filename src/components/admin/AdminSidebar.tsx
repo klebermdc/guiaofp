@@ -21,6 +21,7 @@ import {
   Timer,
   Mail,
   Brain,
+  Wand2,
   type LucideIcon
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ export type AdminSection =
   | 'password'
   | 'documentation'
   | 'ai_knowledge'
+  | 'ai_itinerary_prompt'
   | 'partner_coupons';
 
 interface AdminSidebarProps {
@@ -126,6 +128,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Inteligência Artificial',
     items: [
       { id: 'ai_knowledge', icon: Brain, label: 'Base da Joy' },
+      { id: 'ai_itinerary_prompt', icon: Wand2, label: 'IA Roteiro (Prompt)' },
     ]
   },
 ];

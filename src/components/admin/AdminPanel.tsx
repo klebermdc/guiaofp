@@ -20,6 +20,7 @@ import { WaitTimeAnalytics } from './WaitTimeAnalytics';
 import { TrackingConfigManager } from './TrackingConfigManager';
 import { AIKnowledgeBaseManager } from './AIKnowledgeBaseManager';
 import { PartnerCouponsManager } from './PartnerCouponsManager';
+import { AIItineraryPromptManager } from './AIItineraryPromptManager';
 import { 
   Users, 
   Receipt, 
@@ -40,6 +41,7 @@ import {
   Timer,
   Mail,
   Brain,
+  Wand2,
   type LucideIcon
 } from 'lucide-react';
 
@@ -69,6 +71,7 @@ const sectionConfig: Record<AdminSection, SectionConfig> = {
   password: { title: 'Gerador de Senhas', description: 'Criar senhas seguras', icon: KeyRound },
   documentation: { title: 'Documentação', description: 'Documentação técnica do projeto', icon: BookOpen },
   ai_knowledge: { title: 'Base da Joy (IA)', description: 'Gerenciar conhecimento da assistente virtual', icon: Brain },
+  ai_itinerary_prompt: { title: 'IA Roteiro (Prompt)', description: 'Configurar o prompt da IA para roteiros de parques', icon: Wand2 },
   partner_coupons: { title: 'Cupons de Parceiros', description: 'Gerenciar cupons de desconto para viagem', icon: Tag },
 };
 
@@ -136,6 +139,8 @@ const AdminPanelComponent = () => {
         return <ProjectDocumentation />;
       case 'ai_knowledge':
         return <AIKnowledgeBaseManager />;
+      case 'ai_itinerary_prompt':
+        return <AIItineraryPromptManager />;
       case 'partner_coupons':
         return <PartnerCouponsManager />;
       default:
