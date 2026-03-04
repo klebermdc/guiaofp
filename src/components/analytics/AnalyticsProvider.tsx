@@ -89,17 +89,9 @@ const loadGTM = (containerId: string, sgtmUrl?: string) => {
   }
   document.head.appendChild(script);
 
-  // GTM NoScript (fallback)
-  const noscript = document.createElement('noscript');
-  noscript.id = 'gtm-noscript';
-  const iframeSrc = sgtmUrl 
-    ? `${sgtmUrl.replace(/\/$/, '')}/ns.html?id=${containerId}`
-    : `https://www.googletagmanager.com/ns.html?id=${containerId}`;
-  noscript.innerHTML = `
-    <iframe src="${iframeSrc}"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  `;
-  document.body.insertBefore(noscript, document.body.firstChild);
+  // GTM NoScript fallback removed — dynamically created <noscript> elements
+  // render their children as visible DOM nodes (JS is obviously running),
+  // which caused a visible black rectangle on mobile.
 };
 
 // Load GA4 with optional sGTM transport
