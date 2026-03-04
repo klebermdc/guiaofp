@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, MapPin, RotateCcw, Zap } from 'lucide-react';
+import { Sparkles, Loader2, Clock, MapPin, RotateCcw, Zap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -20,7 +20,7 @@ interface ItineraryItem {
 interface ItineraryData {
   title: string;
   strategy: string;
-  
+  estimated_duration: string;
   items: ItineraryItem[];
   tips: string[];
 }
@@ -185,8 +185,14 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
           <div className="space-y-4">
             {/* Strategy header */}
             <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
-              <span className="text-sm font-semibold">{itinerary.title}</span>
-              <p className="text-xs text-muted-foreground mt-1">{itinerary.strategy}</p>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold">{itinerary.title}</span>
+                <Badge variant="outline" className="text-xs">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {itinerary.estimated_duration}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">{itinerary.strategy}</p>
             </div>
 
             {/* Timeline */}
