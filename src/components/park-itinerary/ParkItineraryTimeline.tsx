@@ -11,7 +11,6 @@ interface ItineraryItem {
   name: string;
   area: string;
   type: 'ride' | 'show' | 'experience' | 'meet' | 'meal' | 'break';
-  duration_min: number;
   tip: string;
   icon: string;
 }
