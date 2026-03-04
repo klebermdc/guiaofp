@@ -13,7 +13,6 @@ interface ItineraryItem {
   area: string;
   type: 'ride' | 'show' | 'experience' | 'meet' | 'meal' | 'break';
   duration_min: number;
-  expected_wait: number;
   tip: string;
   icon: string;
 }
@@ -238,15 +237,6 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
                             )}
                             {item.duration_min > 0 && (
                               <span>{item.duration_min} min</span>
-                            )}
-                            {item.expected_wait > 0 && (
-                              <span className={`font-medium ${
-                                item.expected_wait > 60 ? 'text-red-500' :
-                                item.expected_wait > 30 ? 'text-yellow-500' :
-                                'text-green-500'
-                              }`}>
-                                ~{item.expected_wait} min fila
-                              </span>
                             )}
                           </div>
                           {item.tip && (
