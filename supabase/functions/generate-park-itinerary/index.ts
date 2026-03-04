@@ -234,7 +234,21 @@ PERFIL DO GRUPO:
 `;
     }
 
-    const systemPrompt = `Você é a Joy, especialista em Orlando e parques temáticos. Gere um roteiro otimizado para o parque ${parkName} em PORTUGUÊS DO BRASIL.
+    // Fetch custom prompt from database
+    let systemPrompt: string;
+    const { data: promptData } = await supabase
+      .from("ai_itinerary_prompt")
+      .select("system_prompt")
+      .eq("prompt_key", "park_itinerary_system")
+      .eq("is_active", true)
+      .single();
+
+    if (promptData?.system_prompt) {
+      // Replace {parkName} placeholder with actual park name
+      systemPrompt = promptData.system_prompt.replace(/\{parkName\}/g, parkName);
+    } else {
+      // Fallback hardcoded prompt
+      systemPrompt = `Você é a Joy, especialista em Orlando e parques temáticos. Gere um roteiro otimizado para o parque ${parkName} em PORTUGUÊS DO BRASIL.
 
 REGRAS:
 1. Ordene as atrações de forma estratégica para minimizar tempo de fila e deslocamento
@@ -272,6 +286,7 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
 
 NÃO inclua estimativas de tempo de fila. Foque na ordem otimizada com horários sugeridos e duração de cada atividade.
 Inclua de 15-25 itens incluindo pausas para refeição e descanso.`;
+    }
 
     const userMessage = `ATRAÇÕES ABERTAS NO ${parkName.toUpperCase()} HOJE:
 ${attractionsList}

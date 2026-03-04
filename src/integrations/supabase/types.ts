@@ -131,6 +131,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_itinerary_prompt: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          prompt_key: string
+          system_prompt: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_key?: string
+          system_prompt?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          prompt_key?: string
+          system_prompt?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_knowledge_base: {
         Row: {
           content: string
