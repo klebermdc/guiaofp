@@ -18,7 +18,7 @@ interface ItineraryItem {
 interface ItineraryData {
   title: string;
   strategy: string;
-  estimated_duration: string;
+  
   items: ItineraryItem[];
   tips: string[];
 }
