@@ -1125,7 +1125,7 @@ export const getParkById = (id: string): ParkInfo | undefined => {
 };
 
 export const getCategories = (): { id: ParkCategory; label: string; count: number }[] => {
-  const categories: ParkCategory[] = ['disney', 'universal', 'seaworld', 'other', 'waterpark'];
+  const visibleCategories: ParkCategory[] = ['disney', 'universal', 'seaworld'];
   const labels: Record<ParkCategory, string> = {
     disney: '🏰 Disney',
     universal: '🎥 Universal',
@@ -1134,10 +1134,15 @@ export const getCategories = (): { id: ParkCategory; label: string; count: numbe
     waterpark: '🌊 Parques Aquáticos'
   };
   
-  return categories.map(cat => ({
+  // SeaWorld category shows only SeaWorld + Busch Gardens (exclude Discovery Cove)
+  const countOverrides: Partial<Record<ParkCategory, number>> = {
+    seaworld: 2,
+  };
+
+  return visibleCategories.map(cat => ({
     id: cat,
     label: labels[cat],
-    count: PARK_INFO.filter(p => p.category === cat).length
+    count: countOverrides[cat] ?? PARK_INFO.filter(p => p.category === cat).length
   }));
 };
 
