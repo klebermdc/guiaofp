@@ -1366,6 +1366,11 @@ export default function ParkMap() {
               gestureHandling: 'greedy',
               tilt: mapType === 'satellite' ? 45 : 0,
               heading: 0,
+              clickableIcons: false,
+              styles: [
+                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+              ],
             }}
             onLoad={onMapLoad}
             onClick={(e) => {
