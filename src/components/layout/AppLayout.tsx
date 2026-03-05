@@ -67,12 +67,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <AuthLoadingScreen />;
   }
 
-  // Guides and admins always have access, clients need explicit access
-  // CRITICAL: Wait for profile to finish loading before checking access
-  // Otherwise default isAccessEnabled=false causes premature redirect
-  if (!isAccessEnabled && !isGuide && !isAdmin && !isProfileLoading) {
-    return <Navigate to="/acesso-bloqueado" replace />;
-  }
+  // Access check removed - no longer redirect to blocked page
+  // Access is managed by the guide/admin when creating clients
 
   return (
     <div className="min-h-screen bg-background safe-area-top">
