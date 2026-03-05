@@ -70,7 +70,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   // Guides and admins always have access, clients need explicit access
   // CRITICAL: Wait for profile to finish loading before checking access
   // Otherwise default isAccessEnabled=false causes premature redirect
-  if (!isAccessEnabled && !isGuide && !isProfileLoading) {
+  if (!isAccessEnabled && !isGuide && !isAdmin && !isProfileLoading) {
     return <Navigate to="/acesso-bloqueado" replace />;
   }
 
