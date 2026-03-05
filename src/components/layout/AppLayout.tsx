@@ -37,7 +37,7 @@ const pageVariants = {
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isAuthenticated, isAccessEnabled, isLoading, isProfileLoading } = useAuth();
-  const { isGuide, isLoading: isRoleLoading } = useUserRole();
+  const { isGuide, isAdmin, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
   // Track if we've ever been authenticated to prevent redirect on tab switch
@@ -70,7 +70,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   // Guides and admins always have access, clients need explicit access
   // CRITICAL: Wait for profile to finish loading before checking access
   // Otherwise default isAccessEnabled=false causes premature redirect
-  if (!isAccessEnabled && !isGuide && !isProfileLoading) {
+  if (!isAccessEnabled && !isGuide && !isAdmin && !isProfileLoading) {
     return <Navigate to="/acesso-bloqueado" replace />;
   }
 
