@@ -62,8 +62,23 @@ async function createOrGetCustomer(email: string, name: string, cpf: string): Pr
   const searchData = await searchResponse.json();
   
   if (searchData.data && searchData.data.length > 0) {
-    console.log("Found existing customer:", searchData.data[0].id);
-    return searchData.data[0].id;
+    const existingCustomer = searchData.data[0];
+    console.log("Found existing customer:", existingCustomer.id);
+
+    // Update name and email if they changed
+    if (existingCustomer.name !== name || existingCustomer.email !== email) {
+      console.log("Updating customer data:", { name, email });
+      await fetch(`${ASAAS_BASE_URL}/customers/${existingCustomer.id}`, {
+        method: "PUT",
+        headers: {
+          "access_token": ASAAS_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email }),
+      });
+    }
+
+    return existingCustomer.id;
   }
 
   // Create new customer
