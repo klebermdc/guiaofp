@@ -37,7 +37,7 @@ const pageVariants = {
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
   const { isAuthenticated, isAccessEnabled, isLoading, isProfileLoading } = useAuth();
-  const { isGuide, isLoading: isRoleLoading } = useUserRole();
+  const { isGuide, isAdmin, isLoading: isRoleLoading } = useUserRole();
   const location = useLocation();
 
   // Track if we've ever been authenticated to prevent redirect on tab switch
