@@ -555,15 +555,22 @@ export default function ParkMap() {
     isFetchingRef.current = false;
   }, []);
 
-  // Merge database attractions with wait times
-  const attractionsWithWaitTimes: Attraction[] = dbAttractions.map(attraction => {
+  // Merge database attractions with wait times — memoized to prevent unnecessary marker re-renders
+  const attractionsWithWaitTimes: Attraction[] = useMemo(() => dbAttractions.map(attraction => {
     const waitTimeData = findWaitTime(attraction.name, waitTimes);
     return {
       ...attraction,
       waitTime: waitTimeData?.waitTime,
       isOpen: waitTimeData?.isOpen,
     };
-  });
+  }), [dbAttractions, waitTimes]);
+  
+  // Clear marker icon cache when wait times change so markers get updated colors
+  useEffect(() => {
+    if (typeof markerIconCache !== 'undefined' && markerIconCache.current) {
+      markerIconCache.current.clear();
+    }
+  }, [waitTimes]);
 
   // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
   useEffect(() => {
