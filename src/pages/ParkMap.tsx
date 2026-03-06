@@ -703,7 +703,9 @@ export default function ParkMap() {
   };
 
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
-    if (!userPosition) {
+    // Use ref to get the latest position (avoids stale closure from setInterval callers)
+    const currentPos = userPositionRef.current || userPosition;
+    if (!currentPos) {
       setLocationError('Ative sua localização primeiro para calcular a rota');
       return;
     }
@@ -716,7 +718,7 @@ export default function ParkMap() {
     
     directionsService.route(
       {
-        origin: userPosition,
+        origin: currentPos,
         destination: destination,
         travelMode: google.maps.TravelMode.WALKING,
       },
