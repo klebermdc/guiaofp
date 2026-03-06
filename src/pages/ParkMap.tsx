@@ -400,8 +400,14 @@ export default function ParkMap() {
       setWalkingSpeed(null);
       setIsOffCenter(false);
       lastPositionRef.current = null;
+      lastHeadingPositionRef.current = null;
     }
   }, [isNavigating]);
+
+  // Always reset step pointer when a new route is loaded
+  useEffect(() => {
+    setCurrentStepIndex(0);
+  }, [routeSteps]);
 
   // Calculate walking speed from GPS position changes
   useEffect(() => {
