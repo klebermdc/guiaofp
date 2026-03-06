@@ -402,8 +402,9 @@ export default function ParkMap() {
     }
   }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
 
-  // Reset navigation state when starting/stopping
+  // Reset navigation state when starting/stopping + sync refs
   useEffect(() => {
+    isNavigatingRef.current = isNavigating;
     if (!isNavigating) {
       setHasPlayedArrivalSound(false);
       setCurrentStepIndex(0);
@@ -411,8 +412,14 @@ export default function ParkMap() {
       setIsOffCenter(false);
       lastPositionRef.current = null;
       lastHeadingPositionRef.current = null;
+      userPanningRef.current = false;
     }
   }, [isNavigating]);
+
+  // Sync navigationMode ref
+  useEffect(() => {
+    navigationModeRef.current = navigationMode;
+  }, [navigationMode]);
 
   // Always reset step pointer when a new route is loaded
   useEffect(() => {
