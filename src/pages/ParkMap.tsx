@@ -870,6 +870,7 @@ export default function ParkMap() {
           lng: position.coords.longitude 
         };
         setUserPosition(pos);
+        userPositionRef.current = pos;
         
         // Update heading from GPS if available
         if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
@@ -994,9 +995,9 @@ export default function ParkMap() {
       // Start tracking and wait for position
       startLocationTracking();
       
-      // Store destination for when position is available
+      // Use ref to avoid stale closure — userPositionRef is always current
       const checkPosition = setInterval(() => {
-        if (userPosition) {
+        if (userPositionRef.current) {
           clearInterval(checkPosition);
           calculateRoute(position, name);
         }
