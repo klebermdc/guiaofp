@@ -296,34 +296,38 @@ export default function ParkMap() {
     });
   };
 
-  // Get POI marker icon with unique, visually distinct SVG paths
-  const getPOIMarkerIcon = (type: ExtendedPOIType): google.maps.Icon | google.maps.Symbol | undefined => {
+   // POI marker icon cache — prevents SVG recreation on every render
+  const poiIconCache = useRef(new globalThis.Map<string, google.maps.Icon>());
+  
+  const getPOIMarkerIcon = useCallback((type: ExtendedPOIType): google.maps.Icon | google.maps.Symbol | undefined => {
     if (typeof google === 'undefined') {
       return undefined;
     }
+    
+    const cached = poiIconCache.current.get(type);
+    if (cached) return cached;
+    
     const config = POI_CONFIG[type];
     
-    // Beautiful modern markers with emoji in the center - clean pill/badge shape
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="52" viewBox="0 0 44 52">
-      <!-- Drop shadow -->
       <ellipse cx="22" cy="48" rx="8" ry="3" fill="rgba(0,0,0,0.25)"/>
-      <!-- Pin body - rounded balloon shape -->
       <path d="M22 47 C22 47 40 30 40 20 C40 9 32 2 22 2 C12 2 4 9 4 20 C4 30 22 47 22 47Z" 
             fill="${config.color}" stroke="white" stroke-width="2.5"/>
-      <!-- Inner white circle for emoji -->
       <circle cx="22" cy="19" r="13" fill="white"/>
-      <!-- Emoji text -->
       <text x="22" y="25" text-anchor="middle" font-size="16" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${config.emoji}</text>
     </svg>`;
     
     const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     
-    return {
+    const icon: google.maps.Icon = {
       url: svgUrl,
       scaledSize: new google.maps.Size(44, 52),
       anchor: new google.maps.Point(22, 48),
     };
-  };
+    
+    poiIconCache.current.set(type, icon);
+    return icon;
+  }, []);
 
   // Play arrival notification sound using Web Audio API
   const playArrivalSound = useCallback(() => {
@@ -897,17 +901,25 @@ export default function ParkMap() {
     );
 
     // Also use device orientation for more accurate heading on mobile
+    let lastOrientationUpdate = 0;
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (event.alpha !== null && navigationMode === 'guided') {
-        // Convert device orientation to compass heading
-        // alpha is 0-360 where 0 = north
+        // Throttle orientation updates to max 4Hz (250ms) to prevent marker flicker
+        const now = Date.now();
+        if (now - lastOrientationUpdate < 250) return;
+        lastOrientationUpdate = now;
+        
         let heading = event.alpha;
         if ((event as any).webkitCompassHeading !== undefined) {
           heading = (event as any).webkitCompassHeading;
         } else if (event.alpha !== null) {
           heading = 360 - event.alpha;
         }
-        setUserHeading(heading);
+        // Only update if heading changed significantly (>3 degrees) to reduce re-renders
+        setUserHeading(prev => {
+          const diff = Math.abs(prev - heading);
+          return (diff > 3 && diff < 357) ? heading : prev;
+        });
       }
     };
 
@@ -1115,13 +1127,11 @@ export default function ParkMap() {
     return icon;
   }, []);
 
-  const getUserMarkerIcon = (): google.maps.Symbol | undefined => {
+  const userMarkerIcon = useMemo((): google.maps.Symbol | undefined => {
     if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
       return undefined;
     }
     
-    // In guided mode, we don't rotate the marker since the map rotates instead
-    // The arrow always points "forward" (up) relative to the map
     return {
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#3B82F6',
@@ -1131,7 +1141,7 @@ export default function ParkMap() {
       scale: navigationMode === 'guided' ? 10 : 8,
       rotation: navigationMode === 'guided' ? 0 : (userHeading || 0),
     };
-  };
+  }, [navigationMode, userHeading]);
 
   const getWaitTimeColor = (waitTime: number | undefined) => {
     if (waitTime === undefined) return 'bg-muted text-muted-foreground';
@@ -1411,7 +1421,7 @@ export default function ParkMap() {
             {userPosition && isMapLoaded && navigationMode !== 'guided' && (
               <Marker
                 position={userPosition}
-                icon={getUserMarkerIcon()}
+                icon={userMarkerIcon}
                 title="Sua localização"
                 zIndex={1000}
               />
