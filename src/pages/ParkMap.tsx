@@ -153,6 +153,7 @@ export default function ParkMap() {
   const [isOffCenter, setIsOffCenter] = useState(false);
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
   const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
+  const userPositionRef = useRef<LatLng | null>(null); // Ref for closures that need current position
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
@@ -702,7 +703,9 @@ export default function ParkMap() {
   };
 
   const calculateRoute = useCallback((destination: LatLng, destinationName: string) => {
-    if (!userPosition) {
+    // Use ref to get the latest position (avoids stale closure from setInterval callers)
+    const currentPos = userPositionRef.current || userPosition;
+    if (!currentPos) {
       setLocationError('Ative sua localização primeiro para calcular a rota');
       return;
     }
@@ -715,7 +718,7 @@ export default function ParkMap() {
     
     directionsService.route(
       {
-        origin: userPosition,
+        origin: currentPos,
         destination: destination,
         travelMode: google.maps.TravelMode.WALKING,
       },
@@ -739,7 +742,7 @@ export default function ParkMap() {
           // Fit the entire route in view for preview mode
           if (mapRef.current) {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userPosition);
+            bounds.extend(currentPos);
             bounds.extend(destination);
             mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
             // Reset rotation for preview
@@ -750,7 +753,7 @@ export default function ParkMap() {
           // Fallback: Calculate straight-line distance when Directions API fails
           console.log('Directions API failed with status:', status);
           
-          const straightLineDistance = calculateStraightLineDistance(userPosition, destination);
+          const straightLineDistance = calculateStraightLineDistance(currentPos, destination);
           // Walking routes are typically 1.3x longer than straight-line distance
           const estimatedWalkingDistance = straightLineDistance * 1.3;
           
@@ -769,7 +772,7 @@ export default function ParkMap() {
           // Fit both points in view
           if (mapRef.current) {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userPosition);
+            bounds.extend(currentPos);
             bounds.extend(destination);
             mapRef.current.fitBounds(bounds, { top: 100, bottom: 200, left: 50, right: 50 });
             mapRef.current.setHeading(0);
@@ -869,6 +872,7 @@ export default function ParkMap() {
           lng: position.coords.longitude 
         };
         setUserPosition(pos);
+        userPositionRef.current = pos;
         
         // Update heading from GPS if available
         if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
@@ -993,9 +997,9 @@ export default function ParkMap() {
       // Start tracking and wait for position
       startLocationTracking();
       
-      // Store destination for when position is available
+      // Use ref to avoid stale closure — userPositionRef is always current
       const checkPosition = setInterval(() => {
-        if (userPosition) {
+        if (userPositionRef.current) {
           clearInterval(checkPosition);
           calculateRoute(position, name);
         }
