@@ -158,6 +158,15 @@ export default function ParkMap() {
   const hasHeadingSignalRef = useRef(false); // Track when we have real heading from GPS/orientation
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   
+  // === Direct camera control refs (bypass React state for real-time smoothness) ===
+  const targetHeadingRef = useRef<number>(0); // Where we want the camera to point
+  const currentHeadingRef = useRef<number>(0); // Where the camera currently points
+  const rafIdRef = useRef<number | null>(null); // requestAnimationFrame ID
+  const navigationModeRef = useRef<NavigationMode>('preview'); // Avoid stale closure
+  const isNavigatingRef = useRef(false); // Avoid stale closure
+  const userPanningRef = useRef(false); // True when user is manually dragging the map
+  const lastUserInteractionRef = useRef<number>(0); // Timestamp of last user pan/drag
+  
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -393,8 +402,9 @@ export default function ParkMap() {
     }
   }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
 
-  // Reset navigation state when starting/stopping
+  // Reset navigation state when starting/stopping + sync refs
   useEffect(() => {
+    isNavigatingRef.current = isNavigating;
     if (!isNavigating) {
       setHasPlayedArrivalSound(false);
       setCurrentStepIndex(0);
@@ -402,8 +412,14 @@ export default function ParkMap() {
       setIsOffCenter(false);
       lastPositionRef.current = null;
       lastHeadingPositionRef.current = null;
+      userPanningRef.current = false;
     }
   }, [isNavigating]);
+
+  // Sync navigationMode ref
+  useEffect(() => {
+    navigationModeRef.current = navigationMode;
+  }, [navigationMode]);
 
   // Always reset step pointer when a new route is loaded
   useEffect(() => {
@@ -512,6 +528,8 @@ export default function ParkMap() {
   // Re-center on user position
   const recenterOnUser = useCallback(() => {
     if (mapRef.current && userPosition) {
+      userPanningRef.current = false;
+      lastUserInteractionRef.current = 0;
       mapRef.current.panTo(userPosition);
       mapRef.current.setZoom(19);
       setIsOffCenter(false);
@@ -863,12 +881,17 @@ export default function ParkMap() {
     setRouteInfo(null);
     setRouteSteps([]);
     setIsNavigating(false);
+    isNavigatingRef.current = false;
     setNavigationMode('preview');
+    navigationModeRef.current = 'preview';
+    userPanningRef.current = false;
     // Reset map rotation
     if (mapRef.current) {
       mapRef.current.setHeading(0);
       mapRef.current.setTilt(0);
     }
+    currentHeadingRef.current = 0;
+    targetHeadingRef.current = 0;
   }, []);
 
   // Navigate to parked car
@@ -888,54 +911,112 @@ export default function ParkMap() {
     calculateRoute(carLocation, '🚗 Meu Carro');
   }, [carLocation, userPosition, calculateRoute]);
 
+  // === RAF-based camera animation loop ===
+  // This runs continuously during guided navigation and smoothly interpolates
+  // the map heading toward targetHeadingRef — completely bypassing React state.
+  useEffect(() => {
+    if (navigationMode !== 'guided' || !isNavigating) {
+      // Stop the loop when not in guided mode
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      return;
+    }
+
+    const animate = () => {
+      if (!mapRef.current || !isNavigatingRef.current || navigationModeRef.current !== 'guided') {
+        rafIdRef.current = null;
+        return;
+      }
+
+      const target = targetHeadingRef.current;
+      const current = currentHeadingRef.current;
+      
+      // Smooth interpolation: move 15% toward target each frame (~60fps = very smooth)
+      const shortest = ((target - current + 540) % 360) - 180;
+      const step = shortest * 0.15;
+      
+      if (Math.abs(shortest) > 0.3) {
+        const newHeading = (current + step + 360) % 360;
+        currentHeadingRef.current = newHeading;
+        mapRef.current.setHeading(newHeading);
+      }
+
+      // Keep tilt at 45 degrees
+      if (mapRef.current.getTilt() !== 45) {
+        mapRef.current.setTilt(45);
+      }
+
+      // Auto-follow user position (unless user is panning manually)
+      const timeSinceInteraction = Date.now() - lastUserInteractionRef.current;
+      if (!userPanningRef.current && timeSinceInteraction > 2000 && userPositionRef.current) {
+        mapRef.current.panTo(userPositionRef.current);
+      }
+
+      rafIdRef.current = requestAnimationFrame(animate);
+    };
+
+    rafIdRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [navigationMode, isNavigating]);
+
+  // Detect user drag/pan gestures to pause auto-follow
+  useEffect(() => {
+    if (!mapRef.current || navigationMode !== 'guided') return;
+
+    const dragStartListener = mapRef.current.addListener('dragstart', () => {
+      userPanningRef.current = true;
+      lastUserInteractionRef.current = Date.now();
+    });
+    const dragEndListener = mapRef.current.addListener('dragend', () => {
+      lastUserInteractionRef.current = Date.now();
+      // Resume auto-follow after 3 seconds of no interaction
+      setTimeout(() => {
+        if (Date.now() - lastUserInteractionRef.current >= 2900) {
+          userPanningRef.current = false;
+          setIsOffCenter(false);
+        }
+      }, 3000);
+    });
+
+    return () => {
+      google.maps.event.removeListener(dragStartListener);
+      google.maps.event.removeListener(dragEndListener);
+    };
+  }, [navigationMode, isMapLoaded]);
+
   // Start guided navigation mode with auto-rotation
   const startGuidedNavigation = useCallback(() => {
     setNavigationMode('guided');
-    setMapType('satellite'); // heading/tilt work best in hybrid satellite mode
+    navigationModeRef.current = 'guided';
+    setMapType('satellite');
+    userPanningRef.current = false;
+    lastUserInteractionRef.current = 0;
 
-    // Center on user and zoom in for guided mode
     if (mapRef.current && userPosition) {
-      const cameraPosition = userPosition;
+      // Set initial heading from route or compass
       const initialHeading = hasHeadingSignalRef.current
         ? userHeading
         : (routeGuidanceSnapshot?.routeHeading ?? userHeading);
 
-      mapRef.current.panTo(cameraPosition);
-      mapRef.current.setZoom(19);
-      mapRef.current.setTilt(45);
-      mapRef.current.setHeading(initialHeading);
-      lastHeadingRef.current = initialHeading;
+      targetHeadingRef.current = initialHeading;
+      currentHeadingRef.current = initialHeading;
+
+      mapRef.current.moveCamera({
+        center: userPosition,
+        zoom: 19,
+        tilt: 45,
+        heading: initialHeading,
+      });
     }
   }, [userPosition, userHeading, routeGuidanceSnapshot]);
-
-  // Update map camera/rotation when in guided mode
-  useEffect(() => {
-    if (navigationMode !== 'guided' || !mapRef.current || !isNavigating || !userPosition) return;
-
-    const cameraPosition = userPosition;
-
-    // Prioritize real heading from compass/GPS; fallback to route heading only when unavailable
-    const targetHeading = hasHeadingSignalRef.current
-      ? userHeading
-      : (routeGuidanceSnapshot?.routeHeading ?? userHeading);
-
-    const smoothedHeading = interpolateHeading(lastHeadingRef.current, targetHeading, 0.28);
-    const headingDiff = getAngleDifference(lastHeadingRef.current, smoothedHeading);
-
-    if (headingDiff >= 0.8) {
-      mapRef.current.setHeading(smoothedHeading);
-      lastHeadingRef.current = smoothedHeading;
-    }
-
-    mapRef.current.setTilt(45);
-    mapRef.current.panTo(cameraPosition);
-  }, [
-    userHeading,
-    userPosition,
-    navigationMode,
-    isNavigating,
-    routeGuidanceSnapshot,
-  ]);
 
   // Start continuous location tracking for navigation
   const startLocationTracking = useCallback(() => {
@@ -949,7 +1030,7 @@ export default function ParkMap() {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
 
-    // Clear existing orientation listener (prevents stacked listeners and jitter)
+    // Clear existing orientation listener
     if (orientationHandlerRef.current) {
       window.removeEventListener('deviceorientation', orientationHandlerRef.current, true);
       orientationHandlerRef.current = null;
@@ -961,21 +1042,32 @@ export default function ParkMap() {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         const now = Date.now();
-        // Throttle state updates for smooth navigation without jitter
-        const isNavigatingNow = navigationMode === 'guided';
-        const throttleMs = isNavigatingNow ? 350 : 1200;
-        if (now - lastGpsUpdateRef.current < throttleMs) return;
-        lastGpsUpdateRef.current = now;
-
         const pos: LatLng = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
 
-        setUserPosition(pos);
+        // Always update the ref immediately (for RAF loop and closures)
         userPositionRef.current = pos;
 
-        // Prefer native GPS heading when available; fallback to heading from movement
+        // Throttle React state updates (for UI re-renders only)
+        const isGuidedNow = navigationModeRef.current === 'guided' && isNavigatingRef.current;
+        const throttleMs = isGuidedNow ? 300 : 1200;
+        if (now - lastGpsUpdateRef.current < throttleMs) {
+          // Even when throttled, still update heading and direct-pan during guided mode
+          if (isGuidedNow && mapRef.current && !userPanningRef.current) {
+            const timeSinceInteraction = now - lastUserInteractionRef.current;
+            if (timeSinceInteraction > 2000) {
+              mapRef.current.panTo(pos);
+            }
+          }
+          return;
+        }
+        lastGpsUpdateRef.current = now;
+
+        setUserPosition(pos);
+
+        // Extract heading from GPS or compute from movement
         const gpsHeading = position.coords.heading;
         let nextHeading: number | null = null;
 
@@ -983,21 +1075,28 @@ export default function ParkMap() {
           nextHeading = gpsHeading;
         } else if (lastHeadingPositionRef.current) {
           const movedMeters = calculateStraightLineDistance(lastHeadingPositionRef.current, pos);
-          if (movedMeters >= 3) {
+          if (movedMeters >= 2) {
             nextHeading = calculateBearing(lastHeadingPositionRef.current, pos);
           }
         }
 
         if (nextHeading !== null) {
           hasHeadingSignalRef.current = true;
-          setUserHeading((prev) => {
-            const diff = getAngleDifference(prev, nextHeading as number);
-            return diff >= 2 ? (nextHeading as number) : prev;
-          });
+          // Directly update target heading ref for RAF loop (no React state delay)
+          targetHeadingRef.current = nextHeading;
+          setUserHeading(nextHeading);
         }
 
         if (!lastHeadingPositionRef.current || calculateStraightLineDistance(lastHeadingPositionRef.current, pos) >= 2) {
           lastHeadingPositionRef.current = pos;
+        }
+
+        // Direct pan during guided navigation (bypass React re-render cycle)
+        if (isGuidedNow && mapRef.current && !userPanningRef.current) {
+          const timeSinceInteraction = now - lastUserInteractionRef.current;
+          if (timeSinceInteraction > 2000) {
+            mapRef.current.panTo(pos);
+          }
         }
 
         setIsLoadingLocation(false);
@@ -1021,33 +1120,37 @@ export default function ParkMap() {
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 1000,
+        maximumAge: 0, // Always get fresh position
       }
     );
 
-    // Also use device orientation for more accurate heading on mobile
+    // Device orientation for compass heading (critical for map rotation)
     let lastOrientationUpdate = 0;
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      if (event.alpha !== null && navigationMode === 'guided') {
-        // Throttle orientation updates to max 4Hz (250ms) to prevent marker flicker
-        const now = Date.now();
-        if (now - lastOrientationUpdate < 250) return;
-        lastOrientationUpdate = now;
+      if (event.alpha === null) return;
+      
+      // Only use orientation data during guided navigation
+      if (navigationModeRef.current !== 'guided' || !isNavigatingRef.current) return;
 
-        let heading = event.alpha;
-        if ((event as any).webkitCompassHeading !== undefined) {
-          heading = (event as any).webkitCompassHeading;
-        } else if (event.alpha !== null) {
-          heading = 360 - event.alpha;
-        }
+      // Throttle to ~10Hz (100ms) for smoother rotation
+      const now = Date.now();
+      if (now - lastOrientationUpdate < 100) return;
+      lastOrientationUpdate = now;
 
-        // Only update when heading actually changed (shortest-angle diff)
-        hasHeadingSignalRef.current = true;
-        setUserHeading((prev) => {
-          const diff = getAngleDifference(prev, heading);
-          return diff >= 2 ? heading : prev;
-        });
+      let heading: number;
+      if ((event as any).webkitCompassHeading !== undefined) {
+        heading = (event as any).webkitCompassHeading;
+      } else {
+        heading = (360 - event.alpha) % 360;
       }
+
+      hasHeadingSignalRef.current = true;
+      
+      // Directly update the target heading ref — the RAF loop will smoothly interpolate
+      targetHeadingRef.current = heading;
+      
+      // Also update React state for the user marker arrow
+      setUserHeading(heading);
     };
 
     orientationHandlerRef.current = handleOrientation;
@@ -1065,8 +1168,8 @@ export default function ParkMap() {
       window.addEventListener('deviceorientation', orientationHandlerRef.current, true);
     }
 
-    headingWatchIdRef.current = 1; // Flag that orientation listener is active
-  }, [navigationMode, calculateBearing, calculateStraightLineDistance, getAngleDifference]);
+    headingWatchIdRef.current = 1;
+  }, []);
 
   // Stop location tracking
   const stopLocationTracking = useCallback(() => {
@@ -1078,6 +1181,11 @@ export default function ParkMap() {
     if (orientationHandlerRef.current) {
       window.removeEventListener('deviceorientation', orientationHandlerRef.current, true);
       orientationHandlerRef.current = null;
+    }
+
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
 
     headingWatchIdRef.current = null;
