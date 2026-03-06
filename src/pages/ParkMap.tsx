@@ -155,6 +155,7 @@ export default function ParkMap() {
   const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
   const userPositionRef = useRef<LatLng | null>(null); // Ref for closures that need current position
   const lastHeadingPositionRef = useRef<LatLng | null>(null); // Last position used to infer heading from movement
+  const hasHeadingSignalRef = useRef(false); // Track when we have real heading from GPS/orientation
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   
   // Live shows and characters from API
@@ -890,18 +891,20 @@ export default function ParkMap() {
   // Start guided navigation mode with auto-rotation
   const startGuidedNavigation = useCallback(() => {
     setNavigationMode('guided');
+    setMapType('satellite'); // heading/tilt work best in hybrid satellite mode
 
     // Center on user and zoom in for guided mode
     if (mapRef.current && userPosition) {
-      const cameraPosition =
-        routeGuidanceSnapshot && routeGuidanceSnapshot.nearestDistance <= 18
-          ? routeGuidanceSnapshot.snappedPosition
-          : userPosition;
+      const cameraPosition = userPosition;
+      const initialHeading = hasHeadingSignalRef.current
+        ? userHeading
+        : (routeGuidanceSnapshot?.routeHeading ?? userHeading);
 
       mapRef.current.panTo(cameraPosition);
       mapRef.current.setZoom(19);
-      mapRef.current.setTilt(45); // Add 3D perspective
-      mapRef.current.setHeading(routeGuidanceSnapshot?.routeHeading ?? userHeading);
+      mapRef.current.setTilt(45);
+      mapRef.current.setHeading(initialHeading);
+      lastHeadingRef.current = initialHeading;
     }
   }, [userPosition, userHeading, routeGuidanceSnapshot]);
 
@@ -909,20 +912,22 @@ export default function ParkMap() {
   useEffect(() => {
     if (navigationMode !== 'guided' || !mapRef.current || !isNavigating || !userPosition) return;
 
-    const cameraPosition =
-      routeGuidanceSnapshot && routeGuidanceSnapshot.nearestDistance <= 18
-        ? routeGuidanceSnapshot.snappedPosition
-        : userPosition;
+    const cameraPosition = userPosition;
 
-    const targetHeading = routeGuidanceSnapshot?.routeHeading ?? userHeading;
-    const smoothedHeading = interpolateHeading(lastHeadingRef.current, targetHeading, 0.35);
+    // Prioritize real heading from compass/GPS; fallback to route heading only when unavailable
+    const targetHeading = hasHeadingSignalRef.current
+      ? userHeading
+      : (routeGuidanceSnapshot?.routeHeading ?? userHeading);
+
+    const smoothedHeading = interpolateHeading(lastHeadingRef.current, targetHeading, 0.28);
     const headingDiff = getAngleDifference(lastHeadingRef.current, smoothedHeading);
 
-    if (headingDiff >= 1) {
+    if (headingDiff >= 0.8) {
       mapRef.current.setHeading(smoothedHeading);
       lastHeadingRef.current = smoothedHeading;
     }
 
+    mapRef.current.setTilt(45);
     mapRef.current.panTo(cameraPosition);
   }, [
     userHeading,
@@ -956,10 +961,9 @@ export default function ParkMap() {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         const now = Date.now();
-        // Throttle state updates to max once every 2 seconds to prevent
-        // rapid re-renders that cause markers to flicker/disappear
+        // Throttle state updates for smooth navigation without jitter
         const isNavigatingNow = navigationMode === 'guided';
-        const throttleMs = isNavigatingNow ? 1000 : 2000;
+        const throttleMs = isNavigatingNow ? 350 : 1200;
         if (now - lastGpsUpdateRef.current < throttleMs) return;
         lastGpsUpdateRef.current = now;
 
@@ -985,6 +989,7 @@ export default function ParkMap() {
         }
 
         if (nextHeading !== null) {
+          hasHeadingSignalRef.current = true;
           setUserHeading((prev) => {
             const diff = getAngleDifference(prev, nextHeading as number);
             return diff >= 2 ? (nextHeading as number) : prev;
@@ -1037,6 +1042,7 @@ export default function ParkMap() {
         }
 
         // Only update when heading actually changed (shortest-angle diff)
+        hasHeadingSignalRef.current = true;
         setUserHeading((prev) => {
           const diff = getAngleDifference(prev, heading);
           return diff >= 2 ? heading : prev;
