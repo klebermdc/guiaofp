@@ -1066,7 +1066,7 @@ export default function ParkMap() {
 
   // Memoize marker icons to prevent re-creation on every GPS update
   // Key: "waitTime|isOpen" — only changes when wait time data updates, not on GPS moves
-  const markerIconCache = useRef<Map<string, google.maps.Icon>>(new Map());
+  const markerIconCache = useRef(new globalThis.Map<string, google.maps.Icon>());
   
   const getMarkerIcon = useCallback((attraction: Attraction): google.maps.Icon | undefined => {
     if (typeof google === 'undefined') {
