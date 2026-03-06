@@ -431,25 +431,45 @@ export default function ParkMap() {
     lastPositionRef.current = { pos: userPosition, time: now };
   }, [userPosition, isNavigating]);
 
-  // Auto-advance navigation steps based on proximity to step endpoints
+  // Auto-advance and correct navigation steps based on proximity to route steps
   useEffect(() => {
     if (!isNavigating || !userPosition || routeSteps.length === 0 || navigationMode !== 'guided') return;
-    
-    const step = routeSteps[currentStepIndex] as any;
-    if (!step?.end_location) return;
-    
-    const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
-    const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
-    
-    const distToEnd = calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
-    
-    // Advance to next step when within 15m of step endpoint
-    if (distToEnd < 15 && currentStepIndex < routeSteps.length - 1) {
+
+    const currentStep = routeSteps[currentStepIndex] as any;
+    if (!currentStep?.end_location) return;
+
+    const getStepDistance = (step: any) => {
+      const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
+      const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
+      return calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
+    };
+
+    const currentStepDistance = getStepDistance(currentStep);
+
+    // Advance naturally when approaching end of current step
+    if (currentStepDistance < 15 && currentStepIndex < routeSteps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
-      // Haptic feedback
       if (navigator.vibrate) {
         navigator.vibrate([100, 50, 100]);
       }
+      return;
+    }
+
+    // If GPS drift causes mismatch, snap to a near-future step only
+    const maxLookAhead = Math.min(currentStepIndex + 2, routeSteps.length - 1);
+    let bestIndex = currentStepIndex;
+    let bestDistance = currentStepDistance;
+
+    for (let i = currentStepIndex + 1; i <= maxLookAhead; i++) {
+      const stepDistance = getStepDistance(routeSteps[i] as any);
+      if (stepDistance < bestDistance) {
+        bestDistance = stepDistance;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex !== currentStepIndex && bestDistance + 8 < currentStepDistance) {
+      setCurrentStepIndex(bestIndex);
     }
   }, [userPosition, isNavigating, currentStepIndex, routeSteps, navigationMode]);
 
@@ -660,6 +680,45 @@ export default function ParkMap() {
     return rawDiff > 180 ? 360 - rawDiff : rawDiff;
   };
 
+  const interpolateHeading = (from: number, to: number, factor = 0.35) => {
+    const shortest = ((to - from + 540) % 360) - 180;
+    return (from + shortest * factor + 360) % 360;
+  };
+
+  const routeGuidanceSnapshot = useMemo(() => {
+    if (!userPosition || !directions?.routes?.[0]?.overview_path?.length) return null;
+
+    const overviewPath = directions.routes[0].overview_path;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < overviewPath.length; i++) {
+      const point = overviewPath[i];
+      const pointPos = { lat: point.lat(), lng: point.lng() };
+      const dist = calculateStraightLineDistance(userPosition, pointPos);
+      if (dist < nearestDistance) {
+        nearestDistance = dist;
+        nearestIndex = i;
+      }
+    }
+
+    const nearestPoint = overviewPath[nearestIndex];
+    const snappedPosition = { lat: nearestPoint.lat(), lng: nearestPoint.lng() };
+
+    const lookAheadIndex = Math.min(nearestIndex + 6, overviewPath.length - 1);
+    const lookAheadPoint = overviewPath[lookAheadIndex];
+    const routeHeading =
+      lookAheadIndex > nearestIndex
+        ? calculateBearing(snappedPosition, { lat: lookAheadPoint.lat(), lng: lookAheadPoint.lng() })
+        : null;
+
+    return {
+      nearestDistance,
+      snappedPosition,
+      routeHeading,
+    };
+  }, [userPosition, directions]);
+
   // Get bearing to destination for the compass arrow
   const bearingToDestination = userPosition && routeInfo?.destination 
     ? calculateBearing(userPosition, routeInfo.destination)
@@ -831,31 +890,47 @@ export default function ParkMap() {
   // Start guided navigation mode with auto-rotation
   const startGuidedNavigation = useCallback(() => {
     setNavigationMode('guided');
-    
+
     // Center on user and zoom in for guided mode
     if (mapRef.current && userPosition) {
-      mapRef.current.panTo(userPosition);
+      const cameraPosition =
+        routeGuidanceSnapshot && routeGuidanceSnapshot.nearestDistance <= 18
+          ? routeGuidanceSnapshot.snappedPosition
+          : userPosition;
+
+      mapRef.current.panTo(cameraPosition);
       mapRef.current.setZoom(19);
       mapRef.current.setTilt(45); // Add 3D perspective
-      mapRef.current.setHeading(userHeading); // Rotate to user heading
+      mapRef.current.setHeading(routeGuidanceSnapshot?.routeHeading ?? userHeading);
     }
-  }, [userPosition, userHeading]);
+  }, [userPosition, userHeading, routeGuidanceSnapshot]);
 
-  // Update map rotation when in guided mode
+  // Update map camera/rotation when in guided mode
   useEffect(() => {
-    if (navigationMode === 'guided' && mapRef.current && isNavigating) {
-      // Smooth rotation using shortest angular difference
-      const headingDiff = getAngleDifference(lastHeadingRef.current, userHeading);
-      if (headingDiff >= 2) {
-        mapRef.current.setHeading(userHeading);
-        lastHeadingRef.current = userHeading;
-      }
-      // Keep user centered
-      if (userPosition) {
-        mapRef.current.panTo(userPosition);
-      }
+    if (navigationMode !== 'guided' || !mapRef.current || !isNavigating || !userPosition) return;
+
+    const cameraPosition =
+      routeGuidanceSnapshot && routeGuidanceSnapshot.nearestDistance <= 18
+        ? routeGuidanceSnapshot.snappedPosition
+        : userPosition;
+
+    const targetHeading = routeGuidanceSnapshot?.routeHeading ?? userHeading;
+    const smoothedHeading = interpolateHeading(lastHeadingRef.current, targetHeading, 0.35);
+    const headingDiff = getAngleDifference(lastHeadingRef.current, smoothedHeading);
+
+    if (headingDiff >= 1) {
+      mapRef.current.setHeading(smoothedHeading);
+      lastHeadingRef.current = smoothedHeading;
     }
-  }, [userHeading, userPosition, navigationMode, isNavigating]);
+
+    mapRef.current.panTo(cameraPosition);
+  }, [
+    userHeading,
+    userPosition,
+    navigationMode,
+    isNavigating,
+    routeGuidanceSnapshot,
+  ]);
 
   // Start continuous location tracking for navigation
   const startLocationTracking = useCallback(() => {
