@@ -742,7 +742,7 @@ export default function ParkMap() {
           // Fit the entire route in view for preview mode
           if (mapRef.current) {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userPosition);
+            bounds.extend(currentPos);
             bounds.extend(destination);
             mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
             // Reset rotation for preview
@@ -753,7 +753,7 @@ export default function ParkMap() {
           // Fallback: Calculate straight-line distance when Directions API fails
           console.log('Directions API failed with status:', status);
           
-          const straightLineDistance = calculateStraightLineDistance(userPosition, destination);
+          const straightLineDistance = calculateStraightLineDistance(currentPos, destination);
           // Walking routes are typically 1.3x longer than straight-line distance
           const estimatedWalkingDistance = straightLineDistance * 1.3;
           
@@ -772,7 +772,7 @@ export default function ParkMap() {
           // Fit both points in view
           if (mapRef.current) {
             const bounds = new google.maps.LatLngBounds();
-            bounds.extend(userPosition);
+            bounds.extend(currentPos);
             bounds.extend(destination);
             mapRef.current.fitBounds(bounds, { top: 100, bottom: 200, left: 50, right: 50 });
             mapRef.current.setHeading(0);
