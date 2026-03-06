@@ -844,9 +844,9 @@ export default function ParkMap() {
   // Update map rotation when in guided mode
   useEffect(() => {
     if (navigationMode === 'guided' && mapRef.current && isNavigating) {
-      // Smooth rotation - only rotate if heading changed significantly (>5 degrees)
-      const headingDiff = Math.abs(userHeading - lastHeadingRef.current);
-      if (headingDiff > 5 || headingDiff > 355) {
+      // Smooth rotation using shortest angular difference
+      const headingDiff = getAngleDifference(lastHeadingRef.current, userHeading);
+      if (headingDiff >= 2) {
         mapRef.current.setHeading(userHeading);
         lastHeadingRef.current = userHeading;
       }
