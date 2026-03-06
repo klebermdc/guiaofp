@@ -879,12 +879,17 @@ export default function ParkMap() {
     setRouteInfo(null);
     setRouteSteps([]);
     setIsNavigating(false);
+    isNavigatingRef.current = false;
     setNavigationMode('preview');
+    navigationModeRef.current = 'preview';
+    userPanningRef.current = false;
     // Reset map rotation
     if (mapRef.current) {
       mapRef.current.setHeading(0);
       mapRef.current.setTilt(0);
     }
+    currentHeadingRef.current = 0;
+    targetHeadingRef.current = 0;
   }, []);
 
   // Navigate to parked car
