@@ -152,6 +152,7 @@ export default function ParkMap() {
   const [walkingSpeed, setWalkingSpeed] = useState<number | null>(null);
   const [isOffCenter, setIsOffCenter] = useState(false);
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
+  const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
@@ -844,6 +845,14 @@ export default function ParkMap() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        const now = Date.now();
+        // Throttle state updates to max once every 2 seconds to prevent
+        // rapid re-renders that cause markers to flicker/disappear
+        const isNavigatingNow = navigationMode === 'guided';
+        const throttleMs = isNavigatingNow ? 1000 : 2000;
+        if (now - lastGpsUpdateRef.current < throttleMs) return;
+        lastGpsUpdateRef.current = now;
+
         const pos: LatLng = { 
           lat: position.coords.latitude, 
           lng: position.coords.longitude 
