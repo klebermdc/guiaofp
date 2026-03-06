@@ -748,6 +748,7 @@ export default function ParkMap() {
             destination,
           });
           setRouteSteps(leg.steps || []);
+          setCurrentStepIndex(0);
           setIsNavigating(true);
           setNavigationMode('preview'); // Start in preview mode - show full route
           setIsNavPanelExpanded(true);
