@@ -1421,7 +1421,7 @@ export default function ParkMap() {
             {userPosition && isMapLoaded && navigationMode !== 'guided' && (
               <Marker
                 position={userPosition}
-                icon={getUserMarkerIcon()}
+                icon={userMarkerIcon}
                 title="Sua localização"
                 zIndex={1000}
               />
