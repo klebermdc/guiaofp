@@ -649,6 +649,11 @@ export default function ParkMap() {
     return ((θ * 180) / Math.PI + 360) % 360; // Bearing in degrees (0-360)
   };
 
+  const getAngleDifference = (from: number, to: number) => {
+    const rawDiff = Math.abs(to - from) % 360;
+    return rawDiff > 180 ? 360 - rawDiff : rawDiff;
+  };
+
   // Get bearing to destination for the compass arrow
   const bearingToDestination = userPosition && routeInfo?.destination 
     ? calculateBearing(userPosition, routeInfo.destination)
