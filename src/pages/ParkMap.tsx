@@ -1127,13 +1127,11 @@ export default function ParkMap() {
     return icon;
   }, []);
 
-  const getUserMarkerIcon = (): google.maps.Symbol | undefined => {
+  const userMarkerIcon = useMemo((): google.maps.Symbol | undefined => {
     if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
       return undefined;
     }
     
-    // In guided mode, we don't rotate the marker since the map rotates instead
-    // The arrow always points "forward" (up) relative to the map
     return {
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#3B82F6',
@@ -1143,7 +1141,7 @@ export default function ParkMap() {
       scale: navigationMode === 'guided' ? 10 : 8,
       rotation: navigationMode === 'guided' ? 0 : (userHeading || 0),
     };
-  };
+  }, [navigationMode, userHeading]);
 
   const getWaitTimeColor = (waitTime: number | undefined) => {
     if (waitTime === undefined) return 'bg-muted text-muted-foreground';
