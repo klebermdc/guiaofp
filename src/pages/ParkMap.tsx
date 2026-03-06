@@ -528,6 +528,8 @@ export default function ParkMap() {
   // Re-center on user position
   const recenterOnUser = useCallback(() => {
     if (mapRef.current && userPosition) {
+      userPanningRef.current = false;
+      lastUserInteractionRef.current = 0;
       mapRef.current.panTo(userPosition);
       mapRef.current.setZoom(19);
       setIsOffCenter(false);
