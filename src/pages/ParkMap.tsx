@@ -779,6 +779,7 @@ export default function ParkMap() {
             destination, // Store destination for fallback line
           });
           setRouteSteps([]);
+          setCurrentStepIndex(0);
           setIsNavigating(true);
           setNavigationMode('preview');
           setIsNavPanelExpanded(true);
