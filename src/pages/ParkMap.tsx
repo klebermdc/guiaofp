@@ -154,6 +154,8 @@ export default function ParkMap() {
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
   const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
   const userPositionRef = useRef<LatLng | null>(null); // Ref for closures that need current position
+  const lastHeadingPositionRef = useRef<LatLng | null>(null); // Last position used to infer heading from movement
+  const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
@@ -398,8 +400,14 @@ export default function ParkMap() {
       setWalkingSpeed(null);
       setIsOffCenter(false);
       lastPositionRef.current = null;
+      lastHeadingPositionRef.current = null;
     }
   }, [isNavigating]);
+
+  // Always reset step pointer when a new route is loaded
+  useEffect(() => {
+    setCurrentStepIndex(0);
+  }, [routeSteps]);
 
   // Calculate walking speed from GPS position changes
   useEffect(() => {
@@ -647,6 +655,11 @@ export default function ParkMap() {
     return ((θ * 180) / Math.PI + 360) % 360; // Bearing in degrees (0-360)
   };
 
+  const getAngleDifference = (from: number, to: number) => {
+    const rawDiff = Math.abs(to - from) % 360;
+    return rawDiff > 180 ? 360 - rawDiff : rawDiff;
+  };
+
   // Get bearing to destination for the compass arrow
   const bearingToDestination = userPosition && routeInfo?.destination 
     ? calculateBearing(userPosition, routeInfo.destination)
@@ -735,6 +748,7 @@ export default function ParkMap() {
             destination,
           });
           setRouteSteps(leg.steps || []);
+          setCurrentStepIndex(0);
           setIsNavigating(true);
           setNavigationMode('preview'); // Start in preview mode - show full route
           setIsNavPanelExpanded(true);
@@ -765,6 +779,7 @@ export default function ParkMap() {
             destination, // Store destination for fallback line
           });
           setRouteSteps([]);
+          setCurrentStepIndex(0);
           setIsNavigating(true);
           setNavigationMode('preview');
           setIsNavPanelExpanded(true);
@@ -829,9 +844,9 @@ export default function ParkMap() {
   // Update map rotation when in guided mode
   useEffect(() => {
     if (navigationMode === 'guided' && mapRef.current && isNavigating) {
-      // Smooth rotation - only rotate if heading changed significantly (>5 degrees)
-      const headingDiff = Math.abs(userHeading - lastHeadingRef.current);
-      if (headingDiff > 5 || headingDiff > 355) {
+      // Smooth rotation using shortest angular difference
+      const headingDiff = getAngleDifference(lastHeadingRef.current, userHeading);
+      if (headingDiff >= 2) {
         mapRef.current.setHeading(userHeading);
         lastHeadingRef.current = userHeading;
       }
@@ -854,6 +869,12 @@ export default function ParkMap() {
       navigator.geolocation.clearWatch(watchIdRef.current);
     }
 
+    // Clear existing orientation listener (prevents stacked listeners and jitter)
+    if (orientationHandlerRef.current) {
+      window.removeEventListener('deviceorientation', orientationHandlerRef.current, true);
+      orientationHandlerRef.current = null;
+    }
+
     setIsLoadingLocation(true);
     setLocationError(null);
 
@@ -867,18 +888,38 @@ export default function ParkMap() {
         if (now - lastGpsUpdateRef.current < throttleMs) return;
         lastGpsUpdateRef.current = now;
 
-        const pos: LatLng = { 
-          lat: position.coords.latitude, 
-          lng: position.coords.longitude 
+        const pos: LatLng = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
         };
+
         setUserPosition(pos);
         userPositionRef.current = pos;
-        
-        // Update heading from GPS if available
-        if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
-          setUserHeading(position.coords.heading);
+
+        // Prefer native GPS heading when available; fallback to heading from movement
+        const gpsHeading = position.coords.heading;
+        let nextHeading: number | null = null;
+
+        if (gpsHeading !== null && !Number.isNaN(gpsHeading)) {
+          nextHeading = gpsHeading;
+        } else if (lastHeadingPositionRef.current) {
+          const movedMeters = calculateStraightLineDistance(lastHeadingPositionRef.current, pos);
+          if (movedMeters >= 3) {
+            nextHeading = calculateBearing(lastHeadingPositionRef.current, pos);
+          }
         }
-        
+
+        if (nextHeading !== null) {
+          setUserHeading((prev) => {
+            const diff = getAngleDifference(prev, nextHeading as number);
+            return diff >= 2 ? (nextHeading as number) : prev;
+          });
+        }
+
+        if (!lastHeadingPositionRef.current || calculateStraightLineDistance(lastHeadingPositionRef.current, pos) >= 2) {
+          lastHeadingPositionRef.current = pos;
+        }
+
         setIsLoadingLocation(false);
       },
       (error) => {
@@ -897,10 +938,10 @@ export default function ParkMap() {
         }
         setIsLoadingLocation(false);
       },
-      { 
-        enableHighAccuracy: true, 
-        timeout: 10000, 
-        maximumAge: 1000
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 1000,
       }
     );
 
@@ -912,41 +953,39 @@ export default function ParkMap() {
         const now = Date.now();
         if (now - lastOrientationUpdate < 250) return;
         lastOrientationUpdate = now;
-        
+
         let heading = event.alpha;
         if ((event as any).webkitCompassHeading !== undefined) {
           heading = (event as any).webkitCompassHeading;
         } else if (event.alpha !== null) {
           heading = 360 - event.alpha;
         }
-        // Only update if heading changed significantly (>3 degrees) to reduce re-renders
-        setUserHeading(prev => {
-          const diff = Math.abs(prev - heading);
-          return (diff > 3 && diff < 357) ? heading : prev;
+
+        // Only update when heading actually changed (shortest-angle diff)
+        setUserHeading((prev) => {
+          const diff = getAngleDifference(prev, heading);
+          return diff >= 2 ? heading : prev;
         });
       }
     };
+
+    orientationHandlerRef.current = handleOrientation;
 
     // Request permission for device orientation on iOS 13+
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       (DeviceOrientationEvent as any).requestPermission()
         .then((response: string) => {
-          if (response === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation, true);
+          if (response === 'granted' && orientationHandlerRef.current) {
+            window.addEventListener('deviceorientation', orientationHandlerRef.current, true);
           }
         })
         .catch(console.error);
-    } else {
-      window.addEventListener('deviceorientation', handleOrientation, true);
+    } else if (orientationHandlerRef.current) {
+      window.addEventListener('deviceorientation', orientationHandlerRef.current, true);
     }
 
-    // Store cleanup function reference
     headingWatchIdRef.current = 1; // Flag that orientation listener is active
-    
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation, true);
-    };
-  }, [navigationMode]);
+  }, [navigationMode, calculateBearing, calculateStraightLineDistance, getAngleDifference]);
 
   // Stop location tracking
   const stopLocationTracking = useCallback(() => {
@@ -954,6 +993,12 @@ export default function ParkMap() {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+
+    if (orientationHandlerRef.current) {
+      window.removeEventListener('deviceorientation', orientationHandlerRef.current, true);
+      orientationHandlerRef.current = null;
+    }
+
     headingWatchIdRef.current = null;
   }, []);
 
