@@ -158,6 +158,15 @@ export default function ParkMap() {
   const hasHeadingSignalRef = useRef(false); // Track when we have real heading from GPS/orientation
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   
+  // === Direct camera control refs (bypass React state for real-time smoothness) ===
+  const targetHeadingRef = useRef<number>(0); // Where we want the camera to point
+  const currentHeadingRef = useRef<number>(0); // Where the camera currently points
+  const rafIdRef = useRef<number | null>(null); // requestAnimationFrame ID
+  const navigationModeRef = useRef<NavigationMode>('preview'); // Avoid stale closure
+  const isNavigatingRef = useRef(false); // Avoid stale closure
+  const userPanningRef = useRef(false); // True when user is manually dragging the map
+  const lastUserInteractionRef = useRef<number>(0); // Timestamp of last user pan/drag
+  
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
   const audioContextRef = useRef<AudioContext | null>(null);
