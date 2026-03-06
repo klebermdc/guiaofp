@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
@@ -152,6 +152,7 @@ export default function ParkMap() {
   const [walkingSpeed, setWalkingSpeed] = useState<number | null>(null);
   const [isOffCenter, setIsOffCenter] = useState(false);
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
+  const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
@@ -554,15 +555,22 @@ export default function ParkMap() {
     isFetchingRef.current = false;
   }, []);
 
-  // Merge database attractions with wait times
-  const attractionsWithWaitTimes: Attraction[] = dbAttractions.map(attraction => {
+  // Merge database attractions with wait times — memoized to prevent unnecessary marker re-renders
+  const attractionsWithWaitTimes: Attraction[] = useMemo(() => dbAttractions.map(attraction => {
     const waitTimeData = findWaitTime(attraction.name, waitTimes);
     return {
       ...attraction,
       waitTime: waitTimeData?.waitTime,
       isOpen: waitTimeData?.isOpen,
     };
-  });
+  }), [dbAttractions, waitTimes]);
+  
+  // Clear marker icon cache when wait times change so markers get updated colors
+  useEffect(() => {
+    if (typeof markerIconCache !== 'undefined' && markerIconCache.current) {
+      markerIconCache.current.clear();
+    }
+  }, [waitTimes]);
 
   // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
   useEffect(() => {
@@ -844,6 +852,14 @@ export default function ParkMap() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        const now = Date.now();
+        // Throttle state updates to max once every 2 seconds to prevent
+        // rapid re-renders that cause markers to flicker/disappear
+        const isNavigatingNow = navigationMode === 'guided';
+        const throttleMs = isNavigatingNow ? 1000 : 2000;
+        if (now - lastGpsUpdateRef.current < throttleMs) return;
+        lastGpsUpdateRef.current = now;
+
         const pos: LatLng = { 
           lat: position.coords.latitude, 
           lng: position.coords.longitude 
@@ -1055,11 +1071,18 @@ export default function ParkMap() {
     setIsMapLoaded(true);
   };
 
-  // Mickey head SVG for attraction markers with wait time colors
-  const getMarkerIcon = (attraction: Attraction): google.maps.Icon | undefined => {
+  // Memoize marker icons to prevent re-creation on every GPS update
+  // Key: "waitTime|isOpen" — only changes when wait time data updates, not on GPS moves
+  const markerIconCache = useRef(new globalThis.Map<string, google.maps.Icon>());
+  
+  const getMarkerIcon = useCallback((attraction: Attraction): google.maps.Icon | undefined => {
     if (typeof google === 'undefined') {
       return undefined;
     }
+    
+    const cacheKey = `${attraction.id}-${attraction.waitTime ?? 'none'}`;
+    const cached = markerIconCache.current.get(cacheKey);
+    if (cached) return cached;
     
     const waitTimeColor = attraction.waitTime !== undefined 
       ? attraction.waitTime > 60 ? '#EF4444' 
@@ -1082,12 +1105,15 @@ export default function ParkMap() {
     
     const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     
-    return {
+    const icon: google.maps.Icon = {
       url: svgUrl,
       scaledSize: new google.maps.Size(64, 64),
       anchor: new google.maps.Point(32, 32),
     };
-  };
+    
+    markerIconCache.current.set(cacheKey, icon);
+    return icon;
+  }, []);
 
   const getUserMarkerIcon = (): google.maps.Symbol | undefined => {
     if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
