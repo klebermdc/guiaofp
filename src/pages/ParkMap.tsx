@@ -154,6 +154,8 @@ export default function ParkMap() {
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
   const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
   const userPositionRef = useRef<LatLng | null>(null); // Ref for closures that need current position
+  const lastHeadingPositionRef = useRef<LatLng | null>(null); // Last position used to infer heading from movement
+  const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
