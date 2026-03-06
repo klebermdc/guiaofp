@@ -153,6 +153,7 @@ export default function ParkMap() {
   const [isOffCenter, setIsOffCenter] = useState(false);
   const lastPositionRef = useRef<{ pos: LatLng; time: number } | null>(null);
   const lastGpsUpdateRef = useRef<number>(0); // Throttle GPS state updates
+  const userPositionRef = useRef<LatLng | null>(null); // Ref for closures that need current position
   
   // Live shows and characters from API
   const { shows: liveShows, isLoading: isLoadingLiveShows, lastUpdate: lastShowsUpdate } = useLiveShows(selectedPark.id, 60000);
