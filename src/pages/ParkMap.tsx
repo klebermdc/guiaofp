@@ -1064,11 +1064,18 @@ export default function ParkMap() {
     setIsMapLoaded(true);
   };
 
-  // Mickey head SVG for attraction markers with wait time colors
-  const getMarkerIcon = (attraction: Attraction): google.maps.Icon | undefined => {
+  // Memoize marker icons to prevent re-creation on every GPS update
+  // Key: "waitTime|isOpen" — only changes when wait time data updates, not on GPS moves
+  const markerIconCache = useRef<Map<string, google.maps.Icon>>(new Map());
+  
+  const getMarkerIcon = useCallback((attraction: Attraction): google.maps.Icon | undefined => {
     if (typeof google === 'undefined') {
       return undefined;
     }
+    
+    const cacheKey = `${attraction.id}-${attraction.waitTime ?? 'none'}`;
+    const cached = markerIconCache.current.get(cacheKey);
+    if (cached) return cached;
     
     const waitTimeColor = attraction.waitTime !== undefined 
       ? attraction.waitTime > 60 ? '#EF4444' 
@@ -1091,12 +1098,15 @@ export default function ParkMap() {
     
     const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     
-    return {
+    const icon: google.maps.Icon = {
       url: svgUrl,
       scaledSize: new google.maps.Size(64, 64),
       anchor: new google.maps.Point(32, 32),
     };
-  };
+    
+    markerIconCache.current.set(cacheKey, icon);
+    return icon;
+  }, []);
 
   const getUserMarkerIcon = (): google.maps.Symbol | undefined => {
     if (typeof google === 'undefined' || !google.maps?.SymbolPath) {
