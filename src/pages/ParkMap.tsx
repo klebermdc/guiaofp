@@ -660,6 +660,45 @@ export default function ParkMap() {
     return rawDiff > 180 ? 360 - rawDiff : rawDiff;
   };
 
+  const interpolateHeading = (from: number, to: number, factor = 0.35) => {
+    const shortest = ((to - from + 540) % 360) - 180;
+    return (from + shortest * factor + 360) % 360;
+  };
+
+  const routeGuidanceSnapshot = useMemo(() => {
+    if (!userPosition || !directions?.routes?.[0]?.overview_path?.length) return null;
+
+    const overviewPath = directions.routes[0].overview_path;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < overviewPath.length; i++) {
+      const point = overviewPath[i];
+      const pointPos = { lat: point.lat(), lng: point.lng() };
+      const dist = calculateStraightLineDistance(userPosition, pointPos);
+      if (dist < nearestDistance) {
+        nearestDistance = dist;
+        nearestIndex = i;
+      }
+    }
+
+    const nearestPoint = overviewPath[nearestIndex];
+    const snappedPosition = { lat: nearestPoint.lat(), lng: nearestPoint.lng() };
+
+    const lookAheadIndex = Math.min(nearestIndex + 6, overviewPath.length - 1);
+    const lookAheadPoint = overviewPath[lookAheadIndex];
+    const routeHeading =
+      lookAheadIndex > nearestIndex
+        ? calculateBearing(snappedPosition, { lat: lookAheadPoint.lat(), lng: lookAheadPoint.lng() })
+        : null;
+
+    return {
+      nearestDistance,
+      snappedPosition,
+      routeHeading,
+    };
+  }, [userPosition, directions]);
+
   // Get bearing to destination for the compass arrow
   const bearingToDestination = userPosition && routeInfo?.destination 
     ? calculateBearing(userPosition, routeInfo.destination)
