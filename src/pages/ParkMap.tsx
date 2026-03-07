@@ -1381,6 +1381,22 @@ export default function ParkMap() {
     };
   }, [navigationMode, userHeading]);
 
+  const mapOptions = useMemo<google.maps.MapOptions>(() => ({
+    mapTypeId: mapType === 'satellite' ? 'hybrid' : 'roadmap',
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: false,
+    gestureHandling: 'greedy',
+    // Never force heading in options (it was resetting guided camera rotation)
+    tilt: navigationMode === 'guided' && mapType === 'satellite' ? 45 : mapType === 'satellite' ? 45 : 0,
+    clickableIcons: false,
+    styles: [
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    ],
+  }), [mapType, navigationMode]);
+
   const getWaitTimeColor = (waitTime: number | undefined) => {
     if (waitTime === undefined) return 'bg-muted text-muted-foreground';
     if (waitTime > 60) return 'bg-red-500 text-white';
@@ -1631,21 +1647,7 @@ export default function ParkMap() {
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={selectedPark.center}
             zoom={selectedPark.zoom}
-            options={{
-              mapTypeId: mapType === 'satellite' ? 'hybrid' : 'roadmap',
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false,
-              zoomControl: false,
-              gestureHandling: 'greedy',
-              tilt: mapType === 'satellite' ? 45 : 0,
-              heading: 0,
-              clickableIcons: false,
-              styles: [
-                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-              ],
-            }}
+            options={mapOptions}
             onLoad={onMapLoad}
             onClick={(e) => {
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
