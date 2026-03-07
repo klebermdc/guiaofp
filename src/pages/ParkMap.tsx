@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
-import { NavigationHUD } from '@/components/map/NavigationHUD';
+// NavigationHUD removed — native app navigation used instead
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
@@ -448,67 +448,7 @@ export default function ParkMap() {
     lastPositionRef.current = { pos: userPosition, time: now };
   }, [userPosition, isNavigating]);
 
-  // Auto-advance and correct navigation steps based on proximity to route steps
-  useEffect(() => {
-    if (!isNavigating || !userPosition || routeSteps.length === 0 || navigationMode !== 'guided') return;
-
-    const currentStep = routeSteps[currentStepIndex] as any;
-    if (!currentStep?.end_location) return;
-
-    const getStepDistance = (step: any) => {
-      const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
-      const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
-      return calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
-    };
-
-    const currentStepDistance = getStepDistance(currentStep);
-
-    // Advance naturally when approaching end of current step
-    if (currentStepDistance < 15 && currentStepIndex < routeSteps.length - 1) {
-      setCurrentStepIndex(prev => prev + 1);
-      if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
-      }
-      return;
-    }
-
-    // If GPS drift causes mismatch, snap to a near-future step only
-    const maxLookAhead = Math.min(currentStepIndex + 2, routeSteps.length - 1);
-    let bestIndex = currentStepIndex;
-    let bestDistance = currentStepDistance;
-
-    for (let i = currentStepIndex + 1; i <= maxLookAhead; i++) {
-      const stepDistance = getStepDistance(routeSteps[i] as any);
-      if (stepDistance < bestDistance) {
-        bestDistance = stepDistance;
-        bestIndex = i;
-      }
-    }
-
-    if (bestIndex !== currentStepIndex && bestDistance + 8 < currentStepDistance) {
-      setCurrentStepIndex(bestIndex);
-    }
-  }, [userPosition, isNavigating, currentStepIndex, routeSteps, navigationMode]);
-
-  // Detect when user pans away from their position (off-center)
-  useEffect(() => {
-    if (!mapRef.current || navigationMode !== 'guided' || !userPosition) {
-      setIsOffCenter(false);
-      return;
-    }
-    
-    const listener = mapRef.current.addListener('center_changed', () => {
-      const center = mapRef.current?.getCenter();
-      if (!center || !userPosition) return;
-      const dist = calculateStraightLineDistance(
-        { lat: center.lat(), lng: center.lng() },
-        userPosition
-      );
-      setIsOffCenter(dist > 50); // More than 50m from user
-    });
-    
-    return () => google.maps.event.removeListener(listener);
-  }, [navigationMode, userPosition]);
+  // Step auto-advance and off-center detection removed — native apps handle this
 
   // Open navigation in external app (Google Maps or Waze)
   const openExternalNav = useCallback((app: 'google' | 'waze') => {
@@ -911,112 +851,9 @@ export default function ParkMap() {
     calculateRoute(carLocation, '🚗 Meu Carro');
   }, [carLocation, userPosition, calculateRoute]);
 
-  // === RAF-based camera animation loop ===
-  // This runs continuously during guided navigation and smoothly interpolates
-  // the map heading toward targetHeadingRef — completely bypassing React state.
-  useEffect(() => {
-    if (navigationMode !== 'guided' || !isNavigating) {
-      // Stop the loop when not in guided mode
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-      return;
-    }
+  // Guided navigation code removed — users now open Google Maps/Waze natively
 
-    const animate = () => {
-      if (!mapRef.current || !isNavigatingRef.current || navigationModeRef.current !== 'guided') {
-        rafIdRef.current = null;
-        return;
-      }
-
-      const target = targetHeadingRef.current;
-      const current = currentHeadingRef.current;
-      
-      // Smooth interpolation: move 15% toward target each frame (~60fps = very smooth)
-      const shortest = ((target - current + 540) % 360) - 180;
-      const step = shortest * 0.15;
-      
-      if (Math.abs(shortest) > 0.3) {
-        const newHeading = (current + step + 360) % 360;
-        currentHeadingRef.current = newHeading;
-        mapRef.current.setHeading(newHeading);
-      }
-
-      // Keep tilt at 45 degrees
-      if (mapRef.current.getTilt() !== 45) {
-        mapRef.current.setTilt(45);
-      }
-
-      // Auto-follow user position (unless user is panning manually)
-      const timeSinceInteraction = Date.now() - lastUserInteractionRef.current;
-      if (!userPanningRef.current && timeSinceInteraction > 2000 && userPositionRef.current) {
-        mapRef.current.panTo(userPositionRef.current);
-      }
-
-      rafIdRef.current = requestAnimationFrame(animate);
-    };
-
-    rafIdRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-    };
-  }, [navigationMode, isNavigating]);
-
-  // Detect user drag/pan gestures to pause auto-follow
-  useEffect(() => {
-    if (!mapRef.current || navigationMode !== 'guided') return;
-
-    const dragStartListener = mapRef.current.addListener('dragstart', () => {
-      userPanningRef.current = true;
-      lastUserInteractionRef.current = Date.now();
-    });
-    const dragEndListener = mapRef.current.addListener('dragend', () => {
-      lastUserInteractionRef.current = Date.now();
-      // Resume auto-follow after 3 seconds of no interaction
-      setTimeout(() => {
-        if (Date.now() - lastUserInteractionRef.current >= 2900) {
-          userPanningRef.current = false;
-          setIsOffCenter(false);
-        }
-      }, 3000);
-    });
-
-    return () => {
-      google.maps.event.removeListener(dragStartListener);
-      google.maps.event.removeListener(dragEndListener);
-    };
-  }, [navigationMode, isMapLoaded]);
-
-  // Start guided navigation mode with auto-rotation
-  const startGuidedNavigation = useCallback(() => {
-    setNavigationMode('guided');
-    navigationModeRef.current = 'guided';
-    setMapType('satellite');
-    userPanningRef.current = false;
-    lastUserInteractionRef.current = 0;
-
-    if (mapRef.current && userPosition) {
-      // Set initial heading from route or compass
-      const initialHeading = hasHeadingSignalRef.current
-        ? userHeading
-        : (routeGuidanceSnapshot?.routeHeading ?? userHeading);
-
-      targetHeadingRef.current = initialHeading;
-      currentHeadingRef.current = initialHeading;
-
-      mapRef.current.moveCamera({
-        center: userPosition,
-        zoom: 19,
-        tilt: 45,
-        heading: initialHeading,
-      });
-    }
-  }, [userPosition, userHeading, routeGuidanceSnapshot]);
+  // startGuidedNavigation removed — users open native apps instead
 
   // Start continuous location tracking for navigation
   const startLocationTracking = useCallback(() => {
@@ -2049,36 +1886,7 @@ export default function ParkMap() {
         </div>
       </div>
 
-      {/* Waze-like HUD - Mobile Guided Mode */}
-      {isMobile && isNavigating && routeInfo && navigationMode === 'guided' && (
-        <NavigationHUD
-          destinationName={routeInfo.destinationName}
-          distance={routeInfo.distance}
-          duration={routeInfo.duration}
-          currentStepIndex={currentStepIndex}
-          steps={routeSteps.map(s => ({
-            instructions: s.instructions,
-            distance: s.distance ? { text: s.distance.text, value: s.distance.value } : undefined,
-            duration: s.duration ? { text: s.duration.text, value: s.duration.value } : undefined,
-            maneuver: (s as any).maneuver,
-          }))}
-          speed={walkingSpeed}
-          distanceToNextStep={(() => {
-            if (!userPosition || routeSteps.length === 0) return null;
-            const step = routeSteps[currentStepIndex] as any;
-            if (!step?.end_location) return null;
-            const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
-            const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
-            return calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
-          })()}
-          destination={routeInfo.destination || null}
-          userPosition={userPosition}
-          onStop={handleStopNavigation}
-          onRecenter={recenterOnUser}
-          isOffCenter={isOffCenter}
-          onOpenExternal={openExternalNav}
-        />
-      )}
+      {/* Native navigation HUD removed — users open Google Maps/Waze directly */}
 
       {/* Navigation Panel - Preview mode OR Desktop guided mode */}
       {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
@@ -2117,58 +1925,9 @@ export default function ParkMap() {
             
             {isNavPanelExpanded && (
               <CardContent className="py-3 pb-5">
-                {/* Mode indicator and controls */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={navigationMode === 'guided' ? 'default' : 'secondary'}
-                      className={navigationMode === 'guided' ? 'bg-green-500 text-white' : 'bg-white/20 text-white'}
-                    >
-                      {navigationMode === 'guided' ? '🧭 Navegando' : '👁️ Visualizando rota'}
-                    </Badge>
-                  </div>
-                  
-                  {/* Play/Pause Navigation Button */}
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (navigationMode === 'preview') {
-                        startGuidedNavigation();
-                      } else {
-                        setNavigationMode('preview');
-                        if (mapRef.current && userPosition && routeInfo.destination) {
-                          const bounds = new google.maps.LatLngBounds();
-                          bounds.extend(userPosition);
-                          bounds.extend(routeInfo.destination);
-                          mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
-                          mapRef.current.setHeading(0);
-                          mapRef.current.setTilt(0);
-                        }
-                      }
-                    }}
-                    className={`gap-2 ${
-                      navigationMode === 'guided' 
-                        ? 'bg-amber-500 hover:bg-amber-600' 
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                  >
-                    {navigationMode === 'guided' ? (
-                      <>
-                        <Pause className="w-4 h-4" />
-                        Ver Rota
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Iniciar Navegação
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Preview Mode: Show route steps */}
-                {navigationMode === 'preview' && routeSteps.length > 0 && (
-                  <div className="bg-white/10 rounded-lg p-3">
+                {/* Route steps preview */}
+                {routeSteps.length > 0 && (
+                  <div className="bg-white/10 rounded-lg p-3 mb-3">
                     <p className="text-xs text-blue-200 mb-2 font-medium">📋 Instruções da rota:</p>
                     <div className="space-y-2 max-h-32 overflow-auto">
                       {routeSteps.map((step, index) => (
@@ -2183,48 +1942,12 @@ export default function ParkMap() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-blue-200 mt-3 text-center">
-                      Toque em "Iniciar Navegação" para ser guiado em tempo real
-                    </p>
                   </div>
                 )}
 
-                {/* Guided Mode info (desktop only - mobile uses HUD) */}
-                {navigationMode === 'guided' && !isMobile && routeInfo?.destination && userPosition && (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex items-center justify-center gap-6 w-full">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{routeInfo.distance}</p>
-                        <p className="text-xs text-blue-200">Distância</p>
-                      </div>
-                      <div className="w-px h-10 bg-white/30" />
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{routeInfo.duration}</p>
-                        <p className="text-xs text-blue-200">Tempo estimado</p>
-                      </div>
-                    </div>
-                    {routeSteps.length > 0 && (
-                      <div className="bg-white/10 rounded-lg p-3 w-full">
-                        <p className="text-xs text-blue-200 mb-1 flex items-center gap-1">
-                          <Navigation className="w-3 h-3" />
-                          Próxima instrução:
-                        </p>
-                        <p 
-                          className="text-sm text-white font-medium"
-                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[currentStepIndex]?.instructions || '') }}
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-blue-200 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      GPS ativo • Mapa gira automaticamente
-                    </p>
-                  </div>
-                )}
-
-                {/* Fallback: When no route steps available */}
-                {navigationMode === 'preview' && routeSteps.length === 0 && routeInfo?.destination && (
-                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                {/* Fallback compass when no route steps */}
+                {routeSteps.length === 0 && routeInfo?.destination && (
+                  <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
                     <div className="relative w-20 h-20 mx-auto mb-3">
                       <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
                       <div 
@@ -2234,14 +1957,33 @@ export default function ParkMap() {
                         <ArrowUp className="w-10 h-10 text-white" strokeWidth={3} />
                       </div>
                     </div>
-                    <p className="text-sm text-white/90">
-                      Siga na direção indicada
-                    </p>
-                    <p className="text-xs text-blue-200 mt-1">
-                      Distância aproximada: {routeInfo.distance}
-                    </p>
+                    <p className="text-sm text-white/90">Siga na direção indicada</p>
+                    <p className="text-xs text-blue-200 mt-1">Distância aproximada: {routeInfo.distance}</p>
                   </div>
                 )}
+
+                {/* Open in native app buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => openExternalNav('google')}
+                    className="flex-1 gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Google Maps
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => openExternalNav('waze')}
+                    className="flex-1 gap-2 bg-[#33ccff] text-white hover:bg-[#28b8e8] font-bold"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Waze
+                  </Button>
+                </div>
+                <p className="text-xs text-blue-200 mt-2 text-center">
+                  Abre o app de navegação no seu celular
+                </p>
               </CardContent>
             )}
           </Card>
