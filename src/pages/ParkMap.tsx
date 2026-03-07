@@ -1063,23 +1063,16 @@ export default function ParkMap() {
   };
 
   const handleRouteToAttraction = (position: LatLng, name: string) => {
+    // Open native navigation immediately (Google Maps), then keep route preview in-app.
+    openExternalNav('google', position);
+
     if (!userPosition) {
-      // Start tracking and wait for position
+      // Start tracking in background for local preview details
       startLocationTracking();
-      
-      // Use ref to avoid stale closure — userPositionRef is always current
-      const checkPosition = setInterval(() => {
-        if (userPositionRef.current) {
-          clearInterval(checkPosition);
-          calculateRoute(position, name);
-        }
-      }, 500);
-      
-      // Timeout after 10 seconds
-      setTimeout(() => clearInterval(checkPosition), 10000);
-    } else {
-      calculateRoute(position, name);
+      return;
     }
+
+    calculateRoute(position, name);
   };
 
   const handleStopNavigation = () => {
