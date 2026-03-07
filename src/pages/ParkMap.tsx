@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
-import { NavigationHUD } from '@/components/map/NavigationHUD';
+// NavigationHUD removed — native app navigation used instead
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TravelModeIndicator } from '@/components/travel-mode/TravelModeIndicator';
