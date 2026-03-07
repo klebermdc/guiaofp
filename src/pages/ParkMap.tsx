@@ -2049,36 +2049,7 @@ export default function ParkMap() {
         </div>
       </div>
 
-      {/* Waze-like HUD - Mobile Guided Mode */}
-      {isMobile && isNavigating && routeInfo && navigationMode === 'guided' && (
-        <NavigationHUD
-          destinationName={routeInfo.destinationName}
-          distance={routeInfo.distance}
-          duration={routeInfo.duration}
-          currentStepIndex={currentStepIndex}
-          steps={routeSteps.map(s => ({
-            instructions: s.instructions,
-            distance: s.distance ? { text: s.distance.text, value: s.distance.value } : undefined,
-            duration: s.duration ? { text: s.duration.text, value: s.duration.value } : undefined,
-            maneuver: (s as any).maneuver,
-          }))}
-          speed={walkingSpeed}
-          distanceToNextStep={(() => {
-            if (!userPosition || routeSteps.length === 0) return null;
-            const step = routeSteps[currentStepIndex] as any;
-            if (!step?.end_location) return null;
-            const endLat = typeof step.end_location.lat === 'function' ? step.end_location.lat() : step.end_location.lat;
-            const endLng = typeof step.end_location.lng === 'function' ? step.end_location.lng() : step.end_location.lng;
-            return calculateStraightLineDistance(userPosition, { lat: endLat, lng: endLng });
-          })()}
-          destination={routeInfo.destination || null}
-          userPosition={userPosition}
-          onStop={handleStopNavigation}
-          onRecenter={recenterOnUser}
-          isOffCenter={isOffCenter}
-          onOpenExternal={openExternalNav}
-        />
-      )}
+      {/* Native navigation HUD removed — users open Google Maps/Waze directly */}
 
       {/* Navigation Panel - Preview mode OR Desktop guided mode */}
       {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
@@ -2117,58 +2088,9 @@ export default function ParkMap() {
             
             {isNavPanelExpanded && (
               <CardContent className="py-3 pb-5">
-                {/* Mode indicator and controls */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={navigationMode === 'guided' ? 'default' : 'secondary'}
-                      className={navigationMode === 'guided' ? 'bg-green-500 text-white' : 'bg-white/20 text-white'}
-                    >
-                      {navigationMode === 'guided' ? '🧭 Navegando' : '👁️ Visualizando rota'}
-                    </Badge>
-                  </div>
-                  
-                  {/* Play/Pause Navigation Button */}
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (navigationMode === 'preview') {
-                        startGuidedNavigation();
-                      } else {
-                        setNavigationMode('preview');
-                        if (mapRef.current && userPosition && routeInfo.destination) {
-                          const bounds = new google.maps.LatLngBounds();
-                          bounds.extend(userPosition);
-                          bounds.extend(routeInfo.destination);
-                          mapRef.current.fitBounds(bounds, { top: 100, bottom: 250, left: 50, right: 50 });
-                          mapRef.current.setHeading(0);
-                          mapRef.current.setTilt(0);
-                        }
-                      }
-                    }}
-                    className={`gap-2 ${
-                      navigationMode === 'guided' 
-                        ? 'bg-amber-500 hover:bg-amber-600' 
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                  >
-                    {navigationMode === 'guided' ? (
-                      <>
-                        <Pause className="w-4 h-4" />
-                        Ver Rota
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Iniciar Navegação
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Preview Mode: Show route steps */}
-                {navigationMode === 'preview' && routeSteps.length > 0 && (
-                  <div className="bg-white/10 rounded-lg p-3">
+                {/* Route steps preview */}
+                {routeSteps.length > 0 && (
+                  <div className="bg-white/10 rounded-lg p-3 mb-3">
                     <p className="text-xs text-blue-200 mb-2 font-medium">📋 Instruções da rota:</p>
                     <div className="space-y-2 max-h-32 overflow-auto">
                       {routeSteps.map((step, index) => (
@@ -2183,48 +2105,12 @@ export default function ParkMap() {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-blue-200 mt-3 text-center">
-                      Toque em "Iniciar Navegação" para ser guiado em tempo real
-                    </p>
                   </div>
                 )}
 
-                {/* Guided Mode info (desktop only - mobile uses HUD) */}
-                {navigationMode === 'guided' && !isMobile && routeInfo?.destination && userPosition && (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex items-center justify-center gap-6 w-full">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{routeInfo.distance}</p>
-                        <p className="text-xs text-blue-200">Distância</p>
-                      </div>
-                      <div className="w-px h-10 bg-white/30" />
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{routeInfo.duration}</p>
-                        <p className="text-xs text-blue-200">Tempo estimado</p>
-                      </div>
-                    </div>
-                    {routeSteps.length > 0 && (
-                      <div className="bg-white/10 rounded-lg p-3 w-full">
-                        <p className="text-xs text-blue-200 mb-1 flex items-center gap-1">
-                          <Navigation className="w-3 h-3" />
-                          Próxima instrução:
-                        </p>
-                        <p 
-                          className="text-sm text-white font-medium"
-                          dangerouslySetInnerHTML={{ __html: translateNavigationStep(routeSteps[currentStepIndex]?.instructions || '') }}
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-blue-200 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      GPS ativo • Mapa gira automaticamente
-                    </p>
-                  </div>
-                )}
-
-                {/* Fallback: When no route steps available */}
-                {navigationMode === 'preview' && routeSteps.length === 0 && routeInfo?.destination && (
-                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                {/* Fallback compass when no route steps */}
+                {routeSteps.length === 0 && routeInfo?.destination && (
+                  <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
                     <div className="relative w-20 h-20 mx-auto mb-3">
                       <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
                       <div 
@@ -2234,14 +2120,33 @@ export default function ParkMap() {
                         <ArrowUp className="w-10 h-10 text-white" strokeWidth={3} />
                       </div>
                     </div>
-                    <p className="text-sm text-white/90">
-                      Siga na direção indicada
-                    </p>
-                    <p className="text-xs text-blue-200 mt-1">
-                      Distância aproximada: {routeInfo.distance}
-                    </p>
+                    <p className="text-sm text-white/90">Siga na direção indicada</p>
+                    <p className="text-xs text-blue-200 mt-1">Distância aproximada: {routeInfo.distance}</p>
                   </div>
                 )}
+
+                {/* Open in native app buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => openExternalNav('google')}
+                    className="flex-1 gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Google Maps
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => openExternalNav('waze')}
+                    className="flex-1 gap-2 bg-[#33ccff] text-white hover:bg-[#28b8e8] font-bold"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Waze
+                  </Button>
+                </div>
+                <p className="text-xs text-blue-200 mt-2 text-center">
+                  Abre o app de navegação no seu celular
+                </p>
               </CardContent>
             )}
           </Card>
