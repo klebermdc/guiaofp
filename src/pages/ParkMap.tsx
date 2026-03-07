@@ -451,18 +451,17 @@ export default function ParkMap() {
   // Step auto-advance and off-center detection removed — native apps handle this
 
   // Open navigation in external app (Google Maps or Waze)
-  const openExternalNav = useCallback((app: 'google' | 'waze') => {
-    if (!routeInfo?.destination) return;
-    const { lat, lng } = routeInfo.destination;
-    
-    let url: string;
-    if (app === 'waze') {
-      url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-    } else {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-    }
-    
-    window.open(url, '_blank');
+  const openExternalNav = useCallback((app: 'google' | 'waze', destination?: LatLng) => {
+    const targetDestination = destination ?? routeInfo?.destination;
+    if (!targetDestination) return;
+
+    const { lat, lng } = targetDestination;
+    const url = app === 'waze'
+      ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
+
+    // Use same tab so mobile browsers can hand off correctly to native navigation apps
+    window.location.href = url;
   }, [routeInfo?.destination]);
 
   // Re-center on user position
