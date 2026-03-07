@@ -1645,8 +1645,8 @@ export default function ParkMap() {
         <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
-            defaultCenter={selectedPark.center}
-            defaultZoom={selectedPark.zoom}
+            center={selectedPark.center}
+            zoom={selectedPark.zoom}
             options={mapOptions}
             onLoad={onMapLoad}
             onClick={(e) => {
