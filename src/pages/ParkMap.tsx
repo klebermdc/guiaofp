@@ -111,6 +111,7 @@ type NavigationMode = 'preview' | 'guided';
 export default function ParkMap() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const gps = useGPSNavigation(GOOGLE_MAPS_API_KEY);
 
   // Set page title
   useEffect(() => {
@@ -1063,17 +1064,18 @@ export default function ParkMap() {
     }
   };
 
-  const handleRouteToAttraction = (position: LatLng, name: string) => {
-    // Open native navigation immediately (Google Maps), then keep route preview in-app.
-    openExternalNav('google', position);
-
-    if (!userPosition) {
-      // Start tracking in background for local preview details
-      startLocationTracking();
-      return;
+  const handleRouteToAttraction = async (position: LatLng, name: string) => {
+    // Start internal GPS guided navigation with auto-rotation
+    try {
+      await gps.startNavigation(position, name);
+    } catch (err: any) {
+      // If GPS fails, fall back to opening external nav
+      console.warn('GPS navigation failed, falling back to external:', err);
+      toast.error('Erro ao iniciar navegação GPS', {
+        description: err?.message || 'Tente abrir no Google Maps',
+      });
+      openExternalNav('google', position);
     }
-
-    calculateRoute(position, name);
   };
 
   const handleStopNavigation = () => {
@@ -1148,6 +1150,7 @@ export default function ParkMap() {
 
   const onMapLoad = (map: google.maps.Map) => {
     mapRef.current = map;
+    gps.setMap(map);
     setIsMapLoaded(true);
   };
 
@@ -1479,6 +1482,8 @@ export default function ParkMap() {
             zoom={selectedPark.zoom}
             options={mapOptions}
             onLoad={onMapLoad}
+            onDragStart={gps.onMapDrag}
+            onDragEnd={gps.onMapDragEnd}
             onClick={(e) => {
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
               // Don't close the popup when interacting with it (e.g., tapping the video thumbnail).
@@ -1879,7 +1884,27 @@ export default function ParkMap() {
         </div>
       </div>
 
-      {/* Native navigation HUD removed — users open Google Maps/Waze directly */}
+      {/* GPS Navigation HUD — shown during guided navigation */}
+      {gps.state.isNavigating && (
+        <NavigationHUD
+          destinationName={gps.destinationName}
+          distance={gps.state.distanceToDestination}
+          duration={gps.state.durationRemaining}
+          currentStepIndex={gps.state.currentStepIndex}
+          steps={gps.state.steps}
+          speed={gps.state.speed}
+          distanceToNextStep={gps.state.distanceToNextStep}
+          destination={gps.state.steps.length > 0 ? gps.state.steps[gps.state.steps.length - 1].endLocation : null}
+          userPosition={gps.state.userPosition}
+          onStop={gps.stopNavigation}
+          onRecenter={gps.recenter}
+          isOffCenter={gps.state.isOffCenter}
+          onOpenExternal={(app) => {
+            const lastStep = gps.state.steps[gps.state.steps.length - 1];
+            if (lastStep) openExternalNav(app, lastStep.endLocation);
+          }}
+        />
+      )}
 
       {/* Navigation Panel - Preview mode OR Desktop guided mode */}
       {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
