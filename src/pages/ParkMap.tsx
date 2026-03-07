@@ -1645,23 +1645,9 @@ export default function ParkMap() {
         <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={selectedPark.center}
-            zoom={selectedPark.zoom}
-            options={{
-              mapTypeId: mapType === 'satellite' ? 'hybrid' : 'roadmap',
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false,
-              zoomControl: false,
-              gestureHandling: 'greedy',
-              tilt: mapType === 'satellite' ? 45 : 0,
-              heading: 0,
-              clickableIcons: false,
-              styles: [
-                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-              ],
-            }}
+            defaultCenter={selectedPark.center}
+            defaultZoom={selectedPark.zoom}
+            options={mapOptions}
             onLoad={onMapLoad}
             onClick={(e) => {
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
