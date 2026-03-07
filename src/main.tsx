@@ -3,37 +3,31 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Service Worker
-// IMPORTANT: In dev/preview we DISABLE SW to avoid stale caches breaking the app after updates.
+// IMPORTANT: no preview/editor session, disable SW to avoid reload loops and stale cache.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    if (import.meta.env.PROD) {
+    const isPreviewOrEditorSession =
+      window.location.hostname.includes('id-preview--') ||
+      window.location.search.includes('__lovable_token=');
+
+    if (import.meta.env.PROD && !isPreviewOrEditorSession) {
       navigator.serviceWorker
         .register('/sw.js')
-        .then((registration) => {
-
-          // Only reload on SW update if the page is actively being viewed
-          // This prevents reload when switching back to the tab
+        .then(() => {
           const RELOAD_FLAG = 'sw-reloaded';
           let reloading = false;
-          
+
           const safeReload = () => {
-            // Don't reload if already reloading or already reloaded this session
             if (reloading) return;
             if (sessionStorage.getItem(RELOAD_FLAG) === '1') return;
-            
-            // Only reload if document is visible - prevents reload on tab switch
-            if (document.visibilityState !== 'visible') {
-              return;
-            }
-            
+            if (document.visibilityState !== 'visible') return;
+
             reloading = true;
             sessionStorage.setItem(RELOAD_FLAG, '1');
             window.location.reload();
           };
 
-          // Only listen for genuine SW updates, not every controller change
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // Small delay to ensure this is a real update, not a tab switch
             setTimeout(safeReload, 100);
           });
 
