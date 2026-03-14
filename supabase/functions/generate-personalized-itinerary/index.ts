@@ -242,6 +242,7 @@ GRUPO:
 PREFERÊNCIAS:
 - Orçamento: ${budgetDescriptions[answers.budget_level] || answers.budget_level}
 - Estilo de viagem: ${styleDescriptions[answers.travel_style] || answers.travel_style}
+- Perfil de atrações: ${answers.travel_style === "tranquilo" ? "TRANQUILO (usar ordem Tranquila OFP)" : "RADICAL (usar ordem Radical OFP)"}
 - Interesse em parques: ${answers.parks_interest_level}
 
 PARQUES SELECIONADOS:
@@ -255,6 +256,8 @@ LOGÍSTICA:
 - Tipo de hospedagem: ${answers.accommodation_type.replace(/_/g, " ")}
 - Transporte aeroporto: ${answers.airport_transfer.replace(/_/g, " ")}
 - Aluguel de carro: ${answers.will_rent_car}
+
+IMPORTANTE: Siga EXATAMENTE a ORDEM OFICIAL OFP para as atrações de cada parque, adaptando para o perfil ${answers.travel_style === "tranquilo" ? "TRANQUILO" : "RADICAL"}.
 
 Retorne APENAS o JSON válido, sem explicações adicionais.`;
 
