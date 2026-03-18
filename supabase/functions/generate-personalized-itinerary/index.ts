@@ -270,7 +270,11 @@ LOGÍSTICA:
 - Transporte aeroporto: ${answers.airport_transfer.replace(/_/g, " ")}
 - Aluguel de carro: ${answers.will_rent_car}
 
-IMPORTANTE: Siga EXATAMENTE a ORDEM OFICIAL OFP para as atrações de cada parque, adaptando para o perfil ${answers.travel_style === "tranquilo" ? "TRANQUILO" : "RADICAL"}.
+IMPORTANTE: 
+- Siga EXATAMENTE a ORDEM OFICIAL OFP para as atrações de cada parque, adaptando para o perfil ${answers.travel_style === "tranquilo" ? "TRANQUILO" : "RADICAL"}.
+- Liste CADA atração como uma atividade separada com horário estimado.
+- Todos os valores monetários devem ser em REAIS (R$).
+- Cada dia de parque deve ter no mínimo 8 atividades.
 
 Retorne APENAS o JSON válido, sem explicações adicionais.`;
 

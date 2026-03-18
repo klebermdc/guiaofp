@@ -66,11 +66,11 @@ export const HotelSuggestions = ({ itineraryData }: HotelSuggestionsProps) => {
   }, [itineraryData]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'BRL',
       minimumFractionDigits: 0,
-    }).format(value);
+    }).format(value * 5.5); // Conversão aproximada USD → BRL
   };
 
   if (isLoading) {
