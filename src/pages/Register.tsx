@@ -30,7 +30,7 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
   email: z.string().email('Email inválido').max(255),
-  phone: z.string().optional(),
+  phone: z.string().min(14, 'WhatsApp é obrigatório').max(15),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
