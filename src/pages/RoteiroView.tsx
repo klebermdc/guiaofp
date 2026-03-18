@@ -414,7 +414,7 @@ export default function RoteiroView() {
                       <div className="bg-primary/10 rounded-lg p-3 text-center">
                         <p className="text-sm text-muted-foreground">Total Estimado</p>
                         <p className="text-2xl font-bold text-primary">
-                          ${generated.estimated_budget.total.toLocaleString()}
+                          R${generated.estimated_budget.total.toLocaleString('pt-BR')}
                         </p>
                       </div>
                     </CardContent>
