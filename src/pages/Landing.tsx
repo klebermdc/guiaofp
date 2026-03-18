@@ -87,7 +87,7 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { trackCTAClick } = useAnalytics();
+  const { trackCTAClick, trackBeginCheckout } = useAnalytics();
   const { data: dbPlans } = usePlanPricing();
 
   useScrollTracking();
@@ -567,7 +567,13 @@ const Landing = () => {
                         </li>
                       ))}
                     </ul>
-                    <Link to="/registro/basic" className="block" onClick={() => trackCTAClick('cta_plano_basico', 'pricing')}>
+                    <Link to="/registro/basic" className="block" onClick={() => {
+                      trackCTAClick('cta_plano_basico', 'pricing');
+                      const basicPlan = dbPlans?.basic;
+                      if (basicPlan) {
+                        trackBeginCheckout(basicPlan.plan_key, basicPlan.plan_name, basicPlan.price_cents);
+                      }
+                    }}>
                       <Button className="w-full h-14 rounded-xl gradient-gold text-secondary-foreground font-bold text-base hover:scale-[1.02] transition-transform shadow-gold">
                         🚀 Quero acesso imediato
                       </Button>

@@ -251,17 +251,7 @@ export const useAnalytics = () => {
   const trackEvent = useCallback((event: AnalyticsEvent) => {
     const { action, category, label, value, ...customParams } = event;
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', action, {
-        event_category: category,
-        event_label: label,
-        value: value,
-        ...customParams,
-      });
-    }
-
-    // GTM dataLayer (for sGTM/Stape processing)
+    // All events go through dataLayer only — GTM handles GA4 + FB Pixel tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
@@ -271,24 +261,12 @@ export const useAnalytics = () => {
         eventLabel: label,
         eventValue: value,
         ...customParams,
-        // Stape context
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
       });
-    }
-
-    // Facebook Pixel (custom events) — pass eventID for CAPI dedup
-    if (isFbqAvailable()) {
-      const eventId = generateEventId();
-      window.fbq?.('trackCustom', action, {
-        category,
-        label,
-        value,
-        ...customParams,
-      }, { eventID: eventId });
     }
 
     if (import.meta.env.DEV) {
@@ -303,16 +281,7 @@ export const useAnalytics = () => {
     const path = pagePath || window.location.pathname;
     const title = pageTitle || document.title;
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'page_view', {
-        page_path: path,
-        page_title: title,
-        page_location: window.location.href,
-      });
-    }
-
-    // GTM dataLayer with Stape context
+    // dataLayer only — GTM handles GA4 page_view + FB PageView tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
@@ -329,11 +298,6 @@ export const useAnalytics = () => {
         fbc: ctx.fbc,
         client_id: ctx.client_id,
       });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'PageView');
     }
 
     if (import.meta.env.DEV) {
@@ -363,14 +327,7 @@ export const useAnalytics = () => {
       label: ctaName,
       cta_location: ctaLocation,
     });
-
-    // Facebook Lead event
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: ctaName,
-        content_category: ctaLocation,
-      });
-    }
+    // FB Lead event is handled by GTM tag triggered on cta_click event
   }, [trackEvent]);
 
   /**
@@ -380,16 +337,7 @@ export const useAnalytics = () => {
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue);
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'view_item', {
-        currency: 'BRL',
-        value: priceValue,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer (GA4 e-commerce format + Stape context)
+    // dataLayer only — GTM handles GA4 view_item + FB ViewContent tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -410,17 +358,6 @@ export const useAnalytics = () => {
       });
     }
 
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'ViewContent', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
-      });
-    }
-
     if (import.meta.env.DEV) {
       console.log('[Analytics] ViewItem:', planName, priceValue);
     }
@@ -434,17 +371,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'begin_checkout', {
-        currency: 'BRL',
-        value: priceValue,
-        coupon: coupon,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer + Stape context
+    // dataLayer only — GTM handles GA4 begin_checkout + FB InitiateCheckout tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -467,18 +394,6 @@ export const useAnalytics = () => {
       });
     }
 
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'InitiateCheckout', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
-        num_items: 1,
-      });
-    }
-
     if (import.meta.env.DEV) {
       console.log('[Analytics] BeginCheckout:', planName, priceValue);
     }
@@ -492,17 +407,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'add_payment_info', {
-        currency: 'BRL',
-        value: priceValue,
-        payment_type: paymentMethod,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer + Stape context
+    // dataLayer only — GTM handles GA4 add_payment_info + FB AddPaymentInfo tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -523,16 +428,6 @@ export const useAnalytics = () => {
         client_id: ctx.client_id,
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'AddPaymentInfo', {
-        content_ids: [planId],
-        content_name: planName,
-        value: priceValue,
-        currency: 'BRL',
       });
     }
 
@@ -558,33 +453,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const buyerDataBlock = buildBuyerData(buyer);
 
-    // Set user data for enhanced conversions if provided
-    if (buyer?.email) {
-      if (isGtagAvailable()) {
-        window.gtag?.('set', 'user_data', {
-          email: hashForDataLayer(buyer.email),
-          phone_number: buyer.phone ? hashForDataLayer(buyer.phone) : undefined,
-          address: {
-            first_name: buyer.first_name ? hashForDataLayer(buyer.first_name) : undefined,
-            last_name: buyer.last_name ? hashForDataLayer(buyer.last_name) : undefined,
-          },
-        });
-      }
-    }
-
-    // GA4 Purchase
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'purchase', {
-        transaction_id: transactionId,
-        currency: 'BRL',
-        value: priceValue,
-        payment_type: paymentMethod,
-        coupon: coupon,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer (for sGTM/Stape to process and send to CAPI)
+    // dataLayer only — GTM handles GA4 purchase + FB Purchase + Enhanced Conversions
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -606,19 +475,6 @@ export const useAnalytics = () => {
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
       });
-    }
-
-    // Facebook Pixel (client-side) — pass eventID for CAPI dedup
-    if (isFbqAvailable()) {
-      const eventId = generateEventId();
-      window.fbq?.('track', 'Purchase', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
-        num_items: 1,
-      }, { eventID: eventId });
     }
 
     // Reset checkout transaction ID after successful purchase
