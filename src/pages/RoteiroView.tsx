@@ -404,7 +404,7 @@ export default function RoteiroView() {
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Transporte</p>
-                          <p className="font-semibold">${generated.estimated_budget.transportation}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.transportation.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Extras</p>
