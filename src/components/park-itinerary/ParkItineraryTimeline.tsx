@@ -183,6 +183,16 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
 
         {itinerary && (
           <div className="space-y-4">
+            {/* Show/Parade Disclaimer */}
+            {itinerary.items.some(item => item.type === 'show' || item.type === 'experience') && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed">
+                  <strong>Atenção:</strong> horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados.
+                </p>
+              </div>
+            )}
+
             {/* Strategy header */}
             <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
               <div className="flex items-center justify-between mb-1">
