@@ -242,10 +242,8 @@ export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
         // Determine sGTM URL to use
         const sgtmUrl = trackingConfig.sgtm_url || undefined;
 
-        // Load GTM (with sGTM transport if configured)
-        if (trackingConfig.gtm_container_id) {
-          loadGTM(trackingConfig.gtm_container_id, sgtmUrl, trackingConfig.sgtm_container_id || undefined);
-        }
+        // GTM is now loaded via Stape Custom Loader in index.html
+        // Dynamic loadGTM is skipped to avoid duplicate container loading
 
         // Load GA4 (with sGTM transport if configured)
         if (trackingConfig.ga4_measurement_id) {
