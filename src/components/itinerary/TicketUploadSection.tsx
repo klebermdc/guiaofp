@@ -298,10 +298,6 @@ export const TicketUploadSection = ({
         </div>
       )}
 
-      {/* Se NÃO TEM ingressos - Mostrar sugestões */}
-      {hasTickets === false && itineraryContext && (
-        <TicketSuggestions itineraryData={itineraryContext} />
-      )}
 
       {/* Fallback se não tem contexto */}
       {hasTickets === false && !itineraryContext && (
