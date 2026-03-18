@@ -109,16 +109,7 @@ declare global {
 }
 
 // Check availability
-const isGtagAvailable = () => typeof window !== 'undefined' && typeof window.gtag === 'function';
-const isFbqAvailable = () => typeof window !== 'undefined' && typeof window.fbq === 'function';
 const isDataLayerAvailable = () => typeof window !== 'undefined' && Array.isArray(window.dataLayer);
-
-// Simple hash function for enhanced conversions (SHA-256 in production via sGTM)
-const hashForDataLayer = (value: string): string => {
-  if (!value) return '';
-  const normalized = value.toLowerCase().trim();
-  return normalized;
-};
 
 /**
  * Stape-compatible helpers
