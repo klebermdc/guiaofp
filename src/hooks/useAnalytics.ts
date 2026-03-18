@@ -490,6 +490,7 @@ export const useAnalytics = () => {
   const trackAddPaymentInfo = useCallback((planId: string, planName: string, price: number, paymentMethod: string, coupon?: string, buyer?: BuyerData) => {
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
+    const txId = getCheckoutTransactionId();
 
     // GA4
     if (isGtagAvailable()) {
