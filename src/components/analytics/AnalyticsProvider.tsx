@@ -1,16 +1,17 @@
 /**
  * Analytics Provider
  * 
- * GTM is loaded via Stape Custom Loader in index.html.
+ * GTM is loaded DYNAMICALLY only on checkout pages to save Stape hits.
  * GA4 and FB Pixel are managed as tags INSIDE GTM.
  * 
  * This provider:
  * 1. Fetches tracking_config from DB (for context/flags)
- * 2. Tracks page views via dataLayer (consumed by GTM tags)
- * 3. Exposes config context for other components
+ * 2. Injects GTM script only on /checkout/* routes
+ * 3. Tracks page views via dataLayer only on checkout routes
+ * 4. Exposes config context for other components
  */
 
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useState, createContext, useContext, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,38 @@ export const useAnalyticsConfig = () => useContext(AnalyticsContext);
 interface AnalyticsProviderProps {
   children: React.ReactNode;
 }
+
+/** Routes where GTM should be active */
+const isCheckoutRoute = (pathname: string) =>
+  pathname.startsWith('/checkout');
+
+/** Inject Stape Custom Loader script once */
+const injectGTM = (() => {
+  let injected = false;
+  return () => {
+    if (injected) return;
+    injected = true;
+
+    const w = window as any;
+    const dl = 'dataLayer';
+    w[dl] = w[dl] || [];
+    w[dl].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+
+    const script = document.createElement('script');
+    script.async = true;
+
+    const stapeUrl = 'https://stape.ofpplanejador.com';
+    const loaderId = 'efxyzdoqo';
+    const qs = '4psx1=BhVSIy40VTJbSC0gPko1QBlMXUpLXxwIUh4JFAoVGQgKGw4AFQtWBQAc';
+
+    script.src = `${stapeUrl}/${loaderId}.js?${qs}`;
+    document.head.appendChild(script);
+
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] GTM injected on checkout page');
+    }
+  };
+})();
 
 export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
   const location = useLocation();
@@ -111,9 +144,13 @@ export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
     loadTrackingConfig();
   }, []);
 
-  // Track page views on route change
+  // Inject GTM and track page views ONLY on checkout routes
   useEffect(() => {
     if (!configLoaded) return;
+    if (!isCheckoutRoute(location.pathname)) return;
+
+    // Inject GTM script (idempotent — only runs once)
+    injectGTM();
 
     const timeout = setTimeout(() => {
       trackPageView(location.pathname, document.title);
