@@ -88,18 +88,8 @@ export default function PartnerCoupons() {
       coupon.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = !selectedCategory || coupon.category === selectedCategory;
-
-    // Only show guide and travel insurance coupons
-    const partnerLower = coupon.partner_name.toLowerCase();
-    const titleLower = coupon.title.toLowerCase();
-    const descLower = (coupon.description || '').toLowerCase();
-    const isGuideOrInsurance = 
-      partnerLower.includes('guia') || partnerLower.includes('seguro') ||
-      titleLower.includes('guia') || titleLower.includes('seguro') ||
-      descLower.includes('guia') || descLower.includes('seguro viagem') ||
-      coupon.category === 'guia' || coupon.category === 'seguro';
     
-    return matchesSearch && matchesCategory && isGuideOrInsurance;
+    return matchesSearch && matchesCategory;
   });
 
   const categories = [...new Set(coupons?.map(c => c.category).filter(Boolean))];

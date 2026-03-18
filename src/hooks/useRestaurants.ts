@@ -60,13 +60,18 @@ export function useRestaurants() {
   return useQuery({
     queryKey: ['restaurants'],
     queryFn: async () => {
+      console.log('[useRestaurants] Fetching all restaurants from database...');
       const { data, error } = await supabase
         .from('restaurants')
         .select('*, restaurant_images(id, image_url, display_order)')
         .order('featured', { ascending: false })
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useRestaurants] Query error:', error);
+        throw error;
+      }
+      console.log(`[useRestaurants] Fetched ${data.length} restaurants`);
       return data.map((r: any) => ({
         ...r,
         images: (r.restaurant_images || []).map((img: any) => ({
@@ -79,6 +84,8 @@ export function useRestaurants() {
         restaurant_images: undefined,
       })) as Restaurant[];
     },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
