@@ -396,7 +396,7 @@ export default function RoteiroView() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Ingressos</p>
-                          <p className="font-semibold">${generated.estimated_budget.parks_tickets}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.parks_tickets.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Alimentação</p>
