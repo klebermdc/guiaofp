@@ -706,7 +706,7 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('planos')} className="hover:text-foreground transition-colors">Planos</button>
-            <button onClick={() => setContactOpen(true)} className="hover:text-foreground transition-colors">Contato</button>
+            <button onClick={() => { trackContact('form', 'footer'); setContactOpen(true); }} className="hover:text-foreground transition-colors">Contato</button>
             <Link to="/termos-e-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
           </div>
           <p className="text-xs text-muted-foreground">© 2026 Orlando Fast Pass. Todos os direitos reservados.</p>

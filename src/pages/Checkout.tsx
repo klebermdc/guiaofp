@@ -194,7 +194,7 @@ export default function Checkout() {
         },
       }).catch(console.error);
     }
-  }, [plan, userProfile, originalAmountCents, trackPlanView]);
+  }, [plan, userProfile, originalAmountCents, trackPlanView, trackBeginCheckout]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
