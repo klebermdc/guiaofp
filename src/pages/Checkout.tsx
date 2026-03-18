@@ -590,7 +590,7 @@ export default function Checkout() {
 
                   <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
                     <p className="text-sm text-amber-600">
-                      ⏱️ O código PIX expira em 30 minutos. Após o pagamento, seu acesso será liberado automaticamente.
+                      ⏱️ O código PIX expira em 30 minutos. Após a confirmação do pagamento, seu acesso será liberado automaticamente na sua conta atual.
                     </p>
                   </div>
                 </div>
