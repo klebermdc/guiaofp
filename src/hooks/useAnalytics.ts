@@ -11,7 +11,7 @@
  * Os eventos são enviados para o dataLayer e processados pelo GTM/sGTM
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 // User data for enhanced conversions
 interface UserData {
