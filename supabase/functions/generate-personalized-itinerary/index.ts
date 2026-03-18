@@ -462,7 +462,6 @@ Retorne APENAS o JSON válido, sem explicações adicionais.`;
       .from("itineraries")
       .update({
         generated_itinerary: generatedItinerary,
-        estimated_budget: generatedItinerary.estimated_budget?.total || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", itinerary_id);
