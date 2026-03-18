@@ -64,7 +64,7 @@ interface UserProfile {
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { trackAddPaymentInfo, trackPurchase, trackPlanView } = useAnalytics();
+  const { trackAddPaymentInfo, trackPurchase, trackPlanView, trackBeginCheckout } = useAnalytics();
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   // Derive plan from DB data
