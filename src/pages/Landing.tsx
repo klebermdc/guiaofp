@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
-import { useScrollTracking, useAnalytics } from '@/hooks/useAnalytics';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { TrackableButton } from '@/components/analytics';
 import {
   Accordion,
@@ -87,10 +87,8 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { trackCTAClick, trackBeginCheckout } = useAnalytics();
+  const { trackCTAClick, trackContact } = useAnalytics();
   const { data: dbPlans } = usePlanPricing();
-
-  useScrollTracking();
 
   // Scroll listener for navbar
   useEffect(() => {
@@ -569,10 +567,6 @@ const Landing = () => {
                     </ul>
                     <Link to="/registro/basic" className="block" onClick={() => {
                       trackCTAClick('cta_plano_basico', 'pricing');
-                      const basicPlan = dbPlans?.basic;
-                      if (basicPlan) {
-                        trackBeginCheckout(basicPlan.plan_key, basicPlan.plan_name, basicPlan.price_cents);
-                      }
                     }}>
                       <Button className="w-full h-14 rounded-xl gradient-gold text-secondary-foreground font-bold text-base hover:scale-[1.02] transition-transform shadow-gold">
                         🚀 Quero acesso imediato
@@ -712,7 +706,7 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('planos')} className="hover:text-foreground transition-colors">Planos</button>
-            <button onClick={() => setContactOpen(true)} className="hover:text-foreground transition-colors">Contato</button>
+            <button onClick={() => { trackContact('form', 'footer'); setContactOpen(true); }} className="hover:text-foreground transition-colors">Contato</button>
             <Link to="/termos-e-privacidade" className="hover:text-foreground transition-colors">Privacidade</Link>
           </div>
           <p className="text-xs text-muted-foreground">© 2026 Orlando Fast Pass. Todos os direitos reservados.</p>

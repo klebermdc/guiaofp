@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, Send, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface ContactFormDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const { trackContact, trackFormSubmit } = useAnalytics();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,8 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
       if (error) throw error;
 
       setSent(true);
+      trackContact('form', 'contact_dialog');
+      trackFormSubmit('contact_form', { email: email.trim(), firstName: name.trim() });
       toast.success('Mensagem enviada com sucesso!');
 
       setTimeout(() => {

@@ -11,7 +11,7 @@
  * Os eventos são enviados para o dataLayer e processados pelo GTM/sGTM
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 // User data for enhanced conversions
 interface UserData {
@@ -105,8 +105,20 @@ declare global {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
     fbq?: (...args: unknown[]) => void;
+    __ofp_events_fired?: Set<string>;
   }
 }
+
+// Session-level deduplication: ensures an event fires only once per page session
+const hasEventFiredThisSession = (eventKey: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (!window.__ofp_events_fired) {
+    window.__ofp_events_fired = new Set();
+  }
+  if (window.__ofp_events_fired.has(eventKey)) return true;
+  window.__ofp_events_fired.add(eventKey);
+  return false;
+};
 
 // Check availability
 const isDataLayerAvailable = () => typeof window !== 'undefined' && Array.isArray(window.dataLayer);
@@ -271,19 +283,7 @@ export const useAnalytics = () => {
   }, []);
 
   /**
-   * Scroll Depth
-   */
-  const trackScrollDepth = useCallback((percentage: number) => {
-    trackEvent({
-      action: 'scroll_depth',
-      category: 'Engagement',
-      label: `${percentage}%`,
-      value: percentage,
-    });
-  }, [trackEvent]);
-
-  /**
-   * CTA Click
+   * CTA Click — only fires for meaningful CTAs, not generic clicks
    */
   const trackCTAClick = useCallback((ctaName: string, ctaLocation?: string) => {
     trackEvent({
@@ -292,7 +292,6 @@ export const useAnalytics = () => {
       label: ctaName,
       cta_location: ctaLocation,
     });
-    // FB Lead event is handled by GTM tag triggered on cta_click event
   }, [trackEvent]);
 
   /**
@@ -332,11 +331,18 @@ export const useAnalytics = () => {
    * Begin Checkout
    */
   const trackBeginCheckout = useCallback((planId: string, planName: string, price: number, coupon?: string, buyer?: BuyerData) => {
+    // Session-level dedup: only fire once per session per plan
+    if (hasEventFiredThisSession(`begin_checkout_${planId}`)) {
+      if (import.meta.env.DEV) {
+        console.log('[Analytics] BeginCheckout SKIPPED (already fired this session):', planId);
+      }
+      return;
+    }
+
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // dataLayer only — GTM handles GA4 begin_checkout + FB InitiateCheckout tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -528,7 +534,6 @@ export const useAnalytics = () => {
    * Form Submit (for CAPI)
    */
   const trackFormSubmit = useCallback((formName: string, userData?: UserData) => {
-    // dataLayer only — GTM handles GA4 form_submit + FB Lead tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'form_submit',
@@ -547,10 +552,42 @@ export const useAnalytics = () => {
     }
   }, []);
 
+  /**
+   * Contact / Conversion — session-deduplicated
+   * Fires when user clicks a contact button (WhatsApp, form, etc.)
+   */
+  const trackContact = useCallback((contactMethod: string, contactLocation?: string) => {
+    // Session dedup: one contact event per method per session
+    if (hasEventFiredThisSession(`contact_${contactMethod}`)) {
+      if (import.meta.env.DEV) {
+        console.log('[Analytics] Contact SKIPPED (already fired this session):', contactMethod);
+      }
+      return;
+    }
+
+    if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
+      window.dataLayer?.push({
+        event: 'contact',
+        event_id: ctx.event_id,
+        contact_method: contactMethod,
+        contact_location: contactLocation,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+      });
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] Contact:', contactMethod, contactLocation);
+    }
+  }, []);
+
   return {
     trackEvent,
     trackPageView,
-    trackScrollDepth,
     trackCTAClick,
     trackPlanView,
     trackBeginCheckout,
@@ -560,36 +597,9 @@ export const useAnalytics = () => {
     trackSignUp,
     trackLogin,
     trackFormSubmit,
+    trackContact,
     setUserData,
   };
-};
-
-/**
- * Hook for automatic scroll depth tracking
- */
-export const useScrollTracking = () => {
-  const { trackScrollDepth } = useAnalytics();
-
-  useEffect(() => {
-    const thresholds = [25, 50, 75, 90, 100];
-    const trackedThresholds = new Set<number>();
-
-    const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrolled = window.scrollY;
-      const percentage = Math.round((scrolled / scrollHeight) * 100);
-
-      thresholds.forEach((threshold) => {
-        if (percentage >= threshold && !trackedThresholds.has(threshold)) {
-          trackedThresholds.add(threshold);
-          trackScrollDepth(threshold);
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [trackScrollDepth]);
 };
 
 export default useAnalytics;
