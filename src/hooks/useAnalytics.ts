@@ -251,17 +251,7 @@ export const useAnalytics = () => {
   const trackEvent = useCallback((event: AnalyticsEvent) => {
     const { action, category, label, value, ...customParams } = event;
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', action, {
-        event_category: category,
-        event_label: label,
-        value: value,
-        ...customParams,
-      });
-    }
-
-    // GTM dataLayer (for sGTM/Stape processing)
+    // All events go through dataLayer only — GTM handles GA4 + FB Pixel tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
@@ -271,24 +261,12 @@ export const useAnalytics = () => {
         eventLabel: label,
         eventValue: value,
         ...customParams,
-        // Stape context
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
       });
-    }
-
-    // Facebook Pixel (custom events) — pass eventID for CAPI dedup
-    if (isFbqAvailable()) {
-      const eventId = generateEventId();
-      window.fbq?.('trackCustom', action, {
-        category,
-        label,
-        value,
-        ...customParams,
-      }, { eventID: eventId });
     }
 
     if (import.meta.env.DEV) {
