@@ -23,6 +23,9 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
+import TurnstileWidget from '@/components/TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
