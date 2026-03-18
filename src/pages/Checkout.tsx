@@ -68,7 +68,7 @@ interface UserProfile {
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { trackAddPaymentInfo, trackPurchase, trackPlanView, trackBeginCheckout } = useAnalytics();
+  const { trackPurchase, trackBeginCheckout } = useAnalytics();
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   // Derive plan from DB data
@@ -175,7 +175,7 @@ export default function Checkout() {
         full_name: userProfile.name,
         country: 'BR',
       };
-      trackPlanView(plan.id, plan.name, originalAmountCents, buyer);
+      // view_item removed to save Stape hits — begin_checkout is sufficient for RMKT
       // begin_checkout fires here — real checkout page — with internal session dedup
       trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
@@ -203,7 +203,7 @@ export default function Checkout() {
         },
       }).catch(console.error);
     }
-  }, [plan, userProfile, originalAmountCents, trackPlanView, trackBeginCheckout]);
+  }, [plan, userProfile, originalAmountCents, trackBeginCheckout]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
@@ -416,7 +416,7 @@ export default function Checkout() {
       country: 'BR',
     };
 
-    trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod, appliedCoupon?.code, buyer);
+    // add_payment_info removed to save Stape hits — begin_checkout + purchase is sufficient
 
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
