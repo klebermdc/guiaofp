@@ -283,19 +283,7 @@ export const useAnalytics = () => {
   }, []);
 
   /**
-   * Scroll Depth
-   */
-  const trackScrollDepth = useCallback((percentage: number) => {
-    trackEvent({
-      action: 'scroll_depth',
-      category: 'Engagement',
-      label: `${percentage}%`,
-      value: percentage,
-    });
-  }, [trackEvent]);
-
-  /**
-   * CTA Click
+   * CTA Click — only fires for meaningful CTAs, not generic clicks
    */
   const trackCTAClick = useCallback((ctaName: string, ctaLocation?: string) => {
     trackEvent({
@@ -304,7 +292,6 @@ export const useAnalytics = () => {
       label: ctaName,
       cta_location: ctaLocation,
     });
-    // FB Lead event is handled by GTM tag triggered on cta_click event
   }, [trackEvent]);
 
   /**
