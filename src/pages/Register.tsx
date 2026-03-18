@@ -358,7 +358,7 @@ export default function Register() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">WhatsApp (opcional)</Label>
+                <Label htmlFor="phone">WhatsApp *</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -367,9 +367,14 @@ export default function Register() {
                     placeholder="(00) 00000-0000"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                    error={!!errors.phone}
                     className="pl-10"
+                    required
                   />
                 </div>
+                {errors.phone && (
+                  <p className="text-sm text-destructive">{errors.phone}</p>
+                )}
               </div>
 
               {/* Password */}
