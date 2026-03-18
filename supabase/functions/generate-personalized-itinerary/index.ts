@@ -302,6 +302,42 @@ IMPORTANTE: Dias de parque devem ter MUITAS atividades (8-12+), listando CADA at
 IMPORTANTE: NUNCA inclua campos "general_tips" ou "estimated_budget" no JSON.
 IMPORTANTE: Todos os valores monetários mencionados nas descrições devem ser em Reais (R$).`;
 
+    // Build health & restrictions context
+    const dietaryLabels: Record<string, string> = {
+      none: "Sem restrições", vegetarian: "Vegetariano/Vegano", lactose: "Intolerância à lactose",
+      gluten: "Alergia a glúten/celíaco", seafood: "Alergia a frutos do mar",
+      nuts: "Alergia a nozes/amendoim", diabetes: "Diabetes",
+    };
+    const physicalLabels: Record<string, string> = {
+      all_day_walking: "Todos andam o dia todo", frequent_breaks: "Precisam de pausas frequentes",
+      wheelchair: "Cadeira de rodas/mobilidade reduzida", no_coasters: "Dificuldade com montanhas-russas",
+      heart_issues: "Problemas cardíacos/pressão", pregnant: "Gestante no grupo",
+    };
+    const fearLabels: Record<string, string> = {
+      heights: "Medo de altura", dark: "Medo de escuro", claustrophobia: "Claustrofobia",
+      water: "Medo de água", animals: "Fobia de animais",
+    };
+    const priorityLabels: Record<string, string> = {
+      quantity: "Quantidade de atrações", quality: "Qualidade da experiência",
+      family: "Atrações para toda família", characters: "Encontros com personagens",
+      dining: "Experiências gastronômicas", shows: "Shows e apresentações",
+      shopping: "Tempo para compras", photos: "Tempo para fotos",
+    };
+    const heatLabels: Record<string, string> = {
+      love_heat: "Adoram calor", need_breaks: "Preferem pausas com ar-condicionado",
+      avoid_peak: "Precisam evitar pico de calor",
+    };
+    const rainLabels: Record<string, string> = { continue_normally: "Continuam normalmente na chuva", prefer_indoor: "Preferem atividades indoor" };
+    const energyLabels: Record<string, string> = { early_birds: "Madrugadores", normal: "Horário padrão", night_owls: "Noturnos" };
+    const sleepLabels: Record<string, string> = { early: "Dormem cedo (21h-22h)", normal: "Normal (23h-00h)", late: "Dormem tarde (01h+)" };
+
+    const dietaryInfo = answers.dietary_restrictions?.filter(d => d !== "none").map(d => dietaryLabels[d] || d).join(", ");
+    const dietaryExtra = answers.dietary_other ? ` (Outros: ${answers.dietary_other})` : "";
+    const physicalInfo = answers.physical_limitations?.filter(p => p !== "all_day_walking").map(p => physicalLabels[p] || p).join(", ");
+    const fearsInfo = answers.fears?.map(f => fearLabels[f] || f).join(", ");
+    const prioritiesInfo = answers.attraction_priorities?.map((p, i) => `${i + 1}. ${priorityLabels[p] || p}`).join(", ");
+    const occasionsInfo = answers.special_occasions?.map(o => o).join(", ");
+
     const userPrompt = `Crie um roteiro completo de ${totalDays} dias para Orlando.
 
 INFORMAÇÕES DA VIAGEM:
@@ -331,11 +367,33 @@ LOGÍSTICA:
 - Transporte aeroporto: ${answers.airport_transfer.replace(/_/g, " ")}
 - Aluguel de carro: ${answers.will_rent_car}
 
+🏥 SAÚDE E RESTRIÇÕES:
+- Restrições alimentares: ${dietaryInfo || "Nenhuma"}${dietaryExtra}
+- Limitações físicas: ${physicalInfo || "Nenhuma"}
+- Medos/Fobias: ${fearsInfo || "Nenhum"}
+
+🎯 PRIORIDADES (em ordem de importância):
+${prioritiesInfo || "Não informadas"}
+
+✨ DETALHES ESPECIAIS:
+- Ocasiões especiais: ${occasionsInfo || "Nenhuma"}${answers.birthday_date ? ` (Aniversário em ${answers.birthday_date} - ${answers.birthday_person || ""})` : ""}${answers.occasion_other ? ` (${answers.occasion_other})` : ""}
+
+🌡️ PREFERÊNCIAS CLIMÁTICAS:
+- Calor: ${heatLabels[answers.heat_preference || ""] || "Não informado"}
+- Chuva: ${rainLabels[answers.rain_preference || ""] || "Não informado"}
+
+⏰ ROTINA DO GRUPO:
+- Energia: ${energyLabels[answers.group_energy || ""] || "Não informado"}
+- Hora de dormir: ${sleepLabels[answers.sleep_preference || ""] || "Não informado"}
+
 IMPORTANTE: 
 - Siga EXATAMENTE a ORDEM OFICIAL OFP para as atrações de cada parque, adaptando para o perfil ${answers.travel_style === "tranquilo" ? "TRANQUILO" : "RADICAL"}.
+- REMOVA atrações incompatíveis com as limitações físicas/medos informados.
+- Sugira APENAS restaurantes compatíveis com as restrições alimentares informadas.
 - Liste CADA atração como uma atividade separada com horário estimado.
 - Todos os valores monetários devem ser em REAIS (R$).
 - Cada dia de parque deve ter no mínimo 8 atividades.
+- NÃO inclua "general_tips" ou "estimated_budget" no JSON.
 
 Retorne APENAS o JSON válido, sem explicações adicionais.`;
 
