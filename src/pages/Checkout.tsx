@@ -38,7 +38,7 @@ const planIcons: Record<string, typeof Map | typeof Crown> = {
   premium: Crown,
 };
 
-type PaymentMethod = 'pix' | 'boleto' | 'credit_card';
+type PaymentMethod = 'pix' | 'credit_card';
 
 interface PaymentResult {
   transactionId: string;
