@@ -44,7 +44,6 @@ interface PaymentResult {
   method: PaymentMethod;
   pixQrCode?: string;
   pixPayload?: string;
-  boletoUrl?: string;
   invoiceUrl?: string;
 }
 
