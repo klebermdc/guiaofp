@@ -570,31 +570,6 @@ export default function Checkout() {
                 </div>
               )}
 
-              {paymentResult.method === 'boleto' && (
-                <div className="space-y-4">
-                  <div className="p-6 rounded-xl bg-muted/50 text-center">
-                    <Barcode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      O boleto foi gerado e está pronto para pagamento
-                    </p>
-                    
-                    {paymentResult.boletoUrl && (
-                      <a href={paymentResult.boletoUrl} target="_blank" rel="noopener noreferrer">
-                        <Button className="w-full gradient-primary">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Abrir Boleto
-                        </Button>
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <p className="text-sm text-amber-600">
-                      📅 O boleto vence em 3 dias. Após a compensação (até 3 dias úteis), seu acesso será liberado automaticamente.
-                    </p>
-                  </div>
-                </div>
-              )}
 
               <Separator />
 
