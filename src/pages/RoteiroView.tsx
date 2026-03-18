@@ -396,25 +396,25 @@ export default function RoteiroView() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Ingressos</p>
-                          <p className="font-semibold">${generated.estimated_budget.parks_tickets}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.parks_tickets.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Alimentação</p>
-                          <p className="font-semibold">${generated.estimated_budget.meals}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.meals.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Transporte</p>
-                          <p className="font-semibold">${generated.estimated_budget.transportation}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.transportation.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Extras</p>
-                          <p className="font-semibold">${generated.estimated_budget.extras}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.extras.toLocaleString('pt-BR')}</p>
                         </div>
                       </div>
                       <div className="bg-primary/10 rounded-lg p-3 text-center">
                         <p className="text-sm text-muted-foreground">Total Estimado</p>
                         <p className="text-2xl font-bold text-primary">
-                          ${generated.estimated_budget.total.toLocaleString()}
+                          R${generated.estimated_budget.total.toLocaleString('pt-BR')}
                         </p>
                       </div>
                     </CardContent>
