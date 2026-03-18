@@ -20,6 +20,7 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const { trackContact, trackFormSubmit } = useAnalytics();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
