@@ -465,42 +465,35 @@ export const useAnalytics = () => {
   const trackLead = useCallback((source: string, value?: number, userData?: UserData) => {
     const leadValue = value ? value / 100 : undefined;
 
-    trackEvent({
-      action: 'generate_lead',
-      category: 'Lead',
-      label: source,
-      value: leadValue,
-    });
-
-    // Push user data for CAPI with Stape context
-    if (isDataLayerAvailable() && userData) {
+    // dataLayer only — GTM handles GA4 generate_lead + FB Lead tags
+    if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
-        event: 'lead',
+        event: 'generate_lead',
         event_id: ctx.event_id,
+        eventCategory: 'Lead',
+        eventLabel: source,
+        eventValue: leadValue,
         lead_source: source,
         lead_value: leadValue,
-        user_data: {
+        user_data: userData ? {
           email: userData.email,
           phone: userData.phone,
           first_name: userData.firstName,
           last_name: userData.lastName,
-        },
+        } : undefined,
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: source,
-        value: leadValue,
-        currency: 'BRL',
-      });
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] Lead:', source);
     }
-  }, [trackEvent]);
+  }, []);
 
   /**
    * Sign Up
