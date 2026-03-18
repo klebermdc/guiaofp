@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, Users, MapPin, Clock, Utensils, Lightbulb,
   DollarSign, Loader2, Sparkles, ChevronDown, ChevronUp, Castle,
-  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw, Download
+  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw, Download,
+  Ticket
 } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -383,6 +384,34 @@ export default function RoteiroView() {
                 animate={{ opacity: 1 }}
                 className="space-y-6"
               >
+                {/* Ticket Usage Window Alert */}
+                {(() => {
+                  const hasDisney = generated.days.some(d => d.theme === 'disney');
+                  const hasUniversal = generated.days.some(d => d.theme === 'universal');
+                  if (!hasDisney && !hasUniversal) return null;
+                  return (
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-800 dark:text-blue-300">
+                      <Ticket className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div className="text-xs leading-relaxed space-y-1">
+                        <p className="font-semibold text-sm">🎟️ Janela de Utilização dos Ingressos</p>
+                        {hasDisney && (
+                          <p>
+                            <strong>Disney:</strong> os ingressos possuem janela de utilização limitada após o primeiro uso (ex: ingresso de 4 dias é válido por 7 dias corridos). Confirme suas datas para garantir que todos os dias de parque estejam dentro da validade.
+                          </p>
+                        )}
+                        {hasUniversal && (
+                          <p>
+                            <strong>Universal:</strong> ingressos multi-day são válidos por 14 dias corridos consecutivos a partir do primeiro uso.
+                          </p>
+                        )}
+                        <p className="italic text-muted-foreground">
+                          Consulte suas datas exatas para garantir que o roteiro respeite a janela de validade dos ingressos.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Days */}
                 <Accordion type="single" collapsible defaultValue="day-1" className="space-y-4">
                   {generated.days.map((day, index) => {

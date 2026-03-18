@@ -302,7 +302,26 @@ FORMATO DE SAÍDA (JSON estrito):
 
 IMPORTANTE: Dias de parque devem ter MUITAS atividades (8-12+), listando CADA atração individualmente.
 IMPORTANTE: NUNCA inclua campos "general_tips" ou "estimated_budget" no JSON.
-IMPORTANTE: Todos os valores monetários mencionados nas descrições devem ser em Reais (R$).`;
+IMPORTANTE: Todos os valores monetários mencionados nas descrições devem ser em Reais (R$).
+
+🎟️ REGRA CRÍTICA — JANELA DE UTILIZAÇÃO DOS INGRESSOS:
+Ao distribuir os dias de parque ao longo da viagem, SEMPRE respeite a janela de utilização:
+
+**Disney (janela a partir do primeiro uso):**
+- 2 dias → válido por 4 dias corridos | 3 dias → 5 dias | 4 dias → 7 dias
+- 5 dias → 8 dias | 6 dias → 9 dias | 7 dias → 10 dias
+- 8 dias → 12 dias | 9 dias → 13 dias | 10 dias → 14 dias
+
+**Universal Orlando (janela a partir do primeiro uso):**
+- Todos os ingressos multi-day → válidos por 14 dias corridos consecutivos
+
+REGRAS OBRIGATÓRIAS:
+1. Nunca distribua dias de parque Disney fora da janela de validade do ingresso.
+2. Nunca distribua dias de parque Universal fora dos 14 dias corridos.
+3. Se as datas exatas de início e fim forem informadas, VALIDE automaticamente se os dias de parque cabem na janela. Se não couberem, avise e sugira ajuste.
+4. Se as datas NÃO forem informadas ou o roteiro não tiver datas exatas de primeiro uso, inclua no campo "notes" do PRIMEIRO dia de parque Disney e do PRIMEIRO dia de parque Universal:
+   "⚠️ Atenção: os ingressos possuem janela de utilização limitada após o primeiro uso. Disney: a janela varia de 4 a 14 dias conforme a quantidade de dias do ingresso. Universal: 14 dias corridos. Confirme suas datas exatas para garantir que todos os dias de parque estejam dentro da validade."
+5. Agrupe os dias de parque de forma lógica para otimizar a janela de utilização.`;
 
     // Build health & restrictions context
     const dietaryLabels: Record<string, string> = {

@@ -287,7 +287,13 @@ RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
 }
 
 NÃO inclua estimativas de tempo de fila. Foque na ordem otimizada com horários sugeridos e duração de cada atividade.
-Inclua de 15-25 itens incluindo pausas para refeição e descanso.`;
+Inclua de 15-25 itens incluindo pausas para refeição e descanso.
+
+🎟️ JANELA DE UTILIZAÇÃO DOS INGRESSOS (incluir nas "tips" gerais quando aplicável):
+- Disney: 2d→4d, 3d→5d, 4d→7d, 5d→8d, 6d→9d, 7d→10d, 8d→12d, 9d→13d, 10d→14d corridos a partir do primeiro uso.
+- Universal: todos os multi-day → 14 dias corridos a partir do primeiro uso.
+- Inclua nas tips: "Lembre-se: seus ingressos possuem janela de utilização limitada após o primeiro uso. Confirme suas datas para garantir que todos os dias de parque estejam dentro da validade."`;
+
     }
 
     const userMessage = `ATRAÇÕES ABERTAS NO ${parkName.toUpperCase()} HOJE:
