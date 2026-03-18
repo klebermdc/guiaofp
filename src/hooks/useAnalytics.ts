@@ -537,7 +537,7 @@ export const useAnalytics = () => {
    * Form Submit (for CAPI)
    */
   const trackFormSubmit = useCallback((formName: string, userData?: UserData) => {
-    // GTM dataLayer with user data for CAPI
+    // dataLayer only — GTM handles GA4 form_submit + FB Lead tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'form_submit',
@@ -548,13 +548,6 @@ export const useAnalytics = () => {
           first_name: userData.firstName,
           last_name: userData.lastName,
         } : undefined,
-      });
-    }
-
-    // Facebook Lead
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: formName,
       });
     }
 
