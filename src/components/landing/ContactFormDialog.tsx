@@ -44,6 +44,8 @@ export const ContactFormDialog = ({ open, onOpenChange }: ContactFormDialogProps
       if (error) throw error;
 
       setSent(true);
+      trackContact('form', 'contact_dialog');
+      trackFormSubmit('contact_form', { email: email.trim(), firstName: name.trim() });
       toast.success('Mensagem enviada com sucesso!');
 
       setTimeout(() => {
