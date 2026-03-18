@@ -383,44 +383,6 @@ export default function RoteiroView() {
                 animate={{ opacity: 1 }}
                 className="space-y-6"
               >
-                {/* Budget Overview */}
-                {generated.estimated_budget && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-500" />
-                        Orçamento Estimado
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Ingressos</p>
-                          <p className="font-semibold">R${generated.estimated_budget.parks_tickets.toLocaleString('pt-BR')}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Alimentação</p>
-                          <p className="font-semibold">R${generated.estimated_budget.meals.toLocaleString('pt-BR')}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Transporte</p>
-                          <p className="font-semibold">R${generated.estimated_budget.transportation.toLocaleString('pt-BR')}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Extras</p>
-                          <p className="font-semibold">R${generated.estimated_budget.extras.toLocaleString('pt-BR')}</p>
-                        </div>
-                      </div>
-                      <div className="bg-primary/10 rounded-lg p-3 text-center">
-                        <p className="text-sm text-muted-foreground">Total Estimado</p>
-                        <p className="text-2xl font-bold text-primary">
-                          R${generated.estimated_budget.total.toLocaleString('pt-BR')}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
                 {/* Days */}
                 <Accordion type="single" collapsible defaultValue="day-1" className="space-y-4">
                   {generated.days.map((day, index) => {
@@ -539,27 +501,6 @@ export default function RoteiroView() {
                   })}
                 </Accordion>
 
-                {/* General Tips */}
-                {generated.general_tips && generated.general_tips.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-amber-500" />
-                        Dicas Gerais
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {generated.general_tips.map((tip, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm">
-                            <span className="text-primary font-bold">•</span>
-                            <span>{tip}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                )}
               </motion.div>
             </AnimatePresence>
           )}
