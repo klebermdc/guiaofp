@@ -915,11 +915,19 @@ export default function Checkout() {
                 )}
               </div>
 
+              <div className="flex justify-center">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 size="lg"
                 className="w-full h-14 text-lg gradient-primary text-primary-foreground rounded-xl"
-                disabled={isProcessing || !termsAccepted}
+                disabled={isProcessing || !termsAccepted || !turnstileToken}
               >
                 {isProcessing ? (
                   <>
