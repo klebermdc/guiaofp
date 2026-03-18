@@ -100,6 +100,11 @@ export default function Checkout() {
   // Terms acceptance state
   const [termsAccepted, setTermsAccepted] = useState(false);
   
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const handleTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
+  
   // Form fields - only CPF and payment info needed
   const [formData, setFormData] = useState({
     cpf: '',
