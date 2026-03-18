@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,6 +30,9 @@ import logo from '@/assets/logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
+import TurnstileWidget from '@/components/TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 
 // Plan icons map
 const planIcons: Record<string, typeof Map | typeof Crown> = {
@@ -96,6 +99,11 @@ export default function Checkout() {
   
   // Terms acceptance state
   const [termsAccepted, setTermsAccepted] = useState(false);
+  
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const handleTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
   
   // Form fields - only CPF and payment info needed
   const [formData, setFormData] = useState({
@@ -360,6 +368,11 @@ export default function Checkout() {
       toast.error('Você precisa aceitar os Termos de Uso e Política de Privacidade');
       return;
     }
+
+    if (!turnstileToken) {
+      toast.error('Complete a verificação de segurança');
+      return;
+    }
     
     if (!formData.cpf) {
       toast.error('Preencha o CPF');
@@ -378,6 +391,18 @@ export default function Checkout() {
     }
 
     setIsProcessing(true);
+
+    // Verify Turnstile token server-side
+    const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+      body: { token: turnstileToken },
+    });
+
+    if (!turnstileResult?.success) {
+      toast.error('Verificação de segurança falhou. Tente novamente.');
+      setTurnstileToken(null);
+      setIsProcessing(false);
+      return;
+    }
 
     const buyer = {
       email: userProfile.email,
@@ -890,11 +915,19 @@ export default function Checkout() {
                 )}
               </div>
 
+              <div className="flex justify-center">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 size="lg"
                 className="w-full h-14 text-lg gradient-primary text-primary-foreground rounded-xl"
-                disabled={isProcessing || !termsAccepted}
+                disabled={isProcessing || !termsAccepted || !turnstileToken}
               >
                 {isProcessing ? (
                   <>
