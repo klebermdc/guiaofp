@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Upload, FileCheck, Hotel, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { HotelSuggestions } from './HotelSuggestions';
 
 interface HotelData {
   name: string;
