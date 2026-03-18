@@ -344,16 +344,7 @@ export const useAnalytics = () => {
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue);
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'view_item', {
-        currency: 'BRL',
-        value: priceValue,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer (GA4 e-commerce format + Stape context)
+    // dataLayer only — GTM handles GA4 view_item + FB ViewContent tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -371,17 +362,6 @@ export const useAnalytics = () => {
         client_id: ctx.client_id,
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'ViewContent', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
       });
     }
 
