@@ -153,9 +153,11 @@ export default function Checkout() {
     loadUser();
   }, [navigate, planId]);
 
-  // Track view_item e begin_checkout quando a página carrega
+  // Track view_item on page load (once only)
+  const hasTrackedView = useRef(false);
   useEffect(() => {
-    if (plan && userProfile) {
+    if (plan && userProfile && !hasTrackedView.current) {
+      hasTrackedView.current = true;
       const buyer = {
         email: userProfile.email,
         phone: userProfile.phone,
@@ -165,7 +167,6 @@ export default function Checkout() {
         country: 'BR',
       };
       trackPlanView(plan.id, plan.name, originalAmountCents, buyer);
-      trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
       // Update abandoned cart with user's actual info
       supabase.functions.invoke('track-abandoned-cart', {
@@ -191,7 +192,7 @@ export default function Checkout() {
         },
       }).catch(console.error);
     }
-  }, [plan, userProfile, originalAmountCents, trackPlanView, trackBeginCheckout]);
+  }, [plan, userProfile, originalAmountCents, trackPlanView]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {
