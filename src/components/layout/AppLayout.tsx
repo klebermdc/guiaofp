@@ -68,7 +68,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   }
 
   // Redirect to access blocked page if access is not enabled (skip for guides/admins)
-  if (!isAccessEnabled && !isGuide && !isAdmin && isAuthenticated) {
+  // CRITICAL: Only redirect AFTER profile has finished loading to avoid false redirects
+  if (!isAccessEnabled && !isGuide && !isAdmin && isAuthenticated && !isProfileLoading) {
     return <Navigate to="/acesso-bloqueado" replace />;
   }
 
