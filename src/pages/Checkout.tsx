@@ -731,7 +731,7 @@ export default function Checkout() {
                   <CardTitle className="text-lg">Forma de pagamento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('pix')}
@@ -744,20 +744,6 @@ export default function Checkout() {
                       <QrCode className={`w-6 h-6 mx-auto mb-2 ${paymentMethod === 'pix' ? 'text-primary' : 'text-muted-foreground'}`} />
                       <span className={`text-sm font-medium ${paymentMethod === 'pix' ? 'text-foreground' : 'text-muted-foreground'}`}>
                         PIX
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('boleto')}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        paymentMethod === 'boleto'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <Barcode className={`w-6 h-6 mx-auto mb-2 ${paymentMethod === 'boleto' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`text-sm font-medium ${paymentMethod === 'boleto' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        Boleto
                       </span>
                     </button>
                     <button
