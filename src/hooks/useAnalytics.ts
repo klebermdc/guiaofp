@@ -534,7 +534,6 @@ export const useAnalytics = () => {
    * Form Submit (for CAPI)
    */
   const trackFormSubmit = useCallback((formName: string, userData?: UserData) => {
-    // dataLayer only — GTM handles GA4 form_submit + FB Lead tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'form_submit',
@@ -553,10 +552,42 @@ export const useAnalytics = () => {
     }
   }, []);
 
+  /**
+   * Contact / Conversion — session-deduplicated
+   * Fires when user clicks a contact button (WhatsApp, form, etc.)
+   */
+  const trackContact = useCallback((contactMethod: string, contactLocation?: string) => {
+    // Session dedup: one contact event per method per session
+    if (hasEventFiredThisSession(`contact_${contactMethod}`)) {
+      if (import.meta.env.DEV) {
+        console.log('[Analytics] Contact SKIPPED (already fired this session):', contactMethod);
+      }
+      return;
+    }
+
+    if (isDataLayerAvailable()) {
+      const ctx = getStapeContext();
+      window.dataLayer?.push({
+        event: 'contact',
+        event_id: ctx.event_id,
+        contact_method: contactMethod,
+        contact_location: contactLocation,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
+        fbp: ctx.fbp,
+        fbc: ctx.fbc,
+        client_id: ctx.client_id,
+      });
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] Contact:', contactMethod, contactLocation);
+    }
+  }, []);
+
   return {
     trackEvent,
     trackPageView,
-    trackScrollDepth,
     trackCTAClick,
     trackPlanView,
     trackBeginCheckout,
@@ -566,36 +597,9 @@ export const useAnalytics = () => {
     trackSignUp,
     trackLogin,
     trackFormSubmit,
+    trackContact,
     setUserData,
   };
-};
-
-/**
- * Hook for automatic scroll depth tracking
- */
-export const useScrollTracking = () => {
-  const { trackScrollDepth } = useAnalytics();
-
-  useEffect(() => {
-    const thresholds = [25, 50, 75, 90, 100];
-    const trackedThresholds = new Set<number>();
-
-    const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrolled = window.scrollY;
-      const percentage = Math.round((scrolled / scrollHeight) * 100);
-
-      thresholds.forEach((threshold) => {
-        if (percentage >= threshold && !trackedThresholds.has(threshold)) {
-          trackedThresholds.add(threshold);
-          trackScrollDepth(threshold);
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [trackScrollDepth]);
 };
 
 export default useAnalytics;
