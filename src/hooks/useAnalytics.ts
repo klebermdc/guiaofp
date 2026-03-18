@@ -452,6 +452,7 @@ export const useAnalytics = () => {
         event: 'begin_checkout',
         event_id: ctx.event_id,
         ecommerce: {
+          transaction_id: txId,
           currency: 'BRL',
           value: priceValue,
           coupon: coupon,
