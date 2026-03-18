@@ -408,7 +408,7 @@ export default function RoteiroView() {
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Extras</p>
-                          <p className="font-semibold">${generated.estimated_budget.extras}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.extras.toLocaleString('pt-BR')}</p>
                         </div>
                       </div>
                       <div className="bg-primary/10 rounded-lg p-3 text-center">
