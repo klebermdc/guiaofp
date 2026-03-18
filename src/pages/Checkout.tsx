@@ -525,7 +525,7 @@ export default function Checkout() {
               <CardDescription>
                 {paymentResult.method === 'pix' 
                   ? 'Escaneie o QR Code ou copie o código PIX para pagar'
-                  : 'Clique no botão abaixo para acessar o boleto'}
+                  : 'Pagamento processado com sucesso'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
