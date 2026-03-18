@@ -69,6 +69,24 @@ const Login = () => {
         return;
       }
 
+      // Verify Turnstile token
+      if (!turnstileToken) {
+        toast({ title: "Verificação necessária", description: "Complete a verificação de segurança.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken },
+      });
+
+      if (!turnstileResult?.success) {
+        toast({ title: "Verificação falhou", description: "Tente novamente.", variant: "destructive" });
+        setTurnstileToken(null);
+        setIsSubmitting(false);
+        return;
+      }
+
       const result = await login(email, password);
       if (result.success) {
         toast({
