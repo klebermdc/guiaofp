@@ -319,6 +319,9 @@ ${useRealTimeData ? '6. 📊 **Análise de filas** - quais atrações estão com
       // GENERIC itinerary for non-guide plan
       systemPrompt = `Você é um assistente de viagem para parques de Orlando.
 Forneça dicas gerais e um roteiro básico, mas NÃO dê a sequência otimizada completa.
+
+⚠️ REGRA CRÍTICA: NUNCA apresente horários de paradas, shows ou shows noturnos/de encerramento como fixos ou garantidos. Sempre oriente o visitante a conferir o aplicativo oficial no dia da visita.
+
 Responda em português do Brasil.
 Formate a resposta em markdown com emojis.`;
 

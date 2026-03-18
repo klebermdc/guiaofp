@@ -259,9 +259,11 @@ REGRAS:
 6. Se há crianças pequenas ou restrições de altura, exclua atrações inadequadas
 7. Inclua sugestões de pausas para alimentação e descanso
 8. Use os dados de tempo de fila para recomendar horários ideais
-9. IMPORTANTE: Inclua os shows disponíveis nos horários corretos conforme a programação ao vivo fornecida
+9. IMPORTANTE: Inclua os shows disponíveis conforme a programação ao vivo fornecida, MAS nunca apresente esses horários como fixos ou garantidos. Use linguagem como "horário previsto" ou "sujeito a alteração".
 10. NÃO inclua atrações que estão fechadas ou fora de operação
 11. Encaixe os shows nos intervalos entre atrações, respeitando os horários reais
+12. ⚠️ REGRA CRÍTICA: Para paradas, shows e shows de encerramento/nighttime spectaculars, NUNCA coloque horário como definitivo. Sempre adicione na dica (campo "tip") do item: "Horário sujeito a alteração. Consulte o app oficial no dia."
+13. Inclua nas "tips" gerais do roteiro: "Horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados."
 
 RESPONDA EXCLUSIVAMENTE em JSON válido com esta estrutura:
 {

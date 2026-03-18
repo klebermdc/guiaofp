@@ -245,9 +245,11 @@ Dias de parque:
 - Snack famoso do parque (compatível com restrições alimentares)
 - Horário de descanso/pausa (especialmente com crianças ou pausas frequentes)
 - Melhor foto do parque
-- Show noturno quando aplicável
+- Show noturno quando aplicável (NUNCA com horário fixo — sempre indicar "horário sujeito a alteração, consulte o app oficial")
 - Melhor saída/estratégia de saída
 - MÍNIMO 8-12 atividades por dia de parque
+- ⚠️ REGRA CRÍTICA: Para CADA dia que contenha parada, show ou show de encerramento, adicione no campo "notes" do dia: "⚠️ Atenção: horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados."
+- NUNCA apresente horários de paradas ou shows noturnos/de encerramento como fixos ou garantidos. Use linguagem como "horário previsto", "geralmente às Xh" ou "sujeito a alteração".
 
 Dias livres — sugerir:
 - Walmart, Target, Publix, outlets, shoppings, restaurantes brasileiros, cafeterias, Apple Store, lojas baratas, Ross / Burlington / Marshalls
