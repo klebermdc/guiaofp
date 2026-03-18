@@ -60,10 +60,10 @@ const activityLabels: Record<string, string> = {
 };
 
 const budgetDescriptions: Record<string, string> = {
-  economico: "orçamento econômico (até $150/dia por pessoa)",
-  moderado: "orçamento moderado ($150-300/dia por pessoa)",
-  confortavel: "orçamento confortável ($300-500/dia por pessoa)",
-  premium: "orçamento premium ($500+/dia por pessoa)",
+  economico: "orçamento econômico (até R$800/dia por pessoa)",
+  moderado: "orçamento moderado (R$800-1.500/dia por pessoa)",
+  confortavel: "orçamento confortável (R$1.500-2.500/dia por pessoa)",
+  premium: "orçamento premium (R$2.500+/dia por pessoa)",
 };
 
 const styleDescriptions: Record<string, string> = {
