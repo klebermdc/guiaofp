@@ -267,10 +267,6 @@ export const HotelSection = ({
         </div>
       )}
 
-      {/* Se NÃO TEM hotel - Mostrar sugestões */}
-      {hasHotel === false && itineraryContext && (
-        <HotelSuggestions itineraryData={itineraryContext} />
-      )}
 
       {/* Fallback se não tem contexto */}
       {hasHotel === false && !itineraryContext && (
