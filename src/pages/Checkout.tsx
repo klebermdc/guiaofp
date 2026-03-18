@@ -368,6 +368,11 @@ export default function Checkout() {
       toast.error('Você precisa aceitar os Termos de Uso e Política de Privacidade');
       return;
     }
+
+    if (!turnstileToken) {
+      toast.error('Complete a verificação de segurança');
+      return;
+    }
     
     if (!formData.cpf) {
       toast.error('Preencha o CPF');
