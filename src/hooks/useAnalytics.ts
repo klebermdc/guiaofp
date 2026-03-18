@@ -621,6 +621,9 @@ export const useAnalytics = () => {
       }, { eventID: eventId });
     }
 
+    // Reset checkout transaction ID after successful purchase
+    resetCheckoutTransactionId();
+
     if (import.meta.env.DEV) {
       console.log('[Analytics] Purchase:', transactionId, priceValue);
     }
