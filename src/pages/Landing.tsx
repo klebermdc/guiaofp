@@ -87,7 +87,7 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { trackCTAClick } = useAnalytics();
+  const { trackCTAClick, trackBeginCheckout } = useAnalytics();
   const { data: dbPlans } = usePlanPricing();
 
   useScrollTracking();
