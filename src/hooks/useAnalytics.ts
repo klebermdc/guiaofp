@@ -133,6 +133,21 @@ const generateEventId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
+// Generate or retrieve a persistent transaction_id for the current checkout session
+// This ensures begin_checkout, add_payment_info, and purchase all share the same ID
+let _checkoutTransactionId: string | null = null;
+
+const getCheckoutTransactionId = (): string => {
+  if (!_checkoutTransactionId) {
+    _checkoutTransactionId = generateEventId();
+  }
+  return _checkoutTransactionId;
+};
+
+const resetCheckoutTransactionId = () => {
+  _checkoutTransactionId = null;
+};
+
 // Get Facebook browser cookie (_fbp) - set by Facebook Pixel
 const getFbp = (): string | null => {
   if (typeof document === 'undefined') return null;
