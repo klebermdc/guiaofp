@@ -197,23 +197,7 @@ export const useAnalytics = () => {
    * This data is sent with conversion events for better attribution
    */
   const setUserData = useCallback((userData: UserData) => {
-    // GA4 Enhanced Conversions
-    if (isGtagAvailable()) {
-      window.gtag?.('set', 'user_data', {
-        email: userData.email ? hashForDataLayer(userData.email) : undefined,
-        phone_number: userData.phone ? hashForDataLayer(userData.phone) : undefined,
-        address: {
-          first_name: userData.firstName ? hashForDataLayer(userData.firstName) : undefined,
-          last_name: userData.lastName ? hashForDataLayer(userData.lastName) : undefined,
-          city: userData.city,
-          region: userData.state,
-          country: userData.country || 'BR',
-          postal_code: userData.postalCode,
-        },
-      });
-    }
-
-    // Push to dataLayer for sGTM to process
+    // dataLayer only — GTM handles Enhanced Conversions + FB Advanced Matching
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'set_user_data',
@@ -227,16 +211,6 @@ export const useAnalytics = () => {
           country: userData.country || 'BR',
           postal_code: userData.postalCode,
         },
-      });
-    }
-
-    // Facebook Advanced Matching
-    if (isFbqAvailable() && userData.email) {
-      window.fbq?.('init', '', {
-        em: hashForDataLayer(userData.email),
-        ph: userData.phone ? hashForDataLayer(userData.phone) : undefined,
-        fn: userData.firstName ? hashForDataLayer(userData.firstName) : undefined,
-        ln: userData.lastName ? hashForDataLayer(userData.lastName) : undefined,
       });
     }
 
