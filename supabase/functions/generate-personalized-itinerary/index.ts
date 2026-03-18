@@ -181,6 +181,57 @@ Tranquila: Transformers → Jimmy → Fast → MiB → Simpsons → ET → Troll
 Radical: Hiccup Gliders → Frankenstein → Werewolf → Stardust → Ministério → Mario Kart → Donkey
 Tranquila: Mario Kart → Donkey → Hiccup → Dragon Racer → Ministério → Show Arkanus → Show Dragão
 
+---
+
+🎯 DIRETRIZ DE PERSONALIZAÇÃO DINÂMICA
+
+1. **Perfil e Ritmo da Viagem:**
+   - Se o estilo for "equilibrado", intercale atividades intensas com períodos de descanso e momentos leves.
+   - Se for "agitado" ou "focado_parques", foque em otimização de tempo e maior número de atrações.
+   - Se for "tranquilo", priorize experiências com calma, pausas frequentes e menos atrações por dia.
+   - Ajuste a densidade conforme o interesse em parques: "Altíssimo" → rope drop + fechamento + estratégias de fila.
+
+2. **Filtros de Saúde e Restrições Alimentares:**
+   - ANTES de sugerir qualquer restaurante ou snack, verifique a compatibilidade com as restrições alimentares informadas.
+   - Para Vegetariano/Vegano: sugira APENAS restaurantes com opções confirmadas para esse perfil.
+   - Para alergias (glúten, nozes, frutos do mar, lactose): mencione que devem informar o staff e sugira locais allergy-friendly.
+   - Para diabetes: priorize opções com baixo açúcar e refeições balanceadas.
+
+3. **Limitações Físicas e Condições Especiais:**
+   - **Gestante (pregnant):** É TERMINANTEMENTE PROIBIDO sugerir montanhas-russas, simuladores de alta intensidade ou qualquer atração com aviso oficial de restrição para gestantes. REMOVA essas atrações da lista mesmo que estejam na ordem OFP.
+   - **Mobilidade reduzida (wheelchair):** Priorize atrações acessíveis. Indique filas de acesso especial. Sugira rotas com menos caminhadas.
+   - **Pausas frequentes (frequent_breaks):** Insira pausas de 20-30min entre blocos de 2-3 atrações.
+   - **Problemas cardíacos (heart_issues):** PROIBIDO sugerir atrações de alto impacto (montanhas-russas, tower drops, simuladores agressivos).
+   - **Dificuldade com montanhas-russas (no_coasters):** Remova todas as montanhas-russas e substitua por alternativas.
+
+4. **Medos e Fobias:**
+   - Medo de altura (heights): Evite atrações com altura exposta (montanhas-russas, tower drops).
+   - Medo de escuro (dark): Avise sobre atrações no escuro e sugira alternativas quando possível.
+   - Claustrofobia: Evite simuladores fechados e atrações em espaços confinados.
+   - Medo de água (water): Evite water rides e log flumes.
+
+5. **Prioridades do Visitante:**
+   - Use a ordem de prioridades informada para decidir como alocar o tempo: se "characters" é prioridade 1, reserve blocos significativos para encontros com personagens. Se "dining" é top, inclua experiências gastronômicas marcantes.
+
+6. **Preferências Climáticas e Rotina:**
+   - Se preferem pausas com ar-condicionado: intercale atrações indoor/shows com ar entre atrações ao ar livre.
+   - Se precisam evitar pico de calor: sugira atrações ao ar livre antes das 11h e depois das 16h.
+   - Se o grupo é madrugador: otimize para rope drop. Se noturnos: foque nas experiências noturnas e horários estendidos.
+   - Ajuste horário final do dia conforme preferência de sono (early: encerrar até 21h, late: aproveitar até fechamento).
+
+7. **Coerência Logística:**
+   - O roteiro deve ser viável com o transporte escolhido e a localização da hospedagem.
+   - Se busca economia: NÃO sugira jantares caros ou experiências premium.
+   - Se busca luxo: foque em experiências exclusivas e restaurantes signature.
+
+8. **Ocasiões Especiais:**
+   - Se há aniversário: sugira celebrações especiais do parque (botão de aniversário, refeições temáticas).
+   - Se lua de mel: priorize experiências românticas e restaurantes fine dining.
+
+9. **Tom de Voz e Entrega:**
+   - O roteiro deve demonstrar que CADA escolha foi feita pensando nas limitações e desejos específicos informados.
+   - Linguagem empática e organizada.
+
 📋 REGRAS DO ROTEIRO
 
 Dia de chegada:
@@ -188,10 +239,11 @@ Dia de chegada:
 
 Dias de parque:
 - Horário de saída do hotel
-- TODAS as atrações da ORDEM OFP do parque (conforme perfil radical/tranquilo), cada uma como atividade separada
-- Horário de almoço com restaurante específico
-- Snack famoso do parque (dica real)
-- Horário de descanso/pausa (especialmente com crianças)
+- TODAS as atrações da ORDEM OFP do parque (conforme perfil radical/tranquilo), EXCETO as removidas por restrições de saúde
+- Cada atração como atividade separada
+- Horário de almoço com restaurante específico (compatível com restrições alimentares)
+- Snack famoso do parque (compatível com restrições alimentares)
+- Horário de descanso/pausa (especialmente com crianças ou pausas frequentes)
 - Melhor foto do parque
 - Show noturno quando aplicável
 - Melhor saída/estratégia de saída
@@ -243,19 +295,12 @@ FORMATO DE SAÍDA (JSON estrito):
       ],
       "notes": "Notas adicionais do dia"
     }
-  ],
-  "general_tips": ["Dica geral 1", "Dica geral 2"],
-  "estimated_budget": {
-    "parks_tickets": 0,
-    "meals": 0,
-    "transportation": 0,
-    "extras": 0,
-    "total": 0
-  }
+  ]
 }
 
-IMPORTANTE: Todos os valores de estimated_budget devem ser em Reais (R$), considerando câmbio aproximado.
-IMPORTANTE: Dias de parque devem ter MUITAS atividades (8-12+), listando CADA atração individualmente.`;
+IMPORTANTE: Dias de parque devem ter MUITAS atividades (8-12+), listando CADA atração individualmente.
+IMPORTANTE: NUNCA inclua campos "general_tips" ou "estimated_budget" no JSON.
+IMPORTANTE: Todos os valores monetários mencionados nas descrições devem ser em Reais (R$).`;
 
     const userPrompt = `Crie um roteiro completo de ${totalDays} dias para Orlando.
 
