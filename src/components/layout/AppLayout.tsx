@@ -67,8 +67,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <AuthLoadingScreen />;
   }
 
-  // Access check removed - no longer redirect to blocked page
-  // Access is managed by the guide/admin when creating clients
+  // Redirect to access blocked page if access is not enabled (skip for guides/admins)
+  if (!isAccessEnabled && !isGuide && !isAdmin && isAuthenticated) {
+    return <Navigate to="/acesso-bloqueado" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background safe-area-top">
