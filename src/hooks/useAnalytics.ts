@@ -331,11 +331,18 @@ export const useAnalytics = () => {
    * Begin Checkout
    */
   const trackBeginCheckout = useCallback((planId: string, planName: string, price: number, coupon?: string, buyer?: BuyerData) => {
+    // Session-level dedup: only fire once per session per plan
+    if (hasEventFiredThisSession(`begin_checkout_${planId}`)) {
+      if (import.meta.env.DEV) {
+        console.log('[Analytics] BeginCheckout SKIPPED (already fired this session):', planId);
+      }
+      return;
+    }
+
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // dataLayer only — GTM handles GA4 begin_checkout + FB InitiateCheckout tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
