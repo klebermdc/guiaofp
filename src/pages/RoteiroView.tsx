@@ -501,27 +501,6 @@ export default function RoteiroView() {
                   })}
                 </Accordion>
 
-                {/* General Tips */}
-                {generated.general_tips && generated.general_tips.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-amber-500" />
-                        Dicas Gerais
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {generated.general_tips.map((tip, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm">
-                            <span className="text-primary font-bold">•</span>
-                            <span>{tip}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                )}
               </motion.div>
             </AnimatePresence>
           )}
