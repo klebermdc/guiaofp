@@ -175,7 +175,7 @@ export default function Checkout() {
         full_name: userProfile.name,
         country: 'BR',
       };
-      trackPlanView(plan.id, plan.name, originalAmountCents, buyer);
+      // view_item removed to save Stape hits — begin_checkout is sufficient for RMKT
       // begin_checkout fires here — real checkout page — with internal session dedup
       trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
