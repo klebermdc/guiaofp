@@ -394,7 +394,6 @@ export default function Checkout() {
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
         pix: 'PIX',
-        boleto: 'BOLETO',
         credit_card: 'CREDIT_CARD',
       };
 
