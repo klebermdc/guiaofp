@@ -460,33 +460,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const buyerDataBlock = buildBuyerData(buyer);
 
-    // Set user data for enhanced conversions if provided
-    if (buyer?.email) {
-      if (isGtagAvailable()) {
-        window.gtag?.('set', 'user_data', {
-          email: hashForDataLayer(buyer.email),
-          phone_number: buyer.phone ? hashForDataLayer(buyer.phone) : undefined,
-          address: {
-            first_name: buyer.first_name ? hashForDataLayer(buyer.first_name) : undefined,
-            last_name: buyer.last_name ? hashForDataLayer(buyer.last_name) : undefined,
-          },
-        });
-      }
-    }
-
-    // GA4 Purchase
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'purchase', {
-        transaction_id: transactionId,
-        currency: 'BRL',
-        value: priceValue,
-        payment_type: paymentMethod,
-        coupon: coupon,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer (for sGTM/Stape to process and send to CAPI)
+    // dataLayer only — GTM handles GA4 purchase + FB Purchase + Enhanced Conversions
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -508,19 +482,6 @@ export const useAnalytics = () => {
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
       });
-    }
-
-    // Facebook Pixel (client-side) — pass eventID for CAPI dedup
-    if (isFbqAvailable()) {
-      const eventId = generateEventId();
-      window.fbq?.('track', 'Purchase', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
-        num_items: 1,
-      }, { eventID: eventId });
     }
 
     // Reset checkout transaction ID after successful purchase
