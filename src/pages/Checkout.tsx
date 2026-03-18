@@ -484,7 +484,6 @@ export default function Checkout() {
           method: paymentMethod,
           pixQrCode: data.pixQrCode,
           pixPayload: data.pixPayload,
-          boletoUrl: data.boletoUrl,
           invoiceUrl: data.invoiceUrl,
         });
       }
