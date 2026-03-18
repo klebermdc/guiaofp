@@ -416,7 +416,7 @@ export default function Checkout() {
       country: 'BR',
     };
 
-    trackAddPaymentInfo(plan.id, plan.name, finalAmountCents, paymentMethod, appliedCoupon?.code, buyer);
+    // add_payment_info removed to save Stape hits — begin_checkout + purchase is sufficient
 
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
