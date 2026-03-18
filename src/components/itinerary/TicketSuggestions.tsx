@@ -178,12 +178,10 @@ export const TicketSuggestions = ({ itineraryData }: TicketSuggestionsProps) => 
         >
           <a 
             href={recommendation.buyLink} 
-            target="_blank" 
-            rel="noopener noreferrer"
             className="flex items-center justify-center gap-2"
           >
-            <ExternalLink className="w-4 h-4" />
-            Comprar no Site Oficial
+            <Ticket className="w-4 h-4" />
+            Comprar Ingresso
           </a>
         </Button>
       </div>

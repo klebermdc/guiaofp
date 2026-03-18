@@ -152,7 +152,7 @@ function analyzeAndSuggest(data: ItineraryData): TicketRecommendation {
     totalEstimate: costs.total,
     reason,
     tips,
-    buyLink: 'https://disneyworld.disney.go.com/admission/tickets/'
+    buyLink: 'https://guiaofp.lovable.app/checkout/premium'
   };
 }
 

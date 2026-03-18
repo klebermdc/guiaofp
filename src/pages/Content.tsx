@@ -351,6 +351,9 @@ const Content = () => {
 
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
+    if (!open && cameFromAttractions) {
+      navigate('/atracoes');
+    }
   };
 
   const handleBackToAttractions = () => {
