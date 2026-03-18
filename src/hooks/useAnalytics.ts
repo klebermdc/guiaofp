@@ -520,14 +520,7 @@ export const useAnalytics = () => {
    * Login
    */
   const trackLogin = useCallback((method: string) => {
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'login', {
-        method: method,
-      });
-    }
-
-    // GTM dataLayer
+    // dataLayer only — GTM handles GA4 login tag
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'login',
