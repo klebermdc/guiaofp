@@ -32,13 +32,25 @@ interface TicketUploadSectionProps {
 }
 
 const TICKET_OPTIONS = [
-  { id: 'magic-kingdom', label: 'Magic Kingdom', emoji: '🏰' },
-  { id: 'epcot', label: 'Epcot', emoji: '🌍' },
-  { id: 'hollywood-studios', label: 'Hollywood Studios', emoji: '🎬' },
-  { id: 'animal-kingdom', label: 'Animal Kingdom', emoji: '🦁' },
-  { id: 'park-hopper', label: 'Park Hopper', emoji: '🎫' },
-  { id: 'park-hopper-plus', label: 'Park Hopper Plus', emoji: '✨' },
-  { id: 'water-parks', label: 'Water Parks', emoji: '💦' },
+  // Disney
+  { id: 'magic-kingdom', label: 'Magic Kingdom', emoji: '🏰', group: 'Disney' },
+  { id: 'epcot', label: 'Epcot', emoji: '🌍', group: 'Disney' },
+  { id: 'hollywood-studios', label: 'Hollywood Studios', emoji: '🎬', group: 'Disney' },
+  { id: 'animal-kingdom', label: 'Animal Kingdom', emoji: '🦁', group: 'Disney' },
+  { id: 'park-hopper', label: 'Park Hopper', emoji: '🎫', group: 'Disney' },
+  { id: 'park-hopper-plus', label: 'Park Hopper Plus', emoji: '✨', group: 'Disney' },
+  { id: 'water-parks', label: 'Water Parks', emoji: '💦', group: 'Disney' },
+  // Universal
+  { id: 'universal-studios', label: 'Universal Studios', emoji: '🎥', group: 'Universal' },
+  { id: 'islands-of-adventure', label: 'Islands of Adventure', emoji: '🦖', group: 'Universal' },
+  { id: 'epic-universe', label: 'Epic Universe', emoji: '🌟', group: 'Universal' },
+  { id: 'volcano-bay', label: 'Volcano Bay', emoji: '🌋', group: 'Universal' },
+  // Outros
+  { id: 'seaworld', label: 'SeaWorld', emoji: '🐬', group: 'Outros' },
+  { id: 'busch-gardens', label: 'Busch Gardens', emoji: '🎢', group: 'Outros' },
+  { id: 'aquatica', label: 'Aquatica', emoji: '🏄', group: 'Outros' },
+  { id: 'discovery-cove', label: 'Discovery Cove', emoji: '🐠', group: 'Outros' },
+  { id: 'legoland', label: 'Legoland', emoji: '🧱', group: 'Outros' },
 ];
 
 export const TicketUploadSection = ({ 
@@ -181,30 +193,40 @@ export const TicketUploadSection = ({
             <label className="block mb-3 font-medium text-foreground text-sm">
               Tipo de Ingresso (selecione todos que possui)
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {TICKET_OPTIONS.map(option => {
-                const isSelected = ticketData.ticketType.includes(option.id);
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => toggleTicketType(option.id)}
-                    className={cn(
-                      "flex items-center gap-2 p-3 border-2 rounded-lg transition-all text-left",
-                      isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card hover:border-primary/50"
-                    )}
-                  >
-                    <span className="text-lg">{option.emoji}</span>
-                    <span className="text-sm font-medium flex-1">{option.label}</span>
-                    {isSelected && (
-                      <Check className="w-4 h-4 text-primary shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {['Disney', 'Universal', 'Outros'].map(group => {
+              const groupOptions = TICKET_OPTIONS.filter(o => o.group === group);
+              return (
+                <div key={group} className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {group === 'Outros' ? 'Outros Parques' : `Ingressos ${group}`}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {groupOptions.map(option => {
+                      const isSelected = ticketData.ticketType.includes(option.id);
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => toggleTicketType(option.id)}
+                          className={cn(
+                            "flex items-center gap-2 p-3 border-2 rounded-lg transition-all text-left",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border bg-card hover:border-primary/50"
+                          )}
+                        >
+                          <span className="text-lg">{option.emoji}</span>
+                          <span className="text-sm font-medium flex-1">{option.label}</span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-primary shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Quantidade de Dias */}
