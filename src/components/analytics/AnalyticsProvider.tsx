@@ -242,27 +242,17 @@ export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
         // Determine sGTM URL to use
         const sgtmUrl = trackingConfig.sgtm_url || undefined;
 
-        // GTM is now loaded via Stape Custom Loader in index.html
-        // Dynamic loadGTM is skipped to avoid duplicate container loading
-
-        // Load GA4 (with sGTM transport if configured)
-        if (trackingConfig.ga4_measurement_id) {
-          loadGA4(
-            trackingConfig.ga4_measurement_id, 
-            sgtmUrl,
-            trackingConfig.enhanced_conversions
-          );
-        }
-
-        // Load Facebook Pixel (client-side, CAPI handled by sGTM)
-        if (trackingConfig.fb_pixel_id) {
-          loadFBPixel(trackingConfig.fb_pixel_id);
-        }
-
-        // Push sGTM config to dataLayer
-        if (sgtmUrl && trackingConfig.sgtm_container_id) {
-          pushSgtmConfig(trackingConfig);
-        }
+        // GTM is loaded via Stape Custom Loader in index.html (hardcoded).
+        // GA4 and FB Pixel are managed as tags INSIDE GTM — do NOT load them
+        // again here, as that causes duplicate hits (page_view, events, etc.).
+        //
+        // The AnalyticsProvider now ONLY:
+        // 1. Fetches tracking_config from DB (for context/flags)
+        // 2. Pushes sGTM config to dataLayer
+        // 3. Tracks page views via dataLayer (consumed by GTM tags)
+        //
+        // All script loading (gtm.js, gtag.js, fbevents.js) is handled
+        // exclusively by the Stape custom loader + GTM container.
 
         setConfigLoaded(true);
       } catch (err) {
