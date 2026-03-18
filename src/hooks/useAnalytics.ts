@@ -105,8 +105,20 @@ declare global {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
     fbq?: (...args: unknown[]) => void;
+    __ofp_events_fired?: Set<string>;
   }
 }
+
+// Session-level deduplication: ensures an event fires only once per page session
+const hasEventFiredThisSession = (eventKey: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (!window.__ofp_events_fired) {
+    window.__ofp_events_fired = new Set();
+  }
+  if (window.__ofp_events_fired.has(eventKey)) return true;
+  window.__ofp_events_fired.add(eventKey);
+  return false;
+};
 
 // Check availability
 const isDataLayerAvailable = () => typeof window !== 'undefined' && Array.isArray(window.dataLayer);
