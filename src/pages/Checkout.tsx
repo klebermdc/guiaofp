@@ -153,7 +153,7 @@ export default function Checkout() {
     loadUser();
   }, [navigate, planId]);
 
-  // Track view_item on page load (once only)
+  // Track view_item + begin_checkout on page load (once only via ref + session dedup)
   const hasTrackedView = useRef(false);
   useEffect(() => {
     if (plan && userProfile && !hasTrackedView.current) {
@@ -167,6 +167,8 @@ export default function Checkout() {
         country: 'BR',
       };
       trackPlanView(plan.id, plan.name, originalAmountCents, buyer);
+      // begin_checkout fires here — real checkout page — with internal session dedup
+      trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
       // Update abandoned cart with user's actual info
       supabase.functions.invoke('track-abandoned-cart', {
