@@ -133,6 +133,21 @@ const generateEventId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
+// Generate or retrieve a persistent transaction_id for the current checkout session
+// This ensures begin_checkout, add_payment_info, and purchase all share the same ID
+let _checkoutTransactionId: string | null = null;
+
+const getCheckoutTransactionId = (): string => {
+  if (!_checkoutTransactionId) {
+    _checkoutTransactionId = generateEventId();
+  }
+  return _checkoutTransactionId;
+};
+
+const resetCheckoutTransactionId = () => {
+  _checkoutTransactionId = null;
+};
+
 // Get Facebook browser cookie (_fbp) - set by Facebook Pixel
 const getFbp = (): string | null => {
   if (typeof document === 'undefined') return null;
@@ -417,6 +432,7 @@ export const useAnalytics = () => {
   const trackBeginCheckout = useCallback((planId: string, planName: string, price: number, coupon?: string, buyer?: BuyerData) => {
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
+    const txId = getCheckoutTransactionId();
 
     // GA4
     if (isGtagAvailable()) {
@@ -436,6 +452,7 @@ export const useAnalytics = () => {
         event: 'begin_checkout',
         event_id: ctx.event_id,
         ecommerce: {
+          transaction_id: txId,
           currency: 'BRL',
           value: priceValue,
           coupon: coupon,
@@ -473,6 +490,7 @@ export const useAnalytics = () => {
   const trackAddPaymentInfo = useCallback((planId: string, planName: string, price: number, paymentMethod: string, coupon?: string, buyer?: BuyerData) => {
     const priceValue = price / 100;
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
+    const txId = getCheckoutTransactionId();
 
     // GA4
     if (isGtagAvailable()) {
@@ -492,6 +510,7 @@ export const useAnalytics = () => {
         event: 'add_payment_info',
         event_id: ctx.event_id,
         ecommerce: {
+          transaction_id: txId,
           currency: 'BRL',
           value: priceValue,
           payment_type: paymentMethod,
@@ -601,6 +620,9 @@ export const useAnalytics = () => {
         num_items: 1,
       }, { eventID: eventId });
     }
+
+    // Reset checkout transaction ID after successful purchase
+    resetCheckoutTransactionId();
 
     if (import.meta.env.DEV) {
       console.log('[Analytics] Purchase:', transactionId, priceValue);
