@@ -777,20 +777,6 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {paymentMethod === 'boleto' && (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                      <div className="flex items-start gap-3">
-                        <Barcode className="w-5 h-5 text-amber-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-foreground">Boleto bancário</p>
-                          <p className="text-sm text-muted-foreground">
-                            Prazo de compensação de até 3 dias úteis. 
-                            Vencimento em 3 dias.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {paymentMethod === 'credit_card' && (
                     <div className="space-y-4 pt-2">
