@@ -193,30 +193,40 @@ export const TicketUploadSection = ({
             <label className="block mb-3 font-medium text-foreground text-sm">
               Tipo de Ingresso (selecione todos que possui)
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {TICKET_OPTIONS.map(option => {
-                const isSelected = ticketData.ticketType.includes(option.id);
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => toggleTicketType(option.id)}
-                    className={cn(
-                      "flex items-center gap-2 p-3 border-2 rounded-lg transition-all text-left",
-                      isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card hover:border-primary/50"
-                    )}
-                  >
-                    <span className="text-lg">{option.emoji}</span>
-                    <span className="text-sm font-medium flex-1">{option.label}</span>
-                    {isSelected && (
-                      <Check className="w-4 h-4 text-primary shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {['Disney', 'Universal', 'Outros'].map(group => {
+              const groupOptions = TICKET_OPTIONS.filter(o => o.group === group);
+              return (
+                <div key={group} className="space-y-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {group === 'Outros' ? 'Outros Parques' : `Ingressos ${group}`}
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {groupOptions.map(option => {
+                      const isSelected = ticketData.ticketType.includes(option.id);
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => toggleTicketType(option.id)}
+                          className={cn(
+                            "flex items-center gap-2 p-3 border-2 rounded-lg transition-all text-left",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border bg-card hover:border-primary/50"
+                          )}
+                        >
+                          <span className="text-lg">{option.emoji}</span>
+                          <span className="text-sm font-medium flex-1">{option.label}</span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-primary shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Quantidade de Dias */}
