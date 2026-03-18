@@ -438,10 +438,27 @@ export default function Register() {
               {/* Features preview */}
               <div className="pt-2 pb-2">
                 <p className="text-sm text-muted-foreground mb-2">O que você terá acesso:</p>
-                <ul className="space-y-1">
-                  {plan.features.slice(0, 3).map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <ul className="grid grid-cols-2 gap-1">
+                  {[
+                    'Perfil da Viagem',
+                    'Roteiro com IA',
+                    'Resumo de Orlando',
+                    'Planejador',
+                    'Guia de Viagem',
+                    'Guia de Restaurantes',
+                    'Checklists',
+                    'Cupons de Parceiros',
+                    'Mapa do Parque',
+                    'Guia Criança',
+                    'Guia dos Parques',
+                    'Top 3 nos Parques',
+                    'Multi Pass',
+                    'Guia de Transporte',
+                    'Atrações Desejadas',
+                    'Carteira de Documentos',
+                  ].map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5 text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}

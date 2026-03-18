@@ -27,6 +27,7 @@ import {
   Sparkles,
   Menu,
   XIcon,
+  Crown,
 } from 'lucide-react';
 
 import logo from '@/assets/logo.png';

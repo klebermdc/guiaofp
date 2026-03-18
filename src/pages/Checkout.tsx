@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import asaasLogo from '@/assets/asaas-logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
