@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import asaasLogo from '@/assets/asaas-logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
@@ -1008,6 +1009,9 @@ export default function Checkout() {
                 </div>
 
                 <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-center">
+                    <img src={asaasLogo} alt="Asaas - Plataforma de Pagamentos" className="h-8 opacity-70" />
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Shield className="w-4 h-4 text-green-500" />
                     Pagamento 100% seguro via Asaas

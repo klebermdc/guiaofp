@@ -27,6 +27,7 @@ import {
   Sparkles,
   Menu,
   XIcon,
+  Crown,
 } from 'lucide-react';
 
 import logo from '@/assets/logo.png';
@@ -540,15 +541,17 @@ const Landing = () => {
               Se o conhecimento de anos vivendo isso não vale esse valor, nada mais vai valer.
             </p>
 
-            {/* Pricing cards */}
+            {/* Pricing card - Single plan */}
             <div className="max-w-lg mx-auto mb-10">
-              {/* Basic */}
               <AnimatedSection delay={100}>
-                <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white h-full">
+                <Card className="bg-white/10 backdrop-blur-sm border-secondary/40 text-white h-full shadow-[0_0_40px_hsl(var(--secondary)/0.2)]">
                   <CardContent className="p-6 sm:p-8">
-                    <h3 className="font-display text-xl font-bold mb-2">Planejador</h3>
-                    <p className="text-white/60 text-sm mb-6">Autonomia total para planejar</p>
-                    <div className="mb-6">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Crown className="w-6 h-6 text-secondary" />
+                      <h3 className="font-display text-xl font-bold">OFP Planejador</h3>
+                    </div>
+                    <p className="text-white/60 text-sm mb-6 text-center">Tudo que você precisa para Orlando</p>
+                    <div className="mb-6 text-center">
                      <span className="text-white/40 line-through text-lg">R$ 197</span>
                       <div className="flex items-baseline justify-center gap-1">
                         <span className="text-4xl sm:text-5xl font-bold text-secondary">
@@ -557,8 +560,25 @@ const Landing = () => {
                       </div>
                       <Badge className="mt-2 bg-secondary/20 text-secondary border-secondary/30 text-xs">🔥 Oferta por tempo limitado</Badge>
                     </div>
-                    <ul className="space-y-3 mb-8 text-left">
-                      {(dbPlans?.basic?.features || ['Perfil de viagem completo', 'Seleção de atrações', 'Mapa interativo', 'Checklists inteligentes', 'Roteiro com dicas gerais', 'Guia de restaurantes', 'Carteira de documentos', 'Cupons de parceiros']).map((f, i) => (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8 text-left">
+                      {[
+                        'Perfil da Viagem Personalizado',
+                        'Roteiro Personalizado com IA',
+                        'Resumo de Orlando',
+                        'Planejador Manual',
+                        'Guia de Viagem Completo',
+                        'Guia de Restaurantes',
+                        'Checklists Inteligentes',
+                        'Cupons de Parceiros',
+                        'Mapa do Parque Interativo',
+                        'Guia Mini Viajante (Crianças)',
+                        'Guia dos Parques Detalhado',
+                        'Top 3 nos Parques',
+                        'Multi Pass & Lightning Lane',
+                        'Guia de Transporte',
+                        'Atrações Desejadas',
+                        'Carteira de Documentos',
+                      ].map((f, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm text-white/90">
                           <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                           <span>{f}</span>
@@ -566,7 +586,7 @@ const Landing = () => {
                       ))}
                     </ul>
                     <Link to="/registro/basic" className="block" onClick={() => {
-                      trackCTAClick('cta_plano_basico', 'pricing');
+                      trackCTAClick('cta_plano_planejador', 'pricing');
                     }}>
                       <Button className="w-full h-14 rounded-xl gradient-gold text-secondary-foreground font-bold text-base hover:scale-[1.02] transition-transform shadow-gold">
                         🚀 Quero acesso imediato

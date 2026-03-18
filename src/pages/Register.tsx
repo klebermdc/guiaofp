@@ -30,7 +30,7 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
   email: z.string().email('Email inválido').max(255),
-  phone: z.string().optional(),
+  phone: z.string().min(14, 'WhatsApp é obrigatório').max(15),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -358,7 +358,7 @@ export default function Register() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">WhatsApp (opcional)</Label>
+                <Label htmlFor="phone">WhatsApp *</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -367,9 +367,14 @@ export default function Register() {
                     placeholder="(00) 00000-0000"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', formatPhone(e.target.value))}
+                    error={!!errors.phone}
                     className="pl-10"
+                    required
                   />
                 </div>
+                {errors.phone && (
+                  <p className="text-sm text-destructive">{errors.phone}</p>
+                )}
               </div>
 
               {/* Password */}
@@ -433,10 +438,27 @@ export default function Register() {
               {/* Features preview */}
               <div className="pt-2 pb-2">
                 <p className="text-sm text-muted-foreground mb-2">O que você terá acesso:</p>
-                <ul className="space-y-1">
-                  {plan.features.slice(0, 3).map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <ul className="grid grid-cols-2 gap-1">
+                  {[
+                    'Perfil da Viagem',
+                    'Roteiro com IA',
+                    'Resumo de Orlando',
+                    'Planejador',
+                    'Guia de Viagem',
+                    'Guia de Restaurantes',
+                    'Checklists',
+                    'Cupons de Parceiros',
+                    'Mapa do Parque',
+                    'Guia Criança',
+                    'Guia dos Parques',
+                    'Top 3 nos Parques',
+                    'Multi Pass',
+                    'Guia de Transporte',
+                    'Atrações Desejadas',
+                    'Carteira de Documentos',
+                  ].map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5 text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
