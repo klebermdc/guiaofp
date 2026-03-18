@@ -223,12 +223,20 @@ const Login = () => {
                 )}
               </div>
 
+              <div className="flex justify-center mt-4">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
-                className="w-full mt-6"
-                disabled={isSubmitting}
+                className="w-full mt-4"
+                disabled={isSubmitting || !turnstileToken}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
