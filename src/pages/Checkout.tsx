@@ -30,6 +30,9 @@ import logo from '@/assets/logo.png';
 import { TERMS_VERSION } from './TermsAndPrivacy';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
+import TurnstileWidget from '@/components/TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 
 // Plan icons map
 const planIcons: Record<string, typeof Map | typeof Crown> = {
