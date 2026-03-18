@@ -415,6 +415,15 @@ export default function RoteiroView() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
+                          {/* Show/Parade Alert */}
+                          {(day.theme === 'disney' || day.theme === 'universal' || day.theme === 'seaworld') && (
+                            <div className="flex items-start gap-2 p-3 mt-2 mb-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300">
+                              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                              <p className="text-xs leading-relaxed">
+                                <strong>Atenção:</strong> horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados.
+                              </p>
+                            </div>
+                          )}
                           {/* Activities Timeline */}
                           <div className="relative pl-6 border-l-2 border-primary/20 space-y-4 mt-4">
                             {day.activities.map((activity, actIndex) => (
