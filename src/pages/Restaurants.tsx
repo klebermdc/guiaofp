@@ -182,9 +182,13 @@ const Restaurants = () => {
       // Park filter
       const matchesPark = selectedPark === 'all' || r.park_id === selectedPark;
       
-      // Cuisine filter
-      const matchesCuisine = selectedCuisine === 'all' || 
-                            r.cuisine?.toLowerCase().includes(selectedCuisine.toLowerCase());
+      // Cuisine filter - match against known terms for each cuisine category
+      const matchesCuisine = selectedCuisine === 'all' || (() => {
+        const cuisineType = CUISINE_TYPES.find(c => c.value === selectedCuisine);
+        if (!cuisineType || !r.cuisine) return false;
+        const dbCuisine = r.cuisine.toLowerCase();
+        return cuisineType.matchTerms.some(term => dbCuisine.includes(term));
+      })();
       
       // Price filter
       const matchesPrice = selectedPrice === 'all' || r.price_range === selectedPrice;
