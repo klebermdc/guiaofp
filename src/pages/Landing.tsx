@@ -87,10 +87,8 @@ const Landing = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { trackCTAClick, trackBeginCheckout } = useAnalytics();
+  const { trackCTAClick, trackContact } = useAnalytics();
   const { data: dbPlans } = usePlanPricing();
-
-  useScrollTracking();
 
   // Scroll listener for navbar
   useEffect(() => {
