@@ -32,13 +32,25 @@ interface TicketUploadSectionProps {
 }
 
 const TICKET_OPTIONS = [
-  { id: 'magic-kingdom', label: 'Magic Kingdom', emoji: '🏰' },
-  { id: 'epcot', label: 'Epcot', emoji: '🌍' },
-  { id: 'hollywood-studios', label: 'Hollywood Studios', emoji: '🎬' },
-  { id: 'animal-kingdom', label: 'Animal Kingdom', emoji: '🦁' },
-  { id: 'park-hopper', label: 'Park Hopper', emoji: '🎫' },
-  { id: 'park-hopper-plus', label: 'Park Hopper Plus', emoji: '✨' },
-  { id: 'water-parks', label: 'Water Parks', emoji: '💦' },
+  // Disney
+  { id: 'magic-kingdom', label: 'Magic Kingdom', emoji: '🏰', group: 'Disney' },
+  { id: 'epcot', label: 'Epcot', emoji: '🌍', group: 'Disney' },
+  { id: 'hollywood-studios', label: 'Hollywood Studios', emoji: '🎬', group: 'Disney' },
+  { id: 'animal-kingdom', label: 'Animal Kingdom', emoji: '🦁', group: 'Disney' },
+  { id: 'park-hopper', label: 'Park Hopper', emoji: '🎫', group: 'Disney' },
+  { id: 'park-hopper-plus', label: 'Park Hopper Plus', emoji: '✨', group: 'Disney' },
+  { id: 'water-parks', label: 'Water Parks', emoji: '💦', group: 'Disney' },
+  // Universal
+  { id: 'universal-studios', label: 'Universal Studios', emoji: '🎥', group: 'Universal' },
+  { id: 'islands-of-adventure', label: 'Islands of Adventure', emoji: '🦖', group: 'Universal' },
+  { id: 'epic-universe', label: 'Epic Universe', emoji: '🌟', group: 'Universal' },
+  { id: 'volcano-bay', label: 'Volcano Bay', emoji: '🌋', group: 'Universal' },
+  // Outros
+  { id: 'seaworld', label: 'SeaWorld', emoji: '🐬', group: 'Outros' },
+  { id: 'busch-gardens', label: 'Busch Gardens', emoji: '🎢', group: 'Outros' },
+  { id: 'aquatica', label: 'Aquatica', emoji: '🏄', group: 'Outros' },
+  { id: 'discovery-cove', label: 'Discovery Cove', emoji: '🐠', group: 'Outros' },
+  { id: 'legoland', label: 'Legoland', emoji: '🧱', group: 'Outros' },
 ];
 
 export const TicketUploadSection = ({ 
