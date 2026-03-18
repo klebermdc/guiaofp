@@ -84,20 +84,23 @@ const PARKS_WITH_EMOJI = PARKS.map(park => ({
 
 // Cuisine types available
 const CUISINE_TYPES = [
-  { value: 'all', label: 'Todas as Culinárias', icon: '🍽️' },
-  { value: 'americana', label: 'Americana', icon: '🍔' },
-  { value: 'italiana', label: 'Italiana', icon: '🍝' },
-  { value: 'mexicana', label: 'Mexicana', icon: '🌮' },
-  { value: 'japonesa', label: 'Japonesa', icon: '🍣' },
-  { value: 'chinesa', label: 'Chinesa', icon: '🥡' },
-  { value: 'asiática', label: 'Asiática', icon: '🍜' },
-  { value: 'britânica', label: 'Britânica', icon: '🇬🇧' },
-  { value: 'francesa', label: 'Francesa', icon: '🥐' },
-  { value: 'africana', label: 'Africana', icon: '🌍' },
-  { value: 'churrasco', label: 'Churrasco/BBQ', icon: '🍖' },
-  { value: 'frutos-do-mar', label: 'Frutos do Mar', icon: '🦞' },
-  { value: 'sobremesas', label: 'Sobremesas', icon: '🍰' },
-  { value: 'variada', label: 'Variada/Fusion', icon: '🌎' },
+  { value: 'all', label: 'Todas as Culinárias', icon: '🍽️', matchTerms: [] as string[] },
+  { value: 'americana', label: 'Americana', icon: '🍔', matchTerms: ['americana', 'american'] },
+  { value: 'italiana', label: 'Italiana', icon: '🍝', matchTerms: ['italiana', 'italian'] },
+  { value: 'mexicana', label: 'Mexicana', icon: '🌮', matchTerms: ['mexicana', 'mexican', 'tex-mex', 'latino'] },
+  { value: 'japonesa', label: 'Japonesa', icon: '🍣', matchTerms: ['japonesa', 'japanese'] },
+  { value: 'chinesa', label: 'Chinesa', icon: '🥡', matchTerms: ['chinesa', 'chinese'] },
+  { value: 'asiática', label: 'Asiática', icon: '🍜', matchTerms: ['asiática', 'asian', 'pan-asiática'] },
+  { value: 'britânica', label: 'Britânica', icon: '🇬🇧', matchTerms: ['britânica', 'british', 'irish'] },
+  { value: 'francesa', label: 'Francesa', icon: '🥐', matchTerms: ['francesa', 'french', 'european'] },
+  { value: 'africana', label: 'Africana', icon: '🌍', matchTerms: ['africana', 'african', 'moroccan'] },
+  { value: 'churrasco', label: 'Churrasco/BBQ', icon: '🍖', matchTerms: ['churrasco', 'bbq', 'churrasco americano', 'churrasco/bbq'] },
+  { value: 'frutos-do-mar', label: 'Frutos do Mar', icon: '🦞', matchTerms: ['frutos do mar', 'seafood'] },
+  { value: 'sobremesas', label: 'Sobremesas/Café', icon: '🍰', matchTerms: ['sobremesas', 'desserts', 'coffee', 'bakery'] },
+  { value: 'variada', label: 'Variada/Fusion', icon: '🌎', matchTerms: ['variada', 'varied', 'internacional', 'global', 'fusion', 'mediterranean', 'buffet', 'fine dining', 'small plates'] },
+  { value: 'drinks', label: 'Drinks/Snacks', icon: '🍹', matchTerms: ['drinks', 'snacks', 'drinks/snacks', 'bar', 'bar/petiscos', 'beer/wine'] },
+  { value: 'alemã', label: 'Alemã/Nórdica', icon: '🥨', matchTerms: ['german', 'nordic', 'norwegian', 'escandinava'] },
+  { value: 'caribenha', label: 'Caribenha/Latina', icon: '🌴', matchTerms: ['caribbean', 'latino-americana'] },
 ];
 
 // Price range options
