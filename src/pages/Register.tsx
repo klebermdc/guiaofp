@@ -443,12 +443,20 @@ export default function Register() {
                 </ul>
               </div>
 
+              <div className="flex justify-center">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
               >
                 {isSubmitting ? (
                   <>
