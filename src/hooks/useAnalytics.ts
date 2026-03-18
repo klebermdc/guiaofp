@@ -414,17 +414,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'add_payment_info', {
-        currency: 'BRL',
-        value: priceValue,
-        payment_type: paymentMethod,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer + Stape context
+    // dataLayer only — GTM handles GA4 add_payment_info + FB AddPaymentInfo tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -445,16 +435,6 @@ export const useAnalytics = () => {
         client_id: ctx.client_id,
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'AddPaymentInfo', {
-        content_ids: [planId],
-        content_name: planName,
-        value: priceValue,
-        currency: 'BRL',
       });
     }
 
