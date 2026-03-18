@@ -17,6 +17,22 @@ interface QuestionnaireAnswers {
   accommodation_type: string;
   selected_parks: string[];
   additional_activities: string[];
+  // Health & restrictions
+  dietary_restrictions?: string[];
+  dietary_other?: string;
+  physical_limitations?: string[];
+  fears?: string[];
+  // Special details
+  special_occasions?: string[];
+  birthday_date?: string;
+  birthday_person?: string;
+  occasion_other?: string;
+  heat_preference?: string;
+  rain_preference?: string;
+  group_energy?: string;
+  sleep_preference?: string;
+  // Priorities
+  attraction_priorities?: string[];
 }
 
 interface Travelers {
