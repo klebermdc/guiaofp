@@ -123,6 +123,24 @@ export default function Register() {
         return;
       }
 
+      // Verify Turnstile token
+      if (!turnstileToken) {
+        toast.error('Complete a verificação de segurança.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken },
+      });
+
+      if (!turnstileResult?.success) {
+        toast.error('Verificação de segurança falhou. Tente novamente.');
+        setTurnstileToken(null);
+        setIsSubmitting(false);
+        return;
+      }
+
       // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
