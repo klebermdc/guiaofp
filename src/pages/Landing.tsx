@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
-import { useScrollTracking, useAnalytics } from '@/hooks/useAnalytics';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { TrackableButton } from '@/components/analytics';
 import {
   Accordion,
