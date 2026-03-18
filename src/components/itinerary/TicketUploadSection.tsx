@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Upload, X, FileText, Ticket, Check, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { TicketSuggestions } from './TicketSuggestions';
+
 
 interface TicketUpload {
   ticketType: string[];
@@ -298,10 +298,6 @@ export const TicketUploadSection = ({
         </div>
       )}
 
-      {/* Se NÃO TEM ingressos - Mostrar sugestões */}
-      {hasTickets === false && itineraryContext && (
-        <TicketSuggestions itineraryData={itineraryContext} />
-      )}
 
       {/* Fallback se não tem contexto */}
       {hasTickets === false && !itineraryContext && (
