@@ -197,23 +197,7 @@ export const useAnalytics = () => {
    * This data is sent with conversion events for better attribution
    */
   const setUserData = useCallback((userData: UserData) => {
-    // GA4 Enhanced Conversions
-    if (isGtagAvailable()) {
-      window.gtag?.('set', 'user_data', {
-        email: userData.email ? hashForDataLayer(userData.email) : undefined,
-        phone_number: userData.phone ? hashForDataLayer(userData.phone) : undefined,
-        address: {
-          first_name: userData.firstName ? hashForDataLayer(userData.firstName) : undefined,
-          last_name: userData.lastName ? hashForDataLayer(userData.lastName) : undefined,
-          city: userData.city,
-          region: userData.state,
-          country: userData.country || 'BR',
-          postal_code: userData.postalCode,
-        },
-      });
-    }
-
-    // Push to dataLayer for sGTM to process
+    // dataLayer only — GTM handles Enhanced Conversions + FB Advanced Matching
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'set_user_data',
@@ -227,16 +211,6 @@ export const useAnalytics = () => {
           country: userData.country || 'BR',
           postal_code: userData.postalCode,
         },
-      });
-    }
-
-    // Facebook Advanced Matching
-    if (isFbqAvailable() && userData.email) {
-      window.fbq?.('init', '', {
-        em: hashForDataLayer(userData.email),
-        ph: userData.phone ? hashForDataLayer(userData.phone) : undefined,
-        fn: userData.firstName ? hashForDataLayer(userData.firstName) : undefined,
-        ln: userData.lastName ? hashForDataLayer(userData.lastName) : undefined,
       });
     }
 
@@ -491,55 +465,41 @@ export const useAnalytics = () => {
   const trackLead = useCallback((source: string, value?: number, userData?: UserData) => {
     const leadValue = value ? value / 100 : undefined;
 
-    trackEvent({
-      action: 'generate_lead',
-      category: 'Lead',
-      label: source,
-      value: leadValue,
-    });
-
-    // Push user data for CAPI with Stape context
-    if (isDataLayerAvailable() && userData) {
+    // dataLayer only — GTM handles GA4 generate_lead + FB Lead tags
+    if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
-        event: 'lead',
+        event: 'generate_lead',
         event_id: ctx.event_id,
+        eventCategory: 'Lead',
+        eventLabel: source,
+        eventValue: leadValue,
         lead_source: source,
         lead_value: leadValue,
-        user_data: {
+        user_data: userData ? {
           email: userData.email,
           phone: userData.phone,
           first_name: userData.firstName,
           last_name: userData.lastName,
-        },
+        } : undefined,
         fbp: ctx.fbp,
         fbc: ctx.fbc,
         client_id: ctx.client_id,
+        page_location: ctx.page_location,
+        user_agent: ctx.user_agent,
       });
     }
 
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: source,
-        value: leadValue,
-        currency: 'BRL',
-      });
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] Lead:', source);
     }
-  }, [trackEvent]);
+  }, []);
 
   /**
    * Sign Up
    */
   const trackSignUp = useCallback((method: string, userData?: UserData) => {
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'sign_up', {
-        method: method,
-      });
-    }
-
-    // GTM dataLayer
+    // dataLayer only — GTM handles GA4 sign_up + FB CompleteRegistration tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'sign_up',
@@ -548,13 +508,6 @@ export const useAnalytics = () => {
           email: userData.email,
           phone: userData.phone,
         } : undefined,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'CompleteRegistration', {
-        content_name: method,
       });
     }
 
@@ -567,14 +520,7 @@ export const useAnalytics = () => {
    * Login
    */
   const trackLogin = useCallback((method: string) => {
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'login', {
-        method: method,
-      });
-    }
-
-    // GTM dataLayer
+    // dataLayer only — GTM handles GA4 login tag
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'login',
@@ -591,7 +537,7 @@ export const useAnalytics = () => {
    * Form Submit (for CAPI)
    */
   const trackFormSubmit = useCallback((formName: string, userData?: UserData) => {
-    // GTM dataLayer with user data for CAPI
+    // dataLayer only — GTM handles GA4 form_submit + FB Lead tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'form_submit',
@@ -602,13 +548,6 @@ export const useAnalytics = () => {
           first_name: userData.firstName,
           last_name: userData.lastName,
         } : undefined,
-      });
-    }
-
-    // Facebook Lead
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: formName,
       });
     }
 
