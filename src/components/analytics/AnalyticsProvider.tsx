@@ -244,7 +244,7 @@ export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
 
         // Load GTM (with sGTM transport if configured)
         if (trackingConfig.gtm_container_id) {
-          loadGTM(trackingConfig.gtm_container_id, sgtmUrl);
+          loadGTM(trackingConfig.gtm_container_id, sgtmUrl, trackingConfig.sgtm_container_id || undefined);
         }
 
         // Load GA4 (with sGTM transport if configured)
