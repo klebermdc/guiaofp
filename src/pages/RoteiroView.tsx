@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, Users, MapPin, Clock, Utensils, Lightbulb,
   DollarSign, Loader2, Sparkles, ChevronDown, ChevronUp, Castle,
-  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw, Download
+  Film, Fish, ShoppingBag, Bed, Star, AlertCircle, RefreshCw, Download,
+  Ticket
 } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
