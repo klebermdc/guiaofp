@@ -15,7 +15,6 @@ import {
   Crown,
   Lock,
   QrCode,
-  Barcode,
   Loader2,
   Copy,
   ExternalLink,
