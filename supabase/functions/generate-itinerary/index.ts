@@ -294,6 +294,13 @@ IMPORTANTE: Use os dados de fila em tempo real para otimizar a ordem das atraç�
 Priorize atrações com filas mais curtas primeiro quando possível.
 Sugira os melhores horários baseado nos dados históricos fornecidos.
 
+⚠️ REGRA CRÍTICA SOBRE PARADAS, SHOWS E SHOWS DE ENCERRAMENTO:
+- NUNCA apresente horários de paradas, shows ou shows noturnos/de encerramento (fireworks, nighttime spectaculars) como fixos ou garantidos.
+- Sempre que mencionar uma parada ou show, use linguagem como "horário sujeito a alteração" ou "consulte o app oficial no dia".
+- No INÍCIO do roteiro de cada dia que contenha parada, show ou show de encerramento, inclua obrigatoriamente este aviso:
+  "⚠️ Atenção: horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados."
+- Isso vale para TODOS os parques: Disney, Universal, SeaWorld, etc.
+
 Responda em português do Brasil.
 Formate a resposta em markdown com emojis.`;
 
