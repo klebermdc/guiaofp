@@ -13,7 +13,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Share2, Download, Plus, Loader2, Calendar, FileText, FileStack } from 'lucide-react';
+import { Download, Plus, Loader2, Calendar, FileText, FileStack } from 'lucide-react';
 import { exportPlannerToPDF } from '@/utils/exportPlannerPDF';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
