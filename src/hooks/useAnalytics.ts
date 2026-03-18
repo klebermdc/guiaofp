@@ -499,14 +499,7 @@ export const useAnalytics = () => {
    * Sign Up
    */
   const trackSignUp = useCallback((method: string, userData?: UserData) => {
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'sign_up', {
-        method: method,
-      });
-    }
-
-    // GTM dataLayer
+    // dataLayer only — GTM handles GA4 sign_up + FB CompleteRegistration tags
     if (isDataLayerAvailable()) {
       window.dataLayer?.push({
         event: 'sign_up',
@@ -515,13 +508,6 @@ export const useAnalytics = () => {
           email: userData.email,
           phone: userData.phone,
         } : undefined,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'CompleteRegistration', {
-        content_name: method,
       });
     }
 
