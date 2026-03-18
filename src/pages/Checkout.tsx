@@ -392,6 +392,18 @@ export default function Checkout() {
 
     setIsProcessing(true);
 
+    // Verify Turnstile token server-side
+    const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+      body: { token: turnstileToken },
+    });
+
+    if (!turnstileResult?.success) {
+      toast.error('Verificação de segurança falhou. Tente novamente.');
+      setTurnstileToken(null);
+      setIsProcessing(false);
+      return;
+    }
+
     const buyer = {
       email: userProfile.email,
       phone: formData.phone || userProfile.phone,
