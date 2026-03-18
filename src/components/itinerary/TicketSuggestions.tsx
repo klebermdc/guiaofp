@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Ticket, ExternalLink, Loader2, Lightbulb, DollarSign, Calendar } from 'lucide-react';
+import { Ticket, Loader2, Lightbulb, DollarSign, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
