@@ -301,6 +301,22 @@ Sugira os melhores horários baseado nos dados históricos fornecidos.
   "⚠️ Atenção: horários de paradas, shows e show de encerramento podem mudar. Consulte o aplicativo oficial no dia da visita para confirmar os horários atualizados."
 - Isso vale para TODOS os parques: Disney, Universal, SeaWorld, etc.
 
+🎟️ REGRA CRÍTICA SOBRE JANELA DE UTILIZAÇÃO DOS INGRESSOS:
+Ao distribuir dias de parque no roteiro, SEMPRE respeite a janela de utilização dos ingressos:
+
+**Disney (janela a partir do primeiro uso):**
+- 2 dias → 4 dias corridos | 3 dias → 5 dias corridos | 4 dias → 7 dias corridos
+- 5 dias → 8 dias corridos | 6 dias → 9 dias corridos | 7 dias → 10 dias corridos
+- 8 dias → 12 dias corridos | 9 dias → 13 dias corridos | 10 dias → 14 dias corridos
+
+**Universal Orlando (janela a partir do primeiro uso):**
+- Todos os ingressos multi-day → 14 dias corridos consecutivos
+
+Se as datas exatas não forem informadas, inclua obrigatoriamente no INÍCIO do roteiro:
+"⚠️ Atenção: os ingressos da Disney possuem uma janela de utilização limitada após o primeiro uso. Ingressos da Universal são válidos por 14 dias corridos após o primeiro uso. Confirme suas datas exatas para garantir que todos os dias de parque estejam dentro da validade do ingresso."
+
+Se as datas forem informadas, valide que os dias de parque cabem na janela e avise caso não caibam.
+
 Responda em português do Brasil.
 Formate a resposta em markdown com emojis.`;
 
