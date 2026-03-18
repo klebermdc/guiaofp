@@ -42,9 +42,16 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   // Track if we've ever been authenticated to prevent redirect on tab switch
   const wasAuthenticatedRef = useRef(false);
-  
+  // Track if access has already been confirmed in this session to avoid transient false redirects
+  const hadAccessRef = useRef(false);
+
   if (isAuthenticated) {
     wasAuthenticatedRef.current = true;
+    if (isAccessEnabled) {
+      hadAccessRef.current = true;
+    }
+  } else {
+    hadAccessRef.current = false;
   }
 
   // Only show loading if we're truly in an initial auth check (not returning from login)
@@ -67,9 +74,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return <AuthLoadingScreen />;
   }
 
-  // Redirect to access blocked page if access is not enabled (skip for guides/admins)
-  // CRITICAL: Only redirect AFTER profile has finished loading to avoid false redirects
-  if (!isAccessEnabled && !isGuide && !isAdmin && isAuthenticated && !isProfileLoading) {
+  // Redirect to access blocked page only when access was never confirmed in this session
+  // This avoids false redirects during transient profile refresh/fetch glitches
+  if (!isAccessEnabled && !hadAccessRef.current && !isGuide && !isAdmin && isAuthenticated && !isProfileLoading) {
     return <Navigate to="/acesso-bloqueado" replace />;
   }
 
