@@ -15,7 +15,6 @@ import {
   Crown,
   Lock,
   QrCode,
-  Barcode,
   Loader2,
   Copy,
   ExternalLink,
@@ -38,14 +37,13 @@ const planIcons: Record<string, typeof Map | typeof Crown> = {
   premium: Crown,
 };
 
-type PaymentMethod = 'pix' | 'boleto' | 'credit_card';
+type PaymentMethod = 'pix' | 'credit_card';
 
 interface PaymentResult {
   transactionId: string;
   method: PaymentMethod;
   pixQrCode?: string;
   pixPayload?: string;
-  boletoUrl?: string;
   invoiceUrl?: string;
 }
 
@@ -394,7 +392,6 @@ export default function Checkout() {
     try {
       const billingTypeMap: Record<PaymentMethod, string> = {
         pix: 'PIX',
-        boleto: 'BOLETO',
         credit_card: 'CREDIT_CARD',
       };
 
@@ -487,7 +484,6 @@ export default function Checkout() {
           method: paymentMethod,
           pixQrCode: data.pixQrCode,
           pixPayload: data.pixPayload,
-          boletoUrl: data.boletoUrl,
           invoiceUrl: data.invoiceUrl,
         });
       }
@@ -529,7 +525,7 @@ export default function Checkout() {
               <CardDescription>
                 {paymentResult.method === 'pix' 
                   ? 'Escaneie o QR Code ou copie o código PIX para pagar'
-                  : 'Clique no botão abaixo para acessar o boleto'}
+                  : 'Pagamento processado com sucesso'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -571,31 +567,6 @@ export default function Checkout() {
                 </div>
               )}
 
-              {paymentResult.method === 'boleto' && (
-                <div className="space-y-4">
-                  <div className="p-6 rounded-xl bg-muted/50 text-center">
-                    <Barcode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      O boleto foi gerado e está pronto para pagamento
-                    </p>
-                    
-                    {paymentResult.boletoUrl && (
-                      <a href={paymentResult.boletoUrl} target="_blank" rel="noopener noreferrer">
-                        <Button className="w-full gradient-primary">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Abrir Boleto
-                        </Button>
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <p className="text-sm text-amber-600">
-                      📅 O boleto vence em 3 dias. Após a compensação (até 3 dias úteis), seu acesso será liberado automaticamente.
-                    </p>
-                  </div>
-                </div>
-              )}
 
               <Separator />
 
@@ -757,7 +728,7 @@ export default function Checkout() {
                   <CardTitle className="text-lg">Forma de pagamento</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('pix')}
@@ -770,20 +741,6 @@ export default function Checkout() {
                       <QrCode className={`w-6 h-6 mx-auto mb-2 ${paymentMethod === 'pix' ? 'text-primary' : 'text-muted-foreground'}`} />
                       <span className={`text-sm font-medium ${paymentMethod === 'pix' ? 'text-foreground' : 'text-muted-foreground'}`}>
                         PIX
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('boleto')}
-                      className={`p-4 rounded-xl border-2 transition-all ${
-                        paymentMethod === 'boleto'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <Barcode className={`w-6 h-6 mx-auto mb-2 ${paymentMethod === 'boleto' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className={`text-sm font-medium ${paymentMethod === 'boleto' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                        Boleto
                       </span>
                     </button>
                     <button
@@ -817,20 +774,6 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {paymentMethod === 'boleto' && (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                      <div className="flex items-start gap-3">
-                        <Barcode className="w-5 h-5 text-amber-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium text-foreground">Boleto bancário</p>
-                          <p className="text-sm text-muted-foreground">
-                            Prazo de compensação de até 3 dias úteis. 
-                            Vencimento em 3 dias.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {paymentMethod === 'credit_card' && (
                     <div className="space-y-4 pt-2">
