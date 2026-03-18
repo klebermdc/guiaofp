@@ -510,6 +510,7 @@ export const useAnalytics = () => {
         event: 'add_payment_info',
         event_id: ctx.event_id,
         ecommerce: {
+          transaction_id: txId,
           currency: 'BRL',
           value: priceValue,
           payment_type: paymentMethod,
