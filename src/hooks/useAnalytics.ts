@@ -281,16 +281,7 @@ export const useAnalytics = () => {
     const path = pagePath || window.location.pathname;
     const title = pageTitle || document.title;
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'page_view', {
-        page_path: path,
-        page_title: title,
-        page_location: window.location.href,
-      });
-    }
-
-    // GTM dataLayer with Stape context
+    // dataLayer only — GTM handles GA4 page_view + FB PageView tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({
@@ -307,11 +298,6 @@ export const useAnalytics = () => {
         fbc: ctx.fbc,
         client_id: ctx.client_id,
       });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'PageView');
     }
 
     if (import.meta.env.DEV) {
