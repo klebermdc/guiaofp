@@ -327,14 +327,7 @@ export const useAnalytics = () => {
       label: ctaName,
       cta_location: ctaLocation,
     });
-
-    // Facebook Lead event
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'Lead', {
-        content_name: ctaName,
-        content_category: ctaLocation,
-      });
-    }
+    // FB Lead event is handled by GTM tag triggered on cta_click event
   }, [trackEvent]);
 
   /**
