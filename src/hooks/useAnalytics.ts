@@ -378,17 +378,7 @@ export const useAnalytics = () => {
     const item = buildEcommerceItem(planId, planName, priceValue, coupon);
     const txId = getCheckoutTransactionId();
 
-    // GA4
-    if (isGtagAvailable()) {
-      window.gtag?.('event', 'begin_checkout', {
-        currency: 'BRL',
-        value: priceValue,
-        coupon: coupon,
-        items: [item],
-      });
-    }
-
-    // GTM dataLayer + Stape context
+    // dataLayer only — GTM handles GA4 begin_checkout + FB InitiateCheckout tags
     if (isDataLayerAvailable()) {
       const ctx = getStapeContext();
       window.dataLayer?.push({ ecommerce: null });
@@ -408,18 +398,6 @@ export const useAnalytics = () => {
         client_id: ctx.client_id,
         page_location: ctx.page_location,
         user_agent: ctx.user_agent,
-      });
-    }
-
-    // Facebook Pixel
-    if (isFbqAvailable()) {
-      window.fbq?.('track', 'InitiateCheckout', {
-        content_ids: [planId],
-        content_name: planName,
-        content_type: 'product',
-        value: priceValue,
-        currency: 'BRL',
-        num_items: 1,
       });
     }
 
