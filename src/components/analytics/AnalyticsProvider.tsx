@@ -57,8 +57,8 @@ const initDataLayer = () => {
   }
 };
 
-// Load GTM with optional sGTM transport URL
-const loadGTM = (containerId: string, sgtmUrl?: string) => {
+// Load GTM with optional sGTM transport URL and custom loader path
+const loadGTM = (containerId: string, sgtmUrl?: string, customLoaderPath?: string) => {
   if (!containerId || document.getElementById('gtm-script')) return;
 
   initDataLayer();
@@ -68,13 +68,14 @@ const loadGTM = (containerId: string, sgtmUrl?: string) => {
   script.id = 'gtm-script';
   
   if (sgtmUrl) {
-    // Use sGTM as transport layer
+    // Use sGTM as transport layer, with optional custom loader path (Stape proxy)
     const sgtmHost = sgtmUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const loaderPrefix = customLoaderPath ? `${customLoaderPath}/` : '';
     script.innerHTML = `
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://${sgtmHost}/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      'https://${sgtmHost}/${loaderPrefix}gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','${containerId}');
     `;
   } else {
