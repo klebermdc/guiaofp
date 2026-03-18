@@ -551,13 +551,9 @@ const PlannerManual = () => {
                   {showLibrary ? 'Calendário' : 'Adicionar'}
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={handleExportText}>
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>
                 <Download className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Copiar</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share2 className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Compartilhar</span>
+                <span className="hidden sm:inline">Exportar PDF</span>
               </Button>
             </div>
           </div>
