@@ -400,7 +400,7 @@ export default function RoteiroView() {
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Alimentação</p>
-                          <p className="font-semibold">${generated.estimated_budget.meals}</p>
+                          <p className="font-semibold">R${generated.estimated_budget.meals.toLocaleString('pt-BR')}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Transporte</p>
