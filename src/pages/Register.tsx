@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Mail, 
@@ -23,6 +23,9 @@ import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
+import TurnstileWidget from '@/components/TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
@@ -67,6 +70,10 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const handleTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -112,6 +119,24 @@ export default function Register() {
           }
         });
         setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Verify Turnstile token
+      if (!turnstileToken) {
+        toast.error('Complete a verificação de segurança.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken },
+      });
+
+      if (!turnstileResult?.success) {
+        toast.error('Verificação de segurança falhou. Tente novamente.');
+        setTurnstileToken(null);
         setIsSubmitting(false);
         return;
       }
@@ -418,12 +443,20 @@ export default function Register() {
                 </ul>
               </div>
 
+              <div className="flex justify-center">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
               >
                 {isSubmitting ? (
                   <>

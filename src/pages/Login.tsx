@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
+import TurnstileWidget from '@/components/TurnstileWidget';
+
+const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -20,6 +24,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const handleTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
   
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -57,6 +65,24 @@ const Login = () => {
           fieldErrors[err.path[0]] = err.message;
         });
         setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Verify Turnstile token
+      if (!turnstileToken) {
+        toast({ title: "Verificação necessária", description: "Complete a verificação de segurança.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken },
+      });
+
+      if (!turnstileResult?.success) {
+        toast({ title: "Verificação falhou", description: "Tente novamente.", variant: "destructive" });
+        setTurnstileToken(null);
         setIsSubmitting(false);
         return;
       }
@@ -197,12 +223,20 @@ const Login = () => {
                 )}
               </div>
 
+              <div className="flex justify-center mt-4">
+                <TurnstileWidget
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={handleTurnstileVerify}
+                  onExpire={handleTurnstileExpire}
+                />
+              </div>
+
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
-                className="w-full mt-6"
-                disabled={isSubmitting}
+                className="w-full mt-4"
+                disabled={isSubmitting || !turnstileToken}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
