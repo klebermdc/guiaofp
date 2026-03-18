@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, Send, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface ContactFormDialogProps {
   open: boolean;
