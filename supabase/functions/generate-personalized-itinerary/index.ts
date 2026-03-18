@@ -171,11 +171,19 @@ Dia de chegada:
 - Mercado próximo, farmácia, fast food, posto, jantar leve, dica de adaptação
 
 Dias de parque:
-- Horário de saída, ordem estratégica das atrações (seguir ORDEM OFP), horário de almoço, snack famoso, horário de descanso, melhor foto, melhor saída
+- Horário de saída do hotel
+- TODAS as atrações da ORDEM OFP do parque (conforme perfil radical/tranquilo), cada uma como atividade separada
+- Horário de almoço com restaurante específico
+- Snack famoso do parque (dica real)
+- Horário de descanso/pausa (especialmente com crianças)
+- Melhor foto do parque
+- Show noturno quando aplicável
+- Melhor saída/estratégia de saída
+- MÍNIMO 8-12 atividades por dia de parque
 
 Dias livres — sugerir:
 - Walmart, Target, Publix, outlets, shoppings, restaurantes brasileiros, cafeterias, Apple Store, lojas baratas, Ross / Burlington / Marshalls
-- Criar mini roteiro do dia
+- Criar mini roteiro do dia com horários
 
 Dia de descanso:
 - Piscina, café especial, passeio leve, compras rápidas, jantar legal
@@ -187,6 +195,8 @@ Dia de retorno:
 - Dividir por dias com títulos claros
 - Linguagem simples, dicas reais, tom especialista
 - Otimização logística, foco em conforto
+- CADA atração do parque deve ser uma atividade separada com horário
+- Orçamento SEMPRE em Reais (R$), nunca em dólar
 
 FORMATO DE SAÍDA (JSON estrito):
 {
@@ -201,7 +211,7 @@ FORMATO DE SAÍDA (JSON estrito):
           "time": "HH:MM",
           "title": "Título da atividade",
           "description": "Descrição detalhada com dicas reais",
-          "location": "Local",
+          "location": "Local/Área do parque",
           "duration_minutes": 60,
           "tips": "Dica prática"
         }
@@ -226,7 +236,10 @@ FORMATO DE SAÍDA (JSON estrito):
     "extras": 0,
     "total": 0
   }
-}`;
+}
+
+IMPORTANTE: Todos os valores de estimated_budget devem ser em Reais (R$), considerando câmbio aproximado.
+IMPORTANTE: Dias de parque devem ter MUITAS atividades (8-12+), listando CADA atração individualmente.`;
 
     const userPrompt = `Crie um roteiro completo de ${totalDays} dias para Orlando.
 
