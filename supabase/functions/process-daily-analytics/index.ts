@@ -325,7 +325,7 @@ async function updateOptimalWindows(supabase: any, upToDate: string) {
 
     // Calculate stats for each window
     const windowStats = Object.entries(windows)
-      .filter(([_, times]) => times.length >= 5) // Minimum samples
+      .filter(([_, times]) => times.length >= 2) // Minimum samples
       .map(([windowKey, times]) => {
         const [hour, minute] = windowKey.split(':').map(Number);
         const avgWait = times.reduce((a, b) => a + b, 0) / times.length;
