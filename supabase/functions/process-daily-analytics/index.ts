@@ -104,22 +104,25 @@ serve(async (req) => {
       );
     }
 
-    // Fetch all records in batches of 5000
-    const batchSize = 5000;
+    // Fetch all records in pages of 1000
+    const pageSize = 1000;
     const records: any[] = [];
+    let page = 0;
     
-    for (let offset = 0; offset < totalRecords; offset += batchSize) {
+    while (true) {
       const { data: batch, error: batchErr } = await supabase
         .from('wait_time_records')
         .select('*')
         .eq('date', targetDate)
         .eq('status', 'Operating')
         .order('time')
-        .range(offset, offset + batchSize - 1);
+        .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (batchErr) throw new Error(`Error fetching records batch: ${batchErr.message}`);
-      if (batch) records.push(...batch);
-      if (!batch || batch.length < batchSize) break;
+      if (!batch || batch.length === 0) break;
+      records.push(...batch);
+      page++;
+      if (batch.length < pageSize) break;
     }
 
     console.log(`Fetched ${records.length} records for ${targetDate}`);
