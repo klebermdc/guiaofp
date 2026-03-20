@@ -271,41 +271,111 @@ Deno.serve(async (req) => {
       const dateFrom = url.searchParams.get("date_from") || "";
       const dateTo = url.searchParams.get("date_to") || "";
 
-      let query = supabase
-        .from("wait_time_records")
-        .select("park_name, attraction_name, wait_time_minutes, date, time, status");
-
-      if (park) query = query.ilike("park_name", `%${park}%`);
-      if (dateFrom) query = query.gte("date", dateFrom);
-      if (dateTo) query = query.lte("date", dateTo);
-
-      const { data, error } = await query.order("date", { ascending: false }).limit(5000);
-      if (error) return errorResponse(error.message, 500);
-
-      // Aggregate by park
-      const parkStats: Record<string, { total: number; sum: number; max: number; min: number; attractions: Set<string> }> = {};
-      for (const r of (data || [])) {
-        const p = r.park_name;
-        if (!parkStats[p]) parkStats[p] = { total: 0, sum: 0, max: 0, min: Infinity, attractions: new Set() };
-        if (r.wait_time_minutes != null && r.status === "Operating") {
-          parkStats[p].total++;
-          parkStats[p].sum += r.wait_time_minutes;
-          if (r.wait_time_minutes > parkStats[p].max) parkStats[p].max = r.wait_time_minutes;
-          if (r.wait_time_minutes < parkStats[p].min) parkStats[p].min = r.wait_time_minutes;
-        }
-        parkStats[p].attractions.add(r.attraction_name);
+      // Default to last 30 days if no date filter
+      let effectiveDateFrom = dateFrom;
+      if (!dateFrom && !dateTo) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        effectiveDateFrom = thirtyDaysAgo.toISOString().split('T')[0];
       }
 
-      const summary = Object.entries(parkStats).map(([park, s]) => ({
-        park,
+      // Get total count first
+      let countQuery = supabase
+        .from("wait_time_records")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "Operating")
+        .not("wait_time_minutes", "is", null);
+      if (park) countQuery = countQuery.ilike("park_name", `%${park}%`);
+      if (effectiveDateFrom) countQuery = countQuery.gte("date", effectiveDateFrom);
+      if (dateTo) countQuery = countQuery.lte("date", dateTo);
+
+      const { count: totalCount } = await countQuery;
+      const total = totalCount || 0;
+
+      // Fetch in batches of 5000 to bypass 1000-row limit
+      const batchSize = 5000;
+      const batches = Math.ceil(total / batchSize);
+      const allData: any[] = [];
+
+      for (let i = 0; i < batches; i++) {
+        let batchQuery = supabase
+          .from("wait_time_records")
+          .select("park_name, attraction_name, wait_time_minutes, data_source")
+          .eq("status", "Operating")
+          .not("wait_time_minutes", "is", null);
+        if (park) batchQuery = batchQuery.ilike("park_name", `%${park}%`);
+        if (effectiveDateFrom) batchQuery = batchQuery.gte("date", effectiveDateFrom);
+        if (dateTo) batchQuery = batchQuery.lte("date", dateTo);
+
+        const { data: batch, error: batchErr } = await batchQuery
+          .range(i * batchSize, (i + 1) * batchSize - 1);
+        
+        if (batchErr) return errorResponse(batchErr.message, 500);
+        if (batch) allData.push(...batch);
+        if (!batch || batch.length < batchSize) break;
+      }
+
+      // Aggregate by park
+      const parkStats: Record<string, { total: number; sum: number; max: number; min: number; attractions: Set<string>; sources: Record<string, number> }> = {};
+      for (const r of allData) {
+        const p = r.park_name;
+        if (!parkStats[p]) parkStats[p] = { total: 0, sum: 0, max: 0, min: Infinity, attractions: new Set(), sources: {} };
+        parkStats[p].total++;
+        parkStats[p].sum += r.wait_time_minutes;
+        if (r.wait_time_minutes > parkStats[p].max) parkStats[p].max = r.wait_time_minutes;
+        if (r.wait_time_minutes < parkStats[p].min) parkStats[p].min = r.wait_time_minutes;
+        parkStats[p].attractions.add(r.attraction_name);
+        const src = r.data_source || "unknown";
+        parkStats[p].sources[src] = (parkStats[p].sources[src] || 0) + 1;
+      }
+
+      const summary = Object.entries(parkStats).map(([parkName, s]) => ({
+        park: parkName,
         data_points: s.total,
         avg_wait: s.total > 0 ? Math.round(s.sum / s.total) : 0,
         max_wait: s.max,
         min_wait: s.min === Infinity ? 0 : s.min,
         unique_attractions: s.attractions.size,
+        data_sources: s.sources,
       }));
 
-      return jsonResponse({ parks: summary, total_records: data?.length || 0 });
+      return jsonResponse({ parks: summary, total_records: allData.length, total_in_db: total });
+    }
+
+    // ============ WAIT TIME SOURCES BREAKDOWN ============
+    if (path === "/wait-times/sources" && method === "GET") {
+      // Count by data_source using paginated fetch
+      const { count: totalRecs } = await supabase
+        .from("wait_time_records")
+        .select("id", { count: "exact", head: true });
+
+      const batchSize = 5000;
+      const sources: Record<string, number> = {};
+      let fetched = 0;
+
+      while (fetched < (totalRecs || 0)) {
+        const { data: batch } = await supabase
+          .from("wait_time_records")
+          .select("data_source")
+          .range(fetched, fetched + batchSize - 1);
+        
+        if (!batch || batch.length === 0) break;
+        for (const r of batch) {
+          const src = r.data_source || "unknown";
+          sources[src] = (sources[src] || 0) + 1;
+        }
+        fetched += batch.length;
+        if (batch.length < batchSize) break;
+      }
+
+      const totalCount = Object.values(sources).reduce((a, b) => a + b, 0);
+      const breakdown = Object.entries(sources).map(([source, count]) => ({
+        source,
+        count,
+        percentage: totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) + "%" : "0%",
+      }));
+
+      return jsonResponse({ sources: breakdown, total_records: totalCount });
     }
 
     // ============ DAILY ANALYTICS ============
@@ -395,14 +465,16 @@ Deno.serve(async (req) => {
     // ============ ATTRACTIONS ============
     if (path === "/attractions" && method === "GET") {
       const park = url.searchParams.get("park") || "";
+      const parkId = url.searchParams.get("park_id") || "";
       const page = parseInt(url.searchParams.get("page") || "1");
-      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "500"), 1000);
       const offset = (page - 1) * limit;
 
       let query = supabase
         .from("attractions")
         .select("*, parks!attractions_park_id_fkey(name, slug)", { count: "exact" });
 
+      if (parkId) query = query.eq("park_id", parkId);
       if (park) query = query.ilike("name", `%${park}%`);
 
       const { data, count, error } = await query
@@ -410,7 +482,7 @@ Deno.serve(async (req) => {
         .range(offset, offset + limit - 1);
 
       if (error) return errorResponse(error.message, 500);
-      return jsonResponse({ attractions: data, total: count, page, limit });
+      return jsonResponse({ attractions: data, total: count, page, limit, total_pages: Math.ceil((count || 0) / limit) });
     }
 
     // ============ RESTAURANTS ============
