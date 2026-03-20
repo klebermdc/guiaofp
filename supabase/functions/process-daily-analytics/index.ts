@@ -245,9 +245,9 @@ serve(async (req) => {
 async function updateOptimalWindows(supabase: any, upToDate: string) {
   console.log("Updating optimal windows...");
 
-  // Get last 90 days of data
+  // Get last 30 days of data (reduced from 90 to prevent timeout)
   const startDate = new Date(upToDate);
-  startDate.setDate(startDate.getDate() - 90);
+  startDate.setDate(startDate.getDate() - 30);
   const startDateStr = startDate.toISOString().split('T')[0];
 
   // Count total records first
