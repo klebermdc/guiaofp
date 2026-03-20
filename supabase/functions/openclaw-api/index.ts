@@ -465,14 +465,16 @@ Deno.serve(async (req) => {
     // ============ ATTRACTIONS ============
     if (path === "/attractions" && method === "GET") {
       const park = url.searchParams.get("park") || "";
+      const parkId = url.searchParams.get("park_id") || "";
       const page = parseInt(url.searchParams.get("page") || "1");
-      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "500"), 1000);
       const offset = (page - 1) * limit;
 
       let query = supabase
         .from("attractions")
         .select("*, parks!attractions_park_id_fkey(name, slug)", { count: "exact" });
 
+      if (parkId) query = query.eq("park_id", parkId);
       if (park) query = query.ilike("name", `%${park}%`);
 
       const { data, count, error } = await query
@@ -480,7 +482,7 @@ Deno.serve(async (req) => {
         .range(offset, offset + limit - 1);
 
       if (error) return errorResponse(error.message, 500);
-      return jsonResponse({ attractions: data, total: count, page, limit });
+      return jsonResponse({ attractions: data, total: count, page, limit, total_pages: Math.ceil((count || 0) / limit) });
     }
 
     // ============ RESTAURANTS ============
