@@ -229,6 +229,222 @@ Deno.serve(async (req) => {
       return jsonResponse({ itineraries: data, total: count, page, limit });
     }
 
+    // ============ WAIT TIME RECORDS ============
+    if (path === "/wait-times" && method === "GET") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const offset = (page - 1) * limit;
+      const park = url.searchParams.get("park") || "";
+      const attraction = url.searchParams.get("attraction") || "";
+      const date = url.searchParams.get("date") || "";
+      const dateFrom = url.searchParams.get("date_from") || "";
+      const dateTo = url.searchParams.get("date_to") || "";
+
+      let query = supabase
+        .from("wait_time_records")
+        .select("id, attraction_name, park_name, wait_time_minutes, status, date, time, day_of_week, timestamp, data_source", { count: "exact" });
+
+      if (park) query = query.ilike("park_name", `%${park}%`);
+      if (attraction) query = query.ilike("attraction_name", `%${attraction}%`);
+      if (date) query = query.eq("date", date);
+      if (dateFrom) query = query.gte("date", dateFrom);
+      if (dateTo) query = query.lte("date", dateTo);
+
+      const { data, count, error } = await query
+        .order("timestamp", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) return errorResponse(error.message, 500);
+
+      return jsonResponse({
+        wait_times: data,
+        total: count,
+        page,
+        limit,
+        total_pages: Math.ceil((count || 0) / limit),
+      });
+    }
+
+    // ============ WAIT TIME STATS (aggregated) ============
+    if (path === "/wait-times/stats" && method === "GET") {
+      const park = url.searchParams.get("park") || "";
+      const dateFrom = url.searchParams.get("date_from") || "";
+      const dateTo = url.searchParams.get("date_to") || "";
+
+      let query = supabase
+        .from("wait_time_records")
+        .select("park_name, attraction_name, wait_time_minutes, date, time, status");
+
+      if (park) query = query.ilike("park_name", `%${park}%`);
+      if (dateFrom) query = query.gte("date", dateFrom);
+      if (dateTo) query = query.lte("date", dateTo);
+
+      const { data, error } = await query.order("date", { ascending: false }).limit(5000);
+      if (error) return errorResponse(error.message, 500);
+
+      // Aggregate by park
+      const parkStats: Record<string, { total: number; sum: number; max: number; min: number; attractions: Set<string> }> = {};
+      for (const r of (data || [])) {
+        const p = r.park_name;
+        if (!parkStats[p]) parkStats[p] = { total: 0, sum: 0, max: 0, min: Infinity, attractions: new Set() };
+        if (r.wait_time_minutes != null && r.status === "Operating") {
+          parkStats[p].total++;
+          parkStats[p].sum += r.wait_time_minutes;
+          if (r.wait_time_minutes > parkStats[p].max) parkStats[p].max = r.wait_time_minutes;
+          if (r.wait_time_minutes < parkStats[p].min) parkStats[p].min = r.wait_time_minutes;
+        }
+        parkStats[p].attractions.add(r.attraction_name);
+      }
+
+      const summary = Object.entries(parkStats).map(([park, s]) => ({
+        park,
+        data_points: s.total,
+        avg_wait: s.total > 0 ? Math.round(s.sum / s.total) : 0,
+        max_wait: s.max,
+        min_wait: s.min === Infinity ? 0 : s.min,
+        unique_attractions: s.attractions.size,
+      }));
+
+      return jsonResponse({ parks: summary, total_records: data?.length || 0 });
+    }
+
+    // ============ DAILY ANALYTICS ============
+    if (path === "/daily-analytics" && method === "GET") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const offset = (page - 1) * limit;
+      const park = url.searchParams.get("park") || "";
+      const attraction = url.searchParams.get("attraction") || "";
+      const date = url.searchParams.get("date") || "";
+      const dateFrom = url.searchParams.get("date_from") || "";
+      const dateTo = url.searchParams.get("date_to") || "";
+
+      let query = supabase
+        .from("daily_analytics")
+        .select("*", { count: "exact" });
+
+      if (park) query = query.ilike("park_name", `%${park}%`);
+      if (attraction) query = query.ilike("attraction_name", `%${attraction}%`);
+      if (date) query = query.eq("date", date);
+      if (dateFrom) query = query.gte("date", dateFrom);
+      if (dateTo) query = query.lte("date", dateTo);
+
+      const { data, count, error } = await query
+        .order("date", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) return errorResponse(error.message, 500);
+
+      return jsonResponse({
+        analytics: data,
+        total: count,
+        page,
+        limit,
+        total_pages: Math.ceil((count || 0) / limit),
+      });
+    }
+
+    // ============ OPTIMAL WINDOWS ============
+    if (path === "/optimal-windows" && method === "GET") {
+      const park = url.searchParams.get("park") || "";
+      const attraction = url.searchParams.get("attraction") || "";
+      const dayOfWeek = url.searchParams.get("day_of_week");
+
+      let query = supabase
+        .from("optimal_windows")
+        .select("*");
+
+      if (park) query = query.ilike("park_name", `%${park}%`);
+      if (attraction) query = query.ilike("attraction_name", `%${attraction}%`);
+      if (dayOfWeek) query = query.eq("day_of_week", parseInt(dayOfWeek));
+
+      const { data, error } = await query.order("ranking", { ascending: true }).limit(500);
+      if (error) return errorResponse(error.message, 500);
+
+      return jsonResponse({ windows: data, total: data?.length || 0 });
+    }
+
+    // ============ SYSTEM HEALTH ============
+    if (path === "/system-health" && method === "GET") {
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 200);
+      const component = url.searchParams.get("component") || "";
+
+      let query = supabase
+        .from("system_health_logs")
+        .select("*");
+
+      if (component) query = query.eq("component", component);
+
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
+      if (error) return errorResponse(error.message, 500);
+
+      return jsonResponse({ logs: data, total: data?.length || 0 });
+    }
+
+    // ============ PARKS ============
+    if (path === "/parks" && method === "GET") {
+      const { data, error } = await supabase
+        .from("parks")
+        .select("*")
+        .order("name");
+
+      if (error) return errorResponse(error.message, 500);
+      return jsonResponse({ parks: data, total: data?.length || 0 });
+    }
+
+    // ============ ATTRACTIONS ============
+    if (path === "/attractions" && method === "GET") {
+      const park = url.searchParams.get("park") || "";
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const offset = (page - 1) * limit;
+
+      let query = supabase
+        .from("attractions")
+        .select("*, parks!attractions_park_id_fkey(name, slug)", { count: "exact" });
+
+      if (park) query = query.ilike("name", `%${park}%`);
+
+      const { data, count, error } = await query
+        .order("name")
+        .range(offset, offset + limit - 1);
+
+      if (error) return errorResponse(error.message, 500);
+      return jsonResponse({ attractions: data, total: count, page, limit });
+    }
+
+    // ============ RESTAURANTS ============
+    if (path === "/restaurants" && method === "GET") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+      const offset = (page - 1) * limit;
+
+      const { data, count, error } = await supabase
+        .from("restaurants")
+        .select("id, name, slug, type, cuisine, location, area, category, price_range, reservation_required, character_dining, featured, priority_level", { count: "exact" })
+        .order("name")
+        .range(offset, offset + limit - 1);
+
+      if (error) return errorResponse(error.message, 500);
+      return jsonResponse({ restaurants: data, total: count, page, limit });
+    }
+
+    // ============ PROFILES (full) ============
+    if (path === "/profiles" && method === "GET") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+      const offset = (page - 1) * limit;
+
+      const { data, count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) return errorResponse(error.message, 500);
+      return jsonResponse({ profiles: data, total: count, page, limit });
+    }
+
     // ============ 404 ============
     return errorResponse(`Endpoint not found: ${method} ${path}`, 404);
 
