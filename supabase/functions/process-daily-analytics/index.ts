@@ -270,7 +270,7 @@ async function updateOptimalWindows(supabase: any, upToDate: string) {
   const pageSize = 1000;
   const records: any[] = [];
   let page = 0;
-  const maxRecords = 50000; // Cap to prevent timeout
+  const maxRecords = 30000; // Cap to prevent timeout
   
   while (records.length < Math.min(totalCount, maxRecords)) {
     const { data: batch, error: batchErr } = await supabase
