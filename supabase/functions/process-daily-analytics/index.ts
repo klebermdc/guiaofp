@@ -241,130 +241,117 @@ serve(async (req) => {
   }
 });
 
-// Update optimal windows based on historical data
+// Update optimal windows based on daily_analytics (already aggregated)
 async function updateOptimalWindows(supabase: any, upToDate: string) {
-  console.log("Updating optimal windows...");
+  console.log("Updating optimal windows from daily_analytics...");
 
-  // Get last 30 days of data (reduced from 90 to prevent timeout)
   const startDate = new Date(upToDate);
   startDate.setDate(startDate.getDate() - 30);
   const startDateStr = startDate.toISOString().split('T')[0];
 
-  // Count total records first
-  const { count: totalCount } = await supabase
-    .from('wait_time_records')
-    .select('id', { count: 'exact', head: true })
-    .gte('date', startDateStr)
-    .lte('date', upToDate)
-    .eq('status', 'Operating')
-    .not('wait_time_minutes', 'is', null);
-
-  if (!totalCount || totalCount < 100) {
-    console.log(`Not enough data for optimal windows calculation (${totalCount || 0} records)`);
-    return;
-  }
-
-  console.log(`Fetching ${totalCount} records for optimal windows...`);
-
-  // Fetch in pages of 1000 (Supabase client default) using proper pagination
+  // Fetch from daily_analytics (much smaller than raw records)
   const pageSize = 1000;
-  const records: any[] = [];
+  const analytics: any[] = [];
   let page = 0;
-  const maxRecords = 30000; // Cap to prevent timeout
-  
-  while (records.length < Math.min(totalCount, maxRecords)) {
-    const { data: batch, error: batchErr } = await supabase
-      .from('wait_time_records')
-      .select('attraction_name, park_name, day_of_week, time, wait_time_minutes')
+
+  while (true) {
+    const { data: batch, error } = await supabase
+      .from('daily_analytics')
+      .select('attraction_name, park_name, day_of_week, best_time, best_wait_time, peak_time, peak_wait_time, avg_wait_time, min_wait_time, max_wait_time, std_deviation, data_points_collected')
       .gte('date', startDateStr)
       .lte('date', upToDate)
-      .eq('status', 'Operating')
-      .not('wait_time_minutes', 'is', null)
-      .order('id')
       .range(page * pageSize, (page + 1) * pageSize - 1);
 
-    if (batchErr) {
-      console.error(`Error fetching batch page ${page}:`, batchErr);
+    if (error) {
+      console.error("Error fetching daily_analytics:", error);
       break;
     }
     if (!batch || batch.length === 0) break;
-    records.push(...batch);
+    analytics.push(...batch);
     page++;
     if (batch.length < pageSize) break;
   }
 
-  console.log(`Fetched ${records.length} records for optimal windows calculation (capped at ${maxRecords})`);
-
-  // Group by attraction + park + day_of_week
-  const grouped: Record<string, Record<string, number[]>> = {};
-
-  for (const record of records) {
-    const key = `${record.attraction_name}|${record.park_name}|${record.day_of_week}`;
-    
-    if (!grouped[key]) {
-      grouped[key] = {};
-    }
-
-    // Round time to 10-minute window
-    const timeParts = record.time.split(':');
-    const minutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
-    const windowStart = Math.floor(minutes / 10) * 10;
-    const windowKey = `${String(Math.floor(windowStart / 60)).padStart(2, '0')}:${String(windowStart % 60).padStart(2, '0')}`;
-
-    if (!grouped[key][windowKey]) {
-      grouped[key][windowKey] = [];
-    }
-    grouped[key][windowKey].push(record.wait_time_minutes);
+  if (analytics.length < 5) {
+    console.log(`Not enough analytics data (${analytics.length} records)`);
+    return;
   }
 
-  // Calculate optimal windows for each attraction/day combination
+  console.log(`Processing ${analytics.length} daily_analytics records for optimal windows`);
+
+  // Group by attraction + park + day_of_week
+  const grouped: Record<string, any[]> = {};
+  for (const a of analytics) {
+    const key = `${a.attraction_name}|${a.park_name}|${a.day_of_week}`;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(a);
+  }
+
   const windowsToUpsert: any[] = [];
 
-  for (const [groupKey, windows] of Object.entries(grouped)) {
+  for (const [groupKey, dayRecords] of Object.entries(grouped)) {
     const [attractionName, parkName, dayOfWeek] = groupKey.split('|');
 
-    // Calculate stats for each window
-    const windowStats = Object.entries(windows)
-      .filter(([_, times]) => times.length >= 2) // Minimum samples
-      .map(([windowKey, times]) => {
-        const [hour, minute] = windowKey.split(':').map(Number);
-        const avgWait = times.reduce((a, b) => a + b, 0) / times.length;
-        const stdDev = Math.sqrt(times.reduce((sum, t) => sum + Math.pow(t - avgWait, 2), 0) / times.length);
+    // Calculate aggregate stats across all days for this attraction/day combo
+    const avgWaits = dayRecords.map(d => d.avg_wait_time).filter((v: any) => v != null);
+    const bestWaits = dayRecords.map(d => d.best_wait_time).filter((v: any) => v != null);
+    const bestTimes = dayRecords.map(d => d.best_time).filter((v: any) => v != null);
+
+    if (avgWaits.length === 0) continue;
+
+    const overallAvg = avgWaits.reduce((a: number, b: number) => a + b, 0) / avgWaits.length;
+    const overallMin = bestWaits.length > 0 ? Math.min(...bestWaits) : 0;
+    const overallMax = dayRecords.map(d => d.max_wait_time).filter((v: any) => v != null);
+    const maxWait = overallMax.length > 0 ? Math.max(...overallMax) : 0;
+
+    // Find the most common best time
+    const timeCounts: Record<string, { count: number; totalWait: number }> = {};
+    for (const d of dayRecords) {
+      if (d.best_time) {
+        // Round to 10-min window
+        const parts = d.best_time.split(':');
+        const mins = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        const windowStart = Math.floor(mins / 10) * 10;
+        const windowKey = `${String(Math.floor(windowStart / 60)).padStart(2, '0')}:${String(windowStart % 60).padStart(2, '0')}`;
         
-        return {
-          windowKey,
-          avgWait,
-          minWait: Math.min(...times),
-          maxWait: Math.max(...times),
-          stdDev,
-          sampleSize: times.length,
-          hour,
-          minute,
-        };
-      })
+        if (!timeCounts[windowKey]) timeCounts[windowKey] = { count: 0, totalWait: 0 };
+        timeCounts[windowKey].count++;
+        timeCounts[windowKey].totalWait += (d.best_wait_time || d.avg_wait_time || 0);
+      }
+    }
+
+    // Sort by average wait (lower is better)
+    const sortedWindows = Object.entries(timeCounts)
+      .map(([timeKey, stats]) => ({
+        timeKey,
+        avgWait: stats.totalWait / stats.count,
+        sampleSize: stats.count,
+      }))
       .sort((a, b) => a.avgWait - b.avgWait);
 
-    // Take top 10 windows
-    windowStats.slice(0, 10).forEach((window, index) => {
-      const confidence = calculateConfidence(100, window.stdDev, window.sampleSize);
-      
-      const endMinute = (window.minute + 10) % 60;
-      const endHour = window.minute >= 50 ? (window.hour + 1) % 24 : window.hour;
+    // Take top 5 windows
+    sortedWindows.slice(0, 5).forEach((window, index) => {
+      const [hour, minute] = window.timeKey.split(':').map(Number);
+      const endMinute = (minute + 10) % 60;
+      const endHour = minute >= 50 ? (hour + 1) % 24 : hour;
+
+      const totalSamples = dayRecords.reduce((sum: number, d: any) => sum + (d.data_points_collected || 0), 0);
+      const confidence = calculateConfidence(100, 0, totalSamples);
 
       windowsToUpsert.push({
         attraction_name: attractionName,
         park_name: parkName,
         day_of_week: parseInt(dayOfWeek),
-        time_window_start: `${String(window.hour).padStart(2, '0')}:${String(window.minute).padStart(2, '0')}:00`,
+        time_window_start: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`,
         time_window_end: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`,
         avg_wait_time: Math.round(window.avgWait * 100) / 100,
-        min_wait_time: window.minWait,
-        max_wait_time: window.maxWait,
-        std_deviation: Math.round(window.stdDev * 100) / 100,
+        min_wait_time: overallMin,
+        max_wait_time: maxWait,
+        std_deviation: 0,
         confidence_score: confidence,
         sample_size: window.sampleSize,
         ranking: index + 1,
-        is_recommended: index < 3, // Top 3 are recommended
+        is_recommended: index < 3,
         last_updated: new Date().toISOString(),
       });
     });
@@ -383,5 +370,7 @@ async function updateOptimalWindows(supabase: any, upToDate: string) {
     } else {
       console.log(`Updated ${windowsToUpsert.length} optimal windows`);
     }
+  } else {
+    console.log("No optimal windows to upsert");
   }
 }
