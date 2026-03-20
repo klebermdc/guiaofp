@@ -85,19 +85,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get all wait time records for the target date
-    const { data: records, error: fetchError } = await supabase
+    // Count total records for the target date
+    const { count: totalRecords } = await supabase
       .from('wait_time_records')
-      .select('*')
+      .select('id', { count: 'exact', head: true })
       .eq('date', targetDate)
-      .eq('status', 'Operating')
-      .order('time');
+      .eq('status', 'Operating');
 
-    if (fetchError) {
-      throw new Error(`Error fetching records: ${fetchError.message}`);
-    }
-
-    if (!records || records.length === 0) {
+    if (!totalRecords || totalRecords === 0) {
       console.log(`No records found for ${targetDate}`);
       return new Response(
         JSON.stringify({ 
@@ -108,6 +103,26 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Fetch all records in batches of 5000
+    const batchSize = 5000;
+    const records: any[] = [];
+    
+    for (let offset = 0; offset < totalRecords; offset += batchSize) {
+      const { data: batch, error: batchErr } = await supabase
+        .from('wait_time_records')
+        .select('*')
+        .eq('date', targetDate)
+        .eq('status', 'Operating')
+        .order('time')
+        .range(offset, offset + batchSize - 1);
+
+      if (batchErr) throw new Error(`Error fetching records batch: ${batchErr.message}`);
+      if (batch) records.push(...batch);
+      if (!batch || batch.length < batchSize) break;
+    }
+
+    console.log(`Fetched ${records.length} records for ${targetDate}`);
 
     // Group records by attraction + park
     const groupedRecords: Record<string, typeof records> = {};
