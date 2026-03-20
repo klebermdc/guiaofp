@@ -232,19 +232,45 @@ async function updateOptimalWindows(supabase: any, upToDate: string) {
   startDate.setDate(startDate.getDate() - 90);
   const startDateStr = startDate.toISOString().split('T')[0];
 
-  // Get all records in this period
-  const { data: records, error: fetchError } = await supabase
+  // Count total records first
+  const { count: totalCount } = await supabase
     .from('wait_time_records')
-    .select('attraction_name, park_name, day_of_week, time, wait_time_minutes')
+    .select('id', { count: 'exact', head: true })
     .gte('date', startDateStr)
     .lte('date', upToDate)
     .eq('status', 'Operating')
     .not('wait_time_minutes', 'is', null);
 
-  if (fetchError || !records || records.length < 100) {
-    console.log("Not enough data for optimal windows calculation");
+  if (!totalCount || totalCount < 100) {
+    console.log(`Not enough data for optimal windows calculation (${totalCount || 0} records)`);
     return;
   }
+
+  console.log(`Fetching ${totalCount} records for optimal windows...`);
+
+  // Fetch in batches of 5000 to bypass 1000-row limit
+  const batchSize = 5000;
+  const records: any[] = [];
+  
+  for (let offset = 0; offset < totalCount; offset += batchSize) {
+    const { data: batch, error: batchErr } = await supabase
+      .from('wait_time_records')
+      .select('attraction_name, park_name, day_of_week, time, wait_time_minutes')
+      .gte('date', startDateStr)
+      .lte('date', upToDate)
+      .eq('status', 'Operating')
+      .not('wait_time_minutes', 'is', null)
+      .range(offset, offset + batchSize - 1);
+
+    if (batchErr) {
+      console.error(`Error fetching batch at offset ${offset}:`, batchErr);
+      break;
+    }
+    if (batch) records.push(...batch);
+    if (!batch || batch.length < batchSize) break;
+  }
+
+  console.log(`Fetched ${records.length} records for optimal windows calculation`);
 
   // Group by attraction + park + day_of_week
   const grouped: Record<string, Record<string, number[]>> = {};
