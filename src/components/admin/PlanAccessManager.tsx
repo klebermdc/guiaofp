@@ -65,7 +65,7 @@ export function PlanAccessManager() {
       <CardContent>
         <div className="mb-4 flex gap-4">
           <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">
-            Básico = Planejador Inteligente (R$49,90)
+            OFP Planejador (R$49,90)
           </Badge>
           <Badge variant="secondary" className="bg-amber-500/10 text-amber-600">
             Premium = Roteiro com Guia
