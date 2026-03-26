@@ -55,7 +55,7 @@ function getCartTypeLabel(type: string): string {
 
 // Get plan name for display
 function getPlanDisplayName(planKey: string): string {
-  return planKey === 'premium' ? 'Guia Premium' : 'Básico';
+  return planKey === 'premium' ? 'Guia Premium' : 'OFP Planejador';
 }
 
 // Generate urgency message based on plan type
