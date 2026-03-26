@@ -55,7 +55,7 @@ const Plan = () => {
               Meu Plano
             </h1>
             <p className={hasGuide ? 'text-primary-foreground/80' : 'text-muted-foreground'}>
-              {hasGuide ? 'Roteiro Inteligente com Guia' : 'Planejador Inteligente'}
+              {hasGuide ? 'Roteiro Inteligente com Guia' : 'OFP Planejador'}
             </p>
           </div>
         </div>
