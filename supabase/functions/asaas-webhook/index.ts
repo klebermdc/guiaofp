@@ -40,7 +40,7 @@ const statusMap: Record<string, string> = {
 };
 
 const planNames: Record<string, string> = {
-  basic: "Plano Básico",
+  basic: "OFP Planejador",
   premium: "Plano Premium",
 };
 

@@ -90,7 +90,7 @@ function getStatusBadge(status: string) {
 // Get cart type label
 function getCartTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    basic: '📋 Plano Básico',
+    basic: '📋 OFP Planejador',
     premium: '🌟 Guia Premium',
     plan: '📦 Plano',
   };

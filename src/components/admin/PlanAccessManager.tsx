@@ -65,7 +65,7 @@ export function PlanAccessManager() {
       <CardContent>
         <div className="mb-4 flex gap-4">
           <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">
-            Básico = Planejador Inteligente (R$49,90)
+            OFP Planejador (R$49,90)
           </Badge>
           <Badge variant="secondary" className="bg-amber-500/10 text-amber-600">
             Premium = Roteiro com Guia
@@ -80,7 +80,7 @@ export function PlanAccessManager() {
                 <TableHead className="text-center w-[150px]">
                   <span className="flex items-center justify-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-blue-500" />
-                    Básico
+                    OFP Planejador
                   </span>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">

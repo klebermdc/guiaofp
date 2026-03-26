@@ -46,7 +46,7 @@ function formatCurrency(cents: number): string {
 // Get cart type label in Portuguese
 function getCartTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    basic: 'Plano Básico',
+    basic: 'OFP Planejador',
     premium: 'Plano Guia Premium',
     plan: 'Plano',
   };
@@ -55,7 +55,7 @@ function getCartTypeLabel(type: string): string {
 
 // Get plan name for display
 function getPlanDisplayName(planKey: string): string {
-  return planKey === 'premium' ? 'Guia Premium' : 'Básico';
+  return planKey === 'premium' ? 'Guia Premium' : 'OFP Planejador';
 }
 
 // Generate urgency message based on plan type
@@ -85,7 +85,7 @@ function generateEmailHTML(
 
   const planBadge = isPremium 
     ? '<span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">PREMIUM</span>'
-    : '<span style="background: #6b7280; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">BÁSICO</span>';
+    : '<span style="background: #6b7280; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">OFP PLANEJADOR</span>';
 
   return `
 <!DOCTYPE html>

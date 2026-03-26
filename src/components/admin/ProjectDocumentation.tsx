@@ -65,7 +65,7 @@ const ProjectDocumentationComponent = () => {
                 <Card className="p-4">
                   <h4 className="font-semibold mb-2">💼 Modelo de Negócio</h4>
                   <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• Plano Básico: Acesso limitado</li>
+                    <li>• OFP Planejador: Acesso completo ao planejador</li>
                     <li>• Plano Premium: Acesso completo + guiamento</li>
                     <li>• Pagamento via Asaas (PIX/Boleto)</li>
                   </ul>
