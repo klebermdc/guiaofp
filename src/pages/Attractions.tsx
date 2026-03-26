@@ -365,7 +365,7 @@ export default function Attractions() {
   };
 
   const handleContactGuide = () => {
-    window.open('https://wa.me/5511966144493?text=Olá! Tenho interesse no Guiamento Premium para minha viagem a Orlando.', '_blank');
+    window.open('https://wa.me/message/TRKS54CVGEGUK1', '_blank');
   };
 
   if (loading || parksLoading) {

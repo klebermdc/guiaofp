@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const GUIDE_WHATSAPP: Record<string, string> = {
-  'rafael': 'https://wa.me/5511966144493',
-  'kleber': 'https://wa.me/551151944192',
+  'rafael': 'https://wa.me/message/TRKS54CVGEGUK1',
+  'kleber': 'https://wa.me/message/TRKS54CVGEGUK1',
 };
 
 // Default WhatsApp for when no specific guide is assigned
-const DEFAULT_WHATSAPP = 'https://wa.me/5511966144493';
+const DEFAULT_WHATSAPP = 'https://wa.me/message/TRKS54CVGEGUK1';
 
 export type PlanTier = 'basic' | 'premium';
 

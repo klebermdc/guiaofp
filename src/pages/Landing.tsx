@@ -78,7 +78,7 @@ const AnimatedSection = memo(({ children, className = '', delay = 0 }: { childre
 AnimatedSection.displayName = 'AnimatedSection';
 
 // ─── WhatsApp link ───────────────────────────────────────────────────────────
-const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/2US6I4NWQWLDD1";
+const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/TRKS54CVGEGUK1";
 
 const Landing = () => {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();

@@ -162,7 +162,7 @@ const Plan = () => {
                     Com o <strong>Roteiro Inteligente com Guia</strong>, você aproveita. O guia decide. O sistema executa.
                   </p>
                   <Button 
-                    onClick={() => window.open('https://wa.me/5511966144493', '_blank')}
+                    onClick={() => window.open('https://wa.me/message/TRKS54CVGEGUK1', '_blank')}
                     className="w-full bg-gradient-to-r from-primary to-primary/80"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
