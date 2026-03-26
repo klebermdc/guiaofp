@@ -214,7 +214,7 @@ const Landing = () => {
             <TrackableButton
               size="lg"
               className="gradient-gold text-secondary-foreground rounded-2xl px-8 h-14 text-lg shadow-gold group hover:scale-105 transition-transform w-full sm:w-auto font-bold"
-              onClick={() => scrollTo('planos')}
+              onClick={() => scrollTo('identificacao')}
               trackingName="cta_hero_planos"
               trackingLocation="hero"
             >
@@ -571,7 +571,7 @@ const Landing = () => {
                         'Checklists Inteligentes',
                         'Cupons de Parceiros',
                         'Mapa do Parque Interativo',
-                        'Guia Mini Viajante (Crianças)',
+                        'Guia OFP Crianças',
                         'Guia dos Parques Detalhado',
                         'Top 3 nos Parques',
                         'Multi Pass & Lightning Lane',
