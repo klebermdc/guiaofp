@@ -83,7 +83,7 @@ const Plan = () => {
                 <p className="text-sm text-muted-foreground">
                   {hasGuide 
                     ? `Guia: ${guideName}` 
-                    : 'Você planeja. O sistema organiza.'}
+                    : 'OFP Planejador — sua ferramenta completa.'}
                 </p>
               </div>
             </div>
