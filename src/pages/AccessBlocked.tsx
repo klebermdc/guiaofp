@@ -25,11 +25,7 @@ export default function AccessBlocked() {
     }
   }, [pendingCheckout, redirectParam, navigate]);
 
-  const whatsappNumber = '5511999999999'; // Número de suporte
-  const whatsappMessage = encodeURIComponent(
-    `Olá! Acabei de me cadastrar na plataforma Orlando Fast Pass e gostaria de saber mais sobre os planos de guiamento.\n\nEmail: ${user?.email}`
-  );
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+  const whatsappUrl = 'https://wa.me/message/TRKS54CVGEGUK1';
 
   // Check access periodically (every 10 seconds for the first 2 minutes)
   useEffect(() => {
