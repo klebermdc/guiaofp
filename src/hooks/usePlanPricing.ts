@@ -28,6 +28,7 @@ export function usePlanPricing() {
       (data ?? []).forEach((p: any) => {
         map[p.plan_key] = {
           ...p,
+          plan_name: p.plan_key === 'basic' ? 'OFP Planejador' : p.plan_name,
           features: Array.isArray(p.features) ? p.features : [],
         };
       });
