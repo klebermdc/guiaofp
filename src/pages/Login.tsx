@@ -269,7 +269,7 @@ const Login = () => {
         <p className="text-center text-sm text-muted-foreground mt-6">
           Problemas para acessar?{' '}
           <a
-            href="https://wa.me/5500000000000"
+            href="https://wa.me/message/TRKS54CVGEGUK1"
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent font-medium hover:underline"

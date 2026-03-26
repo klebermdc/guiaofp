@@ -153,6 +153,6 @@ export const THRILL_LEVELS = {
 
 // ============= WhatsApp Links =============
 export const WHATSAPP_LINKS = {
-  premium: 'https://wa.me/message/2US6I4NWQWLDD1',
-  support: 'https://wa.me/message/2US6I4NWQWLDD1',
+  premium: 'https://wa.me/message/TRKS54CVGEGUK1',
+  support: 'https://wa.me/message/TRKS54CVGEGUK1',
 } as const;
