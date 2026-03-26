@@ -1,0 +1,1 @@
+UPDATE public.plan_pricing SET plan_name = 'OFP Planejador' WHERE plan_key = 'basic';
