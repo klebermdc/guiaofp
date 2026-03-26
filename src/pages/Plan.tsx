@@ -73,7 +73,7 @@ const Plan = () => {
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  {hasGuide ? 'Roteiro Inteligente com Guia' : 'Planejador Inteligente'}
+                  {hasGuide ? 'Roteiro Inteligente com Guia' : 'OFP Planejador'}
                   {hasGuide && (
                     <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
                       Premium
