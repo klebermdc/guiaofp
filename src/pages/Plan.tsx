@@ -12,12 +12,22 @@ const Plan = () => {
 
   // Features do Planejador Inteligente (Sem Guia)
   const basicFeatures = [
-    { icon: Users, text: 'Perfil de viagem completo' },
-    { icon: Sparkles, text: 'Seleção de atrações desejadas' },
-    { icon: Map, text: 'Mapa do parque' },
-    { icon: CheckCircle2, text: 'Guia de viagem (checklist)' },
-    { icon: Play, text: 'Conteúdos por parque' },
-    { icon: Route, text: 'Roteiro genérico (dicas gerais)' },
+    { icon: Users, text: 'Perfil da Viagem Personalizado' },
+    { icon: Sparkles, text: 'Resumo de Orlando' },
+    { icon: BookOpen, text: 'Guia de Viagem Completo' },
+    { icon: CheckCircle2, text: 'Checklists Inteligentes' },
+    { icon: Map, text: 'Mapa do Parque Interativo' },
+    { icon: Play, text: 'Guia dos Parques Detalhado' },
+    { icon: Crown, text: 'Multi Pass & Lightning Lane' },
+    { icon: Sparkles, text: 'Atrações Desejadas' },
+    { icon: Route, text: 'Roteiro Personalizado com IA' },
+    { icon: Calendar, text: 'Planejador Manual' },
+    { icon: Sparkles, text: 'Guia de Restaurantes' },
+    { icon: CreditCard, text: 'Cupons de Parceiros' },
+    { icon: Users, text: 'Guia OFP Crianças' },
+    { icon: Sparkles, text: 'Top 3 nos Parques' },
+    { icon: Route, text: 'Guia de Transporte' },
+    { icon: CheckCircle2, text: 'Carteira de Documentos' },
   ];
 
   // Features do Roteiro Inteligente (Com Guia) - inclui tudo do básico + exclusivos

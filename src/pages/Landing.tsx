@@ -571,7 +571,7 @@ const Landing = () => {
                         'Checklists Inteligentes',
                         'Cupons de Parceiros',
                         'Mapa do Parque Interativo',
-                        'Guia Mini Viajante (Crianças)',
+                        'Guia OFP Crianças',
                         'Guia dos Parques Detalhado',
                         'Top 3 nos Parques',
                         'Multi Pass & Lightning Lane',
