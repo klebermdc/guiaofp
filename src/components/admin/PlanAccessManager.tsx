@@ -80,7 +80,7 @@ export function PlanAccessManager() {
                 <TableHead className="text-center w-[150px]">
                   <span className="flex items-center justify-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-blue-500" />
-                    Básico
+                    OFP Planejador
                   </span>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
