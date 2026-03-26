@@ -46,7 +46,7 @@ function formatCurrency(cents: number): string {
 // Get cart type label in Portuguese
 function getCartTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    basic: 'Plano Básico',
+    basic: 'OFP Planejador',
     premium: 'Plano Guia Premium',
     plan: 'Plano',
   };
