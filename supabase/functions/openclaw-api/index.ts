@@ -48,8 +48,11 @@ async function isAdmin(supabase: any, userId: string): Promise<boolean> {
 }
 
 Deno.serve(async (req) => {
+  // Set CORS headers based on request origin
+  _corsHeaders = getCorsHeaders(req.headers.get("origin"));
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: _corsHeaders });
   }
 
   // Auth: Bearer token
