@@ -1,22 +1,58 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Content-Type": "application/json",
+// CORS: restrict to explicit origin whitelist
+const ALLOWED_ORIGINS = [
+  "https://guiaofp.lovable.app",
+  "https://ofp.app",
+  "https://app.ofp.app",
+  "https://planner.ofp.app",
+  Deno.env.get("ENVIRONMENT") === "development" ? "http://localhost:3000" : null,
+].filter(Boolean) as string[];
+
+const getCorsHeaders = (requestOrigin: string | null) => {
+  const allowOrigin =
+    requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
+      ? requestOrigin
+      : ALLOWED_ORIGINS[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Headers": "authorization, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Content-Type": "application/json",
+  };
 };
 
+// Per-request CORS headers (set in handler)
+let _corsHeaders: Record<string, string> = {};
+
 function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders });
+  return new Response(JSON.stringify(data), { status, headers: _corsHeaders });
 }
 
 function errorResponse(message: string, status: number) {
   return jsonResponse({ error: message }, status);
 }
 
+// Admin check via user_roles table
+async function isAdmin(supabase: any, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
 Deno.serve(async (req) => {
+  // Set CORS headers based on request origin
+  _corsHeaders = getCorsHeaders(req.headers.get("origin"));
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: _corsHeaders });
   }
 
   // Auth: Bearer token
@@ -51,8 +87,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ============ METRICS ============
+    // ============ METRICS (admin only) ============
     if (path === "/metrics" && method === "GET") {
+      // Verify admin role via auth token
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader! } } }
+      );
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(
+        authHeader!.replace("Bearer ", "")
+      );
+      // If token is the API key (not a user JWT), allow (backwards compat)
+      // but if it's a user JWT, enforce admin
+      if (claimsData?.claims?.sub) {
+        const userId = claimsData.claims.sub as string;
+        if (!(await isAdmin(supabase, userId))) {
+          return errorResponse("Forbidden: Admin access required", 403);
+        }
+      }
       const [profilesRes, transRes, activeRes, paidRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("transactions").select("id, amount_cents, status, created_at"),
