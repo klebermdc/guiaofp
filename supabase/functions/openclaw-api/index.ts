@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimit } from "../_middleware/rate-limit.ts";
 
 // CORS: restrict to explicit origin whitelist
 const ALLOWED_ORIGINS = [
@@ -66,6 +67,36 @@ Deno.serve(async (req) => {
   if (!authHeader || authHeader !== `Bearer ${expectedKey}`) {
     return errorResponse("Unauthorized", 401);
   }
+
+  // Rate limiting
+  const clientIp = req.headers.get("x-forwarded-for") || "unknown";
+  const rateLimitKey = `${clientIp}:${authHeader}`;
+
+  // Determine per-endpoint limit
+  const urlPath = new URL(req.url).pathname.replace(/^\/openclaw-api\/?/, "/").replace(/\/+$/, "") || "/";
+  const sensitiveEndpoints = ["/users", "/transactions", "/metrics"];
+  const endpointLimit = sensitiveEndpoints.some(e => urlPath.startsWith(e)) ? 20 : 100;
+
+  const { allowed, remaining } = rateLimit(`${rateLimitKey}:${urlPath}`, endpointLimit, 60000);
+
+  if (!allowed) {
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded" }),
+      {
+        status: 429,
+        headers: {
+          ..._corsHeaders,
+          "Retry-After": "60",
+          "X-RateLimit-Limit": endpointLimit.toString(),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
+  // Attach rate limit info to all responses
+  _corsHeaders["X-RateLimit-Limit"] = endpointLimit.toString();
+  _corsHeaders["X-RateLimit-Remaining"] = remaining.toString();
 
   // Supabase admin client
   const supabase = createClient(
