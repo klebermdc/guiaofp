@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { rateLimit } from "../_middleware/rate-limit.ts";
 
 // CORS: restrict to explicit origin whitelist
 const ALLOWED_ORIGINS = [
