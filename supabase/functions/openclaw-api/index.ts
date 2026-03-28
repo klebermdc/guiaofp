@@ -87,8 +87,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ============ METRICS ============
+    // ============ METRICS (admin only) ============
     if (path === "/metrics" && method === "GET") {
+      // Verify admin role via auth token
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader! } } }
+      );
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(
+        authHeader!.replace("Bearer ", "")
+      );
+      // If token is the API key (not a user JWT), allow (backwards compat)
+      // but if it's a user JWT, enforce admin
+      if (claimsData?.claims?.sub) {
+        const userId = claimsData.claims.sub as string;
+        if (!(await isAdmin(supabase, userId))) {
+          return errorResponse("Forbidden: Admin access required", 403);
+        }
+      }
       const [profilesRes, transRes, activeRes, paidRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("transactions").select("id, amount_cents, status, created_at"),
