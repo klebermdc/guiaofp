@@ -10,6 +10,35 @@ const corsHeaders = {
 
 const ASAAS_WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
 
+// HMAC signature verification
+const verifyAsaasSignature = async (
+  payload: string,
+  signature: string | null
+): Promise<boolean> => {
+  const secret = Deno.env.get("ASAAS_WEBHOOK_SECRET");
+  if (!secret || !signature) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const computed = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payload)
+  );
+
+  const computedHex = Array.from(new Uint8Array(computed))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return computedHex === signature;
+};
+
 interface AsaasWebhookPayload {
   event: string;
   payment?: {
@@ -50,17 +79,35 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const webhookToken = req.headers.get("asaas-access-token");
-    
-    if (ASAAS_WEBHOOK_TOKEN && webhookToken !== ASAAS_WEBHOOK_TOKEN) {
-      console.error("Invalid webhook token received");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    // Read body as text for signature verification, then parse
+    const rawBody = await req.text();
+
+    // Auth: verify HMAC signature if ASAAS_WEBHOOK_SECRET is configured
+    const hmacSignature = req.headers.get("asaas-signature");
+    const hasHmacSecret = !!Deno.env.get("ASAAS_WEBHOOK_SECRET");
+
+    if (hasHmacSecret) {
+      const isValid = await verifyAsaasSignature(rawBody, hmacSignature);
+      if (!isValid) {
+        console.error("Invalid HMAC signature on webhook");
+        return new Response(
+          JSON.stringify({ error: "Invalid signature" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    } else {
+      // Fallback: token-based auth
+      const webhookToken = req.headers.get("asaas-access-token");
+      if (ASAAS_WEBHOOK_TOKEN && webhookToken !== ASAAS_WEBHOOK_TOKEN) {
+        console.error("Invalid webhook token received");
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
-    const payload: AsaasWebhookPayload = await req.json();
+    const payload: AsaasWebhookPayload = JSON.parse(rawBody);
     console.log("Received Asaas webhook:", JSON.stringify(payload, null, 2));
 
     if (!payload.event.startsWith("PAYMENT_")) {
@@ -82,6 +129,22 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Missing payment ID" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Idempotency check — prevent duplicate processing
+    const idempotencyKey = `asaas_${paymentId}_${payload.event}`;
+    const { data: existingWebhook } = await supabase
+      .from("webhook_idempotency")
+      .select("id")
+      .eq("webhook_key", idempotencyKey)
+      .maybeSingle();
+
+    if (existingWebhook) {
+      console.log("Webhook already processed:", idempotencyKey);
+      return new Response(
+        JSON.stringify({ success: true, message: "Already processed" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -212,7 +275,6 @@ const handler = async (req: Request): Promise<Response> => {
       };
 
       // ===== PHASE 1: CRITICAL PATH (sequential — must succeed) =====
-      // These operations depend on each other and are essential for user access
 
       // 1a. Check if user already exists
       const { data: usersData } = await supabase.auth.admin.listUsers();
@@ -244,7 +306,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       if (authUser?.id) {
-        // 1c. Enable access and set plan tier (CRITICAL — must happen before anything else)
+        // 1c. Enable access and set plan tier
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
@@ -276,8 +338,7 @@ const handler = async (req: Request): Promise<Response> => {
           console.error("❌ Error updating transaction with user ID:", err);
         }
 
-        // ===== PHASE 2: PARALLEL — all independent operations at once =====
-        // None of these should block each other. If one fails, the others still run.
+        // ===== PHASE 2: PARALLEL =====
         console.log("Starting parallel operations...");
         
         const parallelResults = await Promise.allSettled([
@@ -301,7 +362,6 @@ const handler = async (req: Request): Promise<Response> => {
           sendTracking(),
         ]);
 
-        // Log summary of parallel results
         const labels = ['purchase-email', 'access-email', 'push', 'admin-notif', 'tracking'];
         parallelResults.forEach((result, i) => {
           if (result.status === 'rejected') {
@@ -328,6 +388,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     }
+
+    // Mark webhook as processed (idempotency)
+    await supabase
+      .from("webhook_idempotency")
+      .insert({ webhook_key: idempotencyKey });
 
     return new Response(
       JSON.stringify({ success: true, status: newStatus }),

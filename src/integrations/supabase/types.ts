@@ -2260,6 +2260,24 @@ export type Database = {
           },
         ]
       }
+      webhook_idempotency: {
+        Row: {
+          id: string
+          processed_at: string
+          webhook_key: string
+        }
+        Insert: {
+          id?: string
+          processed_at?: string
+          webhook_key: string
+        }
+        Update: {
+          id?: string
+          processed_at?: string
+          webhook_key?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_guide_view: {
