@@ -1,17 +1,50 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Content-Type": "application/json",
+// CORS: restrict to explicit origin whitelist
+const ALLOWED_ORIGINS = [
+  "https://guiaofp.lovable.app",
+  "https://ofp.app",
+  "https://app.ofp.app",
+  "https://planner.ofp.app",
+  Deno.env.get("ENVIRONMENT") === "development" ? "http://localhost:3000" : null,
+].filter(Boolean) as string[];
+
+const getCorsHeaders = (requestOrigin: string | null) => {
+  const allowOrigin =
+    requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
+      ? requestOrigin
+      : ALLOWED_ORIGINS[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Headers": "authorization, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Content-Type": "application/json",
+  };
 };
 
+// Per-request CORS headers (set in handler)
+let _corsHeaders: Record<string, string> = {};
+
 function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders });
+  return new Response(JSON.stringify(data), { status, headers: _corsHeaders });
 }
 
 function errorResponse(message: string, status: number) {
   return jsonResponse({ error: message }, status);
+}
+
+// Admin check via user_roles table
+async function isAdmin(supabase: any, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
 }
 
 Deno.serve(async (req) => {
