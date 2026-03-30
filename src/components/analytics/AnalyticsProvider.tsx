@@ -1,13 +1,13 @@
 /**
  * Analytics Provider
  * 
- * GTM is loaded DYNAMICALLY only on checkout pages to save Stape hits.
+ * GTM is loaded DYNAMICALLY on all pages via Stape Custom Loader.
  * GA4 and FB Pixel are managed as tags INSIDE GTM.
  * 
  * This provider:
  * 1. Fetches tracking_config from DB (for context/flags)
- * 2. Injects GTM script only on /checkout/* routes
- * 3. Tracks page views via dataLayer only on checkout routes
+ * 2. Injects GTM script on every page
+ * 3. Tracks page views via dataLayer on all routes
  * 4. Exposes config context for other components
  */
 
