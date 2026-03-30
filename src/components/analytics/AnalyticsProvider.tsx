@@ -48,9 +48,7 @@ interface AnalyticsProviderProps {
   children: React.ReactNode;
 }
 
-/** Routes where GTM should be active */
-const isCheckoutRoute = (pathname: string) =>
-  pathname.startsWith('/checkout');
+/** GTM is now active on all routes */
 
 /** Inject Stape Custom Loader script once */
 const injectGTM = (() => {
