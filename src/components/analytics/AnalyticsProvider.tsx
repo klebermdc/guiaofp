@@ -142,10 +142,9 @@ export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
     loadTrackingConfig();
   }, []);
 
-  // Inject GTM and track page views ONLY on checkout routes
+  // Inject GTM on first load and track page views on all routes
   useEffect(() => {
     if (!configLoaded) return;
-    if (!isCheckoutRoute(location.pathname)) return;
 
     // Inject GTM script (idempotent — only runs once)
     injectGTM();
