@@ -73,7 +73,7 @@ const injectGTM = (() => {
     document.head.appendChild(script);
 
     if (import.meta.env.DEV) {
-      console.log('[Analytics] GTM injected on checkout page');
+      console.log('[Analytics] GTM injected');
     }
   };
 })();
