@@ -47,6 +47,7 @@ const planIcons: Record<string, typeof Map | typeof Crown> = {
 export default function Register() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
+  const { trackBeginCheckout } = useAnalytics();
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   const planKey = planId || 'basic';
