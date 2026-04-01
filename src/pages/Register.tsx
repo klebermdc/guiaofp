@@ -214,6 +214,18 @@ export default function Register() {
 
       toast.success('Conta criada! Agora finalize seu pagamento.');
       
+      // Fire begin_checkout only on this button click (Continuar para pagamento)
+      if (plan) {
+        trackBeginCheckout(plan.id, plan.name, plan.price_cents, undefined, {
+          email: formData.email,
+          phone: formData.phone,
+          first_name: formData.name.split(' ')[0],
+          last_name: formData.name.split(' ').slice(1).join(' '),
+          full_name: formData.name,
+          country: 'BR',
+        });
+      }
+
       // Navigate to checkout
       navigate(`/checkout/${planId || 'basic'}`);
     } catch (error: any) {
