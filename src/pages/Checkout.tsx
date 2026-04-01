@@ -68,7 +68,7 @@ interface UserProfile {
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { trackPurchase, trackBeginCheckout } = useAnalytics();
+  const { trackPurchase } = useAnalytics();
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   // Derive plan from DB data
@@ -162,22 +162,11 @@ export default function Checkout() {
     loadUser();
   }, [navigate, planId]);
 
-  // Track view_item + begin_checkout on page load (once only via ref + session dedup)
+  // Track abandoned cart on page load (begin_checkout moved to Register page button click)
   const hasTrackedView = useRef(false);
   useEffect(() => {
     if (plan && userProfile && !hasTrackedView.current) {
       hasTrackedView.current = true;
-      const buyer = {
-        email: userProfile.email,
-        phone: userProfile.phone,
-        first_name: userProfile.name?.split(' ')[0],
-        last_name: userProfile.name?.split(' ').slice(1).join(' '),
-        full_name: userProfile.name,
-        country: 'BR',
-      };
-      // view_item removed to save Stape hits — begin_checkout is sufficient for RMKT
-      // begin_checkout fires here — real checkout page — with internal session dedup
-      trackBeginCheckout(plan.id, plan.name, originalAmountCents, undefined, buyer);
       
       // Update abandoned cart with user's actual info
       supabase.functions.invoke('track-abandoned-cart', {
@@ -203,7 +192,7 @@ export default function Checkout() {
         },
       }).catch(console.error);
     }
-  }, [plan, userProfile, originalAmountCents, trackBeginCheckout]);
+  }, [plan, userProfile, originalAmountCents]);
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) {

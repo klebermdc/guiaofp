@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Mail, 
@@ -46,6 +47,7 @@ const planIcons: Record<string, typeof Map | typeof Crown> = {
 export default function Register() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
+  const { trackBeginCheckout } = useAnalytics();
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   const planKey = planId || 'basic';
@@ -212,6 +214,18 @@ export default function Register() {
 
       toast.success('Conta criada! Agora finalize seu pagamento.');
       
+      // Fire begin_checkout only on this button click (Continuar para pagamento)
+      if (plan) {
+        trackBeginCheckout(plan.id, plan.name, plan.price_cents, undefined, {
+          email: formData.email,
+          phone: formData.phone,
+          first_name: formData.name.split(' ')[0],
+          last_name: formData.name.split(' ').slice(1).join(' '),
+          full_name: formData.name,
+          country: 'BR',
+        });
+      }
+
       // Navigate to checkout
       navigate(`/checkout/${planId || 'basic'}`);
     } catch (error: any) {
