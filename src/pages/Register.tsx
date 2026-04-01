@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Mail, 
