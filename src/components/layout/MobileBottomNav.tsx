@@ -151,7 +151,7 @@ const MobileBottomNavComponent = () => {
                 </motion.div>
                 <motion.span 
                   className={cn(
-                    "text-[9px] sm:text-[10px] font-medium transition-colors duration-200 truncate max-w-[56px] sm:max-w-none",
+                    "text-[9px] sm:text-[10px] font-medium transition-colors duration-200 text-center leading-tight max-w-[56px] sm:max-w-none",
                     isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
                   )}
                   animate={isActive ? { scale: 1.05 } : { scale: 1 }}
