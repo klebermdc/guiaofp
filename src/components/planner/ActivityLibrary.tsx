@@ -65,6 +65,7 @@ const getCategoryStyle = (category: string) => {
 // Removed individual fetch functions - now using fetchLibraryDataParallel from useCachedQueries
 
 // Helper to determine category info
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getCategoryInfo = (item: any, type: string, parks: any[]) => {
   if (type === 'park') {
     const isDisney = item.slug?.includes('disney') || item.slug?.includes('magic-kingdom') || 
@@ -110,6 +111,7 @@ const getCategoryInfo = (item: any, type: string, parks: any[]) => {
 };
 
 // Get icon for item type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getItemIcon = (item: any, type: string) => {
   if (item.icon) return item.icon;
   
@@ -315,6 +317,7 @@ export const ActivityLibrary = ({ onDragStart }: ActivityLibraryProps) => {
     });
 
     // Transform favorite restaurants
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const favoriteItems: LibraryItem[] = favoriteRestaurants.map((fav: any) => {
       const rest = fav.restaurants;
       if (!rest) return null;

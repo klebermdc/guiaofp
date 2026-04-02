@@ -59,7 +59,7 @@ export const SendWhatsAppMessage = ({ clients }: SendWhatsAppMessageProps) => {
     setIsSending(true);
 
     try {
-      const body: Record<string, any> = {
+      const body: Record<string, unknown> = {
         user_id: selectedClient,
       };
 

@@ -5,6 +5,7 @@ import type { PlannerItem } from '@/components/planner/PlannerCalendar';
 import type { LibraryItem } from '@/components/planner/ActivityLibrary';
 
 // Helper functions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const determineItemType = (item: LibraryItem | any): PlannerItem['item_type'] => {
   if (item.type) return item.type;
   if (item.park_id && item.cuisine) return 'restaurant';
@@ -14,6 +15,7 @@ const determineItemType = (item: LibraryItem | any): PlannerItem['item_type'] =>
   return 'activity';
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const determineCategory = (item: LibraryItem | any): string => {
   if (item.category) return item.category;
   if (item.park_slug?.includes('disney')) return 'disney';
@@ -22,6 +24,7 @@ const determineCategory = (item: LibraryItem | any): string => {
   return 'other';
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const determineColor = (item: LibraryItem | any): string => {
   if (item.color) return item.color;
   
@@ -44,6 +47,7 @@ const determineColor = (item: LibraryItem | any): string => {
   return colors[category] || colors.other;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const determineIcon = (item: LibraryItem | any): string => {
   if (item.icon) return item.icon;
   
@@ -70,6 +74,7 @@ const determineIcon = (item: LibraryItem | any): string => {
   return icons[type] || icons.custom;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const transformDbItem = (item: any): PlannerItem => ({
   id: item.id,
   planner_id: item.planner_id,
@@ -163,6 +168,7 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
 
   // Handle drop from library – optimistic with temp ID
   const handleDrop = useCallback(async (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     draggedItem: LibraryItem | any,
     date: string,
     timeSlot: string
@@ -327,6 +333,7 @@ export const usePlannerDragDrop = ({ plannerId, onItemsChange }: UsePlannerDragD
       item.id === itemId ? { ...item, ...updates } : item
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dbUpdates: Record<string, any> = {};
     for (const [key, value] of Object.entries(updates)) {
       if (value !== undefined) {

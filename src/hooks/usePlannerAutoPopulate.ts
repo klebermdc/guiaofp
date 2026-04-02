@@ -118,6 +118,7 @@ export const usePlannerAutoPopulate = () => {
     // Check what already exists
     const { hasCheckIn, hasCheckOut, existingParkDates } = await checkExistingItems(plannerId);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const itemsToInsert: any[] = [];
 
     // === Hotel Check-in (if missing) ===

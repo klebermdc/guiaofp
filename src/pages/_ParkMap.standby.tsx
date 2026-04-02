@@ -217,7 +217,7 @@ export default function ParkMap() {
   }, []);
 
   // Alternative: Use wait times data directly as attractions (they have the correct names)
-  const useWaitTimesAsAttractions = useCallback((waitTimesData: WaitTimeData[], parkCenter: LatLng) => {
+  const applyWaitTimesAsAttractions = useCallback((waitTimesData: WaitTimeData[], parkCenter: LatLng) => {
     // Create attractions from wait times data
     // Since we don't have exact coordinates, we'll place them around the park center
     const attractionsFromWaitTimes: Attraction[] = waitTimesData.map((wt, index) => {
@@ -267,9 +267,9 @@ export default function ParkMap() {
   // When wait times are loaded, use them as attractions if no Places results
   useEffect(() => {
     if (waitTimes.length > 0 && attractions.length === 0) {
-      useWaitTimesAsAttractions(waitTimes, selectedPark.center);
+      applyWaitTimesAsAttractions(waitTimes, selectedPark.center);
     }
-  }, [waitTimes, attractions.length, selectedPark.center, useWaitTimesAsAttractions]);
+  }, [waitTimes, attractions.length, selectedPark.center, applyWaitTimesAsAttractions]);
 
   // Auto-refresh wait times every 5 minutes
   useEffect(() => {

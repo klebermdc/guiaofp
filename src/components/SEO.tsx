@@ -39,7 +39,7 @@ export function SEO({
       let element = document.querySelector(selector) as HTMLMetaElement;
       if (!element) {
         element = document.createElement('meta');
-        const [attr, value] = selector.replace(/[\[\]']/g, '').split('=');
+        const [attr, value] = selector.replace(/[[\]']/g, '').split('=');
         element.setAttribute(attr.replace('meta', '').trim(), value?.replace(/"/g, '') || '');
         document.head.appendChild(element);
       }

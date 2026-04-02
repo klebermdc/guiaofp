@@ -228,9 +228,9 @@ export default function Register() {
 
       // Navigate to checkout
       navigate(`/checkout/${planId || 'basic'}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Erro ao criar conta. Tente novamente.');
+      toast.error((error as Error).message || 'Erro ao criar conta. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }

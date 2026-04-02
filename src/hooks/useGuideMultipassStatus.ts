@@ -96,9 +96,9 @@ export const useGuideMultipassStatus = () => {
       isFetchedRef.current = false;
       await loadAllStatuses(true);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error confirming client purchase:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 
@@ -120,9 +120,9 @@ export const useGuideMultipassStatus = () => {
       isFetchedRef.current = false;
       await loadAllStatuses(true);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error undoing client purchase:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 

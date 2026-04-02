@@ -165,7 +165,8 @@ export function useGPSNavigation(_apiKey: string) {
       lastPosRef.current = cur;
 
       setState((prev) => {
-        let { currentStepIndex: idx, steps } = prev;
+        let { currentStepIndex: idx } = prev;
+        const { steps } = prev;
         const step = steps[idx];
         let dNext: number | null = null;
         if (step) {

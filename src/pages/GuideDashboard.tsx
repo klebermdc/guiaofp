@@ -118,12 +118,13 @@ const GuideDashboard = () => {
           return (client.completion_percentage || 0) >= 80;
         case 'incomplete':
           return (client.completion_percentage || 0) < 80;
-        case 'upcoming':
+        case 'upcoming': {
           if (!client.arrival_date) return false;
           const arrival = new Date(client.arrival_date);
           const todayCheck = new Date();
           const diffDays = Math.ceil((arrival.getTime() - todayCheck.getTime()) / (1000 * 60 * 60 * 24));
           return diffDays > 0 && diffDays <= 30;
+        }
         default:
           return true;
       }

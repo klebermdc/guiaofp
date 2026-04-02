@@ -49,7 +49,7 @@ export function useFavoriteSlugs() {
       if (error) throw error;
       
       const slugs = new Set<string>();
-      data?.forEach((fav: any) => {
+      data?.forEach((fav: { restaurants?: { slug?: string } }) => {
         if (fav.restaurants?.slug) {
           slugs.add(fav.restaurants.slug);
         }

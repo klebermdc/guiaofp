@@ -125,6 +125,7 @@ const defaultTravelProfile: TravelProfile = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper to convert DB profile to frontend format
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dbToFrontend = (dbProfile: any): TravelProfile => ({
   id: dbProfile.id,
   user_id: dbProfile.user_id,
@@ -166,6 +167,7 @@ const dbToFrontend = (dbProfile: any): TravelProfile => ({
 
 // Helper to convert frontend profile to DB format
 const frontendToDb = (profile: Partial<TravelProfile>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbProfile: any = {};
   
   if (profile.responsibleName !== undefined) dbProfile.responsible_name = profile.responsibleName;
@@ -231,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadProfileForUser = useCallback(async (userId: string): Promise<TravelProfile> => {
     try {
       // Retry logic for profile fetch with exponential backoff
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fetchProfileWithRetry = async (attempt = 1): Promise<{ data: any; error: any }> => {
         const timeout = attempt === 1 ? 10000 : 15000; // 10s first, 15s retry
         
@@ -290,6 +293,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profile.guideName = contractData.guide_name;
         }
         if ((!profile.parkDates || profile.parkDates.length === 0) && contractData.parks && Array.isArray(contractData.parks)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           profile.parkDates = contractData.parks as any[];
         }
         if (!profile.arrivalDate && contractData.start_date) {
@@ -505,7 +509,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { success: true };
-    } catch (err: any) {
+    } catch (err) {
       console.error('[Auth] Login error:', err);
       return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
     }

@@ -200,6 +200,7 @@ export default function RoteiroView() {
           bodyStyles: { fontSize: 9, cellPadding: 3 },
           margin: { left: 14, right: 14 },
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         yPosition = (doc as any).lastAutoTable.finalY + 5;
       }
 
@@ -221,6 +222,7 @@ export default function RoteiroView() {
           bodyStyles: { fontSize: 9, cellPadding: 3 },
           margin: { left: 14, right: 14 },
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         yPosition = (doc as any).lastAutoTable.finalY + 10;
       } else {
         yPosition += 5;

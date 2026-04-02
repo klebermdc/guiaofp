@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Hotel, categoryLabels, categoryColors } from '@/data/hotelsData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ const StarRating = ({ stars }: { stars: number }) => {
   );
 };
 
-const AmenityIcon = ({ show, icon: Icon, label }: { show: boolean; icon: any; label: string }) => {
+const AmenityIcon = ({ show, icon: Icon, label }: { show: boolean; icon: React.ElementType; label: string }) => {
   if (!show) return null;
   return (
     <Tooltip>

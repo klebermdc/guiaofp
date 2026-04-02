@@ -49,7 +49,7 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
   }, [isOpen]);
 
   const getYoutubeEmbedUrl = (url: string) => {
-    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    const match = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : url;
   };
 

@@ -59,8 +59,8 @@ export function DiningAlertCreator() {
       setSelectedDate(undefined)
       setPartySize('4')
       setMealTime('any')
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar alerta')
+    } catch (error) {
+      toast.error((error as Error).message || 'Erro ao criar alerta')
     } finally {
       setLoading(false)
     }

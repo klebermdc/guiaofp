@@ -49,6 +49,7 @@ interface PlannerCalendarProps {
   startDate: string;
   endDate: string;
   items: PlannerItem[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onDrop: (item: any, date: string, timeSlot: string) => void;
   onRemove: (itemId: string) => void;
   onReorder: (date: string, timeSlot: string, items: PlannerItem[]) => void;

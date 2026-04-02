@@ -54,7 +54,7 @@ interface UserDocument {
   uploaded_at: string;
   ai_validation_status: string | null;
   ai_validation_message: string | null;
-  ai_extracted_dates: any | null;
+  ai_extracted_dates: unknown | null;
   ai_validated_at: string | null;
 }
 

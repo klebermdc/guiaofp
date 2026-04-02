@@ -91,7 +91,7 @@ export function CouponsManager() {
       toast.success(editingCoupon ? 'Cupom atualizado!' : 'Cupom criado!');
       handleCloseDialog();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       if (error.message?.includes('duplicate')) {
         toast.error('Já existe um cupom com este código');
       } else {

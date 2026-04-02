@@ -35,17 +35,17 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = translations[language];
-    
+    let value: unknown = translations[language];
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as Record<string, unknown>)[k];
       } else {
         // Fallback to Portuguese if key not found
-        let fallback: any = translations['pt'];
+        let fallback: unknown = translations['pt'];
         for (const fk of keys) {
           if (fallback && typeof fallback === 'object' && fk in fallback) {
-            fallback = fallback[fk];
+            fallback = (fallback as Record<string, unknown>)[fk];
           } else {
             return key; // Return key if not found anywhere
           }
@@ -67,11 +67,11 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 // Fallback translation function for when context is not available
 const fallbackT = (key: string): string => {
   const keys = key.split('.');
-  let value: any = translations['pt'];
-  
+  let value: unknown = translations['pt'];
+
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
-      value = value[k];
+      value = (value as Record<string, unknown>)[k];
     } else {
       return key;
     }

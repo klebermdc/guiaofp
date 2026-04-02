@@ -113,7 +113,7 @@ export function TravelModeTop3Manager() {
       toast.success(editingItem ? 'Item atualizado!' : 'Item criado!');
       closeDialog();
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error('Erro ao salvar: ' + err.message);
     },
   });
@@ -179,8 +179,8 @@ export function TravelModeTop3Manager() {
       const { data: urlData } = supabase.storage.from('admin-content').getPublicUrl(path);
       setForm(f => ({ ...f, image_url: urlData.publicUrl }));
       toast.success('Imagem enviada!');
-    } catch (err: any) {
-      toast.error('Erro no upload: ' + err.message);
+    } catch (err) {
+      toast.error('Erro no upload: ' + (err as Error).message);
     } finally {
       setIsUploading(false);
     }

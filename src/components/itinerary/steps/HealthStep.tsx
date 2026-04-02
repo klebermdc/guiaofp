@@ -54,6 +54,7 @@ function Chip({ checked, label, emoji, onClick }: { checked: boolean; label: str
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface HealthStepProps { form: any; watchedValues: any; }
 
 export function HealthStep({ form, watchedValues }: HealthStepProps) {

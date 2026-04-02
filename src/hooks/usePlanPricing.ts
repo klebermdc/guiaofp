@@ -25,6 +25,7 @@ export function usePlanPricing() {
       if (error) throw error;
 
       const map: Record<string, PlanPricingData> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (data ?? []).forEach((p: any) => {
         map[p.plan_key] = {
           ...p,

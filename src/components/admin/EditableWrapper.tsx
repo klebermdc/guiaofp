@@ -131,6 +131,7 @@ const EditableWrapperComponent = ({
   const dynamicClasses = applyStyles ? getClasses() : '';
 
   // Create element with proper typing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const WrapperElement = Component as any;
 
   return (

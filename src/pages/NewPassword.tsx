@@ -47,9 +47,9 @@ const NewPassword = () => {
     try {
       const validation = passwordSchema.safeParse({ password, confirmPassword });
       if (!validation.success) {
-        const fieldErrors: any = {};
+        const fieldErrors: Record<string, string> = {};
         validation.error.errors.forEach((err) => {
-          fieldErrors[err.path[0]] = err.message;
+          fieldErrors[String(err.path[0])] = err.message;
         });
         setErrors(fieldErrors);
         setIsLoading(false);
@@ -74,10 +74,10 @@ const NewPassword = () => {
           navigate('/login', { replace: true });
         });
       }, 2000);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Update password error:', err);
       setIsLoading(false);
-      toast.error(err.message || 'Erro ao alterar senha. Tente novamente.');
+      toast.error((err as Error).message || 'Erro ao alterar senha. Tente novamente.');
     }
   };
 

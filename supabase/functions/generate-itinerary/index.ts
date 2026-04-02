@@ -233,7 +233,7 @@ serve(async (req) => {
 
     // Collect real-time data if enabled
     let waitTimeContext = '';
-    let waitTimeData: WaitTimeData[] = [];
+    const waitTimeData: WaitTimeData[] = [];
 
     if (useRealTimeData) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

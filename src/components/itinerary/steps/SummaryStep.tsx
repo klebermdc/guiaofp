@@ -38,11 +38,13 @@ const priorityLabels: Record<string, string> = {
   shopping: "🛍️ Compras", photos: "📸 Fotos",
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface Props {
   form: any;
   watchedValues: any;
   onEditStep: (step: number) => void;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function Section({ title, step, onEdit, children }: { title: string; step: number; onEdit: (s: number) => void; children: React.ReactNode }) {
   return (

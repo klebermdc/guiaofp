@@ -69,7 +69,7 @@ export function PlanPricingManager() {
     }));
   };
 
-  const handleChange = (planId: string, field: keyof PlanPricing, value: any) => {
+  const handleChange = (planId: string, field: keyof PlanPricing, value: unknown) => {
     setEditingPlans(prev => ({
       ...prev,
       [planId]: {

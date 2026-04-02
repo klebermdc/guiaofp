@@ -171,9 +171,9 @@ export function SendPushNotification({ clients }: SendPushNotificationProps) {
       } else {
         toast.warning(results.join(' | '));
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending notification:', error);
-      toast.error(error.message || 'Erro ao enviar notificação');
+      toast.error((error as Error).message || 'Erro ao enviar notificação');
     } finally {
       setIsLoading(false);
     }

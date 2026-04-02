@@ -710,10 +710,12 @@ const TravelProfile = () => {
 };
 
 // Accommodation Section Component
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface AccommodationSectionProps {
   travelProfile: any;
   handleFieldChange: (data: any) => void;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function AccommodationSection({ travelProfile, handleFieldChange }: AccommodationSectionProps) {
   const { user } = useAuth();
@@ -918,10 +920,12 @@ function AccommodationSection({ travelProfile, handleFieldChange }: Accommodatio
 }
 
 // Disney App Section Component
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface DisneyAppSectionProps {
   travelProfile: any;
   handleFieldChange: (data: any) => void;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function DisneyAppSection({ travelProfile, handleFieldChange }: DisneyAppSectionProps) {
   

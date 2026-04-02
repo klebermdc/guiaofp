@@ -72,8 +72,10 @@ export function useRestaurants() {
         throw error;
       }
       console.log(`[useRestaurants] Fetched ${data.length} restaurants`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data.map((r: any) => ({
         ...r,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         images: (r.restaurant_images || []).map((img: any) => ({
           id: img.id,
           restaurant_id: r.id,

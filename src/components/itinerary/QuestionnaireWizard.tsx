@@ -243,54 +243,55 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (!parsed || typeof parsed !== "object") return null;
+        const parsedRaw = JSON.parse(saved);
+        if (!parsedRaw || typeof parsedRaw !== "object") return null;
+        const parsed = parsedRaw as Record<string, unknown>;
 
         // Normalize (defensive) to avoid crashes from older/corrupted drafts
         const draft = {
           ...parsed,
-          startDate: normalizeDate((parsed as any).startDate),
-          endDate: normalizeDate((parsed as any).endDate),
+          startDate: normalizeDate(parsed.startDate),
+          endDate: normalizeDate(parsed.endDate),
           adultsCount:
-            typeof (parsed as any).adultsCount === "number"
-              ? (parsed as any).adultsCount
-              : Number((parsed as any).adultsCount) || 2,
+            typeof parsed.adultsCount === "number"
+              ? parsed.adultsCount
+              : Number(parsed.adultsCount) || 2,
           childrenCount:
-            typeof (parsed as any).childrenCount === "number"
-              ? (parsed as any).childrenCount
-              : Number((parsed as any).childrenCount) || 0,
-          childrenAges: normalizeNumberArray((parsed as any).childrenAges),
-          selectedParks: normalizeStringArray((parsed as any).selectedParks),
-          additionalActivities: normalizeStringArray((parsed as any).additionalActivities),
+            typeof parsed.childrenCount === "number"
+              ? parsed.childrenCount
+              : Number(parsed.childrenCount) || 0,
+          childrenAges: normalizeNumberArray(parsed.childrenAges),
+          selectedParks: normalizeStringArray(parsed.selectedParks),
+          additionalActivities: normalizeStringArray(parsed.additionalActivities),
           // Step 7 fields
-          hasTickets: typeof (parsed as any).hasTickets === "boolean" ? (parsed as any).hasTickets : null,
-          ticketTypes: normalizeStringArray((parsed as any).ticketTypes),
-          ticketDays: typeof (parsed as any).ticketDays === "number" ? (parsed as any).ticketDays : 0,
-          ticketStartDate: typeof (parsed as any).ticketStartDate === "string" ? (parsed as any).ticketStartDate : "",
-          ticketUploadedUrls: normalizeStringArray((parsed as any).ticketUploadedUrls),
+          hasTickets: typeof parsed.hasTickets === "boolean" ? parsed.hasTickets : null,
+          ticketTypes: normalizeStringArray(parsed.ticketTypes),
+          ticketDays: typeof parsed.ticketDays === "number" ? parsed.ticketDays : 0,
+          ticketStartDate: typeof parsed.ticketStartDate === "string" ? parsed.ticketStartDate : "",
+          ticketUploadedUrls: normalizeStringArray(parsed.ticketUploadedUrls),
           // Step 8 fields
-          hasHotel: typeof (parsed as any).hasHotel === "boolean" ? (parsed as any).hasHotel : null,
-          hotelName: typeof (parsed as any).hotelName === "string" ? (parsed as any).hotelName : "",
-          hotelAddress: typeof (parsed as any).hotelAddress === "string" ? (parsed as any).hotelAddress : "",
-          hotelCheckIn: typeof (parsed as any).hotelCheckIn === "string" ? (parsed as any).hotelCheckIn : "",
-          hotelCheckOut: typeof (parsed as any).hotelCheckOut === "string" ? (parsed as any).hotelCheckOut : "",
-          hotelVoucherUrl: typeof (parsed as any).hotelVoucherUrl === "string" ? (parsed as any).hotelVoucherUrl : "",
+          hasHotel: typeof parsed.hasHotel === "boolean" ? parsed.hasHotel : null,
+          hotelName: typeof parsed.hotelName === "string" ? parsed.hotelName : "",
+          hotelAddress: typeof parsed.hotelAddress === "string" ? parsed.hotelAddress : "",
+          hotelCheckIn: typeof parsed.hotelCheckIn === "string" ? parsed.hotelCheckIn : "",
+          hotelCheckOut: typeof parsed.hotelCheckOut === "string" ? parsed.hotelCheckOut : "",
+          hotelVoucherUrl: typeof parsed.hotelVoucherUrl === "string" ? parsed.hotelVoucherUrl : "",
           // Step 9
-          dietaryRestrictions: normalizeStringArray((parsed as any).dietaryRestrictions),
-          dietaryOther: typeof (parsed as any).dietaryOther === "string" ? (parsed as any).dietaryOther : "",
-          physicalLimitations: normalizeStringArray((parsed as any).physicalLimitations),
-          fears: normalizeStringArray((parsed as any).fears),
+          dietaryRestrictions: normalizeStringArray(parsed.dietaryRestrictions),
+          dietaryOther: typeof parsed.dietaryOther === "string" ? parsed.dietaryOther : "",
+          physicalLimitations: normalizeStringArray(parsed.physicalLimitations),
+          fears: normalizeStringArray(parsed.fears),
           // Step 10
-          specialOccasions: normalizeStringArray((parsed as any).specialOccasions),
-          birthdayDate: typeof (parsed as any).birthdayDate === "string" ? (parsed as any).birthdayDate : "",
-          birthdayPerson: typeof (parsed as any).birthdayPerson === "string" ? (parsed as any).birthdayPerson : "",
-          occasionOther: typeof (parsed as any).occasionOther === "string" ? (parsed as any).occasionOther : "",
-          heatPreference: typeof (parsed as any).heatPreference === "string" ? (parsed as any).heatPreference : "need_breaks",
-          rainPreference: typeof (parsed as any).rainPreference === "string" ? (parsed as any).rainPreference : "prefer_indoor",
-          groupEnergy: typeof (parsed as any).groupEnergy === "string" ? (parsed as any).groupEnergy : "normal",
-          sleepPreference: typeof (parsed as any).sleepPreference === "string" ? (parsed as any).sleepPreference : "normal",
+          specialOccasions: normalizeStringArray(parsed.specialOccasions),
+          birthdayDate: typeof parsed.birthdayDate === "string" ? parsed.birthdayDate : "",
+          birthdayPerson: typeof parsed.birthdayPerson === "string" ? parsed.birthdayPerson : "",
+          occasionOther: typeof parsed.occasionOther === "string" ? parsed.occasionOther : "",
+          heatPreference: typeof parsed.heatPreference === "string" ? parsed.heatPreference : "need_breaks",
+          rainPreference: typeof parsed.rainPreference === "string" ? parsed.rainPreference : "prefer_indoor",
+          groupEnergy: typeof parsed.groupEnergy === "string" ? parsed.groupEnergy : "normal",
+          sleepPreference: typeof parsed.sleepPreference === "string" ? parsed.sleepPreference : "normal",
           // Step 11
-          attractionPriorities: normalizeStringArray((parsed as any).attractionPriorities),
+          attractionPriorities: normalizeStringArray(parsed.attractionPriorities),
         };
 
         // Persist sanitized draft so the user doesn't get stuck in a crash loop

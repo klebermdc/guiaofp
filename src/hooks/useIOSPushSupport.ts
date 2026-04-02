@@ -33,6 +33,7 @@ export function useIOSPushSupport(): IOSPushSupport {
     // On iOS, window.navigator.standalone is the most reliable check
     // NOTE: Avoid '(display-mode: fullscreen)' here — it can produce false positives in iOS Safari.
     const isStandalone =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window.navigator as any).standalone === true || // iOS PWA
       window.matchMedia('(display-mode: standalone)').matches;
     

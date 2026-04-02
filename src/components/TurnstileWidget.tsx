@@ -30,7 +30,7 @@ const TurnstileWidget = ({ siteKey, onVerify, onExpire, onError, className }: Tu
 
     // Clean up existing widget
     if (widgetIdRef.current) {
-      try { window.turnstile.remove(widgetIdRef.current); } catch {}
+      try { window.turnstile.remove(widgetIdRef.current); } catch (_e) { /* intentional */ }
       widgetIdRef.current = null;
     }
 
@@ -67,7 +67,7 @@ const TurnstileWidget = ({ siteKey, onVerify, onExpire, onError, className }: Tu
 
     return () => {
       if (widgetIdRef.current && window.turnstile) {
-        try { window.turnstile.remove(widgetIdRef.current); } catch {}
+        try { window.turnstile.remove(widgetIdRef.current); } catch (_e) { /* intentional */ }
         widgetIdRef.current = null;
       }
     };

@@ -144,7 +144,7 @@ const Content = () => {
 
   // Normalize name for fuzzy matching (remove ™®, punctuation, lowercase, trim)
   const normalizeName = (name: string) => 
-    name.toLowerCase().replace(/[™®©"'`:\/\-–—()!.,]/g, '').replace(/\s+/g, ' ').trim();
+    name.toLowerCase().replace(/[™®©"'`:/\-–—()!.,]/g, '').replace(/\s+/g, ' ').trim();
 
   // Find avg wait time for an attraction using fuzzy matching
   const getAvgWaitTime = (attractionName: string): number | null => {
@@ -232,7 +232,7 @@ const Content = () => {
 
       // Merge all wait_time_records results
       const allRecords: Array<{ attraction_name: string; wait_time_minutes: number | null }> = [];
-      recordsResults.forEach((result: any) => {
+      recordsResults.forEach((result: { error: unknown; data?: { attraction_name: string; wait_time_minutes: number | null }[] }) => {
         if (!result.error && result.data) {
           allRecords.push(...result.data);
         }
@@ -389,7 +389,7 @@ const Content = () => {
   };
 
   const getYoutubeEmbedUrl = (url: string) => {
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
     const match = url.match(youtubeRegex);
     if (match) {
       return `https://www.youtube.com/embed/${match[1]}`;

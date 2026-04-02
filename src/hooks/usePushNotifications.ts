@@ -30,6 +30,7 @@ export function usePushNotifications() {
   const checkExistingSubscription = useCallback(async () => {
     try {
       const registration = await navigator.serviceWorker.ready;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const subscription = await (registration as any).pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch {
@@ -49,12 +50,8 @@ export function usePushNotifications() {
 
   const registerServiceWorker = async () => {
     if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        return registration;
-      } catch (error) {
-        throw error;
-      }
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      return registration;
     }
     throw new Error('Service Workers not supported');
   };
@@ -80,6 +77,7 @@ export function usePushNotifications() {
 
       // Subscribe to push
       const applicationServerKey = VAPID_PUBLIC_KEY ? urlBase64ToUint8Array(VAPID_PUBLIC_KEY) : undefined;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as BufferSource,
@@ -117,6 +115,7 @@ export function usePushNotifications() {
     setIsLoading(true);
     try {
       const registration = await navigator.serviceWorker.ready;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const subscription = await (registration as any).pushManager.getSubscription();
 
       if (subscription) {

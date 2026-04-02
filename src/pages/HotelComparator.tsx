@@ -57,7 +57,7 @@ const HotelComparator = () => {
   };
 
   const filtered = useMemo(() => {
-    let result = hotels.filter((h) => {
+    const result = hotels.filter((h) => {
       const q = search.toLowerCase();
       if (q && !h.name.toLowerCase().includes(q) && !h.chain.toLowerCase().includes(q) && !h.description.toLowerCase().includes(q)) return false;
       if (selectedRegions.length > 0 && !selectedRegions.includes(h.region)) return false;

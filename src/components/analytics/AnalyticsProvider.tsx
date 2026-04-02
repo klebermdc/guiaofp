@@ -57,6 +57,7 @@ const injectGTM = (() => {
     if (injected) return;
     injected = true;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any;
     const dl = 'dataLayer';
     w[dl] = w[dl] || [];

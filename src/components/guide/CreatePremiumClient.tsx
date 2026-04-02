@@ -126,10 +126,10 @@ export const CreatePremiumClient = ({ onClientCreated }: CreatePremiumClientProp
       setIsOpen(false);
       onClientCreated?.();
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating client:', error);
       toast.error('Erro ao criar cliente', {
-        description: error.message || 'Tente novamente',
+        description: (error as Error).message || 'Tente novamente',
       });
     } finally {
       setIsLoading(false);

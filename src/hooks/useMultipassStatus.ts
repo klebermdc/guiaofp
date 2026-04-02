@@ -129,9 +129,9 @@ export const useMultipassStatus = () => {
       fetchedUserIdRef.current = null;
       await loadStatus(true);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error confirming purchase:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 
@@ -155,9 +155,9 @@ export const useMultipassStatus = () => {
       fetchedUserIdRef.current = null;
       await loadStatus(true);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error undoing purchase:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 

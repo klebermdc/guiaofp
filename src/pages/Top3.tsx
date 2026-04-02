@@ -171,6 +171,7 @@ const Top3Page = () => {
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if (error) throw error;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (data ?? []).map((item: any) => ({
         ...item,
         restaurant_latitude: item.restaurants?.latitude ?? null,

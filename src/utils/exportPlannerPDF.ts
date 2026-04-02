@@ -163,6 +163,7 @@ export const exportPlannerToPDF = (planner: Planner, items: PlannerItem[]) => {
         },
       });
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       yPosition = (doc as any).lastAutoTable.finalY + 10;
     }
   });

@@ -95,7 +95,7 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
 
       // Check park_dates JSON
       if (client.park_dates && Array.isArray(client.park_dates)) {
-        client.park_dates.forEach((pd: any) => {
+        client.park_dates.forEach((pd: { date?: string; park?: string }) => {
           if (pd.date) {
             try {
               const parkDate = parseISO(pd.date);
@@ -107,13 +107,13 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
                   user_id: client.user_id
                 });
               }
-            } catch {}
+            } catch (_e) { /* intentional */ }
           }
         });
       }
-      
+
       // Fallback: if no park_dates, show client during their trip period
-      if ((!client.park_dates || !Array.isArray(client.park_dates) || client.park_dates.length === 0) 
+      if ((!client.park_dates || !Array.isArray(client.park_dates) || client.park_dates.length === 0)
           && client.arrival_date && client.departure_date) {
         try {
           const arrival = parseISO(client.arrival_date);
@@ -127,7 +127,7 @@ export function GuideCalendar({ clients, filterGuide = 'all' }: GuideCalendarPro
               user_id: client.user_id
             });
           }
-        } catch {}
+        } catch (_e) { /* intentional */ }
       }
     });
 

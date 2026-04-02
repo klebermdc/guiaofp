@@ -42,7 +42,7 @@ const ResetPassword = () => {
 
       setIsSuccess(true);
       toast.success('Email enviado com sucesso!');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Reset password error:', err);
       toast.error('Erro ao enviar email. Tente novamente.');
     } finally {

@@ -60,9 +60,9 @@ const Login = () => {
     try {
       const validation = loginSchema.safeParse({ email, password });
       if (!validation.success) {
-        const fieldErrors: any = {};
+        const fieldErrors: Record<string, string> = {};
         validation.error.errors.forEach((err) => {
-          fieldErrors[err.path[0]] = err.message;
+          fieldErrors[String(err.path[0])] = err.message;
         });
         setErrors(fieldErrors);
         setIsSubmitting(false);

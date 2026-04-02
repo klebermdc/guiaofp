@@ -93,9 +93,9 @@ export function TransactionsManager() {
       if (error) throw error;
 
       toast.success('Email reenviado com sucesso!');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error resending notification:', error);
-      toast.error('Erro ao reenviar email: ' + (error.message || 'Tente novamente'));
+      toast.error('Erro ao reenviar email: ' + ((error as Error).message || 'Tente novamente'));
     } finally {
       setResendingId(null);
     }

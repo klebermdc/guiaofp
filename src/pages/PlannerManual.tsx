@@ -295,6 +295,7 @@ const PlannerManual = () => {
   }, [plannerData?.id, handleDrop, handleMoveToSlot, handleReorder, plannerItems, toast]);
 
   // Handle drop from PlannerCalendar (for moves between slots)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCalendarDrop = useCallback(async (item: any, date: string, timeSlot: string) => {
     // Check if it's a library item or existing planner item
     if (item.type && ['park', 'attraction', 'restaurant', 'shopping', 'activity'].includes(item.type)) {

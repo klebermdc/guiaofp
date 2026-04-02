@@ -260,7 +260,9 @@ export default function ParkMap() {
       description:
         (typeof poi.description === 'string' && poi.description.trim())
           ? poi.description
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           : (typeof (poi as any).attraction_description === 'string' && (poi as any).attraction_description.trim())
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ? (poi as any).attraction_description
             : null,
       menuUrl: poi.menu_url,
@@ -348,6 +350,7 @@ export default function ParkMap() {
     try {
       // Create or reuse AudioContext
       if (!audioContextRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioContextRef.current;
@@ -532,9 +535,12 @@ export default function ParkMap() {
       if (error) {
         console.error('Error fetching wait times:', error);
         // Don't clear wait times on error - keep showing last known data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (Array.isArray((data as any)?.data)) {
         // Some deployments return { data: Ride[] } without a success flag.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setWaitTimes((data as any).data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setDataSource((data as any)?.source || 'unknown');
         setLastWaitTimeUpdate(new Date());
       }
@@ -977,7 +983,9 @@ export default function ParkMap() {
       lastOrientationUpdate = now;
 
       let heading: number;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((event as any).webkitCompassHeading !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         heading = (event as any).webkitCompassHeading;
       } else {
         heading = (360 - event.alpha) % 360;
@@ -995,7 +1003,9 @@ export default function ParkMap() {
     orientationHandlerRef.current = handleOrientation;
 
     // Request permission for device orientation on iOS 13+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (DeviceOrientationEvent as any).requestPermission()
         .then((response: string) => {
           if (response === 'granted' && orientationHandlerRef.current) {
@@ -1562,6 +1572,7 @@ export default function ParkMap() {
             onDragStart={gps.onMapDrag}
             onDragEnd={gps.onMapDragEnd}
             onClick={(e) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
               // Don't close the popup when interacting with it (e.g., tapping the video thumbnail).
               if (target?.closest?.('[data-attraction-popup="true"], [data-poi-popup="true"]')) return;

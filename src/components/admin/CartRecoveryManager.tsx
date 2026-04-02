@@ -231,11 +231,13 @@ export function CartRecoveryManager() {
   };
 
   // Get email for cart
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCartEmail = (cart: any): string | null => {
     return cart.metadata?.contact_email || cart.profile?.email || null;
   };
 
   // Get name for cart
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCartName = (cart: any): string => {
     return cart.metadata?.contact_name || cart.profile?.responsible_name || 'Viajante';
   };
@@ -251,6 +253,7 @@ export function CartRecoveryManager() {
   };
 
   // Replace template variables
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const replaceVariables = (text: string, cart: any): string => {
     return text
       .replace(/{nome}/g, getCartName(cart))

@@ -17,6 +17,7 @@ function normalizeArr(value: unknown): string[] {
   return [];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props { form: any; watchedValues: any; }
 
 export function PriorityStep({ form, watchedValues }: Props) {

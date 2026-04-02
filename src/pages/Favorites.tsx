@@ -15,8 +15,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-const FavoriteCard = ({ favorite, onRemove }: { 
-  favorite: any; 
+const FavoriteCard = ({ favorite, onRemove }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  favorite: any;
   onRemove: () => void;
 }) => {
   const navigate = useNavigate();
