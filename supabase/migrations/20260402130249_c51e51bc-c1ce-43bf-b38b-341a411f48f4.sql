@@ -1,0 +1,2 @@
+INSERT INTO plan_page_access (page_key, page_name, page_icon, basic_visible, premium_visible, show_in_bottom_nav, travel_mode_visible, sort_order, mobile_sort_order, desktop_sort_order, travel_mode_sort_order)
+VALUES ('top3', 'Top 3 nos Parques', 'Star', true, true, false, true, 18, 18, 18, 18);
