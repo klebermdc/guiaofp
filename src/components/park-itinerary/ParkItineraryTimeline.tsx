@@ -120,6 +120,9 @@ export const ParkItineraryTimeline = ({ parkName }: ParkItineraryTimelineProps) 
         }
       }
 
+      // Strip <think>...</think> reasoning blocks from MiniMax responses
+      fullContent = fullContent.replace(/<think>[\s\S]*?<\/think>\s*/g, '');
+
       // Extract JSON from the response (handle markdown code blocks)
       let jsonContent = fullContent;
       const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)```/);
