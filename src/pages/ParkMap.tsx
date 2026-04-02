@@ -2451,7 +2451,7 @@ export default function ParkMap() {
                               setSelectedPOI(poi);
                               handleNavigateToAttraction(poi.position);
                             }}
-                            onNavigate={() => calculateRoute(poi.position, poi.name)}
+                            onNavigate={() => handleRouteToAttraction(poi.position, poi.name)}
                             onOpenMenu={(url, name) => setMenuModalData({ url, name })}
                           />
                         ))}
