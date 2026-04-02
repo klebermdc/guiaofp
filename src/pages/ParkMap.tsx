@@ -1088,19 +1088,15 @@ export default function ParkMap() {
     }
   };
 
-  const handleRouteToAttraction = async (position: LatLng, name: string) => {
-    // Start internal GPS guided navigation with auto-rotation
-    try {
-      await gps.startNavigation(position, name);
-    } catch (err: any) {
-      // If GPS fails, fall back to opening external nav
-      console.warn('GPS navigation failed, falling back to external:', err);
-      toast.error('Erro ao iniciar navegação GPS', {
-        description: err?.message || 'Tente abrir no Google Maps',
-      });
+  const handleRouteToAttraction = useCallback((position: LatLng, name: string) => {
+    // First try internal route display on map (needs user position)
+    if (userPositionRef.current || userPosition) {
+      calculateRoute(position, name);
+    } else {
+      // No GPS position yet — open Google Maps externally as fallback
       openExternalNav('google', position);
     }
-  };
+  }, [userPosition, calculateRoute, openExternalNav]);
 
   const handleStopNavigation = () => {
     clearRoute();
