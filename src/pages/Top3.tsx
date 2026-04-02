@@ -124,15 +124,33 @@ const Top3ItemCard = memo(({ item, index, onNavigate }: {
           {item.description}
         </p>
 
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-[10px] gap-1 px-2.5 mt-1 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
-          onClick={() => onNavigate(item)}
-        >
-          <Navigation className="w-3 h-3" />
-          Ver no mapa
-        </Button>
+        <div className="flex gap-1.5 mt-1 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-[10px] gap-1 px-2.5 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+            onClick={() => onNavigate(item)}
+          >
+            <Navigation className="w-3 h-3" />
+            Ver no mapa
+          </Button>
+          {item.restaurant_latitude && item.restaurant_longitude && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[10px] gap-1 px-2.5 border-green-500/30 text-green-600 hover:bg-green-500 hover:text-white transition-all"
+              onClick={() => {
+                window.open(
+                  `https://www.google.com/maps/dir/?api=1&destination=${item.restaurant_latitude},${item.restaurant_longitude}&travelmode=walking`,
+                  '_blank'
+                );
+              }}
+            >
+              <MapPin className="w-3 h-3" />
+              Traçar Rota
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   </motion.div>
