@@ -347,7 +347,7 @@ export function AttractionPopup({
   return (
     <OverlayView
       position={attraction.position}
-      mapPaneName={OverlayView.FLOAT_PANE}
+      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
     >
       <motion.div 
         className="relative"
@@ -366,6 +366,7 @@ export function AttractionPopup({
         <div
           data-attraction-popup="true"
           className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[280px] max-w-[90vw]"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="p-3 pb-2">

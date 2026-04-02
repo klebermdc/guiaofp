@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Navigation, Star, Clock, UtensilsCrossed, DollarSign } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { openExternalUrl } from '@/lib/open-external-url';
 
 interface POI {
   id: string;
@@ -62,19 +63,10 @@ export function RestaurantSidebarCard({
         return;
       }
 
-      const isStandalone =
-        ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
-        (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
-
-      if (isMobile || isStandalone) {
-        window.location.assign(poi.menuUrl);
-        return;
-      }
-
-      const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        window.location.assign(poi.menuUrl);
-      }
+      openExternalUrl(poi.menuUrl, {
+        preferSameTab: isMobile,
+        preferSameTabOnMobile: true,
+      });
     }
   };
 

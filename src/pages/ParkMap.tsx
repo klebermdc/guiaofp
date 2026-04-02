@@ -24,6 +24,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useLiveShows, type LiveShow } from '@/hooks/useLiveShows';
+import { openExternalUrl } from '@/lib/open-external-url';
 import { 
   PARKS, 
   POI_CONFIG, 
@@ -460,21 +461,11 @@ export default function ParkMap() {
       ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
       : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
 
-    const isStandalone =
-      ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
-      (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
-
-    if (forceSameTab || isMobile || isStandalone) {
-      window.location.assign(url);
-      return;
-    }
-
-    // Try window.open first (works in embedded previews), fall back to location.href for native app handoff
-    const opened = window.open(url, '_blank');
-    if (!opened) {
-      window.location.assign(url);
-    }
-  }, [routeInfo?.destination, isMobile]);
+    openExternalUrl(url, {
+      preferSameTab: forceSameTab,
+      preferSameTabOnMobile: true,
+    });
+  }, [routeInfo?.destination]);
 
   // Re-center on user position
   const recenterOnUser = useCallback(() => {
@@ -1051,6 +1042,7 @@ export default function ParkMap() {
             (position) => {
               if (!cancelled) {
                 const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+                userPositionRef.current = pos;
                 setUserPosition(pos);
                 setIsLoadingLocation(false);
               }
@@ -1074,6 +1066,7 @@ export default function ParkMap() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+        userPositionRef.current = pos;
         setUserPosition(pos);
         if (mapRef.current) {
           mapRef.current.panTo(pos);
