@@ -25,6 +25,8 @@ export const POI_CONFIG: Record<ExtendedPOIType, POIConfig> = {
 // Alternative config for admin (slightly different labels/emojis)
 // Does NOT include restaurant since it's managed separately
 export const POI_CONFIG_ADMIN: Record<POIType, POIConfig> = {
+  attraction: { label: 'Atração', color: '#10B981', emoji: '🎢' },
+  restaurant: { label: 'Restaurante', color: '#F97316', emoji: '🍔' },
   restroom: { label: 'Banheiro', color: '#3B82F6', emoji: '🚻' },
   shop: { label: 'Loja', color: '#A855F7', emoji: '🛍️' },
   firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },
