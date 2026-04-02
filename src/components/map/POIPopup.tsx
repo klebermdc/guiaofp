@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Navigation, X, Clock, UtensilsCrossed, AlertTriangle, CalendarClock, Star, ExternalLink } from 'lucide-react';
 import { RESTAURANT_DETAILS, getTypeLabel, getPriceIndicator } from '@/data/restaurantDetails';
+import { openExternalUrl } from '@/lib/open-external-url';
 
 interface POI {
   id: string;
@@ -57,19 +58,10 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
         return;
       }
 
-      const isStandalone =
-        ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
-        (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
-
-      if (isMobile || isStandalone) {
-        window.location.assign(poi.menuUrl);
-        return;
-      }
-
-      const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        window.location.assign(poi.menuUrl);
-      }
+      openExternalUrl(poi.menuUrl, {
+        preferSameTab: isMobile,
+        preferSameTabOnMobile: true,
+      });
     }
   };
 
@@ -77,6 +69,7 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     <div
       data-poi-popup="true"
       className="bg-background rounded-xl shadow-2xl border-2 overflow-hidden w-[280px] max-w-[90vw]"
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="p-3 space-y-2.5">
         {/* Header with close button */}
@@ -213,7 +206,10 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
         <Button
           size="sm"
           className="w-full h-9 text-xs"
-          onClick={handleNavigate}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleNavigate();
+          }}
         >
           <Navigation className="w-3.5 h-3.5 mr-1.5" />
           Ir para cá
@@ -258,7 +254,7 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
   return (
     <OverlayView
       position={poi.position}
-      mapPaneName={OverlayView.FLOAT_PANE}
+      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
     >
       <motion.div 
         className="relative"
