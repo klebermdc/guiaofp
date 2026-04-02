@@ -18,7 +18,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { AttractionPopup } from '@/components/map/AttractionPopup';
 import { POIPopup } from '@/components/map/POIPopup';
-import { MenuModal } from '@/components/map/MenuModal';
 import { RestaurantSidebarCard } from '@/components/map/RestaurantSidebarCard';
 import { LiveShowCard } from '@/components/map/LiveShowCard';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -147,7 +146,6 @@ export default function ParkMap() {
   const [visiblePOIs, setVisiblePOIs] = useState<Set<ExtendedPOIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
-  const [menuModalData, setMenuModalData] = useState<{ url: string; name: string } | null>(null);
   
   // Waze-like navigation enhancements
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -1682,9 +1680,6 @@ export default function ParkMap() {
                   poiConfig={POI_CONFIG[selectedPOI.type]}
                   onClose={() => setSelectedPOI(null)}
                   onNavigate={handleRouteToAttraction}
-                  onOpenMenu={(url, name) => {
-                    setMenuModalData({ url, name });
-                  }}
                 />
               )}
             </AnimatePresence>
@@ -2452,7 +2447,6 @@ export default function ParkMap() {
                               handleNavigateToAttraction(poi.position);
                             }}
                             onNavigate={() => handleRouteToAttraction(poi.position, poi.name)}
-                            onOpenMenu={(url, name) => setMenuModalData({ url, name })}
                           />
                         ))}
                     </div>
@@ -2501,7 +2495,7 @@ export default function ParkMap() {
                               className="h-7 w-7 shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                calculateRoute(poi.position, poi.name);
+                                handleRouteToAttraction(poi.position, poi.name);
                               }}
                             >
                               <Navigation className="w-3.5 h-3.5" />
@@ -2538,16 +2532,6 @@ export default function ParkMap() {
       <MobileBottomNav />
 
 
-      {/* Menu Modal - Rendered at root level for proper z-index */}
-      <AnimatePresence>
-        {menuModalData && (
-          <MenuModal
-            menuUrl={menuModalData.url}
-            restaurantName={menuModalData.name}
-            onClose={() => setMenuModalData(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
