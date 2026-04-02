@@ -124,12 +124,16 @@ const OrlandoAssistantComponent = () => {
 
     const updateAssistant = (chunk: string) => {
       assistantSoFar += chunk;
+      // Strip <think>...</think> blocks (complete) and hide incomplete ones still streaming
+      const cleaned = assistantSoFar
+        .replace(/<think>[\s\S]*?<\/think>\s*/g, '')
+        .replace(/<think>[\s\S]*$/g, '');
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: cleaned } : m));
         }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
+        return [...prev, { role: "assistant", content: cleaned }];
       });
     };
 

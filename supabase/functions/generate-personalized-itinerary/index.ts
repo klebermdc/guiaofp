@@ -457,11 +457,14 @@ Retorne APENAS o JSON válido, sem explicações adicionais.`;
     }
 
     const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content;
+    let content = aiData.choices?.[0]?.message?.content;
 
     if (!content) {
       throw new Error("Resposta vazia da IA");
     }
+
+    // Strip <think>...</think> reasoning blocks from MiniMax responses
+    content = content.replace(/<think>[\s\S]*?<\/think>\s*/g, '');
 
     // Parse the JSON response
     let generatedItinerary;

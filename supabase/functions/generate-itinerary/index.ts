@@ -405,7 +405,9 @@ Finalize dizendo que para um roteiro personalizado e otimizado em tempo real, é
     }
 
     const data = await response.json();
-    const itinerary = data.choices?.[0]?.message?.content || "Não foi possível gerar o roteiro.";
+    const rawItinerary = data.choices?.[0]?.message?.content || "Não foi possível gerar o roteiro.";
+    // Strip <think>...</think> reasoning blocks from MiniMax responses
+    const itinerary = rawItinerary.replace(/<think>[\s\S]*?<\/think>\s*/g, '');
 
     return new Response(
       JSON.stringify({ 

@@ -160,7 +160,8 @@ Se há problema de datas (ingresso vence antes da viagem, ou não cobre os dias 
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
+    // Strip <think>...</think> reasoning blocks from MiniMax responses
+    const rawContent = (aiData.choices?.[0]?.message?.content || "").replace(/<think>[\s\S]*?<\/think>\s*/g, '');
 
     // 5. Parse AI response
     let parsed: any;
