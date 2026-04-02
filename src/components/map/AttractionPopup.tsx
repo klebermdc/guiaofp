@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { OverlayView } from '@react-google-maps/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -343,24 +342,27 @@ export function AttractionPopup({
     );
   }
 
-  // Desktop: Render anchored to map position
-  return (
-    <OverlayView
-      position={attraction.position}
-      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-    >
-      <motion.div 
+  // Desktop: same portal approach as mobile — OverlayView intercepts React click events
+  return createPortal(
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+      <motion.div
         className="relative"
-        style={{ transform: 'translate(-50%, -100%)', marginTop: '-20px' }}
-        initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.85, y: 10 }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
       >
-        {/* Arrow pointer */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-          <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-background" />
-        </div>
+        {/* invisible placeholder to keep structure intact */}
+        <span style={{ display: 'none' }} />
 
         {/* Popup Card */}
         <div
@@ -531,6 +533,8 @@ export function AttractionPopup({
           </div>
         </div>
       </motion.div>
-    </OverlayView>
+      </motion.div>
+    </AnimatePresence>,
+    document.body
   );
 }

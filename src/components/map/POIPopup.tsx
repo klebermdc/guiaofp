@@ -1,5 +1,4 @@
 import { createPortal } from 'react-dom';
-import { OverlayView } from '@react-google-maps/api';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -215,59 +214,34 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     </div>
   );
 
-  // Mobile: Use portal to render centered modal
-  if (isMobile) {
-    return createPortal(
-      <motion.div
-        className="fixed inset-0 z-[60] flex items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-      >
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-black/30"
-          onClick={onClose}
-        />
-        
-        {/* Card */}
-        <motion.div
-          data-poi-popup="true"
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {cardContent}
-        </motion.div>
-      </motion.div>,
-      document.body
-    );
-  }
-
-  // Desktop: Render anchored above the marker using OverlayView
-  return (
-    <OverlayView
-      position={poi.position}
-      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+  // Both mobile and desktop: portal over the map so React events work 100%
+  return createPortal(
+    <motion.div
+      className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
     >
-      <motion.div 
-        className="relative"
-        style={{ transform: 'translate(-50%, -100%)', marginTop: '-20px' }}
-        initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.85, y: 10 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        {/* Arrow pointer */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-          <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-background" />
-        </div>
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/30"
+        onClick={onClose}
+      />
 
+      {/* Card — slides up on mobile, scales in centered on desktop */}
+      <motion.div
+        data-poi-popup="true"
+        className="relative mb-20 sm:mb-0"
+        initial={{ opacity: 0, y: isMobile ? 60 : 0, scale: isMobile ? 1 : 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: isMobile ? 60 : 0, scale: isMobile ? 1 : 0.9 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {cardContent}
       </motion.div>
-    </OverlayView>
+    </motion.div>,
+    document.body
   );
 }
