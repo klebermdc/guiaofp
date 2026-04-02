@@ -51,11 +51,19 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
     e.stopPropagation();
     e.preventDefault();
     if (poi.menuUrl) {
-      // On mobile, open directly in new tab (iframes often blocked)
-      if (isMobile) {
-        const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
-        // Some mobile browsers/PWA contexts block popups; fallback to same-tab navigation.
-        if (!opened) window.location.assign(poi.menuUrl);
+      const isStandalone =
+        ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
+        (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+
+      if (isMobile || isStandalone) {
+        // Mobile / PWA: window.open is often blocked; use a temporary <a> click
+        const a = document.createElement('a');
+        a.href = poi.menuUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else if (onOpenMenu) {
         onOpenMenu(poi.menuUrl, poi.name);
         onClose();
