@@ -310,14 +310,14 @@ ${profileContext}
 
 Gere o roteiro otimizado para um dia completo no parque, encaixando os shows nos horários corretos.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.minimaxi.chat/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${MINIMAX_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "MiniMax-M2.7",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
