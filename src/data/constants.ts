@@ -3,11 +3,10 @@
 
 // ============= POI (Points of Interest) Configuration =============
 // POI types for content_items table (managed in POI Editor)
-export type POIType = 'restroom' | 'shop' | 'firstaid' | 'show';
+export type POIType = 'restroom' | 'shop' | 'firstaid' | 'show' | 'attraction' | 'restaurant';
 
-// Extended POI type that includes 'restaurant' for the map display
-// Restaurants are managed separately via the 'restaurants' table and AdminRestaurantsPanel
-export type ExtendedPOIType = POIType | 'restaurant';
+// Extended POI type kept for backward compatibility
+export type ExtendedPOIType = POIType;
 
 export interface POIConfig {
   label: string;
@@ -16,6 +15,7 @@ export interface POIConfig {
 }
 
 export const POI_CONFIG: Record<ExtendedPOIType, POIConfig> = {
+  attraction: { label: 'Atrações', color: '#10B981', emoji: '🎢' },
   restroom: { label: 'Banheiros', color: '#0EA5E9', emoji: '🚽' },
   restaurant: { label: 'Restaurantes', color: '#F97316', emoji: '🍔' },
   shop: { label: 'Lojas', color: '#A855F7', emoji: '🛒' },
@@ -26,6 +26,8 @@ export const POI_CONFIG: Record<ExtendedPOIType, POIConfig> = {
 // Alternative config for admin (slightly different labels/emojis)
 // Does NOT include restaurant since it's managed separately
 export const POI_CONFIG_ADMIN: Record<POIType, POIConfig> = {
+  attraction: { label: 'Atração', color: '#10B981', emoji: '🎢' },
+  restaurant: { label: 'Restaurante', color: '#F97316', emoji: '🍔' },
   restroom: { label: 'Banheiro', color: '#3B82F6', emoji: '🚻' },
   shop: { label: 'Loja', color: '#A855F7', emoji: '🛍️' },
   firstaid: { label: 'Primeiros Socorros', color: '#EF4444', emoji: '🏥' },

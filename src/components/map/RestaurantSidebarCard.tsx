@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface POI {
   id: string;
-  type: 'restaurant' | 'restroom' | 'shop' | 'firstaid' | 'show';
+  type: 'restaurant' | 'restroom' | 'shop' | 'firstaid' | 'show' | 'attraction';
   name: string;
   position: { lat: number; lng: number };
   schedule?: string | null;
