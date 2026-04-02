@@ -286,7 +286,7 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           birthdayDate: typeof parsed.birthdayDate === "string" ? parsed.birthdayDate : "",
           birthdayPerson: typeof parsed.birthdayPerson === "string" ? parsed.birthdayPerson : "",
           occasionOther: typeof parsed.occasionOther === "string" ? parsed.occasionOther : "",
-          heatPreference: typeof parsed.heatPreference === "string" ? parsed.heatPreference : "need_breaks",
+          heatPreference: (typeof parsed.heatPreference === "string" ? parsed.heatPreference : "need_breaks") as "avoid_peak" | "love_heat" | "need_breaks",
           rainPreference: typeof parsed.rainPreference === "string" ? parsed.rainPreference : "prefer_indoor",
           groupEnergy: typeof parsed.groupEnergy === "string" ? parsed.groupEnergy : "normal",
           sleepPreference: typeof parsed.sleepPreference === "string" ? parsed.sleepPreference : "normal",
