@@ -288,8 +288,8 @@ export function QuestionnaireWizard({ onComplete, isLoading }: QuestionnaireWiza
           occasionOther: typeof parsed.occasionOther === "string" ? parsed.occasionOther : "",
           heatPreference: (typeof parsed.heatPreference === "string" ? parsed.heatPreference : "need_breaks") as "avoid_peak" | "love_heat" | "need_breaks",
           rainPreference: (typeof parsed.rainPreference === "string" ? parsed.rainPreference : "prefer_indoor") as "continue_normally" | "prefer_indoor",
-          groupEnergy: (typeof parsed.groupEnergy === "string" ? parsed.groupEnergy : "normal") as "high_energy" | "normal" | "relaxed",
-          sleepPreference: (typeof parsed.sleepPreference === "string" ? parsed.sleepPreference : "normal") as "early_bird" | "normal" | "night_owl",
+          groupEnergy: (typeof parsed.groupEnergy === "string" ? parsed.groupEnergy : "normal") as "early_birds" | "normal" | "night_owls",
+          sleepPreference: (typeof parsed.sleepPreference === "string" ? parsed.sleepPreference : "normal") as "early" | "normal" | "late",
           // Step 11
           attractionPriorities: normalizeStringArray(parsed.attractionPriorities),
         };
