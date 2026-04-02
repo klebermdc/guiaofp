@@ -57,20 +57,23 @@ export function RestaurantSidebarCard({
   const handleOpenMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (poi.menuUrl) {
+      if (onOpenMenu) {
+        onOpenMenu(poi.menuUrl, poi.name);
+        return;
+      }
+
       const isStandalone =
         ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
         (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
 
       if (isMobile || isStandalone) {
-        const a = document.createElement('a');
-        a.href = poi.menuUrl;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else if (onOpenMenu) {
-        onOpenMenu(poi.menuUrl, poi.name);
+        window.location.assign(poi.menuUrl);
+        return;
+      }
+
+      const opened = window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        window.location.assign(poi.menuUrl);
       }
     }
   };
