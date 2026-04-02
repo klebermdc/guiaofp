@@ -3,7 +3,7 @@
 
 // ============= POI (Points of Interest) Configuration =============
 // POI types for content_items table (managed in POI Editor)
-export type POIType = 'restroom' | 'shop' | 'firstaid' | 'show';
+export type POIType = 'restroom' | 'shop' | 'firstaid' | 'show' | 'attraction' | 'restaurant';
 
 // Extended POI type that includes 'restaurant' for the map display
 // Restaurants are managed separately via the 'restaurants' table and AdminRestaurantsPanel
