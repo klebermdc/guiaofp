@@ -225,7 +225,7 @@ export const NavigationHUD = memo(function NavigationHUD({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-2.5 text-xs gap-1.5 rounded-xl"
+                className="h-11 px-3 text-xs gap-1.5 rounded-xl"
                 onClick={() => onOpenExternal('google')}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -234,7 +234,7 @@ export const NavigationHUD = memo(function NavigationHUD({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-2.5 text-xs gap-1.5 rounded-xl"
+                className="h-11 px-3 text-xs gap-1.5 rounded-xl"
                 onClick={() => onOpenExternal('waze')}
               >
                 <Route className="w-3.5 h-3.5" />

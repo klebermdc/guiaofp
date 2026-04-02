@@ -82,7 +82,7 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ delay: 0.1 }}
             onClick={onClose}
-            className="absolute top-4 right-4 z-[100000] p-2 bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
+            className="absolute top-4 right-[max(1rem,env(safe-area-inset-right,1rem))] z-[100000] p-2 bg-white/20 hover:bg-white/30 active:bg-white/40 rounded-full backdrop-blur-sm transition-colors touch-manipulation"
           >
             <X className="w-5 h-5 text-white" />
           </motion.button>

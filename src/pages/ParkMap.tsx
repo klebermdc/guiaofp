@@ -1427,7 +1427,7 @@ export default function ParkMap() {
                 </div>
               )}
               
-              <div className="overflow-auto h-full pb-20 -mx-4 px-4">
+              <div className="overflow-auto h-full pb-4 -mx-4 px-4">
                 {isLoadingAttractions ? (
                   <div className="p-8 flex items-center justify-center">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
