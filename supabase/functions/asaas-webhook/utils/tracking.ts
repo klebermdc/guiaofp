@@ -69,7 +69,7 @@ const getTrackingContext = (metadata: Record<string, unknown> | null) => {
 
 // Send server-side tracking event (sGTM / Facebook CAPI)
 export async function sendServerTrackingEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createClient<unknown>>,
   transaction: Record<string, unknown>,
   paymentMethod: string
 ): Promise<void> {
