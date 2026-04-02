@@ -209,9 +209,9 @@ serve(async (req) => {
       useRealTimeData = true 
     }: ItineraryRequest = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const MINIMAX_API_KEY = Deno.env.get("MINIMAX_API_KEY");
+    if (!MINIMAX_API_KEY) {
+      throw new Error("MINIMAX_API_KEY is not configured");
     }
 
     const attractionsList = attractions
@@ -367,14 +367,14 @@ NÃO forneça:
 Finalize dizendo que para um roteiro personalizado e otimizado em tempo real, é necessário contratar um guia.`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.minimaxi.chat/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${MINIMAX_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "MiniMax-M2.7",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

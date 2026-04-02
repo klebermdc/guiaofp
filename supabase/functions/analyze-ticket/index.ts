@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
+    const minimaxApiKey = Deno.env.get("MINIMAX_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -125,15 +125,15 @@ Se há problema de datas (ingresso vence antes da viagem, ou não cobre os dias 
 
     // 4. Call Lovable AI
     const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      "https://api.minimaxi.chat/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
+          Authorization: `Bearer ${minimaxApiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "MiniMax-M2.7",
           messages,
         }),
       }
