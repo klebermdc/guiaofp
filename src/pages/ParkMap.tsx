@@ -1030,11 +1030,32 @@ export default function ParkMap() {
   }, []);
 
   // Cleanup on unmount
+  // Auto-start GPS if permission was previously granted
   useEffect(() => {
+    let cancelled = false;
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
+        if (!cancelled && result.state === 'granted') {
+          startLocationTracking();
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              if (!cancelled) {
+                const pos: LatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+                setUserPosition(pos);
+                setIsLoadingLocation(false);
+              }
+            },
+            () => { if (!cancelled) setIsLoadingLocation(false); },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+          );
+        }
+      });
+    }
     return () => {
+      cancelled = true;
       stopLocationTracking();
     };
-  }, [stopLocationTracking]);
+  }, [stopLocationTracking, startLocationTracking]);
 
   const handleGetLocation = () => {
     startLocationTracking();
