@@ -394,9 +394,10 @@ export default function Checkout() {
       return;
     }
 
+    const rawPhone = (formData.phone || userProfile.phone || '').replace(/\D/g, '');
     const buyer = {
       email: userProfile.email,
-      phone: formData.phone || userProfile.phone,
+      phone: rawPhone,
       first_name: userProfile.name?.split(' ')[0],
       last_name: userProfile.name?.split(' ').slice(1).join(' '),
       full_name: userProfile.name,
