@@ -124,8 +124,10 @@ const OrlandoAssistantComponent = () => {
 
     const updateAssistant = (chunk: string) => {
       assistantSoFar += chunk;
-      // Strip <think>...</think> reasoning blocks from MiniMax responses
-      const cleaned = assistantSoFar.replace(/<think>[\s\S]*?<\/think>\s*/g, '');
+      // Strip <think>...</think> blocks (complete) and hide incomplete ones still streaming
+      const cleaned = assistantSoFar
+        .replace(/<think>[\s\S]*?<\/think>\s*/g, '')
+        .replace(/<think>[\s\S]*$/g, '');
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
