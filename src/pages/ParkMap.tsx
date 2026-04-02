@@ -453,7 +453,7 @@ export default function ParkMap() {
   // Step auto-advance and off-center detection removed — native apps handle this
 
   // Open navigation in external app (Google Maps or Waze)
-  const openExternalNav = useCallback((app: 'google' | 'waze', destination?: LatLng) => {
+  const openExternalNav = useCallback((app: 'google' | 'waze', destination?: LatLng, forceSameTab = false) => {
     const targetDestination = destination ?? routeInfo?.destination;
     if (!targetDestination) return;
 
@@ -462,12 +462,21 @@ export default function ParkMap() {
       ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
       : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
 
+    const isStandalone =
+      ((window.navigator as Navigator & { standalone?: boolean }).standalone === true) ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
+
+    if (forceSameTab || isMobile || isStandalone) {
+      window.location.assign(url);
+      return;
+    }
+
     // Try window.open first (works in embedded previews), fall back to location.href for native app handoff
     const opened = window.open(url, '_blank');
     if (!opened) {
-      window.location.href = url;
+      window.location.assign(url);
     }
-  }, [routeInfo?.destination]);
+  }, [routeInfo?.destination, isMobile]);
 
   // Re-center on user position
   const recenterOnUser = useCallback(() => {
@@ -1089,13 +1098,40 @@ export default function ParkMap() {
   };
 
   const handleRouteToAttraction = useCallback((position: LatLng, name: string) => {
+    const currentPos = userPositionRef.current || userPosition;
+
     // First try internal route display on map (needs user position)
-    if (userPositionRef.current || userPosition) {
+    if (currentPos) {
       calculateRoute(position, name);
-    } else {
-      // No GPS position yet — open Google Maps externally as fallback
-      openExternalNav('google', position);
+      return;
     }
+
+    if (!navigator.geolocation) {
+      openExternalNav('google', position, true);
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (geoPosition) => {
+        const nextPos: LatLng = {
+          lat: geoPosition.coords.latitude,
+          lng: geoPosition.coords.longitude,
+        };
+
+        userPositionRef.current = nextPos;
+        setUserPosition(nextPos);
+        setIsLoadingLocation(false);
+        calculateRoute(position, name);
+      },
+      () => {
+        setIsLoadingLocation(false);
+        openExternalNav('google', position, true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }, [userPosition, calculateRoute, openExternalNav]);
 
   const handleStopNavigation = () => {
