@@ -1115,11 +1115,42 @@ export default function ParkMap() {
     const params = new URLSearchParams(window.location.search);
     const searchParam = params.get('search');
     const parkParam = params.get('park');
+    const latParam = params.get('lat');
+    const lngParam = params.get('lng');
     
     if (parkParam) {
       const targetPark = PARKS.find(p => p.id === parkParam);
       if (targetPark && targetPark.id !== selectedPark.id) {
         setSelectedPark(targetPark);
+      }
+    }
+
+    // If lat/lng provided (from Top3), navigate directly to coordinates
+    if (latParam && lngParam) {
+      const lat = parseFloat(latParam);
+      const lng = parseFloat(lngParam);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const position: LatLng = { lat, lng };
+        const name = searchParam ? decodeURIComponent(searchParam) : 'Destino';
+        handleNavigateToAttraction(position);
+        
+        // Try to find and select matching POI
+        if (searchParam && currentParkPOIs.length > 0) {
+          const normalizedSearch = searchParam.toLowerCase().trim();
+          const matchingPOI = currentParkPOIs.find(poi => 
+            poi.name.toLowerCase().includes(normalizedSearch) || 
+            normalizedSearch.includes(poi.name.toLowerCase())
+          );
+          if (matchingPOI) {
+            setSelectedPOI(matchingPOI);
+          }
+        }
+        
+        toast.success(`📍 ${name}`, {
+          description: 'Localizado no mapa! Toque para traçar rota.',
+        });
+        window.history.replaceState({}, '', '/mapa');
+        return;
       }
     }
     
@@ -1135,9 +1166,8 @@ export default function ParkMap() {
         setSelectedPOI(matchingPOI);
         handleNavigateToAttraction(matchingPOI.position);
         toast.success(`📍 ${matchingPOI.name}`, {
-          description: 'Localizado no mapa! Ative o GPS para traçar rota.',
+          description: 'Localizado no mapa! Toque para traçar rota.',
         });
-        // Clear search param
         window.history.replaceState({}, '', '/mapa');
         return;
       }
