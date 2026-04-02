@@ -464,10 +464,7 @@ export default function ParkMap() {
       ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
       : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
 
-    openExternalUrl(url, {
-      preferSameTab: forceSameTab,
-      preferSameTabOnMobile: true,
-    });
+    window.open(url, '_blank', 'noopener,noreferrer');
   }, [routeInfo?.destination]);
 
   // Re-center on user position
@@ -1108,7 +1105,7 @@ export default function ParkMap() {
     }
 
     if (!navigator.geolocation) {
-      openExternalNav('google', position, true);
+      openExternalNav('google', position, false);
       return;
     }
 
@@ -1129,7 +1126,7 @@ export default function ParkMap() {
       },
       () => {
         setIsLoadingLocation(false);
-        openExternalNav('google', position, true);
+        openExternalNav('google', position, false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );

@@ -58,10 +58,7 @@ export function POIPopup({ poi, poiConfig, onClose, onNavigate, onOpenMenu }: PO
         return;
       }
 
-      openExternalUrl(poi.menuUrl, {
-        preferSameTab: isMobile,
-        preferSameTabOnMobile: true,
-      });
+      window.open(poi.menuUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
