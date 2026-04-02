@@ -107,7 +107,7 @@ export const getWaitTimeColor = (waitTime: number | undefined): string => {
 };
 
 // ============= Google Maps Configuration =============
-export const GOOGLE_MAPS_API_KEY = 'AIzaSyCib6OEwxnVUEan4mgc3YlITa4LMwahmbo';
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export const DEFAULT_MAP_OPTIONS: google.maps.MapOptions = {
   disableDefaultUI: true,
