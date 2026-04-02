@@ -15,6 +15,7 @@ export interface POIConfig {
 }
 
 export const POI_CONFIG: Record<ExtendedPOIType, POIConfig> = {
+  attraction: { label: 'Atrações', color: '#10B981', emoji: '🎢' },
   restroom: { label: 'Banheiros', color: '#0EA5E9', emoji: '🚽' },
   restaurant: { label: 'Restaurantes', color: '#F97316', emoji: '🍔' },
   shop: { label: 'Lojas', color: '#A855F7', emoji: '🛒' },
