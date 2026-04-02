@@ -1608,6 +1608,10 @@ export default function ParkMap() {
                     description: selectedPOI.description || undefined,
                     schedule: selectedPOI.schedule || undefined,
                     menuUrl: selectedPOI.menuUrl || undefined,
+                    cuisineType: selectedPOI.cuisineType || undefined,
+                    requiresReservation: selectedPOI.requiresReservation || undefined,
+                    hasWarning: selectedPOI.hasWarning || undefined,
+                    warningText: selectedPOI.warningText || undefined,
                   }}
                   poiConfig={POI_CONFIG[selectedPOI.type]}
                   onClose={() => setSelectedPOI(null)}
