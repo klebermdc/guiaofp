@@ -462,8 +462,11 @@ export default function ParkMap() {
       ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
       : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
 
-    // Use same tab so mobile browsers can hand off correctly to native navigation apps
-    window.location.href = url;
+    // Try window.open first (works in embedded previews), fall back to location.href for native app handoff
+    const opened = window.open(url, '_blank');
+    if (!opened) {
+      window.location.href = url;
+    }
   }, [routeInfo?.destination]);
 
   // Re-center on user position
