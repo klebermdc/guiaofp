@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel/output
+.vercel/README.txt
+.npmrc
+supabase/.temp
+.claude/worktrees
