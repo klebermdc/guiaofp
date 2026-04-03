@@ -147,7 +147,8 @@ export default function ParkMap() {
   const [visiblePOIs, setVisiblePOIs] = useState<Set<ExtendedPOIType>>(new Set(['restroom', 'restaurant', 'shop', 'firstaid', 'show']));
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
-  
+  const [highlightedPOIId, setHighlightedPOIId] = useState<string | null>(null);
+
   // Waze-like navigation enhancements
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [walkingSpeed, setWalkingSpeed] = useState<number | null>(null);
@@ -345,6 +346,27 @@ export default function ParkMap() {
     
     poiIconCache.current.set(type, icon);
     return icon;
+  }, []);
+
+  const getPOIMarkerIconHighlighted = useCallback((type: ExtendedPOIType): google.maps.Icon | undefined => {
+    if (typeof google === 'undefined') return undefined;
+    const config = POI_CONFIG[type];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="72" viewBox="0 0 64 72">
+      <circle cx="32" cy="24" r="22" fill="none" stroke="${config.color}" stroke-width="3" opacity="0.9">
+        <animate attributeName="r" values="22;34;22" dur="1.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.9;0;0.9" dur="1.4s" repeatCount="indefinite"/>
+      </circle>
+      <ellipse cx="32" cy="68" rx="10" ry="4" fill="rgba(0,0,0,0.3)"/>
+      <path d="M32 66 C32 66 54 46 54 28 C54 15 44 4 32 4 C20 4 10 15 10 28 C10 46 32 66 32 66Z"
+            fill="${config.color}" stroke="white" stroke-width="3"/>
+      <circle cx="32" cy="26" r="17" fill="white"/>
+      <text x="32" y="33" text-anchor="middle" font-size="20" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${config.emoji}</text>
+    </svg>`;
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new google.maps.Size(64, 72),
+      anchor: new google.maps.Point(32, 68),
+    };
   }, []);
 
   // Play arrival notification sound using Web Audio API
@@ -1188,16 +1210,18 @@ export default function ParkMap() {
     if (parkId && selectedPark.id !== parkId) return;
     if (currentParkPOIs.length === 0 && !dbAttractions) return;
 
+    const highlightPOI = (poi: POI) => {
+      setSelectedPOI(poi);
+      setHighlightedPOIId(poi.id);
+      handleNavigateToAttraction(poi.position);
+      toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
+      pendingDeepLinkRef.current = null;
+    };
+
     // Try match by restaurant_id first (most reliable — from Top3)
     if (restaurantId && currentParkPOIs.length > 0) {
       const poi = currentParkPOIs.find(p => p.id === `restaurant-${restaurantId}`);
-      if (poi) {
-        setSelectedPOI(poi);
-        handleNavigateToAttraction(poi.position);
-        toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
-        pendingDeepLinkRef.current = null;
-        return;
-      }
+      if (poi) { highlightPOI(poi); return; }
     }
 
     // Fallback: match by lat/lng coordinates
@@ -1210,7 +1234,10 @@ export default function ParkMap() {
         const poi = currentParkPOIs.find(p =>
           p.name.toLowerCase().includes(normalized) || normalized.includes(p.name.toLowerCase())
         );
-        if (poi) setSelectedPOI(poi);
+        if (poi) {
+          setSelectedPOI(poi);
+          setHighlightedPOIId(poi.id);
+        }
       }
 
       toast.success(`📍 ${search ?? 'Destino'}`, { description: 'Localizado no mapa!' });
@@ -1224,13 +1251,7 @@ export default function ParkMap() {
       const poi = currentParkPOIs.find(p =>
         p.name.toLowerCase().includes(normalized) || normalized.includes(p.name.toLowerCase())
       );
-      if (poi) {
-        setSelectedPOI(poi);
-        handleNavigateToAttraction(poi.position);
-        toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
-        pendingDeepLinkRef.current = null;
-        return;
-      }
+      if (poi) { highlightPOI(poi); return; }
 
       if (dbAttractions) {
         const attraction = dbAttractions.find(a =>
@@ -1622,19 +1643,22 @@ export default function ParkMap() {
             {/* POI markers */}
             {isMapLoaded && currentParkPOIs
               .filter(poi => visiblePOIs.has(poi.type))
-              .map((poi) => (
-                <Marker
-                  key={poi.id}
-                  position={poi.position}
-                  icon={getPOIMarkerIcon(poi.type)}
-                  title={`${POI_CONFIG[poi.type].emoji} ${poi.name}`}
-                  onClick={() => {
-                    setSelectedPOI(poi);
-                    setSelectedAttraction(null);
-                  }}
-                  zIndex={500}
-                />
-              ))
+              .map((poi) => {
+                const isHighlighted = poi.id === highlightedPOIId;
+                return (
+                  <Marker
+                    key={poi.id}
+                    position={poi.position}
+                    icon={isHighlighted ? getPOIMarkerIconHighlighted(poi.type) : getPOIMarkerIcon(poi.type)}
+                    title={`${POI_CONFIG[poi.type].emoji} ${poi.name}`}
+                    onClick={() => {
+                      setSelectedPOI(poi);
+                      setSelectedAttraction(null);
+                    }}
+                    zIndex={isHighlighted ? 9999 : 500}
+                  />
+                );
+              })
             }
 
             {/* Car parking marker */}
@@ -1697,7 +1721,7 @@ export default function ParkMap() {
                     warningText: selectedPOI.warningText || undefined,
                   }}
                   poiConfig={POI_CONFIG[selectedPOI.type]}
-                  onClose={() => setSelectedPOI(null)}
+                  onClose={() => { setSelectedPOI(null); setHighlightedPOIId(null); }}
                   onNavigate={handleRouteToAttraction}
                 />
               )}
