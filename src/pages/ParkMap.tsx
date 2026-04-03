@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline, OverlayView } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline, Circle } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
 import { NavigationHUD } from '@/components/map/NavigationHUD';
@@ -148,6 +148,7 @@ export default function ParkMap() {
   const [showAttractionMarkers, setShowAttractionMarkers] = useState(true);
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
   const [highlightedPOIId, setHighlightedPOIId] = useState<string | null>(null);
+  const [pulseExpanded, setPulseExpanded] = useState(false);
 
   // Waze-like navigation enhancements
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -592,6 +593,13 @@ export default function ParkMap() {
       markerIconCache.current.clear();
     }
   }, [waitTimes]);
+
+  // Pulse animation for highlighted POI
+  useEffect(() => {
+    if (!highlightedPOIId) { setPulseExpanded(false); return; }
+    const interval = setInterval(() => setPulseExpanded(v => !v), 600);
+    return () => clearInterval(interval);
+  }, [highlightedPOIId]);
 
   // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
   useEffect(() => {
@@ -1649,7 +1657,7 @@ export default function ParkMap() {
                   <Marker
                     key={poi.id}
                     position={poi.position}
-                    icon={getPOIMarkerIcon(poi.type)}
+                    icon={isHighlighted ? getPOIMarkerIconHighlighted(poi.type) : getPOIMarkerIcon(poi.type)}
                     title={`${POI_CONFIG[poi.type].emoji} ${poi.name}`}
                     onClick={() => {
                       setSelectedPOI(poi);
@@ -1661,40 +1669,26 @@ export default function ParkMap() {
               })
             }
 
-            {/* Pulse ring overlay for highlighted POI (from Top3 deep-link) */}
-            {isMapLoaded && (() => {
-              if (!highlightedPOIId) return null;
-              const poi = currentParkPOIs.find(p => p.id === highlightedPOIId);
-              if (!poi) return null;
+            {/* Pulse Circle for highlighted POI (from Top3 deep-link) */}
+            {isMapLoaded && highlightedPOIId && currentParkPOIs.filter(p => p.id === highlightedPOIId).map(poi => {
               const color = POI_CONFIG[poi.type]?.color ?? '#F97316';
               return (
-                <OverlayView
-                  key={`pulse-${highlightedPOIId}`}
-                  position={poi.position}
-                  mapPaneName={OverlayView.OVERLAY_LAYER}
-                  getPixelPositionOffset={() => ({ x: -28, y: -28 })}
-                >
-                  <div style={{ width: 56, height: 56, position: 'relative', pointerEvents: 'none' }}>
-                    <style>{`
-                      @keyframes ofp-poi-pulse {
-                        0%   { transform: scale(0.5); opacity: 1; }
-                        100% { transform: scale(2.2); opacity: 0; }
-                      }
-                    `}</style>
-                    {[0, 0.6, 1.2].map(delay => (
-                      <div key={delay} style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: '50%',
-                        border: `3px solid ${color}`,
-                        animation: `ofp-poi-pulse 1.8s ease-out ${delay}s infinite`,
-                        pointerEvents: 'none',
-                      }} />
-                    ))}
-                  </div>
-                </OverlayView>
+                <Circle
+                  key={`pulse-${poi.id}`}
+                  center={poi.position}
+                  radius={pulseExpanded ? 28 : 16}
+                  options={{
+                    fillColor: color,
+                    fillOpacity: pulseExpanded ? 0 : 0.25,
+                    strokeColor: color,
+                    strokeOpacity: pulseExpanded ? 0.3 : 0.9,
+                    strokeWeight: 3,
+                    clickable: false,
+                    zIndex: 1000,
+                  }}
+                />
               );
-            })()}
+            })}
 
             {/* Car parking marker */}
             {carLocation && isMapLoaded && (
