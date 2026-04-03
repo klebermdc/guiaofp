@@ -118,7 +118,7 @@ const TravelModeTop3Component = ({ parkId, parkName, onNavigateToLocation }: Tra
     queryFn: async () => {
       const { data, error } = await supabase
         .from('travel_mode_top3')
-        .select('*, restaurants:restaurant_id(latitude, longitude, slug)')
+        .select('*, restaurants!restaurant_id(latitude, longitude, slug)')
         .eq('park_id', parkId)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
