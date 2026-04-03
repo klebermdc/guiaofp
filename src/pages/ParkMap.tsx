@@ -1219,10 +1219,9 @@ export default function ParkMap() {
     if (currentParkPOIs.length === 0 && !dbAttractions) return;
 
     const highlightPOI = (poi: POI) => {
-      setSelectedPOI(poi);
       setHighlightedPOIId(poi.id);
       handleNavigateToAttraction(poi.position);
-      toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
+      toast.success(`📍 ${poi.name}`, { description: 'Toque no marcador para ver detalhes!' });
       pendingDeepLinkRef.current = null;
     };
 
@@ -1662,6 +1661,7 @@ export default function ParkMap() {
                     onClick={() => {
                       setSelectedPOI(poi);
                       setSelectedAttraction(null);
+                      setHighlightedPOIId(null);
                     }}
                     zIndex={isHighlighted ? 9999 : 500}
                   />
@@ -1750,7 +1750,7 @@ export default function ParkMap() {
                     warningText: selectedPOI.warningText || undefined,
                   }}
                   poiConfig={POI_CONFIG[selectedPOI.type]}
-                  onClose={() => { setSelectedPOI(null); setHighlightedPOIId(null); }}
+                  onClose={() => setSelectedPOI(null)}
                   onNavigate={handleRouteToAttraction}
                 />
               )}
