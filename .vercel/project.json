@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_cZSoj3oOjBoswyYJrwZR3HvXw5B0",
+  "orgId": "team_27m4nHpoFSoHAhQIr140kf6A",
+  "projectName": "guiaofp",
+  "settings": {
+    "createdAt": 1774028351131,
+    "framework": "vite",
+    "devCommand": "npm run dev",
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

@@ -80,22 +80,54 @@ interface POI {
 const normalizeAttractionName = (name: string): string => {
   return name
     .toLowerCase()
-    .replace(/['']/g, "'")
-    .replace(/[^\w\s']/g, '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+    .replace(/[''`]/g, '')
+    .replace(/[^\w\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 };
 
-// Find matching wait time for an attraction
+// Levenshtein distance for fuzzy matching
+const levenshtein = (a: string, b: string): number => {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+};
+
+// Find matching wait time — exact match first, then fuzzy
 const findWaitTime = (attractionName: string, waitTimes: WaitTimeData[]): WaitTimeData | undefined => {
   const normalizedName = normalizeAttractionName(attractionName);
-  
-  return waitTimes.find(wt => {
-    const normalizedWtName = normalizeAttractionName(wt.name);
-    return normalizedName === normalizedWtName || 
-           normalizedName.includes(normalizedWtName) || 
-           normalizedWtName.includes(normalizedName);
+
+  // 1. Exact match
+  const exact = waitTimes.find(wt => normalizeAttractionName(wt.name) === normalizedName);
+  if (exact) return exact;
+
+  // 2. One fully contains the other (short name inside long name)
+  const contained = waitTimes.find(wt => {
+    const n = normalizeAttractionName(wt.name);
+    // Only allow containment when the shorter string is at least 60% of the longer
+    const [shorter, longer] = n.length < normalizedName.length ? [n, normalizedName] : [normalizedName, n];
+    return longer.includes(shorter) && shorter.length / longer.length >= 0.6;
   });
+  if (contained) return contained;
+
+  // 3. Fuzzy match — allow up to 20% edit distance of the longer string
+  let best: WaitTimeData | undefined;
+  let bestScore = Infinity;
+  for (const wt of waitTimes) {
+    const n = normalizeAttractionName(wt.name);
+    const maxLen = Math.max(normalizedName.length, n.length);
+    const dist = levenshtein(normalizedName, n);
+    if (dist < bestScore && dist / maxLen <= 0.2) {
+      bestScore = dist;
+      best = wt;
+    }
+  }
+  return best;
 };
 
 interface RouteInfo {
@@ -222,6 +254,8 @@ export default function ParkMap() {
   // Fetch POIs for current park from database (content_items)
   const { data: dbPOIs = [], isLoading: isLoadingPOIs } = useQuery({
     queryKey: ['park-pois', selectedPark.id],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
@@ -240,6 +274,8 @@ export default function ParkMap() {
   const parksTableId = getParksTableId(selectedPark.id);
   const { data: dbRestaurants = [] } = useQuery({
     queryKey: ['map-restaurants', selectedPark.id, parksTableId],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('restaurants')
@@ -506,6 +542,8 @@ export default function ParkMap() {
   // Fetch attractions from database with real coordinates
   const { data: dbAttractions = [], isLoading: isLoadingAttractions } = useQuery({
     queryKey: ['park-attractions', selectedPark.id],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_items')
@@ -589,16 +627,17 @@ export default function ParkMap() {
   
   // Clear marker icon cache when wait times change so markers get updated colors
   useEffect(() => {
-    if (typeof markerIconCache !== 'undefined' && markerIconCache.current) {
+    if (markerIconCache.current) {
       markerIconCache.current.clear();
     }
   }, [waitTimes]);
 
-  // Pulse animation for highlighted POI
+  // Pulse animation for highlighted POI — auto-stops after 8s
   useEffect(() => {
     if (!highlightedPOIId) { setPulseExpanded(false); return; }
     const interval = setInterval(() => setPulseExpanded(v => !v), 600);
-    return () => clearInterval(interval);
+    const timeout = setTimeout(() => setHighlightedPOIId(null), 8000);
+    return () => { clearInterval(interval); clearTimeout(timeout); };
   }, [highlightedPOIId]);
 
   // Auto-refresh wait times - 15 seconds for desktop (planning mode), 30 seconds for mobile (battery saving)
@@ -807,6 +846,8 @@ export default function ParkMap() {
           setIsNavigating(true);
           setNavigationMode('preview'); // Start in preview mode - show full route
           setIsNavPanelExpanded(true);
+          // Auto-start GPS tracking when route is calculated
+          if (!userPositionRef.current) startLocationTracking();
           
           // Fit the entire route in view for preview mode
           if (mapRef.current) {
@@ -1172,6 +1213,8 @@ export default function ParkMap() {
     const park = PARKS.find(p => p.id === parkId);
     if (park) {
       setSelectedPark(park);
+      setAttractionFilter('all');
+      setHighlightedPOIId(null);
       clearRoute();
     }
   };
@@ -2065,84 +2108,92 @@ export default function ParkMap() {
 
       {/* Navigation Panel - Preview mode OR Desktop guided mode */}
       {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
-        <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom ${isNavPanelExpanded ? 'h-auto' : 'h-16'}`}>
-          <Card className="rounded-t-xl rounded-b-none border-t-2 border-blue-500 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl">
-            {/* Collapse Toggle */}
-            <button 
-              onClick={() => setIsNavPanelExpanded(!isNavPanelExpanded)}
-              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full p-1 shadow-lg"
-            >
-              {isNavPanelExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-            </button>
+        <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom`}>
+          {/* Collapse toggle handle */}
+          <button
+            onClick={() => setIsNavPanelExpanded(!isNavPanelExpanded)}
+            className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 rounded-full px-4 py-1 shadow-lg z-10 flex items-center gap-1"
+          >
+            {isNavPanelExpanded ? <ChevronDown className="w-4 h-4 text-white" /> : <ChevronUp className="w-4 h-4 text-white" />}
+            <span className="text-[10px] text-white font-medium">Rota</span>
+          </button>
 
-            <CardHeader className="py-2 pb-1 pt-4">
-              <CardTitle className="text-sm flex items-center justify-between">
-                <span className="flex items-center gap-2 truncate">
-                  <Navigation className={`w-4 h-4 shrink-0 ${navigationMode === 'guided' ? 'animate-pulse' : ''}`} />
-                  <span className="truncate">{routeInfo.destinationName}</span>
-                </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-bold text-xs">{routeInfo.distance}</span>
-                  <span className="text-blue-200 text-xs">|</span>
-                  <span className="font-bold text-xs">{routeInfo.duration}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleStopNavigation}
-                    className="text-white hover:bg-red-500/50 h-8 w-8 p-0"
-                    title="Parar navegação"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
+          <div className="bg-gradient-to-b from-blue-700 to-blue-800 text-white shadow-2xl rounded-t-2xl overflow-hidden">
+            {/* Header row: destination + stats + close */}
+            <div className="flex items-center gap-3 px-4 pt-5 pb-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-blue-300 font-medium mb-0.5">Destino</p>
+                <p className="text-sm font-bold text-white truncate">{routeInfo.destinationName}</p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-center">
+                  <p className="text-base font-black leading-none">{routeInfo.duration}</p>
+                  <p className="text-[10px] text-blue-300">tempo</p>
                 </div>
-              </CardTitle>
-            </CardHeader>
-            
+                <div className="w-px h-8 bg-white/20" />
+                <div className="text-center">
+                  <p className="text-base font-black leading-none">{routeInfo.distance}</p>
+                  <p className="text-[10px] text-blue-300">distância</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleStopNavigation}
+                  className="text-white hover:bg-red-500/60 h-10 w-10 rounded-full shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
             {isNavPanelExpanded && (
-              <CardContent className="py-3 pb-5">
-                {/* Route steps preview */}
+              <div className="px-4 pb-6 space-y-3">
+                {/* Route steps */}
                 {routeSteps.length > 0 && (
-                  <div className="bg-white/10 rounded-lg p-3 mb-3">
-                    <p className="text-xs text-blue-200 mb-2 font-medium">📋 Instruções da rota:</p>
-                    <div className="space-y-2 max-h-32 overflow-auto">
+                  <div className="bg-white/10 rounded-xl overflow-hidden">
+                    <p className="text-[10px] text-blue-300 font-semibold px-3 pt-2 pb-1 uppercase tracking-wide">Instruções</p>
+                    <div className="max-h-36 overflow-auto divide-y divide-white/10">
                       {routeSteps.map((step, index) => (
-                        <div key={index} className="flex items-start gap-2 text-xs">
+                        <div key={index} className="flex items-start gap-2.5 px-3 py-2 text-xs">
                           <span className="bg-white/20 rounded-full w-5 h-5 flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-bold">
                             {index + 1}
                           </span>
-                          <span 
+                          <span
                             className="text-white/90 leading-tight"
                             dangerouslySetInnerHTML={{ __html: translateNavigationStep(step.instructions) }}
                           />
+                          {step.distance && (
+                            <span className="text-blue-300 text-[10px] shrink-0 ml-auto">{step.distance.text}</span>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Fallback compass when no route steps */}
+                {/* Fallback compass */}
                 {routeSteps.length === 0 && routeInfo?.destination && (
-                  <div className="bg-white/10 rounded-lg p-3 mb-3 text-center">
-                    <div className="relative w-20 h-20 mx-auto mb-3">
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <div className="relative w-16 h-16 mx-auto mb-2">
                       <div className="absolute inset-0 rounded-full bg-white/10 border-2 border-white/40" />
-                      <div 
+                      <div
                         className="absolute inset-0 flex items-center justify-center transition-transform duration-500"
                         style={{ transform: `rotate(${bearingToDestination}deg)` }}
                       >
-                        <ArrowUp className="w-10 h-10 text-white" strokeWidth={3} />
+                        <ArrowUp className="w-8 h-8 text-white" strokeWidth={3} />
                       </div>
                     </div>
-                    <p className="text-sm text-white/90">Siga na direção indicada</p>
-                    <p className="text-xs text-blue-200 mt-1">Distância aproximada: {routeInfo.distance}</p>
+                    <p className="text-sm text-white/90 font-medium">Siga na direção indicada</p>
+                    <p className="text-xs text-blue-300 mt-0.5">Distância aprox.: {routeInfo.distance}</p>
                   </div>
                 )}
 
-                {/* Open in native app buttons */}
-                <div className="flex gap-2">
+                {/* Action buttons */}
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
                     onClick={() => openExternalNav('google')}
-                    className="flex-1 gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold"
+                    className="gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold h-11"
                   >
                     <Navigation className="w-4 h-4" />
                     Google Maps
@@ -2150,18 +2201,18 @@ export default function ParkMap() {
                   <Button
                     size="sm"
                     onClick={() => openExternalNav('waze')}
-                    className="flex-1 gap-2 bg-[#33ccff] text-white hover:bg-[#28b8e8] font-bold"
+                    className="gap-2 bg-[#33ccff] text-white hover:bg-[#28b8e8] font-bold h-11"
                   >
                     <Navigation className="w-4 h-4" />
                     Waze
                   </Button>
                 </div>
-                <p className="text-xs text-blue-200 mt-2 text-center">
+                <p className="text-[10px] text-blue-300 text-center">
                   Abre o app de navegação no seu celular
                 </p>
-              </CardContent>
+              </div>
             )}
-          </Card>
+          </div>
         </div>
       )}
         </div>
