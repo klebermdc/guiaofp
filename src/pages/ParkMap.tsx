@@ -168,6 +168,7 @@ export default function ParkMap() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('preview');
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [isStartingGPSNav, setIsStartingGPSNav] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
@@ -2188,12 +2189,42 @@ export default function ParkMap() {
                   </div>
                 )}
 
-                {/* Action buttons */}
+                {/* Primary: Native in-app navigation */}
+                {routeInfo?.destination && (
+                  <Button
+                    size="lg"
+                    disabled={isStartingGPSNav}
+                    onClick={async () => {
+                      if (!routeInfo.destination) return;
+                      setIsStartingGPSNav(true);
+                      try {
+                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName);
+                        setIsNavigating(false); // hide preview panel — NavigationHUD takes over
+                      } catch {
+                        toast.error('Não foi possível iniciar a navegação', {
+                          description: 'Verifique se o GPS está ativado e tente novamente',
+                        });
+                      } finally {
+                        setIsStartingGPSNav(false);
+                      }
+                    }}
+                    className="w-full gap-2 bg-green-500 hover:bg-green-400 text-white font-black text-base h-14 rounded-xl shadow-lg"
+                  >
+                    {isStartingGPSNav ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Navigation className="w-5 h-5" />
+                    )}
+                    {isStartingGPSNav ? 'Iniciando GPS...' : 'Iniciar Navegação'}
+                  </Button>
+                )}
+
+                {/* Fallback: external apps */}
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
                     onClick={() => openExternalNav('google')}
-                    className="gap-2 bg-white text-blue-700 hover:bg-blue-50 font-bold h-11"
+                    className="gap-2 bg-white/20 text-white hover:bg-white/30 font-semibold h-10"
                   >
                     <Navigation className="w-4 h-4" />
                     Google Maps
@@ -2201,14 +2232,14 @@ export default function ParkMap() {
                   <Button
                     size="sm"
                     onClick={() => openExternalNav('waze')}
-                    className="gap-2 bg-[#33ccff] text-white hover:bg-[#28b8e8] font-bold h-11"
+                    className="gap-2 bg-white/20 text-white hover:bg-white/30 font-semibold h-10"
                   >
                     <Navigation className="w-4 h-4" />
                     Waze
                   </Button>
                 </div>
                 <p className="text-[10px] text-blue-300 text-center">
-                  Abre o app de navegação no seu celular
+                  Ou abra em app externo
                 </p>
               </div>
             )}
