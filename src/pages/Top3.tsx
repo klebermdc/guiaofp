@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PARKS, GOOGLE_MAPS_API_KEY } from '@/data/constants';
+import { PARKS } from '@/data/constants';
 import { toast } from 'sonner';
 
 import top3MagicKingdom from '@/assets/parks/top3-magic-kingdom.jpg';
@@ -542,16 +542,24 @@ const Top3Page = () => {
               ).findIndex(i => i.id === item.id)
             ] ?? RANK_STYLES[0];
 
-            const staticMapUrl = hasCoords
-              ? `https://maps.googleapis.com/maps/api/staticmap?center=${item.restaurant_latitude},${item.restaurant_longitude}&zoom=18&size=600x300&scale=2&markers=color:red%7C${item.restaurant_latitude},${item.restaurant_longitude}&key=${GOOGLE_MAPS_API_KEY}`
+            const lat = item.restaurant_latitude;
+            const lng = item.restaurant_longitude;
+            const osmEmbed = hasCoords
+              ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng! - 0.003},${lat! - 0.002},${lng! + 0.003},${lat! + 0.002}&layer=mapnik&marker=${lat},${lng}`
               : null;
 
             return (
               <div>
-                {/* Map image */}
+                {/* Map iframe */}
                 <div className="relative h-52 bg-muted">
-                  {staticMapUrl ? (
-                    <img src={staticMapUrl} alt="Localização" className="w-full h-full object-cover" />
+                  {osmEmbed ? (
+                    <iframe
+                      src={osmEmbed}
+                      title="Localização"
+                      className="w-full h-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
                       <MapPin className="w-8 h-8" />
