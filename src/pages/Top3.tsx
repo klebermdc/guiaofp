@@ -1,13 +1,14 @@
 import { useState, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame } from 'lucide-react';
+import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PARKS } from '@/data/constants';
+import { PARKS, GOOGLE_MAPS_API_KEY } from '@/data/constants';
 import { toast } from 'sonner';
 
 import top3MagicKingdom from '@/assets/parks/top3-magic-kingdom.jpg';
@@ -213,6 +214,7 @@ const Top3Page = () => {
   const navigate = useNavigate();
   const [selectedParkId, setSelectedParkId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<Top3Category>('restaurantes');
+  const [mapPreviewItem, setMapPreviewItem] = useState<Top3Row | null>(null);
 
   const { data: allItems = [], isLoading } = useQuery({
     queryKey: ['travel-mode-top3-all'],
@@ -255,6 +257,11 @@ const Top3Page = () => {
     : {};
 
   const handleNavigateToMap = useCallback((item: Top3Row) => {
+    // Open inline map preview sheet — no navigation away from the page
+    setMapPreviewItem(item);
+  }, []);
+
+  const handleOpenFullMap = useCallback((item: Top3Row) => {
     const params = new URLSearchParams({ park: item.park_id });
     if (item.restaurant_id) params.set('restaurant_id', item.restaurant_id);
     if (item.restaurant_latitude && item.restaurant_longitude) {
@@ -522,6 +529,95 @@ const Top3Page = () => {
           )}
         </div>
       </div>
+      {/* ─── Inline map preview sheet ─── */}
+      <Sheet open={!!mapPreviewItem} onOpenChange={(open) => { if (!open) setMapPreviewItem(null); }}>
+        <SheetContent side="bottom" className="p-0 rounded-t-2xl max-h-[85vh] overflow-y-auto">
+          {mapPreviewItem && (() => {
+            const item = mapPreviewItem;
+            const hasCoords = !!(item.restaurant_latitude && item.restaurant_longitude);
+            const rank = RANK_STYLES[
+              (selectedPark
+                ? allItems.filter(i => i.park_id === item.park_id && i.category === item.category)
+                : allItems
+              ).findIndex(i => i.id === item.id)
+            ] ?? RANK_STYLES[0];
+
+            const staticMapUrl = hasCoords
+              ? `https://maps.googleapis.com/maps/api/staticmap?center=${item.restaurant_latitude},${item.restaurant_longitude}&zoom=18&size=600x300&scale=2&markers=color:red%7C${item.restaurant_latitude},${item.restaurant_longitude}&key=${GOOGLE_MAPS_API_KEY}`
+              : null;
+
+            return (
+              <div>
+                {/* Map image */}
+                <div className="relative h-52 bg-muted">
+                  {staticMapUrl ? (
+                    <img src={staticMapUrl} alt="Localização" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                      <MapPin className="w-8 h-8" />
+                      <p className="text-xs">Coordenadas não disponíveis</p>
+                    </div>
+                  )}
+                  {/* Close button */}
+                  <button
+                    onClick={() => setMapPreviewItem(null)}
+                    className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full p-1.5 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  {/* Rank medal overlay */}
+                  <div className={`absolute top-3 left-3 bg-gradient-to-br ${rank.bg} rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-lg`}>
+                    <span className="text-sm">{rank.medal}</span>
+                    <span className="text-xs font-bold text-white">{item.item_name}</span>
+                  </div>
+                </div>
+
+                {/* Item details */}
+                <div className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-bold text-foreground text-base">{item.item_name}</h3>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                      <MapPin className="w-3 h-3 text-primary shrink-0" />
+                      <span className="font-medium text-foreground/80">{item.location}</span>
+                      {item.area && <><span className="text-muted-foreground/40">•</span><span>{item.area}</span></>}
+                    </div>
+                  </div>
+
+                  {item.price && (
+                    <Badge variant="outline" className="text-xs gap-1 text-green-600 border-green-500/30 bg-green-500/5">
+                      <DollarSign className="w-3 h-3" />{item.price}
+                    </Badge>
+                  )}
+
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Button
+                      className="gap-2 h-11 bg-primary hover:bg-primary/90"
+                      onClick={() => { setMapPreviewItem(null); handleRouteInApp(item); }}
+                      disabled={!hasCoords}
+                    >
+                      <Navigation className="w-4 h-4" />
+                      Navegar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2 h-11"
+                      onClick={() => { setMapPreviewItem(null); handleOpenFullMap(item); }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Abrir mapa
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 };
