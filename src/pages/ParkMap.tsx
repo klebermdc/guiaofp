@@ -2198,11 +2198,14 @@ export default function ParkMap() {
                       if (!routeInfo.destination) return;
                       setIsStartingGPSNav(true);
                       try {
-                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName);
+                        // Pass existing position — avoids redundant GPS request that can fail
+                        const knownPos = userPositionRef.current ?? userPosition ?? undefined;
+                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
                         setIsNavigating(false); // hide preview panel — NavigationHUD takes over
-                      } catch {
+                      } catch (err) {
+                        console.error('GPS nav error:', err);
                         toast.error('Não foi possível iniciar a navegação', {
-                          description: 'Verifique se o GPS está ativado e tente novamente',
+                          description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
                         });
                       } finally {
                         setIsStartingGPSNav(false);

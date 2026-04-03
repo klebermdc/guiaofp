@@ -191,15 +191,20 @@ export function useGPSNavigation(_apiKey: string) {
     [moveCamera],
   );
 
-  /** Iniciar navegação */
+  /** Iniciar navegação — aceita posição conhecida para evitar nova requisição GPS */
   const startNavigation = useCallback(
-    async (destination: LatLng, name: string) => {
-      if (!navigator.geolocation) throw new Error('Geolocalização não disponível');
+    async (destination: LatLng, name: string, knownOrigin?: LatLng) => {
       destNameRef.current = name;
-      const raw = await new Promise<GeolocationPosition>((ok, err) =>
-        navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy: true, timeout: 10000 }),
-      );
-      const origin: LatLng = { lat: raw.coords.latitude, lng: raw.coords.longitude };
+      let origin: LatLng;
+      if (knownOrigin) {
+        origin = knownOrigin;
+      } else {
+        if (!navigator.geolocation) throw new Error('Geolocalização não disponível');
+        const raw = await new Promise<GeolocationPosition>((ok, err) =>
+          navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy: true, timeout: 15000 }),
+        );
+        origin = { lat: raw.coords.latitude, lng: raw.coords.longitude };
+      }
       const route = await fetchRoute(origin, destination);
       if (!route) throw new Error('Rota não encontrada');
       setState((prev) => ({
