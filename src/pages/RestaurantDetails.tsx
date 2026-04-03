@@ -94,23 +94,19 @@ const RestaurantDetails = () => {
 
         if (error) throw error;
 
-        // Fetch images
-        const { data: images } = await supabase
-          .from('restaurant_images')
-          .select('*')
-          .eq('restaurant_id', data.id)
-          .order('display_order');
+        // Fetch images and menu items in parallel
+        const [imagesResult, menuResult] = await Promise.all([
+          supabase.from('restaurant_images').select('*').eq('restaurant_id', data.id).order('display_order'),
+          supabase.from('restaurant_menu_items').select('*').eq('restaurant_id', data.id),
+        ]);
 
-        // Fetch menu items
-        const { data: menuItems } = await supabase
-          .from('restaurant_menu_items')
-          .select('*')
-          .eq('restaurant_id', data.id);
+        if (imagesResult.error) console.warn('Could not load restaurant images:', imagesResult.error.message);
+        if (menuResult.error) console.warn('Could not load menu items:', menuResult.error.message);
 
         setRestaurant({
           ...data,
-          images: images || [],
-          menu_items: menuItems || []
+          images: imagesResult.data || [],
+          menu_items: menuResult.data || []
         });
       } catch (error) {
         console.error('Error fetching restaurant:', error);

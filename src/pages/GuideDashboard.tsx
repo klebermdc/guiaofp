@@ -53,25 +53,20 @@ const GuideDashboard = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
-    
-    // Fetch profiles
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('arrival_date', { ascending: true });
 
-    if (!profilesError && profilesData) {
-      setClients(profilesData as ClientProfile[]);
+    // Fetch profiles and attraction counts in parallel
+    const [profilesResult, attractionsResult] = await Promise.all([
+      supabase.from('profiles').select('*').order('arrival_date', { ascending: true }),
+      supabase.from('attraction_preferences').select('user_id'),
+    ]);
+
+    if (!profilesResult.error && profilesResult.data) {
+      setClients(profilesResult.data as ClientProfile[]);
     }
 
-    // Fetch attraction counts
-    const { data: attractionsData } = await supabase
-      .from('attraction_preferences')
-      .select('user_id');
-
-    if (attractionsData) {
+    if (attractionsResult.data) {
       const counts: Record<string, number> = {};
-      attractionsData.forEach((a: { user_id: string }) => {
+      attractionsResult.data.forEach((a: { user_id: string }) => {
         counts[a.user_id] = (counts[a.user_id] || 0) + 1;
       });
       setAttractionCounts(counts);

@@ -162,6 +162,7 @@ export default function ParkMap() {
   const [userHeading, setUserHeading] = useState<number>(0);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGPSPaused, setIsGPSPaused] = useState(false);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routeSteps, setRouteSteps] = useState<google.maps.DirectionsStep[]>([]);
@@ -1142,8 +1143,9 @@ export default function ParkMap() {
   }, [stopLocationTracking, startLocationTracking]);
 
   const handleGetLocation = () => {
+    setIsGPSPaused(false);
     startLocationTracking();
-    
+
     // Initial position fetch to center map
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -1161,6 +1163,13 @@ export default function ParkMap() {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
+  };
+
+  const handlePauseGPS = () => {
+    stopLocationTracking();
+    setUserPosition(null);
+    userPositionRef.current = null;
+    setIsGPSPaused(true);
   };
 
   const handleNavigateToAttraction = (position: LatLng) => {
@@ -1470,13 +1479,14 @@ export default function ParkMap() {
             <RefreshCw className={`w-4 h-4 ${isLoadingWaitTimes ? 'animate-spin' : ''}`} />
           </Button>
 
-          {/* My Location Button */}
+          {/* My Location Button — tap when active to pause GPS and save battery */}
           <Button
-            onClick={handleGetLocation}
+            onClick={userPosition ? handlePauseGPS : handleGetLocation}
             disabled={isLoadingLocation}
             variant={userPosition ? 'default' : 'outline'}
             size="icon"
             className="h-9 w-9 shrink-0"
+            title={userPosition ? 'Pausar GPS' : 'Ativar localização'}
           >
             {isLoadingLocation ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -2673,7 +2683,7 @@ export default function ParkMap() {
             {/* Sidebar Footer */}
             <div className="p-3 border-t">
               <Button
-                onClick={handleGetLocation}
+                onClick={userPosition ? handlePauseGPS : handleGetLocation}
                 disabled={isLoadingLocation}
                 variant={userPosition ? 'default' : 'outline'}
                 className="w-full"
@@ -2683,7 +2693,7 @@ export default function ParkMap() {
                 ) : (
                   <Navigation className="w-4 h-4 mr-2" />
                 )}
-                {userPosition ? 'Localização ativa' : 'Ativar localização'}
+                {userPosition ? 'Pausar GPS' : isGPSPaused ? 'Retomar localização' : 'Ativar localização'}
               </Button>
             </div>
           </aside>

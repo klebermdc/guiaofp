@@ -20,15 +20,19 @@ import top3UniversalStudios from '@/assets/parks/top3-universal-studios.jpg';
 import top3IslandsOfAdventure from '@/assets/parks/top3-islands-of-adventure.jpg';
 import top3EpicUniverse from '@/assets/parks/top3-epic-universe.jpg';
 
-const parkImages: Record<string, string> = {
-  'dd6b79b8-d934-4e15-8967-1f1af1911fef': top3MagicKingdom,
-  '03e87b8e-7467-4121-971b-91826dd55bec': top3Epcot,
-  'ffdca010-b62c-40cc-98ee-37a853da037d': top3HollywoodStudios,
-  '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205': top3AnimalKingdom,
-  'c63c98b3-1cef-4d90-8142-0a68331907e1': top3UniversalStudios,
-  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148': top3IslandsOfAdventure,
-  'ba562b14-26bf-4b12-a13d-2aa7df43297e': top3EpicUniverse,
+// Map by park name (stable) — IDs are derived from PARKS constant so they stay in sync automatically
+const PARK_IMAGE_BY_NAME: Record<string, string> = {
+  'Magic Kingdom':       top3MagicKingdom,
+  'EPCOT':               top3Epcot,
+  'Hollywood Studios':   top3HollywoodStudios,
+  'Animal Kingdom':      top3AnimalKingdom,
+  'Universal Studios':   top3UniversalStudios,
+  'Islands of Adventure':top3IslandsOfAdventure,
+  'Epic Universe':       top3EpicUniverse,
 };
+const parkImages: Record<string, string> = Object.fromEntries(
+  PARKS.filter(p => PARK_IMAGE_BY_NAME[p.name]).map(p => [p.id, PARK_IMAGE_BY_NAME[p.name]])
+);
 
 type Top3Category = 'doces' | 'restaurantes' | 'snacks';
 
@@ -63,15 +67,8 @@ interface Top3Row {
   restaurant_slug: string | null;
 }
 
-const TOP3_PARK_IDS = [
-  'dd6b79b8-d934-4e15-8967-1f1af1911fef',
-  '03e87b8e-7467-4121-971b-91826dd55bec',
-  'ffdca010-b62c-40cc-98ee-37a853da037d',
-  '0ba5dfb2-4a27-48d2-9fa5-b014f04a4205',
-  'c63c98b3-1cef-4d90-8142-0a68331907e1',
-  '5a1bb5ed-866e-4a73-86ff-2ad23ebc1148',
-  'ba562b14-26bf-4b12-a13d-2aa7df43297e',
-];
+// Parks that have Top3 content — derived from the names that have images
+const TOP3_PARK_IDS = PARKS.filter(p => PARK_IMAGE_BY_NAME[p.name]).map(p => p.id);
 
 // ─── Skeleton loader ───────────────────────────────────────────
 const ParkCardSkeleton = () => (
@@ -279,7 +276,7 @@ const Top3Page = () => {
   const [activeCategory, setActiveCategory] = useState<Top3Category>('restaurantes');
   const [mapPreviewItem, setMapPreviewItem] = useState<Top3Row | null>(null);
 
-  const { data: allItems = [], isLoading } = useQuery({
+  const { data: allItems = [], isLoading, isError } = useQuery({
     queryKey: ['travel-mode-top3-all'],
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -428,6 +425,11 @@ const Top3Page = () => {
               {isLoading ? (
                 <div className="grid grid-cols-2 gap-3">
                   {Array.from({ length: 6 }).map((_, i) => <ParkCardSkeleton key={i} />)}
+                </div>
+              ) : isError ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="text-sm">Erro ao carregar recomendações.</p>
+                  <p className="text-xs mt-1">Tente recarregar a página.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 pb-4">

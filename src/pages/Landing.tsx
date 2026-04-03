@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { AuthLoadingScreen } from '@/components/layout/AuthLoadingScreen';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { TrackableButton } from '@/components/analytics';
@@ -81,10 +82,10 @@ AnimatedSection.displayName = 'AnimatedSection';
 const WHATSAPP_PREMIUM_LINK = "https://wa.me/message/TRKS54CVGEGUK1";
 
 const Landing = () => {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isGuide, isLoading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
-  const [isAdminUser, setIsAdminUser] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -98,18 +99,6 @@ const Landing = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Admin check
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (user) {
-        const { supabase } = await import('@/integrations/supabase/client');
-        const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
-        const roles = data?.map(r => r.role) || [];
-        setIsAdminUser(roles.includes('admin') || roles.includes('guide'));
-      }
-    };
-    checkAdmin();
-  }, [user]);
 
   // Preload hero image dynamically (Vite-hashed URL)
   useEffect(() => {
@@ -128,15 +117,15 @@ const Landing = () => {
     return () => clearTimeout(t);
   }, [showContent]);
 
-  // Redirect auth users
+  // Redirect auth users (guides stay on landing; regular users go to dashboard)
   useEffect(() => {
-    if (!authLoading && isAuthenticated && !isAdminUser) {
-      const t = setTimeout(() => { if (!isAdminUser) navigate('/dashboard', { replace: true }); }, 500);
+    if (!authLoading && !roleLoading && isAuthenticated && !isGuide) {
+      const t = setTimeout(() => navigate('/dashboard', { replace: true }), 500);
       return () => clearTimeout(t);
     } else if (!authLoading) {
       setShowContent(true);
     }
-  }, [authLoading, isAuthenticated, isAdminUser, navigate]);
+  }, [authLoading, roleLoading, isAuthenticated, isGuide, navigate]);
 
   if (authLoading && !showContent) return <AuthLoadingScreen />;
 
