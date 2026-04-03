@@ -203,6 +203,7 @@ export default function ParkMap() {
   const navigationModeRef = useRef<NavigationMode>('preview'); // Avoid stale closure
   const isNavigatingRef = useRef(false); // Avoid stale closure
   const userPanningRef = useRef(false); // True when user is manually dragging the map
+  const lastMarkerClickRef = useRef(0); // Timestamp of last marker click — prevents map click from clearing popup
   const lastUserInteractionRef = useRef<number>(0); // Timestamp of last user pan/drag
   
   // Live shows and characters from API
@@ -1659,6 +1660,8 @@ export default function ParkMap() {
             onDragStart={gps.onMapDrag}
             onDragEnd={gps.onMapDragEnd}
             onClick={(e) => {
+              // Ignore if a marker was just clicked (marker click also bubbles to map click)
+              if (Date.now() - lastMarkerClickRef.current < 300) return;
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const target = (e as any)?.domEvent?.target as HTMLElement | null;
               // Don't close the popup when interacting with it (e.g., tapping the video thumbnail).
@@ -1685,6 +1688,7 @@ export default function ParkMap() {
                 icon={getMarkerIcon(attraction)}
                 title={`${attraction.name}${attraction.waitTime !== undefined ? ` - ${attraction.waitTime} min` : ''}`}
                 onClick={() => {
+                  lastMarkerClickRef.current = Date.now();
                   setSelectedAttraction(attraction);
                   setSelectedPOI(null);
                 }}
@@ -1703,6 +1707,7 @@ export default function ParkMap() {
                     icon={isHighlighted ? getPOIMarkerIconHighlighted(poi.type) : getPOIMarkerIcon(poi.type)}
                     title={`${POI_CONFIG[poi.type].emoji} ${poi.name}`}
                     onClick={() => {
+                      lastMarkerClickRef.current = Date.now();
                       setSelectedPOI(poi);
                       setSelectedAttraction(null);
                       setHighlightedPOIId(null);
@@ -1762,7 +1767,7 @@ export default function ParkMap() {
 
             {/* Attraction Popup over marker */}
             <AnimatePresence>
-              {selectedAttraction && !isNavigating && (
+              {selectedAttraction && !gps.state.isNavigating && (
                 <AttractionPopup
                   attraction={selectedAttraction}
                   parkName={selectedPark.name}
