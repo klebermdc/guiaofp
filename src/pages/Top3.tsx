@@ -1,14 +1,15 @@
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, ExternalLink } from 'lucide-react';
+import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useLoadScript, GoogleMap, Marker, Circle } from '@react-google-maps/api';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PARKS } from '@/data/constants';
+import { PARKS, GOOGLE_MAPS_API_KEY } from '@/data/constants';
 import { toast } from 'sonner';
 
 import top3MagicKingdom from '@/assets/parks/top3-magic-kingdom.jpg';
@@ -90,6 +91,68 @@ const ItemCardSkeleton = () => (
     </div>
   </div>
 );
+
+// ─── Mini interactive map ──────────────────────────────────────
+const MINI_MAP_OPTIONS: google.maps.MapOptions = {
+  mapTypeId: 'hybrid',
+  disableDefaultUI: true,
+  gestureHandling: 'greedy',
+  clickableIcons: false,
+  styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
+};
+
+const MiniMap = memo(({ lat, lng, color = '#F97316' }: { lat: number; lng: number; color?: string }) => {
+  const { isLoaded } = useLoadScript({ googleMapsApiKey: GOOGLE_MAPS_API_KEY });
+  const [pulse, setPulse] = useState(false);
+  const center = { lat, lng };
+
+  useEffect(() => {
+    const id = setInterval(() => setPulse(v => !v), 700);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!isLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-muted">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <GoogleMap
+      mapContainerStyle={{ width: '100%', height: '100%' }}
+      center={center}
+      zoom={19}
+      options={MINI_MAP_OPTIONS}
+    >
+      <Marker
+        position={center}
+        icon={{
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+          scale: 10,
+        }}
+      />
+      <Circle
+        center={center}
+        radius={pulse ? 22 : 12}
+        options={{
+          fillColor: color,
+          fillOpacity: pulse ? 0 : 0.2,
+          strokeColor: color,
+          strokeOpacity: pulse ? 0.3 : 0.8,
+          strokeWeight: 2,
+          clickable: false,
+        }}
+      />
+    </GoogleMap>
+  );
+});
+MiniMap.displayName = 'MiniMap';
 
 // ─── Item card ─────────────────────────────────────────────────
 const Top3ItemCard = memo(({ item, index, onNavigate, onRoute }: {
@@ -544,22 +607,16 @@ const Top3Page = () => {
 
             const lat = item.restaurant_latitude;
             const lng = item.restaurant_longitude;
-            const osmEmbed = hasCoords
-              ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng! - 0.003},${lat! - 0.002},${lng! + 0.003},${lat! + 0.002}&layer=mapnik&marker=${lat},${lng}`
-              : null;
+            const catColor = CATEGORIES[item.category as Top3Category]?.gradient.includes('pink') ? '#EC4899'
+              : CATEGORIES[item.category as Top3Category]?.gradient.includes('orange') ? '#F97316'
+              : '#10B981';
 
             return (
               <div>
-                {/* Map iframe */}
-                <div className="relative h-52 bg-muted">
-                  {osmEmbed ? (
-                    <iframe
-                      src={osmEmbed}
-                      title="Localização"
-                      className="w-full h-full border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
+                {/* Interactive Google Map */}
+                <div className="relative h-56 bg-muted overflow-hidden">
+                  {hasCoords ? (
+                    <MiniMap lat={lat!} lng={lng!} color={catColor} />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
                       <MapPin className="w-8 h-8" />
