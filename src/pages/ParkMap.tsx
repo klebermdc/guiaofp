@@ -1662,33 +1662,33 @@ export default function ParkMap() {
             }
 
             {/* Pulse ring overlay for highlighted POI (from Top3 deep-link) */}
-            {isMapLoaded && highlightedPOIId && (() => {
+            {isMapLoaded && (() => {
+              if (!highlightedPOIId) return null;
               const poi = currentParkPOIs.find(p => p.id === highlightedPOIId);
               if (!poi) return null;
               const color = POI_CONFIG[poi.type]?.color ?? '#F97316';
               return (
                 <OverlayView
+                  key={`pulse-${highlightedPOIId}`}
                   position={poi.position}
-                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                  mapPaneName={OverlayView.OVERLAY_LAYER}
+                  getPixelPositionOffset={() => ({ x: -28, y: -28 })}
                 >
-                  <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none' }}>
+                  <div style={{ width: 56, height: 56, position: 'relative', pointerEvents: 'none' }}>
                     <style>{`
                       @keyframes ofp-poi-pulse {
-                        0%   { transform: translate(-50%,-50%) scale(0.6); opacity: 0.9; }
-                        70%  { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
-                        100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+                        0%   { transform: scale(0.5); opacity: 1; }
+                        100% { transform: scale(2.2); opacity: 0; }
                       }
                     `}</style>
-                    {[0, 0.5, 1].map(delay => (
+                    {[0, 0.6, 1.2].map(delay => (
                       <div key={delay} style={{
                         position: 'absolute',
-                        width: 56,
-                        height: 56,
+                        inset: 0,
                         borderRadius: '50%',
                         border: `3px solid ${color}`,
                         animation: `ofp-poi-pulse 1.8s ease-out ${delay}s infinite`,
-                        top: 0,
-                        left: 0,
+                        pointerEvents: 'none',
                       }} />
                     ))}
                   </div>
