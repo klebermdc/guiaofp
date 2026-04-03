@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, DirectionsRenderer, Polyline, OverlayView } from '@react-google-maps/api';
 import { AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Loader2, AlertCircle, Star, X, Clock, RefreshCw, ChevronUp, ChevronDown, List, Filter, ArrowUp, Volume2, Home, Map, Satellite, Play, Pause, LocateFixed, Car, ParkingCircle, Users, Sparkles } from 'lucide-react';
 import { NavigationHUD } from '@/components/map/NavigationHUD';
@@ -1649,7 +1649,7 @@ export default function ParkMap() {
                   <Marker
                     key={poi.id}
                     position={poi.position}
-                    icon={isHighlighted ? getPOIMarkerIconHighlighted(poi.type) : getPOIMarkerIcon(poi.type)}
+                    icon={getPOIMarkerIcon(poi.type)}
                     title={`${POI_CONFIG[poi.type].emoji} ${poi.name}`}
                     onClick={() => {
                       setSelectedPOI(poi);
@@ -1660,6 +1660,41 @@ export default function ParkMap() {
                 );
               })
             }
+
+            {/* Pulse ring overlay for highlighted POI (from Top3 deep-link) */}
+            {isMapLoaded && highlightedPOIId && (() => {
+              const poi = currentParkPOIs.find(p => p.id === highlightedPOIId);
+              if (!poi) return null;
+              const color = POI_CONFIG[poi.type]?.color ?? '#F97316';
+              return (
+                <OverlayView
+                  position={poi.position}
+                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                >
+                  <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none' }}>
+                    <style>{`
+                      @keyframes ofp-poi-pulse {
+                        0%   { transform: translate(-50%,-50%) scale(0.6); opacity: 0.9; }
+                        70%  { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+                        100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+                      }
+                    `}</style>
+                    {[0, 0.5, 1].map(delay => (
+                      <div key={delay} style={{
+                        position: 'absolute',
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        border: `3px solid ${color}`,
+                        animation: `ofp-poi-pulse 1.8s ease-out ${delay}s infinite`,
+                        top: 0,
+                        left: 0,
+                      }} />
+                    ))}
+                  </div>
+                </OverlayView>
+              );
+            })()}
 
             {/* Car parking marker */}
             {carLocation && isMapLoaded && (
