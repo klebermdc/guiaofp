@@ -195,11 +195,14 @@ const Top3Page = () => {
     : [];
 
   const handleNavigateToMap = useCallback((item: Top3Row) => {
+    const params = new URLSearchParams({ park: item.park_id });
+    if (item.restaurant_id) params.set('restaurant_id', item.restaurant_id);
     if (item.restaurant_latitude && item.restaurant_longitude) {
-      navigate(`/mapa?park=${item.park_id}&lat=${item.restaurant_latitude}&lng=${item.restaurant_longitude}&search=${encodeURIComponent(item.location)}`);
-    } else {
-      navigate(`/mapa?park=${item.park_id}&search=${encodeURIComponent(item.location)}`);
+      params.set('lat', String(item.restaurant_latitude));
+      params.set('lng', String(item.restaurant_longitude));
     }
+    params.set('search', item.location);
+    navigate(`/mapa?${params.toString()}`);
   }, [navigate]);
 
   const categoryMeta = CATEGORIES[activeCategory];

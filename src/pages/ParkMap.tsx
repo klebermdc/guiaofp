@@ -158,6 +158,8 @@ export default function ParkMap() {
   const lastHeadingPositionRef = useRef<LatLng | null>(null); // Last position used to infer heading from movement
   const hasHeadingSignalRef = useRef(false); // Track when we have real heading from GPS/orientation
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
+  // Pending deep-link from URL params (Top3 → Map navigation)
+  const pendingDeepLinkRef = useRef<{ restaurantId?: string; lat?: number; lng?: number; search?: string } | null>(null);
   
   // === Direct camera control refs (bypass React state for real-time smoothness) ===
   const targetHeadingRef = useRef<number>(0); // Where we want the camera to point
@@ -1145,86 +1147,99 @@ export default function ParkMap() {
   };
 
   // Handle search param from Top3 page navigation
+  // Phase 1: read URL params once on mount, set park, store deep-link in ref
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const searchParam = params.get('search');
+    if (!params.toString()) return;
+
     const parkParam = params.get('park');
+    const restaurantId = params.get('restaurant_id') ?? undefined;
     const latParam = params.get('lat');
     const lngParam = params.get('lng');
-    
+    const searchParam = params.get('search') ?? undefined;
+
     if (parkParam) {
       const targetPark = PARKS.find(p => p.id === parkParam);
-      if (targetPark && targetPark.id !== selectedPark.id) {
-        setSelectedPark(targetPark);
+      if (targetPark) setSelectedPark(targetPark);
+    }
+
+    const lat = latParam ? parseFloat(latParam) : undefined;
+    const lng = lngParam ? parseFloat(lngParam) : undefined;
+
+    if (restaurantId || (lat && lng) || searchParam) {
+      pendingDeepLinkRef.current = {
+        restaurantId,
+        lat: lat && !isNaN(lat) ? lat : undefined,
+        lng: lng && !isNaN(lng) ? lng : undefined,
+        search: searchParam,
+      };
+    }
+
+    window.history.replaceState({}, '', '/mapa');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Phase 2: once POIs are loaded, resolve the pending deep-link
+  useEffect(() => {
+    if (!pendingDeepLinkRef.current) return;
+    if (currentParkPOIs.length === 0 && !dbAttractions) return;
+
+    const { restaurantId, lat, lng, search } = pendingDeepLinkRef.current;
+
+    // Try match by restaurant_id first (most reliable — from Top3)
+    if (restaurantId && currentParkPOIs.length > 0) {
+      const poi = currentParkPOIs.find(p => p.id === `restaurant-${restaurantId}`);
+      if (poi) {
+        setSelectedPOI(poi);
+        handleNavigateToAttraction(poi.position);
+        toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
+        pendingDeepLinkRef.current = null;
+        return;
       }
     }
 
-    // If lat/lng provided (from Top3), navigate directly to coordinates
-    if (latParam && lngParam) {
-      const lat = parseFloat(latParam);
-      const lng = parseFloat(lngParam);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const position: LatLng = { lat, lng };
-        const name = searchParam ? decodeURIComponent(searchParam) : 'Destino';
-        handleNavigateToAttraction(position);
-        
-        // Try to find and select matching POI
-        if (searchParam && currentParkPOIs.length > 0) {
-          const normalizedSearch = searchParam.toLowerCase().trim();
-          const matchingPOI = currentParkPOIs.find(poi => 
-            poi.name.toLowerCase().includes(normalizedSearch) || 
-            normalizedSearch.includes(poi.name.toLowerCase())
-          );
-          if (matchingPOI) {
-            setSelectedPOI(matchingPOI);
-          }
-        }
-        
-        toast.success(`📍 ${name}`, {
-          description: 'Localizado no mapa! Toque para traçar rota.',
-        });
-        window.history.replaceState({}, '', '/mapa');
-        return;
-      }
-    }
-    
-    if (searchParam && currentParkPOIs.length > 0) {
-      const normalizedSearch = searchParam.toLowerCase().trim();
-      
-      const matchingPOI = currentParkPOIs.find(poi => 
-        poi.name.toLowerCase().includes(normalizedSearch) || 
-        normalizedSearch.includes(poi.name.toLowerCase())
-      );
-      
-      if (matchingPOI) {
-        setSelectedPOI(matchingPOI);
-        handleNavigateToAttraction(matchingPOI.position);
-        toast.success(`📍 ${matchingPOI.name}`, {
-          description: 'Localizado no mapa! Toque para traçar rota.',
-        });
-        window.history.replaceState({}, '', '/mapa');
-        return;
-      }
-      
-      if (dbAttractions) {
-        const matchingAttraction = dbAttractions.find((a) => 
-          a.name.toLowerCase().includes(normalizedSearch) || 
-          normalizedSearch.includes(a.name.toLowerCase())
+    // Fallback: match by lat/lng coordinates
+    if (lat && lng) {
+      const position: LatLng = { lat, lng };
+      handleNavigateToAttraction(position);
+
+      if (search && currentParkPOIs.length > 0) {
+        const normalized = search.toLowerCase().trim();
+        const poi = currentParkPOIs.find(p =>
+          p.name.toLowerCase().includes(normalized) || normalized.includes(p.name.toLowerCase())
         );
-        if (matchingAttraction) {
-          handleNavigateToAttraction(matchingAttraction.position);
-          toast.success(`📍 ${matchingAttraction.name}`, {
-            description: 'Localizado no mapa!',
-          });
-          window.history.replaceState({}, '', '/mapa');
+        if (poi) setSelectedPOI(poi);
+      }
+
+      toast.success(`📍 ${search ?? 'Destino'}`, { description: 'Localizado no mapa!' });
+      pendingDeepLinkRef.current = null;
+      return;
+    }
+
+    // Fallback: match by name only
+    if (search && currentParkPOIs.length > 0) {
+      const normalized = search.toLowerCase().trim();
+      const poi = currentParkPOIs.find(p =>
+        p.name.toLowerCase().includes(normalized) || normalized.includes(p.name.toLowerCase())
+      );
+      if (poi) {
+        setSelectedPOI(poi);
+        handleNavigateToAttraction(poi.position);
+        toast.success(`📍 ${poi.name}`, { description: 'Localizado no mapa!' });
+        pendingDeepLinkRef.current = null;
+        return;
+      }
+
+      if (dbAttractions) {
+        const attraction = dbAttractions.find(a =>
+          a.name.toLowerCase().includes(normalized) || normalized.includes(a.name.toLowerCase())
+        );
+        if (attraction) {
+          handleNavigateToAttraction(attraction.position);
+          toast.success(`📍 ${attraction.name}`, { description: 'Localizado no mapa!' });
+          pendingDeepLinkRef.current = null;
           return;
         }
       }
-      
-      toast.info(`🔍 "${searchParam}"`, {
-        description: 'Local não encontrado no mapa. Tente buscar na barra lateral.',
-      });
-      window.history.replaceState({}, '', '/mapa');
     }
   }, [currentParkPOIs, dbAttractions]); // eslint-disable-line react-hooks/exhaustive-deps
 
