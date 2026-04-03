@@ -213,7 +213,7 @@ const Top3Page = () => {
         {/* Header */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
           <div className="flex items-center gap-3 px-4 py-3 max-w-2xl mx-auto">
-            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={() => selectedParkId ? setSelectedParkId(null) : navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">

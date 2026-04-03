@@ -159,7 +159,7 @@ export default function ParkMap() {
   const hasHeadingSignalRef = useRef(false); // Track when we have real heading from GPS/orientation
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
   // Pending deep-link from URL params (Top3 → Map navigation)
-  const pendingDeepLinkRef = useRef<{ restaurantId?: string; lat?: number; lng?: number; search?: string } | null>(null);
+  const pendingDeepLinkRef = useRef<{ parkId?: string; restaurantId?: string; lat?: number; lng?: number; search?: string } | null>(null);
   
   // === Direct camera control refs (bypass React state for real-time smoothness) ===
   const targetHeadingRef = useRef<number>(0); // Where we want the camera to point
@@ -1168,6 +1168,7 @@ export default function ParkMap() {
 
     if (restaurantId || (lat && lng) || searchParam) {
       pendingDeepLinkRef.current = {
+        parkId: parkParam ?? undefined,
         restaurantId,
         lat: lat && !isNaN(lat) ? lat : undefined,
         lng: lng && !isNaN(lng) ? lng : undefined,
@@ -1178,12 +1179,14 @@ export default function ParkMap() {
     window.history.replaceState({}, '', '/mapa');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Phase 2: once POIs are loaded, resolve the pending deep-link
+  // Phase 2: once POIs are loaded for the correct park, resolve the pending deep-link
   useEffect(() => {
     if (!pendingDeepLinkRef.current) return;
-    if (currentParkPOIs.length === 0 && !dbAttractions) return;
+    const { parkId, restaurantId, lat, lng, search } = pendingDeepLinkRef.current;
 
-    const { restaurantId, lat, lng, search } = pendingDeepLinkRef.current;
+    // Wait until the correct park's POIs are loaded
+    if (parkId && selectedPark.id !== parkId) return;
+    if (currentParkPOIs.length === 0 && !dbAttractions) return;
 
     // Try match by restaurant_id first (most reliable — from Top3)
     if (restaurantId && currentParkPOIs.length > 0) {
@@ -1241,7 +1244,7 @@ export default function ParkMap() {
         }
       }
     }
-  }, [currentParkPOIs, dbAttractions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentParkPOIs, dbAttractions, selectedPark]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshWaitTimes = () => {
     fetchWaitTimes(selectedPark.id);
