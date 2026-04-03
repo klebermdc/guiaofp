@@ -164,10 +164,12 @@ const Top3Page = () => {
 
   const { data: allItems = [], isLoading } = useQuery({
     queryKey: ['travel-mode-top3-all'],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('travel_mode_top3')
-        .select('*, restaurants:restaurant_id(latitude, longitude, slug)')
+        .select('id, item_name, location, area, price, description, emoji, image_url, category, sort_order, park_id, park_name, restaurant_id, restaurants:restaurant_id(latitude, longitude, slug)')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if (error) throw error;
