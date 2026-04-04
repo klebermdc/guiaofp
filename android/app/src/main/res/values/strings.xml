@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OFP Planejador</string>
+    <string name="title_activity_main">OFP Planejador</string>
+    <string name="package_name">com.orlandofastpass.planejador</string>
+    <string name="custom_url_scheme">com.orlandofastpass.planejador</string>
+</resources>
