@@ -1,6 +1,6 @@
 import { useState, memo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, ExternalLink, Loader2 } from 'lucide-react';
+import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -321,16 +321,6 @@ const Top3Page = () => {
     setMapPreviewItem(item);
   }, []);
 
-  const handleOpenFullMap = useCallback((item: Top3Row) => {
-    const params = new URLSearchParams({ park: item.park_id });
-    if (item.restaurant_id) params.set('restaurant_id', item.restaurant_id);
-    if (item.restaurant_latitude && item.restaurant_longitude) {
-      params.set('lat', String(item.restaurant_latitude));
-      params.set('lng', String(item.restaurant_longitude));
-    }
-    params.set('search', item.location);
-    navigate(`/mapa?${params.toString()}`);
-  }, [navigate]);
 
   const handleRouteInApp = useCallback((item: Top3Row) => {
     // Navigate to map and trigger route calculation to this POI
@@ -616,7 +606,7 @@ const Top3Page = () => {
             return (
               <div>
                 {/* Interactive Google Map */}
-                <div className="relative h-56 bg-muted overflow-hidden">
+                <div className="relative h-80 bg-muted overflow-hidden">
                   {hasCoords ? (
                     <MiniMap lat={lat!} lng={lng!} color={catColor} />
                   ) : (
@@ -661,22 +651,14 @@ const Top3Page = () => {
                   )}
 
                   {/* Action buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="pt-1">
                     <Button
-                      className="gap-2 h-11 bg-primary hover:bg-primary/90"
+                      className="w-full gap-2 h-11 bg-primary hover:bg-primary/90"
                       onClick={() => { setMapPreviewItem(null); handleRouteInApp(item); }}
                       disabled={!hasCoords}
                     >
                       <Navigation className="w-4 h-4" />
                       Navegar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="gap-2 h-11"
-                      onClick={() => { setMapPreviewItem(null); handleOpenFullMap(item); }}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Abrir mapa
                     </Button>
                   </div>
                 </div>
