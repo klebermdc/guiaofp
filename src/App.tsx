@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,43 +20,43 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
 // Lazy load heavy pages
-const GuideDashboard = lazy(() => import("./pages/GuideDashboard"));
-const TravelProfile = lazy(() => import("./pages/TravelProfile"));
-const Agenda = lazy(() => import("./pages/Agenda"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Content = lazy(() => import("./pages/Content"));
-const Plan = lazy(() => import("./pages/Plan"));
-const PostTrip = lazy(() => import("./pages/PostTrip"));
-const Admin = lazy(() => import("./pages/Admin"));
-const ParkMap = lazy(() => import("./pages/ParkMap"));
-const TravelGuide = lazy(() => import("./pages/TravelGuide"));
-const Attractions = lazy(() => import("./pages/Attractions"));
-const ClientDetails = lazy(() => import("./pages/ClientDetails"));
-const AccessBlocked = lazy(() => import("./pages/AccessBlocked"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const MultiPass = lazy(() => import("./pages/MultiPass"));
-const RemoteGuidance = lazy(() => import("./pages/RemoteGuidance"));
-const Checklists = lazy(() => import("./pages/Checklists"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const Register = lazy(() => import("./pages/Register"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const NewPassword = lazy(() => import("./pages/NewPassword"));
-const Restaurants = lazy(() => import("./pages/Restaurants"));
-const RestaurantsGuide = lazy(() => import("./pages/RestaurantsGuide"));
-const RestaurantDetails = lazy(() => import("./pages/RestaurantDetails"));
-const Favorites = lazy(() => import("./pages/Favorites"));
-const RoteiroPersonalizado = lazy(() => import("./pages/RoteiroPersonalizado"));
-const RoteiroQuestionario = lazy(() => import("./pages/RoteiroQuestionario"));
-const RoteiroView = lazy(() => import("./pages/RoteiroView"));
-const PlannerManual = lazy(() => import("./pages/PlannerManual"));
-const DocumentWalletPage = lazy(() => import("./pages/DocumentWalletPage"));
-const TermsAndPrivacy = lazy(() => import("./pages/TermsAndPrivacy"));
-const PartnerCoupons = lazy(() => import("./pages/PartnerCoupons"));
-const OrlandoSummary = lazy(() => import("./pages/OrlandoSummary"));
-const GuiaMiniViajante = lazy(() => import("./pages/GuiaMiniViajante"));
-const Top3 = lazy(() => import("./pages/Top3"));
-const HotelComparator = lazy(() => import("./pages/HotelComparator"));
-const TransportGuide = lazy(() => import("./pages/TransportGuide"));
+const GuideDashboard = lazyWithRetry(() => import("./pages/GuideDashboard"));
+const TravelProfile = lazyWithRetry(() => import("./pages/TravelProfile"));
+const Agenda = lazyWithRetry(() => import("./pages/Agenda"));
+const Contact = lazyWithRetry(() => import("./pages/Contact"));
+const Content = lazyWithRetry(() => import("./pages/Content"));
+const Plan = lazyWithRetry(() => import("./pages/Plan"));
+const PostTrip = lazyWithRetry(() => import("./pages/PostTrip"));
+const Admin = lazyWithRetry(() => import("./pages/Admin"));
+const ParkMap = lazyWithRetry(() => import("./pages/ParkMap"));
+const TravelGuide = lazyWithRetry(() => import("./pages/TravelGuide"));
+const Attractions = lazyWithRetry(() => import("./pages/Attractions"));
+const ClientDetails = lazyWithRetry(() => import("./pages/ClientDetails"));
+const AccessBlocked = lazyWithRetry(() => import("./pages/AccessBlocked"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const MultiPass = lazyWithRetry(() => import("./pages/MultiPass"));
+const RemoteGuidance = lazyWithRetry(() => import("./pages/RemoteGuidance"));
+const Checklists = lazyWithRetry(() => import("./pages/Checklists"));
+const Checkout = lazyWithRetry(() => import("./pages/Checkout"));
+const Register = lazyWithRetry(() => import("./pages/Register"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
+const Restaurants = lazyWithRetry(() => import("./pages/Restaurants"));
+const RestaurantsGuide = lazyWithRetry(() => import("./pages/RestaurantsGuide"));
+const RestaurantDetails = lazyWithRetry(() => import("./pages/RestaurantDetails"));
+const Favorites = lazyWithRetry(() => import("./pages/Favorites"));
+const RoteiroPersonalizado = lazyWithRetry(() => import("./pages/RoteiroPersonalizado"));
+const RoteiroQuestionario = lazyWithRetry(() => import("./pages/RoteiroQuestionario"));
+const RoteiroView = lazyWithRetry(() => import("./pages/RoteiroView"));
+const PlannerManual = lazyWithRetry(() => import("./pages/PlannerManual"));
+const DocumentWalletPage = lazyWithRetry(() => import("./pages/DocumentWalletPage"));
+const TermsAndPrivacy = lazyWithRetry(() => import("./pages/TermsAndPrivacy"));
+const PartnerCoupons = lazyWithRetry(() => import("./pages/PartnerCoupons"));
+const OrlandoSummary = lazyWithRetry(() => import("./pages/OrlandoSummary"));
+const GuiaMiniViajante = lazyWithRetry(() => import("./pages/GuiaMiniViajante"));
+const Top3 = lazyWithRetry(() => import("./pages/Top3"));
+const HotelComparator = lazyWithRetry(() => import("./pages/HotelComparator"));
+const TransportGuide = lazyWithRetry(() => import("./pages/TransportGuide"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -68,6 +68,25 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Wrap lazy imports to reload the page on chunk load failures (stale deploy)
+function lazyWithRetry(factory: () => Promise<{ default: React.ComponentType<any> }>) {
+  return lazy(() =>
+    factory().catch((err) => {
+      // ChunkLoadError happens when a new deploy invalidates old chunk hashes
+      const isChunkError =
+        err?.name === 'ChunkLoadError' ||
+        /Loading chunk \d+ failed/.test(err?.message ?? '') ||
+        /Failed to fetch dynamically imported module/.test(err?.message ?? '');
+      if (isChunkError) {
+        window.location.reload();
+        // Return a never-resolving promise so React doesn't render anything before reload
+        return new Promise(() => {});
+      }
+      throw err;
+    })
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
