@@ -1446,7 +1446,7 @@ export default function ParkMap() {
     zoomControl: false,
     gestureHandling: 'greedy',
     // Never force heading in options (it was resetting guided camera rotation)
-    tilt: navigationMode === 'guided' && mapType === 'satellite' ? 45 : mapType === 'satellite' ? 45 : 0,
+    tilt: navigationMode === 'guided' ? 45 : mapType === 'satellite' ? 45 : 0,
     clickableIcons: false,
     styles: [
       { featureType: 'poi', stylers: [{ visibility: 'off' }] },
@@ -1897,7 +1897,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {navigationMode === 'guided' && (isNavigating || gps.state.isNavigating) && userPosition && (
+        {navigationMode === 'guided' && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
