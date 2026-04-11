@@ -203,6 +203,7 @@ export default function ParkMap() {
   const rafIdRef = useRef<number | null>(null); // requestAnimationFrame ID
   const navigationModeRef = useRef<NavigationMode>('preview'); // Avoid stale closure
   const isNavigatingRef = useRef(false); // Avoid stale closure
+  const gpsNavigatingRef = useRef(false); // Tracks gps.state.isNavigating without stale closures
   const userPanningRef = useRef(false); // True when user is manually dragging the map
   const lastMarkerClickRef = useRef(0); // Timestamp of last marker click — prevents map click from clearing popup
   const lastUserInteractionRef = useRef<number>(0); // Timestamp of last user pan/drag
@@ -470,6 +471,11 @@ export default function ParkMap() {
     }
   }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
 
+  // Sync gps hook navigating state to ref (for RAF loop)
+  useEffect(() => {
+    gpsNavigatingRef.current = gps.state.isNavigating;
+  }, [gps.state.isNavigating]);
+
   // Reset navigation state when starting/stopping + sync refs
   useEffect(() => {
     isNavigatingRef.current = isNavigating;
@@ -729,8 +735,8 @@ export default function ParkMap() {
     let active = true;
     const tick = () => {
       if (!active) return;
-      // Rotate map when navigating (any mode) and user is not manually panning
-      if (isNavigatingRef.current && mapRef.current && !userPanningRef.current && hasHeadingSignalRef.current) {
+      // Rotate map when navigating (preview or GPS hook) and user is not manually panning
+      if ((isNavigatingRef.current || gpsNavigatingRef.current) && mapRef.current && !userPanningRef.current && hasHeadingSignalRef.current) {
         const target = targetHeadingRef.current;
         const current = currentMapHeadingRef.current;
         const next = interpolateHeading(current, target, 0.12);
@@ -1705,8 +1711,8 @@ export default function ParkMap() {
               setSelectedPOI(null);
             }}
           >
-            {/* User location marker - hidden in guided mode (Waze arrow takes over) */}
-            {userPosition && isMapLoaded && navigationMode !== 'guided' && (
+            {/* User location marker - hidden during GPS navigation (Waze arrow takes over) */}
+            {userPosition && isMapLoaded && !gps.state.isNavigating && (
               <Marker
                 position={userPosition}
                 icon={userMarkerIcon}
@@ -1882,7 +1888,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {navigationMode === 'guided' && isNavigating && userPosition && (
+        {gps.state.isNavigating && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
