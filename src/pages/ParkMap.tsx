@@ -723,17 +723,18 @@ export default function ParkMap() {
     return (from + shortest * factor + 360) % 360;
   };
 
-  // RAF loop for smooth map rotation during guided navigation
+  // Smooth map rotation loop — rotates map to follow user heading during navigation
   const currentMapHeadingRef = useRef(0);
   useEffect(() => {
     let active = true;
     const tick = () => {
       if (!active) return;
-      if (navigationModeRef.current === 'guided' && isNavigatingRef.current && mapRef.current && !userPanningRef.current) {
+      // Rotate map when navigating (any mode) and user is not manually panning
+      if (isNavigatingRef.current && mapRef.current && !userPanningRef.current && hasHeadingSignalRef.current) {
         const target = targetHeadingRef.current;
         const current = currentMapHeadingRef.current;
-        const next = interpolateHeading(current, target, 0.15);
-        if (Math.abs(next - current) > 0.1) {
+        const next = interpolateHeading(current, target, 0.12);
+        if (Math.abs(((target - current + 540) % 360) - 180) > 0.5) {
           currentMapHeadingRef.current = next;
           mapRef.current.setHeading(next);
         }
@@ -996,23 +997,12 @@ export default function ParkMap() {
         const isGuidedNow = navigationModeRef.current === 'guided' && isNavigatingRef.current;
         const throttleMs = isGuidedNow ? 300 : 1200;
         if (now - lastGpsUpdateRef.current < throttleMs) {
-          // Even when throttled, still update camera during guided mode (GPS-style smooth tracking)
+          // Even when throttled, still update heading and direct-pan during guided mode
           if (isGuidedNow && mapRef.current && !userPanningRef.current) {
             const timeSinceInteraction = now - lastUserInteractionRef.current;
-            if (timeSinceInteraction > 1500) {
-              mapRef.current.moveCamera({
-                center: pos,
-                heading: currentMapHeadingRef.current,
-                tilt: 45,
-                zoom: 18,
-              });
+            if (timeSinceInteraction > 2000) {
+              mapRef.current.panTo(pos);
             }
-          }
-          // Still update heading even when throttled
-          const gH = position.coords.heading;
-          if (gH !== null && !Number.isNaN(gH)) {
-            targetHeadingRef.current = gH;
-            hasHeadingSignalRef.current = true;
           }
           return;
         }
@@ -1044,16 +1034,11 @@ export default function ParkMap() {
           lastHeadingPositionRef.current = pos;
         }
 
-        // Direct camera move during guided navigation (GPS-style: center + heading + tilt atomically)
+        // Direct pan during guided navigation (bypass React re-render cycle)
         if (isGuidedNow && mapRef.current && !userPanningRef.current) {
           const timeSinceInteraction = now - lastUserInteractionRef.current;
-          if (timeSinceInteraction > 1500) {
-            mapRef.current.moveCamera({
-              center: pos,
-              heading: currentMapHeadingRef.current,
-              tilt: 45,
-              zoom: 18,
-            });
+          if (timeSinceInteraction > 2000) {
+            mapRef.current.panTo(pos);
           }
         }
 
@@ -1446,7 +1431,7 @@ export default function ParkMap() {
     zoomControl: false,
     gestureHandling: 'greedy',
     // Never force heading in options (it was resetting guided camera rotation)
-    tilt: navigationMode === 'guided' ? 45 : mapType === 'satellite' ? 45 : 0,
+    tilt: navigationMode === 'guided' && mapType === 'satellite' ? 45 : mapType === 'satellite' ? 45 : 0,
     clickableIcons: false,
     styles: [
       { featureType: 'poi', stylers: [{ visibility: 'off' }] },
@@ -1897,7 +1882,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {navigationMode === 'guided' && (
+        {navigationMode === 'guided' && isNavigating && userPosition && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
@@ -2253,35 +2238,12 @@ export default function ParkMap() {
                       if (!routeInfo.destination) return;
                       setIsStartingGPSNav(true);
                       try {
+                        // Pass existing position — avoids redundant GPS request that can fail
                         const knownPos = userPositionRef.current ?? userPosition ?? undefined;
-
-                        // Switch to guided mode FIRST — so arrow appears immediately
-                        setNavigationMode('guided');
-                        navigationModeRef.current = 'guided';
-                        setIsNavigating(true);
-                        isNavigatingRef.current = true;
-
-                        // Set camera to GPS perspective immediately
-                        if (mapRef.current && knownPos) {
-                          mapRef.current.moveCamera({
-                            center: knownPos,
-                            heading: targetHeadingRef.current,
-                            tilt: 45,
-                            zoom: 18,
-                          });
-                        }
-
-                        // Then start GPS navigation (may take time)
                         await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
+                        setIsNavigating(false); // hide preview panel — NavigationHUD takes over
                       } catch (err) {
                         console.error('GPS nav error:', err);
-                        // Revert to preview mode on error
-                        setNavigationMode('preview');
-                        navigationModeRef.current = 'preview';
-                        if (mapRef.current) {
-                          mapRef.current.setHeading(0);
-                          mapRef.current.setTilt(0);
-                        }
                         toast.error('Não foi possível iniciar a navegação', {
                           description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
                         });
