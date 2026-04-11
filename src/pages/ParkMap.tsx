@@ -170,6 +170,7 @@ export default function ParkMap() {
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('preview');
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [isStartingGPSNav, setIsStartingGPSNav] = useState(false);
+  const [isGPSMode, setIsGPSMode] = useState(false); // GPS car-style view with centered arrow
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
@@ -203,7 +204,6 @@ export default function ParkMap() {
   const rafIdRef = useRef<number | null>(null); // requestAnimationFrame ID
   const navigationModeRef = useRef<NavigationMode>('preview'); // Avoid stale closure
   const isNavigatingRef = useRef(false); // Avoid stale closure
-  const gpsNavigatingRef = useRef(false); // Tracks gps.state.isNavigating without stale closures
   const userPanningRef = useRef(false); // True when user is manually dragging the map
   const lastMarkerClickRef = useRef(0); // Timestamp of last marker click — prevents map click from clearing popup
   const lastUserInteractionRef = useRef<number>(0); // Timestamp of last user pan/drag
@@ -471,11 +471,6 @@ export default function ParkMap() {
     }
   }, [userPosition, routeInfo?.destination, isNavigating, hasPlayedArrivalSound, playArrivalSound]);
 
-  // Sync gps hook navigating state to ref (for RAF loop)
-  useEffect(() => {
-    gpsNavigatingRef.current = gps.state.isNavigating;
-  }, [gps.state.isNavigating]);
-
   // Reset navigation state when starting/stopping + sync refs
   useEffect(() => {
     isNavigatingRef.current = isNavigating;
@@ -729,20 +724,31 @@ export default function ParkMap() {
     return (from + shortest * factor + 360) % 360;
   };
 
-  // Smooth map rotation loop — rotates map to follow user heading during navigation
-  const currentMapHeadingRef = useRef(0);
+  // GPS car-style: smooth rotation + camera follow + tilt
+  const gpsMapHeadingRef = useRef(0);
+  const isGPSModeRef = useRef(false);
+  useEffect(() => { isGPSModeRef.current = isGPSMode; }, [isGPSMode]);
+
   useEffect(() => {
     let active = true;
     const tick = () => {
       if (!active) return;
-      // Rotate map when navigating (preview or GPS hook) and user is not manually panning
-      if ((isNavigatingRef.current || gpsNavigatingRef.current) && mapRef.current && !userPanningRef.current && hasHeadingSignalRef.current) {
+      if (isGPSModeRef.current && mapRef.current && !userPanningRef.current) {
         const target = targetHeadingRef.current;
-        const current = currentMapHeadingRef.current;
+        const current = gpsMapHeadingRef.current;
         const next = interpolateHeading(current, target, 0.12);
         if (Math.abs(((target - current + 540) % 360) - 180) > 0.5) {
-          currentMapHeadingRef.current = next;
-          mapRef.current.setHeading(next);
+          gpsMapHeadingRef.current = next;
+        }
+        // Atomic camera update: center + heading + tilt
+        const pos = userPositionRef.current;
+        if (pos) {
+          mapRef.current.moveCamera({
+            center: pos,
+            heading: gpsMapHeadingRef.current,
+            tilt: 45,
+            zoom: 18,
+          });
         }
       }
       rafIdRef.current = requestAnimationFrame(tick);
@@ -934,6 +940,7 @@ export default function ParkMap() {
     setRouteSteps([]);
     setIsNavigating(false);
     isNavigatingRef.current = false;
+    setIsGPSMode(false);
     setNavigationMode('preview');
     navigationModeRef.current = 'preview';
     userPanningRef.current = false;
@@ -942,6 +949,7 @@ export default function ParkMap() {
       mapRef.current.setHeading(0);
       mapRef.current.setTilt(0);
     }
+    gpsMapHeadingRef.current = 0;
     currentHeadingRef.current = 0;
     targetHeadingRef.current = 0;
   }, []);
@@ -1711,8 +1719,8 @@ export default function ParkMap() {
               setSelectedPOI(null);
             }}
           >
-            {/* User location marker - hidden during GPS navigation (Waze arrow takes over) */}
-            {userPosition && isMapLoaded && !gps.state.isNavigating && (
+            {/* User location marker - hidden in GPS mode (Waze arrow takes over) */}
+            {userPosition && isMapLoaded && !isGPSMode && (
               <Marker
                 position={userPosition}
                 icon={userMarkerIcon}
@@ -1888,7 +1896,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {gps.state.isNavigating && (
+        {isGPSMode && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
@@ -2242,20 +2250,10 @@ export default function ParkMap() {
                     disabled={isStartingGPSNav}
                     onClick={async () => {
                       if (!routeInfo.destination) return;
-                      setIsStartingGPSNav(true);
-                      try {
-                        // Pass existing position — avoids redundant GPS request that can fail
-                        const knownPos = userPositionRef.current ?? userPosition ?? undefined;
-                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
-                        setIsNavigating(false); // hide preview panel — NavigationHUD takes over
-                      } catch (err) {
-                        console.error('GPS nav error:', err);
-                        toast.error('Não foi possível iniciar a navegação', {
-                          description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
-                        });
-                      } finally {
-                        setIsStartingGPSNav(false);
-                      }
+                      // Activate GPS car-style mode — arrow centered, map rotates, 3D tilt
+                      setIsGPSMode(true);
+                      // Ensure location tracking is active
+                      if (!userPositionRef.current) startLocationTracking();
                     }}
                     className="w-full gap-2 bg-green-500 hover:bg-green-400 text-white font-black text-base h-14 rounded-xl shadow-lg"
                   >
