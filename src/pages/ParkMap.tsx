@@ -2253,15 +2253,15 @@ export default function ParkMap() {
                       if (!routeInfo.destination) return;
                       setIsStartingGPSNav(true);
                       try {
-                        // Pass existing position — avoids redundant GPS request that can fail
                         const knownPos = userPositionRef.current ?? userPosition ?? undefined;
-                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
-                        // Switch to guided mode — enables GPS-style auto-rotation
+
+                        // Switch to guided mode FIRST — so arrow appears immediately
                         setNavigationMode('guided');
                         navigationModeRef.current = 'guided';
                         setIsNavigating(true);
                         isNavigatingRef.current = true;
-                        // Set initial camera to GPS perspective
+
+                        // Set camera to GPS perspective immediately
                         if (mapRef.current && knownPos) {
                           mapRef.current.moveCamera({
                             center: knownPos,
@@ -2270,8 +2270,18 @@ export default function ParkMap() {
                             zoom: 18,
                           });
                         }
+
+                        // Then start GPS navigation (may take time)
+                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
                       } catch (err) {
                         console.error('GPS nav error:', err);
+                        // Revert to preview mode on error
+                        setNavigationMode('preview');
+                        navigationModeRef.current = 'preview';
+                        if (mapRef.current) {
+                          mapRef.current.setHeading(0);
+                          mapRef.current.setTilt(0);
+                        }
                         toast.error('Não foi possível iniciar a navegação', {
                           description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
                         });
