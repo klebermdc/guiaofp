@@ -1961,7 +1961,7 @@ export default function ParkMap() {
           distanceToNextStep={gps.state.distanceToNextStep}
           destination={gps.state.steps.length > 0 ? gps.state.steps[gps.state.steps.length - 1].endLocation : null}
           userPosition={gps.state.userPosition}
-          onStop={gps.stopNavigation}
+          onStop={() => { gps.stopNavigation(); clearRoute(); }}
           onRecenter={gps.recenter}
           isOffCenter={gps.state.isOffCenter}
           onOpenExternal={(app) => {
