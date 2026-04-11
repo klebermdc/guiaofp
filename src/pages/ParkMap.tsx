@@ -1897,7 +1897,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {navigationMode === 'guided' && isNavigating && userPosition && (
+        {navigationMode === 'guided' && (isNavigating || gps.state.isNavigating) && userPosition && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
