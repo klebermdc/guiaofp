@@ -1897,6 +1897,31 @@ export default function ParkMap() {
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
         {isGPSMode && (
+          <>
+          {/* GPS HUD - route info at top */}
+          <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
+            <div className="bg-blue-700/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-2xl flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-white font-bold text-sm truncate">{routeInfo?.destinationName}</p>
+                <p className="text-blue-200 text-xs">{routeInfo?.distance} • {routeInfo?.duration}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsGPSMode(false);
+                  gpsMapHeadingRef.current = 0;
+                  if (mapRef.current) {
+                    mapRef.current.setHeading(0);
+                    mapRef.current.setTilt(0);
+                    mapRef.current.setZoom(16);
+                  }
+                }}
+                className="ml-3 bg-red-500 hover:bg-red-400 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          {/* GPS Arrow - centered */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
@@ -1959,6 +1984,7 @@ export default function ParkMap() {
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-blue-600 shadow-lg" />
             </div>
           </div>
+          </>
         )}
 
         {/* POI Filters - Floating buttons (Desktop only - mobile uses horizontal pills in header) */}
@@ -2161,8 +2187,8 @@ export default function ParkMap() {
         />
       )}
 
-      {/* Navigation Panel - Preview mode OR Desktop guided mode */}
-      {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
+      {/* Navigation Panel - hidden in GPS car mode on mobile */}
+      {isNavigating && routeInfo && !isGPSMode && (
         <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom`}>
           {/* Collapse toggle handle */}
           <button
@@ -2250,10 +2276,22 @@ export default function ParkMap() {
                     disabled={isStartingGPSNav}
                     onClick={async () => {
                       if (!routeInfo.destination) return;
-                      // Activate GPS car-style mode — arrow centered, map rotates, 3D tilt
+                      // Activate GPS car-style mode
                       setIsGPSMode(true);
-                      // Ensure location tracking is active
-                      if (!userPositionRef.current) startLocationTracking();
+                      // Hide the preview panel so the GPS arrow is visible
+                      setIsNavPanelExpanded(false);
+                      // Ensure location tracking is running
+                      startLocationTracking();
+                      // Set camera to GPS perspective immediately
+                      const pos = userPositionRef.current || userPosition;
+                      if (mapRef.current && pos) {
+                        mapRef.current.moveCamera({
+                          center: pos,
+                          heading: targetHeadingRef.current || 0,
+                          tilt: 45,
+                          zoom: 18,
+                        });
+                      }
                     }}
                     className="w-full gap-2 bg-green-500 hover:bg-green-400 text-white font-black text-base h-14 rounded-xl shadow-lg"
                   >
