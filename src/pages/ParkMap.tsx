@@ -723,6 +723,30 @@ export default function ParkMap() {
     return (from + shortest * factor + 360) % 360;
   };
 
+  // RAF loop for smooth map rotation during guided navigation
+  const currentMapHeadingRef = useRef(0);
+  useEffect(() => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      if (navigationModeRef.current === 'guided' && isNavigatingRef.current && mapRef.current && !userPanningRef.current) {
+        const target = targetHeadingRef.current;
+        const current = currentMapHeadingRef.current;
+        const next = interpolateHeading(current, target, 0.15);
+        if (Math.abs(next - current) > 0.1) {
+          currentMapHeadingRef.current = next;
+          mapRef.current.setHeading(next);
+        }
+      }
+      rafIdRef.current = requestAnimationFrame(tick);
+    };
+    rafIdRef.current = requestAnimationFrame(tick);
+    return () => {
+      active = false;
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
+
   const routeGuidanceSnapshot = useMemo(() => {
     if (!userPosition || !directions?.routes?.[0]?.overview_path?.length) return null;
 
@@ -972,12 +996,23 @@ export default function ParkMap() {
         const isGuidedNow = navigationModeRef.current === 'guided' && isNavigatingRef.current;
         const throttleMs = isGuidedNow ? 300 : 1200;
         if (now - lastGpsUpdateRef.current < throttleMs) {
-          // Even when throttled, still update heading and direct-pan during guided mode
+          // Even when throttled, still update camera during guided mode (GPS-style smooth tracking)
           if (isGuidedNow && mapRef.current && !userPanningRef.current) {
             const timeSinceInteraction = now - lastUserInteractionRef.current;
-            if (timeSinceInteraction > 2000) {
-              mapRef.current.panTo(pos);
+            if (timeSinceInteraction > 1500) {
+              mapRef.current.moveCamera({
+                center: pos,
+                heading: currentMapHeadingRef.current,
+                tilt: 45,
+                zoom: 18,
+              });
             }
+          }
+          // Still update heading even when throttled
+          const gH = position.coords.heading;
+          if (gH !== null && !Number.isNaN(gH)) {
+            targetHeadingRef.current = gH;
+            hasHeadingSignalRef.current = true;
           }
           return;
         }
@@ -1009,11 +1044,16 @@ export default function ParkMap() {
           lastHeadingPositionRef.current = pos;
         }
 
-        // Direct pan during guided navigation (bypass React re-render cycle)
+        // Direct camera move during guided navigation (GPS-style: center + heading + tilt atomically)
         if (isGuidedNow && mapRef.current && !userPanningRef.current) {
           const timeSinceInteraction = now - lastUserInteractionRef.current;
-          if (timeSinceInteraction > 2000) {
-            mapRef.current.panTo(pos);
+          if (timeSinceInteraction > 1500) {
+            mapRef.current.moveCamera({
+              center: pos,
+              heading: currentMapHeadingRef.current,
+              tilt: 45,
+              zoom: 18,
+            });
           }
         }
 
@@ -2216,7 +2256,20 @@ export default function ParkMap() {
                         // Pass existing position — avoids redundant GPS request that can fail
                         const knownPos = userPositionRef.current ?? userPosition ?? undefined;
                         await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
-                        setIsNavigating(false); // hide preview panel — NavigationHUD takes over
+                        // Switch to guided mode — enables GPS-style auto-rotation
+                        setNavigationMode('guided');
+                        navigationModeRef.current = 'guided';
+                        setIsNavigating(true);
+                        isNavigatingRef.current = true;
+                        // Set initial camera to GPS perspective
+                        if (mapRef.current && knownPos) {
+                          mapRef.current.moveCamera({
+                            center: knownPos,
+                            heading: targetHeadingRef.current,
+                            tilt: 45,
+                            zoom: 18,
+                          });
+                        }
                       } catch (err) {
                         console.error('GPS nav error:', err);
                         toast.error('Não foi possível iniciar a navegação', {
