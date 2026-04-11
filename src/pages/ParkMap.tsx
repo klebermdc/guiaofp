@@ -724,41 +724,55 @@ export default function ParkMap() {
     return (from + shortest * factor + 360) % 360;
   };
 
-  // GPS car-style: smooth rotation + camera follow + tilt
+  // GPS car-style mode refs
   const gpsMapHeadingRef = useRef(0);
-  const isGPSModeRef = useRef(false);
-  useEffect(() => { isGPSModeRef.current = isGPSMode; }, [isGPSMode]);
 
+  // Device orientation listener — only active during GPS mode
   useEffect(() => {
-    let active = true;
-    const tick = () => {
-      if (!active) return;
-      if (isGPSModeRef.current && mapRef.current && !userPanningRef.current) {
-        const target = targetHeadingRef.current;
-        const current = gpsMapHeadingRef.current;
-        const next = interpolateHeading(current, target, 0.12);
-        if (Math.abs(((target - current + 540) % 360) - 180) > 0.5) {
-          gpsMapHeadingRef.current = next;
-        }
-        // Atomic camera update: center + heading + tilt
-        const pos = userPositionRef.current;
-        if (pos) {
-          mapRef.current.moveCamera({
-            center: pos,
-            heading: gpsMapHeadingRef.current,
-            tilt: 45,
-            zoom: 18,
-          });
-        }
+    if (!isGPSMode) return;
+    let lastUpdate = 0;
+    const handler = (event: DeviceOrientationEvent) => {
+      const now = Date.now();
+      if (now - lastUpdate < 150) return;
+      lastUpdate = now;
+      let heading: number;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((event as any).webkitCompassHeading !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        heading = (event as any).webkitCompassHeading;
+      } else if (event.alpha !== null) {
+        heading = (360 - event.alpha) % 360;
+      } else {
+        return;
       }
-      rafIdRef.current = requestAnimationFrame(tick);
+      targetHeadingRef.current = heading;
+      hasHeadingSignalRef.current = true;
     };
-    rafIdRef.current = requestAnimationFrame(tick);
-    return () => {
-      active = false;
-      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+    window.addEventListener('deviceorientation', handler, true);
+    return () => window.removeEventListener('deviceorientation', handler, true);
+  }, [isGPSMode]);
+
+  // Camera update loop — 15fps to keep mobile smooth
+  useEffect(() => {
+    if (!isGPSMode) return;
+    const update = () => {
+      if (!mapRef.current) return;
+      const target = targetHeadingRef.current;
+      const current = gpsMapHeadingRef.current;
+      gpsMapHeadingRef.current = interpolateHeading(current, target, 0.15);
+      const pos = userPositionRef.current;
+      if (pos) {
+        mapRef.current.moveCamera({
+          center: pos,
+          heading: gpsMapHeadingRef.current,
+          tilt: 45,
+          zoom: 18,
+        });
+      }
     };
-  }, []);
+    const interval = setInterval(update, 66);
+    return () => clearInterval(interval);
+  }, [isGPSMode]);
 
   const routeGuidanceSnapshot = useMemo(() => {
     if (!userPosition || !directions?.routes?.[0]?.overview_path?.length) return null;
@@ -2276,14 +2290,27 @@ export default function ParkMap() {
                     disabled={isStartingGPSNav}
                     onClick={async () => {
                       if (!routeInfo.destination) return;
+                      // Request device orientation permission on iOS 13+
+                      try {
+                        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+                          await (DeviceOrientationEvent as any).requestPermission();
+                        }
+                      } catch (e) { console.warn('Orientation permission:', e); }
                       // Activate GPS car-style mode
                       setIsGPSMode(true);
                       // Hide the preview panel so the GPS arrow is visible
                       setIsNavPanelExpanded(false);
                       // Ensure location tracking is running
                       startLocationTracking();
-                      // Set camera to GPS perspective immediately
+                      // Calculate initial heading toward destination
                       const pos = userPositionRef.current || userPosition;
+                      if (pos && routeInfo.destination) {
+                        const initHeading = calculateBearing(pos, routeInfo.destination);
+                        targetHeadingRef.current = initHeading;
+                        gpsMapHeadingRef.current = initHeading;
+                        hasHeadingSignalRef.current = true;
+                      }
+                      // Set camera to GPS perspective immediately
                       if (mapRef.current && pos) {
                         mapRef.current.moveCamera({
                           center: pos,
