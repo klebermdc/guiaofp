@@ -36,3 +36,4 @@ supabase/.temp
 # Capacitor build outputs (keep source, ignore native build artifacts)
 ios/App/App/public
 android/app/src/main/assets/public
+.env*.local
