@@ -170,7 +170,6 @@ export default function ParkMap() {
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('preview');
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [isStartingGPSNav, setIsStartingGPSNav] = useState(false);
-  const [isGPSMode, setIsGPSMode] = useState(false); // GPS car-style view with centered arrow
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [showAttractionsList, setShowAttractionsList] = useState(false);
@@ -724,56 +723,6 @@ export default function ParkMap() {
     return (from + shortest * factor + 360) % 360;
   };
 
-  // GPS car-style mode refs
-  const gpsMapHeadingRef = useRef(0);
-
-  // Device orientation listener — only active during GPS mode
-  useEffect(() => {
-    if (!isGPSMode) return;
-    let lastUpdate = 0;
-    const handler = (event: DeviceOrientationEvent) => {
-      const now = Date.now();
-      if (now - lastUpdate < 150) return;
-      lastUpdate = now;
-      let heading: number;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((event as any).webkitCompassHeading !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        heading = (event as any).webkitCompassHeading;
-      } else if (event.alpha !== null) {
-        heading = (360 - event.alpha) % 360;
-      } else {
-        return;
-      }
-      targetHeadingRef.current = heading;
-      hasHeadingSignalRef.current = true;
-    };
-    window.addEventListener('deviceorientation', handler, true);
-    return () => window.removeEventListener('deviceorientation', handler, true);
-  }, [isGPSMode]);
-
-  // Camera update loop — 15fps to keep mobile smooth
-  useEffect(() => {
-    if (!isGPSMode) return;
-    const update = () => {
-      if (!mapRef.current) return;
-      const target = targetHeadingRef.current;
-      const current = gpsMapHeadingRef.current;
-      gpsMapHeadingRef.current = interpolateHeading(current, target, 0.15);
-      const pos = userPositionRef.current;
-      if (pos) {
-        mapRef.current.moveCamera({
-          center: pos,
-          heading: gpsMapHeadingRef.current,
-          tilt: 45,
-          zoom: 18,
-        });
-      }
-    };
-    const interval = setInterval(update, 66);
-    return () => clearInterval(interval);
-  }, [isGPSMode]);
-
   const routeGuidanceSnapshot = useMemo(() => {
     if (!userPosition || !directions?.routes?.[0]?.overview_path?.length) return null;
 
@@ -954,7 +903,6 @@ export default function ParkMap() {
     setRouteSteps([]);
     setIsNavigating(false);
     isNavigatingRef.current = false;
-    setIsGPSMode(false);
     setNavigationMode('preview');
     navigationModeRef.current = 'preview';
     userPanningRef.current = false;
@@ -963,7 +911,6 @@ export default function ParkMap() {
       mapRef.current.setHeading(0);
       mapRef.current.setTilt(0);
     }
-    gpsMapHeadingRef.current = 0;
     currentHeadingRef.current = 0;
     targetHeadingRef.current = 0;
   }, []);
@@ -1733,8 +1680,8 @@ export default function ParkMap() {
               setSelectedPOI(null);
             }}
           >
-            {/* User location marker - hidden in GPS mode (Waze arrow takes over) */}
-            {userPosition && isMapLoaded && !isGPSMode && (
+            {/* User location marker - hidden in guided mode (Waze arrow takes over) */}
+            {userPosition && isMapLoaded && navigationMode !== 'guided' && (
               <Marker
                 position={userPosition}
                 icon={userMarkerIcon}
@@ -1910,32 +1857,7 @@ export default function ParkMap() {
         </LoadScript>
 
         {/* Centered GPS Navigation Arrow - Waze Style */}
-        {isGPSMode && (
-          <>
-          {/* GPS HUD - route info at top */}
-          <div className="absolute top-4 left-4 right-4 z-20 pointer-events-auto">
-            <div className="bg-blue-700/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-2xl flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-white font-bold text-sm truncate">{routeInfo?.destinationName}</p>
-                <p className="text-blue-200 text-xs">{routeInfo?.distance} • {routeInfo?.duration}</p>
-              </div>
-              <button
-                onClick={() => {
-                  setIsGPSMode(false);
-                  gpsMapHeadingRef.current = 0;
-                  if (mapRef.current) {
-                    mapRef.current.setHeading(0);
-                    mapRef.current.setTilt(0);
-                    mapRef.current.setZoom(16);
-                  }
-                }}
-                className="ml-3 bg-red-500 hover:bg-red-400 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-          {/* GPS Arrow - centered */}
+        {navigationMode === 'guided' && isNavigating && userPosition && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             {/* GPS Navigation Cone/Arrow - Waze style */}
             <div className="relative">
@@ -1998,7 +1920,6 @@ export default function ParkMap() {
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-blue-600 shadow-lg" />
             </div>
           </div>
-          </>
         )}
 
         {/* POI Filters - Floating buttons (Desktop only - mobile uses horizontal pills in header) */}
@@ -2201,8 +2122,8 @@ export default function ParkMap() {
         />
       )}
 
-      {/* Navigation Panel - hidden in GPS car mode on mobile */}
-      {isNavigating && routeInfo && !isGPSMode && (
+      {/* Navigation Panel - Preview mode OR Desktop guided mode */}
+      {isNavigating && routeInfo && !(isMobile && navigationMode === 'guided') && (
         <div className={`absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 safe-area-bottom`}>
           {/* Collapse toggle handle */}
           <button
@@ -2290,34 +2211,19 @@ export default function ParkMap() {
                     disabled={isStartingGPSNav}
                     onClick={async () => {
                       if (!routeInfo.destination) return;
-                      // Request device orientation permission on iOS 13+
+                      setIsStartingGPSNav(true);
                       try {
-                        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-                          await (DeviceOrientationEvent as any).requestPermission();
-                        }
-                      } catch (e) { console.warn('Orientation permission:', e); }
-                      // Activate GPS car-style mode
-                      setIsGPSMode(true);
-                      // Hide the preview panel so the GPS arrow is visible
-                      setIsNavPanelExpanded(false);
-                      // Ensure location tracking is running
-                      startLocationTracking();
-                      // Calculate initial heading toward destination
-                      const pos = userPositionRef.current || userPosition;
-                      if (pos && routeInfo.destination) {
-                        const initHeading = calculateBearing(pos, routeInfo.destination);
-                        targetHeadingRef.current = initHeading;
-                        gpsMapHeadingRef.current = initHeading;
-                        hasHeadingSignalRef.current = true;
-                      }
-                      // Set camera to GPS perspective immediately
-                      if (mapRef.current && pos) {
-                        mapRef.current.moveCamera({
-                          center: pos,
-                          heading: targetHeadingRef.current || 0,
-                          tilt: 45,
-                          zoom: 18,
+                        // Pass existing position — avoids redundant GPS request that can fail
+                        const knownPos = userPositionRef.current ?? userPosition ?? undefined;
+                        await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
+                        setIsNavigating(false); // hide preview panel — NavigationHUD takes over
+                      } catch (err) {
+                        console.error('GPS nav error:', err);
+                        toast.error('Não foi possível iniciar a navegação', {
+                          description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
                         });
+                      } finally {
+                        setIsStartingGPSNav(false);
                       }
                     }}
                     className="w-full gap-2 bg-green-500 hover:bg-green-400 text-white font-black text-base h-14 rounded-xl shadow-lg"
