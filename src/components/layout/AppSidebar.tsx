@@ -65,6 +65,7 @@ const iconMap: Record<string, React.ElementType> = {
 // Static menu items (not controlled by plan_page_access)
 const staticMenuItems = [
   { icon: Sparkles, label: 'Top 3 nos Parques', path: '/top3', pageKey: 'top3' },
+  { icon: MapPin, label: 'Orlando Concierge', path: '/concierge', pageKey: 'concierge' },
   // { icon: Hotel, label: 'Comparador de Hotéis', path: '/hoteis', pageKey: 'hoteis' },
   { icon: Car, label: 'Guia de Transporte', path: '/transporte', pageKey: 'transporte' },
   { icon: Wallet, label: 'Carteira de Documentos', path: '/carteira', pageKey: 'carteira' },

@@ -1,10 +1,11 @@
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  Calendar, 
-  MessageCircle, 
-  CheckCircle2
+import {
+  User,
+  Calendar,
+  MessageCircle,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -292,6 +293,35 @@ const Dashboard = () => {
               </Link>
             </motion.div>
           )}
+        </motion.div>
+
+        {/* Orlando Concierge Card */}
+        <motion.div variants={itemVariants}>
+          <Link to="/concierge" className="block">
+            <motion.div
+              variants={cardHoverVariants}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <Card variant="interactive" className="overflow-hidden">
+                <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+                  <motion.div
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center text-white flex-shrink-0"
+                    style={{ backgroundColor: '#FF6B35' }}
+                    whileHover={{ rotate: [0, -10, 10, 0] }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <Sparkles size={20} className="sm:w-6 sm:h-6" />
+                  </motion.div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">Orlando Concierge</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">Descubra locais próximos ao seu hotel</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Link>
         </motion.div>
 
         {/* Unified Trip & Planner Card */}
