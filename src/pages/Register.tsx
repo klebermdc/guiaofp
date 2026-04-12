@@ -31,7 +31,20 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
   email: z.string().email('Email inválido').max(255),
-  phone: z.string().min(14, 'WhatsApp é obrigatório').max(15),
+  phone: z.string()
+    .min(14, 'WhatsApp é obrigatório')
+    .max(15)
+    .refine((val) => {
+      const digits = val.replace(/\D/g, '');
+      // Must be 10 or 11 digits (Brazilian phone with DDD)
+      if (digits.length < 10 || digits.length > 11) return false;
+      // DDD must be valid (11-99)
+      const ddd = parseInt(digits.substring(0, 2));
+      if (ddd < 11 || ddd > 99) return false;
+      // Mobile numbers (11 digits) must start with 9 after DDD
+      if (digits.length === 11 && digits[2] !== '9') return false;
+      return true;
+    }, 'Número de WhatsApp inválido. Use formato: (XX) 9XXXX-XXXX'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -98,11 +111,10 @@ export default function Register() {
   };
 
   const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    return numbers
-      .replace(/(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{5})(\d)/, '$1-$2')
-      .slice(0, 15);
+    const numbers = value.replace(/\D/g, '').slice(0, 11); // Max 11 digits (DDD + 9 digits)
+    if (numbers.length <= 2) return numbers.length > 0 ? `(${numbers}` : '';
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
