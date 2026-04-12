@@ -1,3 +1,4 @@
+// LEGACY: Uses Google Maps API. Migration to Mapbox pending.
 import { useState, useRef, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { 

@@ -1,15 +1,16 @@
-import { useState, memo, useCallback, useEffect } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X, Loader2 } from 'lucide-react';
+import { Navigation, MapPin, DollarSign, Sparkles, ArrowLeft, ChevronRight, Star, Share2, Flame, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useLoadScript, GoogleMap, Marker, Circle } from '@react-google-maps/api';
+import Map, { Marker as MapboxMarker } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PARKS, GOOGLE_MAPS_API_KEY } from '@/data/constants';
+import { PARKS } from '@/data/constants';
 import { toast } from 'sonner';
 
 import top3MagicKingdom from '@/assets/parks/top3-magic-kingdom.jpg';
@@ -89,64 +90,32 @@ const ItemCardSkeleton = () => (
   </div>
 );
 
-// ─── Mini interactive map ──────────────────────────────────────
-const MINI_MAP_OPTIONS: google.maps.MapOptions = {
-  mapTypeId: 'hybrid',
-  disableDefaultUI: true,
-  gestureHandling: 'greedy',
-  clickableIcons: false,
-  styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
-};
+// ─── Mini interactive map (Mapbox GL) ──────────────────────────
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const MiniMap = memo(({ lat, lng, color = '#F97316' }: { lat: number; lng: number; color?: string }) => {
-  const { isLoaded } = useLoadScript({ googleMapsApiKey: GOOGLE_MAPS_API_KEY });
-  const [pulse, setPulse] = useState(false);
-  const center = { lat, lng };
-
-  useEffect(() => {
-    const id = setInterval(() => setPulse(v => !v), 700);
-    return () => clearInterval(id);
-  }, []);
-
-  if (!isLoaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-muted">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <GoogleMap
-      mapContainerStyle={{ width: '100%', height: '100%' }}
-      center={center}
-      zoom={19}
-      options={MINI_MAP_OPTIONS}
+    <Map
+      mapboxAccessToken={MAPBOX_TOKEN}
+      initialViewState={{ longitude: lng, latitude: lat, zoom: 18 }}
+      style={{ width: '100%', height: '100%' }}
+      mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+      interactive={true}
+      attributionControl={false}
     >
-      <Marker
-        position={center}
-        icon={{
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: color,
-          fillOpacity: 1,
-          strokeColor: '#FFFFFF',
-          strokeWeight: 3,
-          scale: 10,
-        }}
-      />
-      <Circle
-        center={center}
-        radius={pulse ? 22 : 12}
-        options={{
-          fillColor: color,
-          fillOpacity: pulse ? 0 : 0.2,
-          strokeColor: color,
-          strokeOpacity: pulse ? 0.3 : 0.8,
-          strokeWeight: 2,
-          clickable: false,
-        }}
-      />
-    </GoogleMap>
+      <MapboxMarker longitude={lng} latitude={lat} anchor="center">
+        <div
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            backgroundColor: color,
+            border: '3px solid #FFFFFF',
+            boxShadow: `0 0 0 4px ${color}33, 0 2px 8px rgba(0,0,0,0.3)`,
+          }}
+        />
+      </MapboxMarker>
+    </Map>
   );
 });
 MiniMap.displayName = 'MiniMap';
@@ -605,7 +574,7 @@ const Top3Page = () => {
 
             return (
               <div>
-                {/* Interactive Google Map */}
+                {/* Interactive Mapbox Map */}
                 <div className="relative h-80 bg-muted overflow-hidden">
                   {hasCoords ? (
                     <MiniMap lat={lat!} lng={lng!} color={catColor} />

@@ -1,3 +1,4 @@
+// LEGACY: Uses Google Maps API. Migration to Mapbox pending.
 import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GoogleMap, Marker, useLoadScript } from '@react-google-maps/api';

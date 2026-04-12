@@ -107,19 +107,9 @@ export const getWaitTimeColor = (waitTime: number | undefined): string => {
 };
 
 // ============= Google Maps Configuration =============
+// LEGACY: Used only by admin components (TravelModeTop3Manager, UnifiedMapEditor).
+// Migration to Mapbox pending for admin panels.
 export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
-export const DEFAULT_MAP_OPTIONS: google.maps.MapOptions = {
-  disableDefaultUI: true,
-  zoomControl: false,
-  mapTypeControl: false,
-  scaleControl: false,
-  streetViewControl: false,
-  rotateControl: false,
-  fullscreenControl: false,
-  clickableIcons: false,
-  gestureHandling: 'greedy',
-};
 
 // ============= Refresh Intervals =============
 export const REFRESH_INTERVALS = {
