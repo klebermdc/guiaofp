@@ -256,7 +256,7 @@ export default function ParkMap() {
   const lastHeadingPositionRef = useRef<LatLng | null>(null);
   const hasHeadingSignalRef = useRef(false);
   const orientationHandlerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
-  const pendingDeepLinkRef = useRef<{ parkId?: string; restaurantId?: string; lat?: number; lng?: number; search?: string } | null>(null);
+  const pendingDeepLinkRef = useRef<{ parkId?: string; restaurantId?: string; lat?: number; lng?: number; search?: string; navigate?: boolean } | null>(null);
 
   // Direct camera control refs
   const targetHeadingRef = useRef<number>(0);
@@ -1094,6 +1094,7 @@ export default function ParkMap() {
     const latParam = params.get('lat');
     const lngParam = params.get('lng');
     const searchParam = params.get('search') ?? undefined;
+    const shouldNavigate = params.get('navigate') === '1';
 
     if (parkParam) {
       const targetPark = PARKS.find(p => p.id === parkParam);
@@ -1110,6 +1111,7 @@ export default function ParkMap() {
         lat: lat && !isNaN(lat) ? lat : undefined,
         lng: lng && !isNaN(lng) ? lng : undefined,
         search: searchParam,
+        navigate: shouldNavigate,
       };
     }
 
@@ -1119,7 +1121,7 @@ export default function ParkMap() {
   // Phase 2: resolve pending deep-link
   useEffect(() => {
     if (!pendingDeepLinkRef.current) return;
-    const { parkId, restaurantId, lat, lng, search } = pendingDeepLinkRef.current;
+    const { parkId, restaurantId, lat, lng, search, navigate: shouldNav } = pendingDeepLinkRef.current;
 
     if (parkId && selectedPark.id !== parkId) return;
     if (currentParkPOIs.length === 0 && !dbAttractions) return;
@@ -1138,7 +1140,7 @@ export default function ParkMap() {
 
     if (lat && lng) {
       const position: LatLng = { lat, lng };
-      handleNavigateToAttraction(position);
+      const destName = search ?? 'Destino';
 
       if (search && currentParkPOIs.length > 0) {
         const normalized = search.toLowerCase().trim();
@@ -1151,7 +1153,15 @@ export default function ParkMap() {
         }
       }
 
-      toast.success(`📍 ${search ?? 'Destino'}`, { description: 'Localizado no mapa!' });
+      if (shouldNav) {
+        // Auto-start navigation to this location
+        calculateRoute(position, destName);
+        toast.success(`🧭 Navegando até ${destName}`, { description: 'Rota calculada automaticamente!' });
+      } else {
+        handleNavigateToAttraction(position);
+        toast.success(`📍 ${destName}`, { description: 'Localizado no mapa!' });
+      }
+
       pendingDeepLinkRef.current = null;
       return;
     }
