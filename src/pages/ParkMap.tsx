@@ -1154,9 +1154,9 @@ export default function ParkMap() {
       }
 
       if (shouldNav) {
-        // Auto-start navigation to this location
-        calculateRoute(position, destName);
-        toast.success(`🧭 Navegando até ${destName}`, { description: 'Rota calculada automaticamente!' });
+        // Auto-start navigation — handles GPS permission + route calculation
+        handleRouteToAttraction(position, destName);
+        toast.success(`🧭 Navegando até ${destName}`, { description: 'Calculando rota...' });
       } else {
         handleNavigateToAttraction(position);
         toast.success(`📍 ${destName}`, { description: 'Localizado no mapa!' });
