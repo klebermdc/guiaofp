@@ -1521,8 +1521,8 @@ export default function ParkMap() {
           touchPitch={true}
           dragRotate={true}
         >
-          {/* User location marker - hidden in guided mode */}
-          {userPosition && isMapLoaded && navigationMode !== 'guided' && (
+          {/* User location marker - hidden during GPS navigation */}
+          {userPosition && isMapLoaded && navigationMode !== 'guided' && !gps.state.isNavigating && (
             <Marker
               longitude={userPosition.lng}
               latitude={userPosition.lat}
