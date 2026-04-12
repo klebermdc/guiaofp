@@ -11,9 +11,12 @@ const Agenda = () => {
   const { t, language } = useLanguage();
 
   // Usar parkDates do perfil de viagem, ordenados cronologicamente
-  const agendaItems = [...(travelProfile.parkDates || [])].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const agendaItems = [...(travelProfile?.parkDates || [])].sort((a, b) => {
+    // Parse as local dates to avoid timezone shift
+    const [ay, am, ad] = (a.date || '').split('-').map(Number);
+    const [by, bm, bd] = (b.date || '').split('-').map(Number);
+    return new Date(ay, am - 1, ad).getTime() - new Date(by, bm - 1, bd).getTime();
+  });
 
   const formatDate = (dateStr: string) => {
     // Parse date as local time to avoid timezone issues

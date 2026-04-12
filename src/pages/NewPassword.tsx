@@ -75,7 +75,6 @@ const NewPassword = () => {
         });
       }, 2000);
     } catch (err) {
-      console.error('Update password error:', err);
       setIsLoading(false);
       toast.error((err as Error).message || 'Erro ao alterar senha. Tente novamente.');
     }

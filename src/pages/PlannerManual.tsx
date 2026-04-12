@@ -103,11 +103,18 @@ const PlannerManual = () => {
             .select()
             .single();
           
+          if (updateError) {
+            toast({
+              title: 'Erro ao sincronizar datas',
+              description: 'Não foi possível atualizar as datas do roteiro.',
+              variant: 'destructive'
+            });
+          }
           if (!updateError && updatedPlanner) {
             return { planner: updatedPlanner, isNew: false, datesUpdated: true };
           }
         }
-        
+
         return { planner: existing, isNew: false };
       }
       
@@ -379,7 +386,6 @@ const PlannerManual = () => {
         description: `Arquivo ${fileName} baixado com sucesso.`,
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast({
         title: 'Erro ao gerar PDF',
         description: 'Não foi possível gerar o arquivo.',
@@ -481,7 +487,6 @@ const PlannerManual = () => {
         description: `${itemsToInsert.length} atividades adicionadas ao seu roteiro.`,
       });
     } catch (error) {
-      console.error('Error importing template:', error);
       toast({
         title: 'Erro ao importar',
         description: 'Não foi possível importar o template.',

@@ -226,9 +226,7 @@ const Content = () => {
         ),
       ]);
 
-      if (dailyError) {
-        console.error('Error fetching daily analytics wait times:', dailyError);
-      }
+      // dailyError is non-critical; wait time data may be unavailable
 
       // Merge all wait_time_records results
       const allRecords: Array<{ attraction_name: string; wait_time_minutes: number | null }> = [];
@@ -342,7 +340,6 @@ const Content = () => {
         toast.success('Atração adicionada às desejadas');
       }
     } catch (error) {
-      console.error('Error toggling preference:', error);
       toast.error('Erro ao atualizar preferência');
     } finally {
       setSavingPreference(false);

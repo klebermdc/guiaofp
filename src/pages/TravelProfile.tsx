@@ -779,7 +779,7 @@ function AccommodationSection({ travelProfile, handleFieldChange }: Accommodatio
 
       setHotelVoucher({ name: file.name, url: urlData.publicUrl });
     } catch (error) {
-      console.error('Error uploading voucher:', error);
+      // Upload failed silently — user can retry
     } finally {
       setIsUploading(false);
     }
@@ -804,7 +804,7 @@ function AccommodationSection({ travelProfile, handleFieldChange }: Accommodatio
 
       setHotelVoucher(null);
     } catch (error) {
-      console.error('Error removing voucher:', error);
+      // Removal failed silently — user can retry
     }
   };
 

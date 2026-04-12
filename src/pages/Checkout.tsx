@@ -190,7 +190,7 @@ export default function Checkout() {
           },
           action: 'create_or_update',
         },
-      }).catch(console.error);
+      }).catch(() => { /* non-critical tracking */ });
     }
   }, [plan, userProfile, originalAmountCents]);
 
@@ -507,7 +507,6 @@ export default function Checkout() {
         });
       }
     } catch (error: unknown) {
-      console.error('Payment error:', error);
       const message = error instanceof Error ? error.message : 'Erro ao processar pagamento. Tente novamente.';
       toast.error(message);
     } finally {

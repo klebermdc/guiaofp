@@ -112,7 +112,7 @@ export default function ClientDetails() {
       if (attractionsError) throw attractionsError;
       setAttractions(attractionsData || []);
     } catch (error) {
-      console.error('Error loading client data:', error);
+      // Error loading client data — will show empty state
     } finally {
       setLoading(false);
     }

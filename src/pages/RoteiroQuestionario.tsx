@@ -104,7 +104,6 @@ export default function RoteiroQuestionario() {
         .single();
 
       if (error) {
-        console.error("Error saving itinerary:", error);
         toast.error("Erro ao salvar. Tente novamente.");
         return;
       }
@@ -113,7 +112,6 @@ export default function RoteiroQuestionario() {
       navigate(`/roteiro-personalizado/${itinerary.id}`);
       
     } catch (error) {
-      console.error("Unexpected error:", error);
       toast.error("Erro inesperado. Tente novamente.");
     } finally {
       setIsLoading(false);

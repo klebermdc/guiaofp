@@ -74,6 +74,7 @@ const RestaurantDetails = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [restaurant, setRestaurant] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: favoriteSlugs } = useFavoriteSlugs();
   const toggleFavorite = useToggleFavorite();
@@ -81,40 +82,40 @@ const RestaurantDetails = () => {
   
   const isFavorite = slug ? (favoriteSlugs?.has(slug) || false) : false;
 
+  const fetchRestaurant = async () => {
+    if (!slug) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Fetch images and menu items in parallel
+      const [imagesResult, menuResult] = await Promise.all([
+        supabase.from('restaurant_images').select('*').eq('restaurant_id', data.id).order('display_order'),
+        supabase.from('restaurant_menu_items').select('*').eq('restaurant_id', data.id),
+      ]);
+
+      setRestaurant({
+        ...data,
+        images: imagesResult.data || [],
+        menu_items: menuResult.data || []
+      });
+    } catch (err) {
+      setError('Não foi possível carregar o restaurante. Verifique sua conexão e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRestaurant = async () => {
-      if (!slug) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('restaurants')
-          .select('*')
-          .eq('slug', slug)
-          .single();
-
-        if (error) throw error;
-
-        // Fetch images and menu items in parallel
-        const [imagesResult, menuResult] = await Promise.all([
-          supabase.from('restaurant_images').select('*').eq('restaurant_id', data.id).order('display_order'),
-          supabase.from('restaurant_menu_items').select('*').eq('restaurant_id', data.id),
-        ]);
-
-        if (imagesResult.error) console.warn('Could not load restaurant images:', imagesResult.error.message);
-        if (menuResult.error) console.warn('Could not load menu items:', menuResult.error.message);
-
-        setRestaurant({
-          ...data,
-          images: imagesResult.data || [],
-          menu_items: menuResult.data || []
-        });
-      } catch (error) {
-        console.error('Error fetching restaurant:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRestaurant();
   }, [slug]);
 
@@ -181,6 +182,26 @@ const RestaurantDetails = () => {
               <Skeleton className="h-24 w-full" />
             </CardContent>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Erro ao carregar</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={fetchRestaurant}>
+              Tentar novamente
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/guia-restaurantes')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Guia
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -97,18 +97,11 @@ const RestaurantsGuide = () => {
   // Fetch favorites
   const { data: favoriteSlugs } = useFavoriteSlugs();
 
-  // Log errors for debugging
-  if (restaurantsError) {
-    console.error('[RestaurantsGuide] Error fetching restaurants:', restaurantsError);
-  }
-
   // Use Supabase data if available, otherwise fallback to static data
   const restaurantsData: StaticRestaurant[] = useMemo(() => {
     if (supabaseRestaurants.length > 0) {
-      console.log(`[RestaurantsGuide] Using ${supabaseRestaurants.length} restaurants from database`);
       return supabaseRestaurants.map(convertToCardFormat);
     }
-    console.warn(`[RestaurantsGuide] Fallback to static data (${staticRestaurantsData.length} restaurants)`);
     return staticRestaurantsData;
   }, [supabaseRestaurants]);
 

@@ -137,7 +137,6 @@ export default function RoteiroView() {
       toast.success("Roteiro gerado com sucesso!");
       refetch();
     } catch (err) {
-      console.error("Error generating itinerary:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar roteiro");
     } finally {
       clearInterval(progressInterval);

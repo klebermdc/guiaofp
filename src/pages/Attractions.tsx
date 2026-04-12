@@ -238,7 +238,6 @@ export default function Attractions() {
 
         if (error) throw error;
       } catch (error) {
-        console.error('Error saving note:', error);
         toast.error('Erro ao salvar anotação');
       } finally {
         setSaving(false);
@@ -276,7 +275,6 @@ export default function Attractions() {
         if (error) throw error;
       }
     } catch (error) {
-      console.error('Error saving preferences:', error);
       toast.error('Erro ao salvar preferências');
     } finally {
       setSaving(false);

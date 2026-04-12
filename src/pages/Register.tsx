@@ -180,9 +180,7 @@ export default function Register() {
         })
         .eq('user_id', authData.user.id);
 
-      if (profileError) {
-        console.error('Profile update error:', profileError);
-      }
+      // profileError is non-critical; profile was created during signup
 
       // Track abandoned cart with real user ID now
       try {
@@ -209,7 +207,7 @@ export default function Register() {
           },
         });
       } catch (err) {
-        console.error('Failed to track cart:', err);
+        // Non-critical tracking failure
       }
 
       toast.success('Conta criada! Agora finalize seu pagamento.');
@@ -229,7 +227,6 @@ export default function Register() {
       // Navigate to checkout
       navigate(`/checkout/${planId || 'basic'}`);
     } catch (error) {
-      console.error('Registration error:', error);
       toast.error((error as Error).message || 'Erro ao criar conta. Tente novamente.');
     } finally {
       setIsSubmitting(false);

@@ -231,7 +231,6 @@ const Checklists = () => {
     try {
       await updateTravelProfile({ checklistItems: newCheckedItems });
     } catch (error) {
-      console.error('Error saving checklist:', error);
       toast.error('Erro ao salvar checklist');
     } finally {
       setIsSaving(false);

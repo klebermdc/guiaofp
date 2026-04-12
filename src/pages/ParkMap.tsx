@@ -526,7 +526,6 @@ export default function ParkMap() {
         .not('longitude', 'is', null);
 
       if (error) {
-        console.error('Error fetching attractions:', error);
         return [];
       }
 
@@ -556,7 +555,7 @@ export default function ParkMap() {
         body: { parkId },
       });
       if (error) {
-        console.error('Error fetching wait times:', error);
+        // Wait times unavailable
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (Array.isArray((data as any)?.data)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -566,7 +565,7 @@ export default function ParkMap() {
         setLastWaitTimeUpdate(new Date());
       }
     } catch (err) {
-      console.error('Failed to fetch wait times:', err);
+      // Wait times fetch failed
     }
     if (!isBackground) setIsLoadingWaitTimes(false);
     isFetchingRef.current = false;
@@ -747,7 +746,6 @@ export default function ParkMap() {
         }
       }
     } catch (err) {
-      console.error('Route calculation error:', err);
       // Fallback
       const straightLineDistance = calculateStraightLineDistance(currentPos, destination);
       const estimatedWalkingDistance = straightLineDistance * 1.3;
@@ -960,7 +958,7 @@ export default function ParkMap() {
             window.addEventListener('deviceorientation', orientationHandlerRef.current, true);
           }
         })
-        .catch(console.error);
+        .catch(() => { /* orientation permission denied */ });
     } else if (orientationHandlerRef.current) {
       window.addEventListener('deviceorientation', orientationHandlerRef.current, true);
     }
@@ -2073,7 +2071,6 @@ export default function ParkMap() {
                         await gps.startNavigation(routeInfo.destination, routeInfo.destinationName, knownPos);
                         setIsNavigating(false);
                       } catch (err) {
-                        console.error('GPS nav error:', err);
                         toast.error('Não foi possível iniciar a navegação', {
                           description: 'Tente aproximar-se de uma área com sinal ou aguarde o GPS estabilizar',
                         });
