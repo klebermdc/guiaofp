@@ -83,24 +83,6 @@ serve(async (req) => {
 
     if (cached?.recommendations) {
       console.log("Cache HIT for concierge:", normalized);
-      // Increment hit_count (fire-and-forget)
-      supabase.rpc("", {}).catch(() => {});
-      supabase
-        .from("concierge_cache")
-        .update({ hit_count: undefined }) // we'll use raw SQL below
-        .eq("id", cached.id)
-        .then(() => {});
-      // Simple increment via update
-      fetch(`${supabaseUrl}/rest/v1/concierge_cache?id=eq.${cached.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=minimal",
-        },
-        body: JSON.stringify({ hit_count: (cached as any).hit_count ? (cached as any).hit_count + 1 : 1 }),
-      }).catch(() => {});
 
       return new Response(JSON.stringify(cached.recommendations), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
