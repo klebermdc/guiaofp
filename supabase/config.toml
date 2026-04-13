@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.openclaw-api]
 verify_jwt = false
+
+[functions.concierge-recommend]
+verify_jwt = false
