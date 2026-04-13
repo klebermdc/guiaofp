@@ -411,6 +411,39 @@ export type Database = {
         }
         Relationships: []
       }
+      concierge_cache: {
+        Row: {
+          address_normalized: string
+          address_original: string
+          created_at: string
+          expires_at: string
+          hit_count: number
+          id: string
+          recommendations: Json
+          updated_at: string
+        }
+        Insert: {
+          address_normalized: string
+          address_original: string
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          recommendations: Json
+          updated_at?: string
+        }
+        Update: {
+          address_normalized?: string
+          address_original?: string
+          created_at?: string
+          expires_at?: string
+          hit_count?: number
+          id?: string
+          recommendations?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_categories: {
         Row: {
           color: string | null
