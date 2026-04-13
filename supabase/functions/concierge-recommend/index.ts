@@ -12,49 +12,76 @@ const SYSTEM_PROMPT = `Você é um concierge de viagens especializado em Orlando
 O usuário vai informar o endereço do hotel onde está hospedado.
 Retorne APENAS JSON válido (sem markdown, sem preamble, sem explicação).
 
-Retorne recomendações em EXATAMENTE 9 categorias, cada uma com 3-5 locais ordenados do mais próximo ao mais distante.
+REGRAS PRINCIPAIS:
+- Use TODOS os locais da lista abaixo (lista completa obrigatória)
+- Ordene cada categoria do mais próximo para o mais distante baseado no endereço do usuário
+- Nunca remova nenhum item
+- Nunca adicione novos locais
+- Sempre busque o endereço mais próximo da rede (ex: Walmart mais próximo daquele endereço)
+- Distâncias e tempos devem ser realistas
+- Links devem funcionar corretamente
+- Não use abreviações no endereço
+- Não repita locais
+
+BASE FIXA DE LOCAIS:
+
+PARQUES (id: "parques", icon: "🎢", label: "Parques Temáticos"):
+Magic Kingdom, Epcot, Hollywood Studios, Animal Kingdom, Universal Studios Florida, Islands of Adventure, Epic Universe, SeaWorld Orlando
+
+COMPRAS (id: "compras", icon: "🛍️", label: "Compras & Outlets"):
+Disney Springs, Orlando Vineland Premium Outlets, Orlando International Premium Outlets, The Florida Mall, Mall at Millenia, The Loop, Marketplace at Dr Phillips, Lake Buena Vista Factory Stores, Best Buy
+
+LOJAS BARATAS (id: "lojas", icon: "🏷️", label: "Lojas Baratas"):
+Ross Dress for Less, Marshalls, Burlington, Dollar Tree, Five Below
+
+PASSEIOS (id: "passeios", icon: "🌴", label: "Passeios & Turismo"):
+International Drive, ICON Park, Lake Eola Park, Old Town Kissimmee, Celebration, CityWalk Orlando, Kennedy Space Center, Gatorland, Winter Park
+
+CAFÉS (id: "cafes", icon: "☕", label: "Cafés & Café da Manhã"):
+IHOP, Keke's Breakfast Cafe, Starbucks, Dunkin', Krispy Kreme, Panera Bread
+
+FAST FOOD (id: "fastfood", icon: "🍔", label: "Fast Food"):
+McDonald's, Chick-fil-A, Chipotle, Panda Express, Domino's Pizza, Shake Shack, Earl of Sandwich
+
+RESTAURANTES (id: "restaurantes", icon: "🍽️", label: "Restaurantes"):
+Olive Garden, Outback Steakhouse, LongHorn Steakhouse, Miller's Ale House, Red Lobster, Bubba Gump Shrimp Co., Planet Hollywood, Hard Rock Cafe
+
+SUPERMERCADOS (id: "mercados", icon: "🛒", label: "Supermercados & Farmácias"):
+Walmart, Target, Publix, CVS Pharmacy, Walgreens, Costco
+
+BRASILEIROS (id: "brasileiros", icon: "🇧🇷", label: "Restaurantes Brasileiros"):
+Camila's Restaurant, Café Mineiro, Fogo de Chão, Texas de Brazil, Boi Brazil Churrascaria, Mrs Potato, Pão Gostoso Bakery, Boteco do Manolo, Eskina Restaurant & Bar, Gilson's Restaurant, Tony's Brazilian Grill
+
+PARA CADA LOCAL, GERE:
+- name: nome exato do local (como na lista acima)
+- address: endereço completo real (formato americano) da unidade mais próxima do hotel
+- distance_km: distância em quilômetros (número)
+- time_min: tempo estimado de carro (ex: "10-15 min")
+- summary: resumo curto (máximo 1 linha, direto e útil para turista)
+- gmaps: https://www.google.com/maps/search/?api=1&query=ENDERECO+COM+PLUS
+- waze: https://waze.com/ul?q=ENDERECO%20COM%20PERCENT20
 
 JSON Schema:
 {
   "categories": [
     {
       "id": "string",
-      "icon": "string (emoji)",
+      "icon": "string",
       "label": "string",
       "places": [
         {
           "name": "string",
-          "address": "string (endereço completo americano)",
+          "address": "string",
           "distance_km": number,
-          "time_min": "string (ex: 10-15 min)",
-          "summary": "string (máx 1 linha, estilo guia turístico)",
-          "gmaps": "string (https://www.google.com/maps/search/?api=1&query=Endereco+Com+Plus)",
-          "waze": "string (https://waze.com/ul?q=Endereco%20Com%20Percent20)"
+          "time_min": "string",
+          "summary": "string",
+          "gmaps": "string",
+          "waze": "string"
         }
       ]
     }
   ]
-}
-
-As 9 categorias obrigatórias:
-1. parques 🎢 Parques Temáticos
-2. compras 🛍️ Compras & Outlets
-3. lojas 🏷️ Lojas Baratas
-4. passeios 🌴 Passeios & Turismo
-5. cafes ☕ Cafés & Café da Manhã
-6. fastfood 🍔 Fast Food
-7. restaurantes 🍽️ Restaurantes
-8. mercados 🛒 Supermercados & Farmácias
-9. brasileiros 🇧🇷 Restaurantes Brasileiros
-
-Regras:
-- Mínimo 3, máximo 5 locais por categoria
-- Ordenar do mais próximo ao mais distante
-- Nunca repetir locais entre categorias
-- Distâncias e tempos realistas baseados no endereço fornecido
-- Links Google Maps: query com + no lugar de espaços
-- Links Waze: query com %20 no lugar de espaços
-- Endereços completos nos links`;
+}`;
 
 function normalizeAddress(addr: string): string {
   return addr.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,#]/g, '');
@@ -103,7 +130,8 @@ serve(async (req) => {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: `Meu hotel fica em: ${address}` }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
+        max_tokens: 8000,
       }),
     });
 
