@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const CACHE_TTL_HOURS = 24;
 
 const SYSTEM_PROMPT = `Você é um concierge de viagens especializado em Orlando, Florida.
 O usuário vai informar o endereço do hotel onde está hospedado.
@@ -53,14 +56,45 @@ Regras:
 - Links Waze: query com %20 no lugar de espaços
 - Endereços completos nos links`;
 
+function normalizeAddress(addr: string): string {
+  return addr.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,#]/g, '');
+}
+
+function makeCacheKey(address: string): string {
+  return `concierge:${normalizeAddress(address)}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { address } = await req.json();
+    if (!address || address.length < 10) throw new Error("Endereço muito curto");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const cacheKey = makeCacheKey(address);
+
+    // Check cache
+    const { data: cached } = await supabase
+      .from("cache_entries")
+      .select("data")
+      .eq("key", cacheKey)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (cached?.data) {
+      console.log("Cache HIT for concierge:", cacheKey);
+      return new Response(JSON.stringify(cached.data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Cache miss — call AI
     const MINIMAX_API_KEY = Deno.env.get("MINIMAX_API_KEY");
     if (!MINIMAX_API_KEY) throw new Error("MINIMAX_API_KEY not configured");
-    if (!address || address.length < 10) throw new Error("Endereço muito curto");
 
     const response = await fetch("https://api.minimaxi.chat/v1/chat/completions", {
       method: "POST",
@@ -82,6 +116,13 @@ serve(async (req) => {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Invalid response");
     const result = JSON.parse(jsonMatch[0]);
+
+    // Store in cache (fire-and-forget)
+    const expiresAt = new Date(Date.now() + CACHE_TTL_HOURS * 60 * 60 * 1000).toISOString();
+    supabase
+      .from("cache_entries")
+      .upsert({ key: cacheKey, data: result, expires_at: expiresAt, hit_count: 0 }, { onConflict: "key" })
+      .then(({ error }) => { if (error) console.error("Cache write error:", error); });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
