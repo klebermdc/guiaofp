@@ -17,8 +17,20 @@ REGRAS PRINCIPAIS:
 - Ordene cada categoria do mais próximo para o mais distante baseado no endereço do usuário
 - Nunca remova nenhum item
 - Nunca adicione novos locais
-- Sempre busque o endereço mais próximo da rede (ex: Walmart mais próximo daquele endereço)
-- Distâncias e tempos devem ser realistas
+- Sempre busque o endereço da unidade MAIS PRÓXIMA do hotel (ex: o Walmart mais perto, não qualquer Walmart)
+
+REGRAS DE DISTÂNCIA (CRÍTICO — DEVE SER PRECISO):
+- Calcule distâncias REAIS de carro entre o endereço do hotel e cada local
+- Use como referência que Orlando tem ~30km de extensão norte-sul
+- Magic Kingdom fica em Lake Buena Vista (28.4177° N, 81.5812° W)
+- Universal Studios fica em Universal Blvd (28.4747° N, 81.4679° W)
+- International Drive fica no centro turístico (28.4282° N, 81.4700° W)
+- Kennedy Space Center fica a ~70km leste de Orlando
+- A maioria dos hotéis na área de Disney fica a 5-15km dos parques
+- A maioria dos hotéis na I-Drive fica a 2-10km dos outlets e restaurantes
+- NUNCA coloque distâncias menores que 1km para parques temáticos (são grandes complexos)
+- NUNCA coloque distâncias maiores que 100km para locais dentro de Orlando (exceto Kennedy Space Center)
+- Tempos de carro: considere ~2 min por km em área urbana, ~1 min por km em highway
 - Links devem funcionar corretamente
 - Não use abreviações no endereço
 - Não repita locais
