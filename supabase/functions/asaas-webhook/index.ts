@@ -261,17 +261,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       };
 
+      // Server-side tracking (sGTM/CAPI direct) REMOVED
+      // Purchase tracking is now handled 100% via GTM/sGTM tags
+      // The dataLayer push happens client-side, GTM forwards to sGTM
       const sendTracking = async () => {
-        try {
-          if (paymentMethod !== 'credit_card') {
-            await sendServerTrackingEvent(supabase, transaction, paymentMethod);
-            console.log('✅ Server tracking sent');
-          } else {
-            console.log('⏭️ Skipping server tracking for credit card (already tracked client-side)');
-          }
-        } catch (error) {
-          console.error('❌ Server tracking error:', error);
-        }
+        console.log('⏭️ Server tracking disabled — managed via GTM/sGTM');
       };
 
       // ===== PHASE 1: CRITICAL PATH (sequential — must succeed) =====

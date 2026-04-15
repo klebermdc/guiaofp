@@ -68,7 +68,7 @@ interface UserProfile {
 export default function Checkout() {
   const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
-  const { trackPurchase } = useAnalytics();
+  const _analytics = useAnalytics(); // kept for future use; purchase tracking moved to server-side webhook
   const { data: dbPlans, isLoading: isLoadingPlans } = usePlanPricing();
 
   // Derive plan from DB data
@@ -493,7 +493,7 @@ export default function Checkout() {
         .eq('status', 'active');
 
       if (paymentMethod === 'credit_card' && data.status === 'CONFIRMED') {
-        trackPurchase(data.transactionId, plan.id, plan.name, finalAmountCents, 'credit_card', appliedCoupon?.code, buyer);
+        // Purchase tracking removed — now handled 100% server-side via Asaas webhook
         toast.success('Pagamento aprovado! Redirecionando...');
         navigate('/login?payment=success');
       } else {
