@@ -50,34 +50,14 @@ interface AnalyticsProviderProps {
 
 /** GTM is now active on all routes */
 
-/** Inject Stape Custom Loader script once */
-const injectGTM = (() => {
-  let injected = false;
-  return () => {
-    if (injected) return;
-    injected = true;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
-    const dl = 'dataLayer';
-    w[dl] = w[dl] || [];
-    w[dl].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-
-    const script = document.createElement('script');
-    script.async = true;
-
-    const stapeUrl = 'https://stape.ofpplanejador.com';
-    const loaderId = 'efxyzdoqo';
-    const qs = '4psx1=BhVSIy40VTJbSC0gPko1QBlMXUpLXxwIUh4JFAoVGQgKGw4AFQtWBQAc';
-
-    script.src = `${stapeUrl}/${loaderId}.js?${qs}`;
-    document.head.appendChild(script);
-
-    if (import.meta.env.DEV) {
-      console.log('[Analytics] GTM injected');
-    }
-  };
-})();
+/**
+ * GTM is now loaded via Stape Custom Loader + Cookie Keeper
+ * directly in index.html <head> (before any JS executes).
+ * No need to inject dynamically — it's already there.
+ */
+const injectGTM = () => {
+  // GTM loaded in index.html — nothing to do here
+};
 
 export const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
   const location = useLocation();
