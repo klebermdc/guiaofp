@@ -142,7 +142,14 @@ const AppSidebarComponent = () => {
 
   // Combine dynamic items with static items
   const allMenuItems = useMemo(() => {
-    const menuItems = [...dynamicMenuItems, ...staticMenuItems];
+    const combined = [...dynamicMenuItems, ...staticMenuItems];
+    // Deduplicate by path
+    const seen = new Set<string>();
+    const menuItems = combined.filter(item => {
+      if (seen.has(item.path)) return false;
+      seen.add(item.path);
+      return true;
+    });
     return isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
   }, [dynamicMenuItems, isGuide]);
 

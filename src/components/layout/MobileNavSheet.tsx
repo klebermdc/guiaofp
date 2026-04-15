@@ -163,8 +163,14 @@ export const MobileNavSheet = ({ open, onOpenChange }: MobileNavSheetProps) => {
       };
     });
 
-  // Combine dynamic items with static items
-  const menuItems = [...dynamicMenuItems, ...staticMenuItems];
+  // Combine dynamic items with static items (deduplicate by path)
+  const combined = [...dynamicMenuItems, ...staticMenuItems];
+  const seen = new Set<string>();
+  const menuItems = combined.filter(item => {
+    if (seen.has(item.path)) return false;
+    seen.add(item.path);
+    return true;
+  });
   const allItems = isGuide ? [...menuItems, ...guideMenuItems] : menuItems;
 
   return (
