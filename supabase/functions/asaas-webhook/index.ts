@@ -261,11 +261,75 @@ const handler = async (req: Request): Promise<Response> => {
         }
       };
 
-      // Server-side tracking (sGTM/CAPI direct) REMOVED
-      // Purchase tracking is now handled 100% via GTM/sGTM tags
-      // The dataLayer push happens client-side, GTM forwards to sGTM
+      // Server-side purchase → send to sGTM Data Client at /ofp/ endpoint
+      // sGTM uses Stape Store Reader to merge with begin_checkout data (fbp, fbc, etc)
       const sendTracking = async () => {
-        console.log('⏭️ Server tracking disabled — managed via GTM/sGTM');
+        try {
+          const sgtmUrl = 'https://stape.ofpplanejador.com/ofp/';
+          const metadata = (transaction.metadata as Record<string, unknown>) || {};
+          const trackingCtx = (metadata.tracking_context as Record<string, string | null>) || {};
+          const amountCents = transaction.amount_cents as number;
+          const planKey = transaction.plan_key as string;
+          const email = transaction.email as string;
+          const customerName = transaction.customer_name as string;
+          const phone = (metadata.phone as string) || null;
+          const couponCode = (transaction.coupon_code as string) || undefined;
+          const discountCents = (transaction.discount_amount_cents as number) || 0;
+          const transactionId = transaction.id as string;
+
+          const planNames: Record<string, string> = { basic: 'Plano Básico', premium: 'Plano Premium' };
+          const eventId = trackingCtx?.event_id || crypto.randomUUID();
+
+          const payload = {
+            client_id: trackingCtx?.client_id || transactionId,
+            events: [{
+              name: 'purchase',
+              params: {
+                transaction_id: transactionId,
+                value: amountCents / 100,
+                currency: 'BRL',
+                payment_type: paymentMethod,
+                coupon: couponCode || undefined,
+                event_id: eventId,
+                items: [{
+                  item_id: planKey,
+                  item_name: planNames[planKey] || planKey,
+                  item_category: 'Plano de Viagem',
+                  item_brand: 'Orlando Fast Pass',
+                  price: amountCents / 100,
+                  quantity: 1,
+                  ...(couponCode ? { coupon: couponCode } : {}),
+                  ...(discountCents > 0 ? { discount: discountCents / 100 } : {}),
+                }],
+                // User data for Enhanced Conversions
+                user_data: {
+                  email_address: email,
+                  phone_number: phone || undefined,
+                  address: {
+                    first_name: customerName?.split(' ')[0] || '',
+                    last_name: customerName?.split(' ').slice(1).join(' ') || '',
+                    country: 'BR',
+                  },
+                },
+              },
+            }],
+            // Browser context from begin_checkout (for attribution)
+            ...(trackingCtx?.user_agent ? { user_agent: trackingCtx.user_agent } : {}),
+            ...(trackingCtx?.page_location ? { page_location: trackingCtx.page_location } : {}),
+            ...(trackingCtx?.fbp ? { fbp: trackingCtx.fbp } : {}),
+            ...(trackingCtx?.fbc ? { fbc: trackingCtx.fbc } : {}),
+          };
+
+          const response = await fetch(sgtmUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          console.log(`✅ sGTM purchase sent to /ofp/: ${response.status}`);
+        } catch (error) {
+          console.error('❌ sGTM tracking error:', error);
+        }
       };
 
       // ===== PHASE 1: CRITICAL PATH (sequential — must succeed) =====
