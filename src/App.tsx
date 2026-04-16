@@ -58,6 +58,7 @@ const Top3 = lazyWithRetry(() => import("./pages/Top3"));
 const HotelComparator = lazyWithRetry(() => import("./pages/HotelComparator"));
 const TransportGuide = lazyWithRetry(() => import("./pages/TransportGuide"));
 const OrlandoConcierge = lazyWithRetry(() => import("./components/OrlandoConcierge"));
+const DeleteAccount = lazyWithRetry(() => import("./pages/DeleteAccount"));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -158,6 +159,7 @@ const App = () => {
                       <Route path="/planejador-manual" element={<Navigate to="/planner-manual" replace />} />
                       <Route path="/carteira" element={<DocumentWalletPage />} />
                       <Route path="/termos-e-privacidade" element={<TermsAndPrivacy />} />
+                      <Route path="/excluir-conta" element={<DeleteAccount />} />
                       <Route path="/cupons" element={<PartnerCoupons />} />
                       <Route path="/resumo-orlando" element={<OrlandoSummary />} />
                       <Route path="/guia-mini-viajante" element={<GuiaMiniViajante />} />
