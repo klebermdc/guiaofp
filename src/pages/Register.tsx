@@ -32,17 +32,17 @@ const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
   email: z.string().email('Email inválido').max(255),
   phone: z.string()
-    .min(14, 'WhatsApp é obrigatório')
+    .min(15, 'WhatsApp deve ter DDD + 9 dígitos')
     .max(15)
     .refine((val) => {
       const digits = val.replace(/\D/g, '');
-      // Must be 10 or 11 digits (Brazilian phone with DDD)
-      if (digits.length < 10 || digits.length > 11) return false;
+      // Must be exactly 11 digits (Brazilian mobile: DDD + 9 digits)
+      if (digits.length !== 11) return false;
       // DDD must be valid (11-99)
       const ddd = parseInt(digits.substring(0, 2));
       if (ddd < 11 || ddd > 99) return false;
-      // Mobile numbers (11 digits) must start with 9 after DDD
-      if (digits.length === 11 && digits[2] !== '9') return false;
+      // Mobile numbers must start with 9 after DDD
+      if (digits[2] !== '9') return false;
       return true;
     }, 'Número de WhatsApp inválido. Use formato: (XX) 9XXXX-XXXX'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
