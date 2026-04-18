@@ -12,6 +12,7 @@ import logo from '@/assets/logo.png';
 import TurnstileWidget from '@/components/TurnstileWidget';
 
 const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
+const SKIP_TURNSTILE = import.meta.env.DEV;
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -69,22 +70,24 @@ const Login = () => {
         return;
       }
 
-      // Verify Turnstile token
-      if (!turnstileToken) {
-        toast({ title: "Verificação necessária", description: "Complete a verificação de segurança.", variant: "destructive" });
-        setIsSubmitting(false);
-        return;
-      }
+      // Verify Turnstile token (skipped in dev)
+      if (!SKIP_TURNSTILE) {
+        if (!turnstileToken) {
+          toast({ title: "Verificação necessária", description: "Complete a verificação de segurança.", variant: "destructive" });
+          setIsSubmitting(false);
+          return;
+        }
 
-      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: turnstileToken },
-      });
+        const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+          body: { token: turnstileToken },
+        });
 
-      if (!turnstileResult?.success) {
-        toast({ title: "Verificação falhou", description: "Tente novamente.", variant: "destructive" });
-        setTurnstileToken(null);
-        setIsSubmitting(false);
-        return;
+        if (!turnstileResult?.success) {
+          toast({ title: "Verificação falhou", description: "Tente novamente.", variant: "destructive" });
+          setTurnstileToken(null);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const result = await login(email, password);
@@ -223,20 +226,22 @@ const Login = () => {
                 )}
               </div>
 
-              <div className="flex justify-center mt-4">
-                <TurnstileWidget
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onVerify={handleTurnstileVerify}
-                  onExpire={handleTurnstileExpire}
-                />
-              </div>
+              {!SKIP_TURNSTILE && (
+                <div className="flex justify-center mt-4">
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onVerify={handleTurnstileVerify}
+                    onExpire={handleTurnstileExpire}
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
                 className="w-full mt-4"
-                disabled={isSubmitting || !turnstileToken}
+                disabled={isSubmitting || (!SKIP_TURNSTILE && !turnstileToken)}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
