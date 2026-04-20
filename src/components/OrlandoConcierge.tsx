@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { openExternalUrl } from '@/lib/open-external-url';
-import { AppLayout } from '@/components/layout/AppLayout';
 
 interface Place {
   name: string;
@@ -204,7 +203,6 @@ const OrlandoConcierge = () => {
   };
 
   return (
-    <AppLayout>
       <div className="min-h-screen bg-background pb-24 lg:pb-8">
         {/* Header */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
@@ -445,7 +443,6 @@ const OrlandoConcierge = () => {
           </button>
         )}
       </div>
-    </AppLayout>
   );
 };
 
