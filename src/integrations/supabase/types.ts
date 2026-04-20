@@ -444,6 +444,60 @@ export type Database = {
         }
         Relationships: []
       }
+      concierge_places: {
+        Row: {
+          active: boolean
+          address: string
+          brand: string | null
+          category_icon: string
+          category_id: string
+          category_label: string
+          category_order: number
+          created_at: string
+          display_order: number
+          id: string
+          lat: number
+          lng: number
+          name: string
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          brand?: string | null
+          category_icon: string
+          category_id: string
+          category_label: string
+          category_order?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          brand?: string | null
+          category_icon?: string
+          category_id?: string
+          category_label?: string
+          category_order?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_categories: {
         Row: {
           color: string | null
