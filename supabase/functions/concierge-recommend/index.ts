@@ -9,13 +9,14 @@ const corsHeaders = {
 const CACHE_TTL_DAYS = 30;
 const TOP_PER_CATEGORY = 8;
 
-// Bounding box restrita à Grande Orlando (cobre I-Drive, Disney, Universal, Kissimmee, Lake Buena Vista, Winter Garden, Sanford)
+// Bounding box restrita à Grande Orlando
 const ORLANDO_BBOX = {
   minLat: 28.10,
   maxLat: 28.95,
   minLng: -81.85,
   maxLng: -81.05,
 };
+const PROXIMITY = "-81.4711,28.4717"; // I-Drive / Universal area
 
 interface DBPlace {
   id: string;
@@ -49,6 +50,15 @@ interface ResponseCategory {
   places: ResponsePlace[];
 }
 
+interface AutocompleteSuggestion {
+  type: "place" | "address";
+  label: string;
+  sublabel: string;
+  lat: number;
+  lng: number;
+  mapbox_id?: string; // necessário para retrieve da Search Box API
+}
+
 function normalizeAddress(addr: string): string {
   return addr.trim().toLowerCase().replace(/\s+/g, " ").replace(/[.,#]/g, "");
 }
@@ -80,78 +90,6 @@ function buildWazeUrl(lat: number, lng: number): string {
   return `https://waze.com/ul?ll=${lat}%2C${lng}&navigate=yes`;
 }
 
-async function geocodeWithMapbox(
-  address: string,
-  token: string,
-): Promise<{ lat: number; lng: number } | null> {
-  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?country=us&bbox=${bbox}&limit=1&access_token=${token}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error("Mapbox geocoding failed:", res.status, await res.text());
-    return null;
-  }
-  const data = await res.json();
-  const feat = data.features?.[0];
-  if (!feat?.center || feat.center.length !== 2) return null;
-  const [lng, lat] = feat.center as [number, number];
-  if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) {
-    console.warn("Geocoded point outside Orlando bbox:", lat, lng);
-    return null;
-  }
-  return { lat, lng };
-}
-
-interface AutocompleteSuggestion {
-  type: "place" | "address";
-  label: string;
-  sublabel: string;
-  lat: number;
-  lng: number;
-}
-
-async function autocompleteWithMapbox(
-  query: string,
-  token: string,
-): Promise<AutocompleteSuggestion[]> {
-  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
-  const proximity = "-81.4711,28.4717"; // I-Drive / Universal area
-  // 2 chamadas em paralelo: POIs (hotéis/lugares) e endereços, para priorizar lugares conhecidos
-  const poiUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&proximity=${proximity}&limit=5&types=poi&access_token=${token}`;
-  const addrUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&proximity=${proximity}&limit=4&types=address&access_token=${token}`;
-
-  const [poiRes, addrRes] = await Promise.all([fetch(poiUrl), fetch(addrUrl)]);
-
-  type Feat = { place_type?: string[]; text?: string; place_name?: string; center?: [number, number] };
-  const collect = async (res: Response, type: "place" | "address"): Promise<AutocompleteSuggestion[]> => {
-    if (!res.ok) {
-      console.error(`Mapbox autocomplete (${type}) failed:`, res.status);
-      return [];
-    }
-    const data = await res.json();
-    const feats = (data.features ?? []) as Feat[];
-    const out: AutocompleteSuggestion[] = [];
-    for (const f of feats) {
-      if (!f.center || f.center.length !== 2) continue;
-      const [lng, lat] = f.center;
-      if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) continue;
-      const placeName = f.place_name ?? f.text ?? "";
-      const label = f.text ?? placeName;
-      const sublabel = placeName.replace(label, "").replace(/^,\s*/, "");
-      out.push({ type, label, sublabel, lat, lng });
-    }
-    return out;
-  };
-
-  const [pois, addrs] = await Promise.all([collect(poiRes, "place"), collect(addrRes, "address")]);
-  // POIs primeiro (hotéis/lugares conhecidos), depois endereços
-  return [...pois, ...addrs].slice(0, 8);
-}
-
-function isValidCoord(v: unknown): v is number {
-  return typeof v === "number" && Number.isFinite(v);
-}
-
 function isInsideOrlando(lat: number, lng: number): boolean {
   return (
     lat >= ORLANDO_BBOX.minLat &&
@@ -161,28 +99,170 @@ function isInsideOrlando(lat: number, lng: number): boolean {
   );
 }
 
+function isValidCoord(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
+/**
+ * Geocoding via Search Box API (suggest + retrieve) — cobertura completa de POIs.
+ * Fallback: Geocoding v5 legacy (apenas endereços).
+ */
+async function geocodeWithMapbox(
+  address: string,
+  token: string,
+): Promise<{ lat: number; lng: number } | null> {
+  // 1) Tentar Search Box API (suggest + retrieve)
+  try {
+    const sessionToken = crypto.randomUUID();
+    const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
+    const suggestUrl = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(address)}&country=us&bbox=${bbox}&proximity=${PROXIMITY}&limit=1&session_token=${sessionToken}&access_token=${token}`;
+    const sRes = await fetch(suggestUrl);
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      const sug = sData?.suggestions?.[0];
+      if (sug?.mapbox_id) {
+        const retrieveUrl = `https://api.mapbox.com/search/searchbox/v1/retrieve/${sug.mapbox_id}?session_token=${sessionToken}&access_token=${token}`;
+        const rRes = await fetch(retrieveUrl);
+        if (rRes.ok) {
+          const rData = await rRes.json();
+          const coords = rData?.features?.[0]?.geometry?.coordinates;
+          if (Array.isArray(coords) && coords.length === 2) {
+            const [lng, lat] = coords as [number, number];
+            if (isInsideOrlando(lat, lng)) return { lat, lng };
+          }
+        }
+      }
+    } else {
+      console.warn("Search Box suggest failed:", sRes.status);
+    }
+  } catch (e) {
+    console.warn("Search Box error, falling back to legacy:", e);
+  }
+
+  // 2) Fallback: Geocoding v5 legacy
+  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?country=us&bbox=${bbox}&limit=1&access_token=${token}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Mapbox legacy geocoding failed:", res.status);
+    return null;
+  }
+  const data = await res.json();
+  const feat = data.features?.[0];
+  if (!feat?.center || feat.center.length !== 2) return null;
+  const [lng, lat] = feat.center as [number, number];
+  if (!isInsideOrlando(lat, lng)) return null;
+  return { lat, lng };
+}
+
+/**
+ * Autocomplete via Search Box API (cobertura completa: hotéis, marcos, ruas, etc.)
+ */
+async function autocompleteWithMapbox(
+  query: string,
+  token: string,
+): Promise<AutocompleteSuggestion[]> {
+  const sessionToken = crypto.randomUUID();
+  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
+  const url = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(query)}&country=us&bbox=${bbox}&proximity=${PROXIMITY}&limit=8&session_token=${sessionToken}&access_token=${token}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Mapbox Search Box suggest failed:", res.status, await res.text());
+    return [];
+  }
+  const data = await res.json();
+  const sugs = (data?.suggestions ?? []) as Array<{
+    mapbox_id?: string;
+    name?: string;
+    name_preferred?: string;
+    feature_type?: string; // poi, address, street, place, etc.
+    place_formatted?: string;
+    full_address?: string;
+    address?: string;
+    context?: { region?: { name?: string }; place?: { name?: string }; postcode?: { name?: string } };
+  }>;
+
+  const isPoi = (ft?: string) => ft === "poi" || ft === "category" || ft === "brand";
+  const out: AutocompleteSuggestion[] = [];
+  for (const s of sugs) {
+    if (!s.name) continue;
+    const label = s.name;
+    const sublabel = s.place_formatted || s.full_address || s.address || "";
+    out.push({
+      type: isPoi(s.feature_type) ? "place" : "address",
+      label,
+      sublabel,
+      // coordenadas só vêm via /retrieve — preencheremos no momento da seleção
+      lat: 0,
+      lng: 0,
+      mapbox_id: s.mapbox_id,
+    });
+  }
+
+  // POIs primeiro
+  out.sort((a, b) => (a.type === "place" ? -1 : 1) - (b.type === "place" ? -1 : 1));
+  return out;
+}
+
+/** Retrieve coordinates for a previously suggested mapbox_id */
+async function retrieveSuggestionCoords(
+  mapboxId: string,
+  token: string,
+): Promise<{ lat: number; lng: number } | null> {
+  const sessionToken = crypto.randomUUID();
+  const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}?session_token=${sessionToken}&access_token=${token}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Mapbox retrieve failed:", res.status);
+    return null;
+  }
+  const data = await res.json();
+  const coords = data?.features?.[0]?.geometry?.coordinates;
+  if (!Array.isArray(coords) || coords.length !== 2) return null;
+  const [lng, lat] = coords as [number, number];
+  if (!isInsideOrlando(lat, lng)) return null;
+  return { lat, lng };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json();
+    const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
 
     // === Modo autocomplete ===
     if (body?.mode === "autocomplete") {
       const q: string = typeof body?.query === "string" ? body.query.trim() : "";
-      if (q.length < 3) {
-        return new Response(JSON.stringify({ suggestions: [] }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
-      if (!MAPBOX_TOKEN) {
+      if (q.length < 3 || !MAPBOX_TOKEN) {
         return new Response(JSON.stringify({ suggestions: [] }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const suggestions = await autocompleteWithMapbox(q, MAPBOX_TOKEN);
       return new Response(JSON.stringify({ suggestions }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // === Modo retrieve (resolver mapbox_id em coordenadas) ===
+    if (body?.mode === "retrieve") {
+      const id: string = typeof body?.mapbox_id === "string" ? body.mapbox_id : "";
+      if (!id || !MAPBOX_TOKEN) {
+        return new Response(JSON.stringify({ error: "mapbox_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const coords = await retrieveSuggestionCoords(id, MAPBOX_TOKEN);
+      if (!coords) {
+        return new Response(JSON.stringify({ error: "Não foi possível obter as coordenadas." }), {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify(coords), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -232,7 +312,6 @@ serve(async (req) => {
       }
       origin = { lat: providedLat as number, lng: providedLng as number };
     } else {
-      const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
       if (!MAPBOX_TOKEN) {
         console.error("MAPBOX_ACCESS_TOKEN secret not set");
         return new Response(
