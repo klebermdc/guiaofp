@@ -115,38 +115,37 @@ async function autocompleteWithMapbox(
   token: string,
 ): Promise<AutocompleteSuggestion[]> {
   const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
-  // types=poi,address para incluir hotéis/lugares + ruas
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&limit=6&types=poi,address&access_token=${token}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error("Mapbox autocomplete failed:", res.status);
-    return [];
-  }
-  const data = await res.json();
-  const feats = (data.features ?? []) as Array<{
-    place_type?: string[];
-    text?: string;
-    place_name?: string;
-    center?: [number, number];
-  }>;
-  const out: AutocompleteSuggestion[] = [];
-  for (const f of feats) {
-    if (!f.center || f.center.length !== 2) continue;
-    const [lng, lat] = f.center;
-    if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) continue;
-    const isPoi = f.place_type?.includes("poi");
-    const placeName = f.place_name ?? f.text ?? "";
-    const label = f.text ?? placeName;
-    const sublabel = placeName.replace(label, "").replace(/^,\s*/, "");
-    out.push({
-      type: isPoi ? "place" : "address",
-      label,
-      sublabel,
-      lat,
-      lng,
-    });
-  }
-  return out;
+  const proximity = "-81.4711,28.4717"; // I-Drive / Universal area
+  // 2 chamadas em paralelo: POIs (hotéis/lugares) e endereços, para priorizar lugares conhecidos
+  const poiUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&proximity=${proximity}&limit=5&types=poi&access_token=${token}`;
+  const addrUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&proximity=${proximity}&limit=4&types=address&access_token=${token}`;
+
+  const [poiRes, addrRes] = await Promise.all([fetch(poiUrl), fetch(addrUrl)]);
+
+  type Feat = { place_type?: string[]; text?: string; place_name?: string; center?: [number, number] };
+  const collect = async (res: Response, type: "place" | "address"): Promise<AutocompleteSuggestion[]> => {
+    if (!res.ok) {
+      console.error(`Mapbox autocomplete (${type}) failed:`, res.status);
+      return [];
+    }
+    const data = await res.json();
+    const feats = (data.features ?? []) as Feat[];
+    const out: AutocompleteSuggestion[] = [];
+    for (const f of feats) {
+      if (!f.center || f.center.length !== 2) continue;
+      const [lng, lat] = f.center;
+      if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) continue;
+      const placeName = f.place_name ?? f.text ?? "";
+      const label = f.text ?? placeName;
+      const sublabel = placeName.replace(label, "").replace(/^,\s*/, "");
+      out.push({ type, label, sublabel, lat, lng });
+    }
+    return out;
+  };
+
+  const [pois, addrs] = await Promise.all([collect(poiRes, "place"), collect(addrRes, "address")]);
+  // POIs primeiro (hotéis/lugares conhecidos), depois endereços
+  return [...pois, ...addrs].slice(0, 8);
 }
 
 function isValidCoord(v: unknown): v is number {
