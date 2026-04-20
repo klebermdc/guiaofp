@@ -50,23 +50,40 @@ const OrlandoConcierge = () => {
   const [viewState, setViewState] = useState<ViewState>('input');
   const [result, setResult] = useState<ConciergeResult | null>(null);
   const [submittedAddress, setSubmittedAddress] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!address || address.length < 10) return;
     setViewState('loading');
     setSubmittedAddress(address);
+    setErrorMessage(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('concierge-recommend', {
         body: { address },
       });
 
-      if (error) throw error;
-      if (!data || !data.categories) throw new Error('Invalid response');
+      const payloadError =
+        data && typeof data === 'object' && 'error' in data && typeof (data as { error?: unknown }).error === 'string'
+          ? (data as { error: string }).error
+          : null;
+
+      if (error || payloadError) {
+        setErrorMessage(payloadError || 'Não foi possível gerar as recomendações. Tente novamente.');
+        setViewState('error');
+        return;
+      }
+
+      if (!data || !data.categories) {
+        setErrorMessage('Resposta inesperada do servidor. Tente novamente.');
+        setViewState('error');
+        return;
+      }
 
       setResult(data as ConciergeResult);
       setViewState('results');
     } catch {
+      setErrorMessage('Falha de conexão. Verifique sua internet e tente novamente.');
       setViewState('error');
     }
   };
@@ -76,6 +93,7 @@ const OrlandoConcierge = () => {
     setResult(null);
     setAddress('');
     setSubmittedAddress('');
+    setErrorMessage(null);
   };
 
   const handleShare = () => {
@@ -192,7 +210,9 @@ const OrlandoConcierge = () => {
                 <p className="text-foreground font-semibold">
                   Não foi possível gerar as recomendações
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">Verifique o endereço e tente novamente</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {errorMessage || 'Verifique o endereço e tente novamente'}
+                </p>
               </div>
               <Button onClick={handleNewSearch} style={{ backgroundColor: '#FF6B35' }}>
                 <RotateCcw className="w-4 h-4 mr-2" />
