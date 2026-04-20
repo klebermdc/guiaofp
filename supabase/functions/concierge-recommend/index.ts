@@ -9,6 +9,14 @@ const corsHeaders = {
 const CACHE_TTL_DAYS = 30;
 const TOP_PER_CATEGORY = 8;
 
+// Bounding box restrita à Grande Orlando (cobre I-Drive, Disney, Universal, Kissimmee, Lake Buena Vista, Winter Garden, Sanford)
+const ORLANDO_BBOX = {
+  minLat: 28.10,
+  maxLat: 28.95,
+  minLng: -81.85,
+  maxLng: -81.05,
+};
+
 interface DBPlace {
   id: string;
   category_id: string;
@@ -57,7 +65,6 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 }
 
 function estimateDriveTime(km: number): string {
-  // ~1.5 min/km em área urbana de Orlando
   const minutes = Math.max(2, Math.round(km * 1.5));
   const lower = Math.max(2, minutes - 3);
   const upper = minutes + 5;
@@ -77,75 +84,170 @@ async function geocodeWithMapbox(
   address: string,
   token: string,
 ): Promise<{ lat: number; lng: number } | null> {
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${token}&country=US&proximity=-81.379,28.538&limit=1`;
+  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?country=us&bbox=${bbox}&limit=1&access_token=${token}`;
   const res = await fetch(url);
   if (!res.ok) {
-    console.error("Mapbox geocoding failed:", res.status);
+    console.error("Mapbox geocoding failed:", res.status, await res.text());
     return null;
   }
   const data = await res.json();
-  const feature = data?.features?.[0];
-  if (!feature?.center || feature.center.length < 2) return null;
-  const [lng, lat] = feature.center;
-  // Garantir que é na área de Orlando (raio amplo ~150km)
-  const orlandoDist = haversineKm(28.5384, -81.3789, lat, lng);
-  if (orlandoDist > 150) return null;
+  const feat = data.features?.[0];
+  if (!feat?.center || feat.center.length !== 2) return null;
+  const [lng, lat] = feat.center as [number, number];
+  if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) {
+    console.warn("Geocoded point outside Orlando bbox:", lat, lng);
+    return null;
+  }
   return { lat, lng };
+}
+
+interface AutocompleteSuggestion {
+  type: "place" | "address";
+  label: string;
+  sublabel: string;
+  lat: number;
+  lng: number;
+}
+
+async function autocompleteWithMapbox(
+  query: string,
+  token: string,
+): Promise<AutocompleteSuggestion[]> {
+  const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
+  // types=poi,address para incluir hotéis/lugares + ruas
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?country=us&bbox=${bbox}&limit=6&types=poi,address&access_token=${token}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Mapbox autocomplete failed:", res.status);
+    return [];
+  }
+  const data = await res.json();
+  const feats = (data.features ?? []) as Array<{
+    place_type?: string[];
+    text?: string;
+    place_name?: string;
+    center?: [number, number];
+  }>;
+  const out: AutocompleteSuggestion[] = [];
+  for (const f of feats) {
+    if (!f.center || f.center.length !== 2) continue;
+    const [lng, lat] = f.center;
+    if (lat < ORLANDO_BBOX.minLat || lat > ORLANDO_BBOX.maxLat || lng < ORLANDO_BBOX.minLng || lng > ORLANDO_BBOX.maxLng) continue;
+    const isPoi = f.place_type?.includes("poi");
+    const placeName = f.place_name ?? f.text ?? "";
+    const label = f.text ?? placeName;
+    const sublabel = placeName.replace(label, "").replace(/^,\s*/, "");
+    out.push({
+      type: isPoi ? "place" : "address",
+      label,
+      sublabel,
+      lat,
+      lng,
+    });
+  }
+  return out;
+}
+
+function isValidCoord(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
+function isInsideOrlando(lat: number, lng: number): boolean {
+  return (
+    lat >= ORLANDO_BBOX.minLat &&
+    lat <= ORLANDO_BBOX.maxLat &&
+    lng >= ORLANDO_BBOX.minLng &&
+    lng <= ORLANDO_BBOX.maxLng
+  );
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { address } = await req.json();
-    if (!address || typeof address !== "string" || address.length < 10) {
-      return new Response(JSON.stringify({ error: "Endereço muito curto" }), {
-        status: 400,
+    const body = await req.json();
+
+    // === Modo autocomplete ===
+    if (body?.mode === "autocomplete") {
+      const q: string = typeof body?.query === "string" ? body.query.trim() : "";
+      if (q.length < 3) {
+        return new Response(JSON.stringify({ suggestions: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
+      if (!MAPBOX_TOKEN) {
+        return new Response(JSON.stringify({ suggestions: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const suggestions = await autocompleteWithMapbox(q, MAPBOX_TOKEN);
+      return new Response(JSON.stringify({ suggestions }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // === Modo recomendação ===
+    const address: string = typeof body?.address === "string" ? body.address : "";
+    const providedLat = body?.lat;
+    const providedLng = body?.lng;
+    const hasCoords = isValidCoord(providedLat) && isValidCoord(providedLng);
+
+    if (!hasCoords && (!address || address.length < 10)) {
+      return new Response(
+        JSON.stringify({ error: "Informe um endereço completo ou sua localização atual." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const normalized = normalizeAddress(address);
+    const cacheKey = address
+      ? normalizeAddress(address)
+      : `coords:${Math.round((providedLat as number) * 10000) / 10000},${Math.round((providedLng as number) * 10000) / 10000}`;
 
-    // Cache check
     const { data: cached } = await supabase
       .from("concierge_cache")
-      .select("recommendations")
-      .eq("address_normalized", normalized)
+      .select("id, recommendations")
+      .eq("address_normalized", cacheKey)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
     if (cached?.recommendations) {
-      console.log("Cache HIT:", normalized);
+      console.log("Cache HIT for concierge:", cacheKey);
       return new Response(JSON.stringify(cached.recommendations), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Cache MISS:", normalized);
-
-    const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
-    if (!MAPBOX_TOKEN) {
-      console.error("MAPBOX_ACCESS_TOKEN secret not set");
-      return new Response(
-        JSON.stringify({ error: "Servidor não configurado (contate o suporte)" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const origin = await geocodeWithMapbox(address, MAPBOX_TOKEN);
-    if (!origin) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "Não conseguimos localizar esse endereço em Orlando. Verifique se o endereço está completo (rua, número, cidade, FL).",
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    let origin: { lat: number; lng: number } | null = null;
+    if (hasCoords) {
+      if (!isInsideOrlando(providedLat as number, providedLng as number)) {
+        return new Response(
+          JSON.stringify({ error: "Sua localização atual parece estar fora de Orlando. O Concierge só funciona dentro da região." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      origin = { lat: providedLat as number, lng: providedLng as number };
+    } else {
+      const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
+      if (!MAPBOX_TOKEN) {
+        console.error("MAPBOX_ACCESS_TOKEN secret not set");
+        return new Response(
+          JSON.stringify({ error: "Servidor não configurado (contato suporte)" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      origin = await geocodeWithMapbox(address, MAPBOX_TOKEN);
+      if (!origin) {
+        return new Response(
+          JSON.stringify({ error: "Não conseguimos localizar esse endereço em Orlando. Verifique se o endereço está completo (rua, número, cidade, FL)." }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     const { data: places, error: placesError } = await supabase
@@ -210,8 +312,8 @@ serve(async (req) => {
       .from("concierge_cache")
       .upsert(
         {
-          address_normalized: normalized,
-          address_original: address,
+          address_normalized: cacheKey,
+          address_original: address || `${origin.lat},${origin.lng}`,
           recommendations: result,
           expires_at: expiresAt,
           hit_count: 0,

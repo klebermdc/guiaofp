@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, MapPin, Navigation, Share2, RotateCcw, Sparkles, Search } from 'lucide-react';
+import { Loader2, ArrowLeft, MapPin, Navigation, Share2, RotateCcw, Sparkles, Search, Building2, LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +30,14 @@ interface ConciergeResult {
   categories: Category[];
 }
 
+interface AutocompleteSuggestion {
+  type: 'place' | 'address';
+  label: string;
+  sublabel: string;
+  lat: number;
+  lng: number;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   parques: '#FF6B35',
   compras: '#7C3AED',
@@ -51,35 +59,68 @@ const OrlandoConcierge = () => {
   const [result, setResult] = useState<ConciergeResult | null>(null);
   const [submittedAddress, setSubmittedAddress] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const debounceRef = useRef<number | null>(null);
+  const suppressNextFetchRef = useRef(false);
 
-  const handleSearch = async () => {
-    if (!address || address.length < 10) return;
+  // Debounced autocomplete
+  useEffect(() => {
+    if (suppressNextFetchRef.current) {
+      suppressNextFetchRef.current = false;
+      return;
+    }
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (address.trim().length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = window.setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const { data } = await supabase.functions.invoke('concierge-recommend', {
+          body: { mode: 'autocomplete', query: address.trim() },
+        });
+        const list = (data?.suggestions ?? []) as AutocompleteSuggestion[];
+        setSuggestions(list);
+        setShowSuggestions(list.length > 0);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 350);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [address]);
+
+  const runRecommendation = async (payload: { address?: string; lat?: number; lng?: number }, displayLabel: string) => {
     setViewState('loading');
-    setSubmittedAddress(address);
+    setSubmittedAddress(displayLabel);
     setErrorMessage(null);
-
+    setShowSuggestions(false);
     try {
       const { data, error } = await supabase.functions.invoke('concierge-recommend', {
-        body: { address },
+        body: payload,
       });
-
       const payloadError =
         data && typeof data === 'object' && 'error' in data && typeof (data as { error?: unknown }).error === 'string'
           ? (data as { error: string }).error
           : null;
-
       if (error || payloadError) {
         setErrorMessage(payloadError || 'Não foi possível gerar as recomendações. Tente novamente.');
         setViewState('error');
         return;
       }
-
       if (!data || !data.categories) {
         setErrorMessage('Resposta inesperada do servidor. Tente novamente.');
         setViewState('error');
         return;
       }
-
       setResult(data as ConciergeResult);
       setViewState('results');
     } catch {
@@ -88,12 +129,63 @@ const OrlandoConcierge = () => {
     }
   };
 
+  const handleSearch = async () => {
+    if (!address || address.length < 10) return;
+    await runRecommendation({ address }, address);
+  };
+
+  const handleSelectSuggestion = (s: AutocompleteSuggestion) => {
+    const display = s.sublabel ? `${s.label}, ${s.sublabel}` : s.label;
+    suppressNextFetchRef.current = true;
+    setAddress(display);
+    setShowSuggestions(false);
+    runRecommendation({ lat: s.lat, lng: s.lng, address: display }, display);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setErrorMessage('Seu dispositivo não suporta geolocalização.');
+      setViewState('error');
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLoading(false);
+        runRecommendation(
+          { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          'Minha localização atual',
+        );
+      },
+      (err) => {
+        setGpsLoading(false);
+        const msg =
+          err.code === err.PERMISSION_DENIED
+            ? 'Permissão de localização negada. Habilite o GPS nas configurações do navegador.'
+            : 'Não foi possível obter sua localização atual.';
+        setErrorMessage(msg);
+        setViewState('error');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  };
+
   const handleNewSearch = () => {
     setViewState('input');
     setResult(null);
     setAddress('');
     setSubmittedAddress('');
     setErrorMessage(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleBack = () => {
+    if (viewState === 'results' || viewState === 'error' || viewState === 'loading') {
+      handleNewSearch();
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleShare = () => {
@@ -121,7 +213,7 @@ const OrlandoConcierge = () => {
               variant="ghost"
               size="icon"
               className="shrink-0"
-              onClick={() => navigate(-1)}
+              onClick={handleBack}
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -159,19 +251,63 @@ const OrlandoConcierge = () => {
                   Descubra locais perto do seu hotel
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  Digite o endereço onde está hospedado e receba recomendações personalizadas
+                  Digite o nome do hotel ou endereço e receba recomendações personalizadas
                 </p>
               </div>
               <div className="w-full max-w-md space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                   <Input
-                    placeholder="Ex: 7102 Grand National Dr, Orlando, FL"
+                    placeholder="Ex: Rosen Plaza ou 7102 Grand National Dr"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (suggestions.length > 0 && showSuggestions) {
+                          handleSelectSuggestion(suggestions[0]);
+                        } else {
+                          handleSearch();
+                        }
+                      }
+                      if (e.key === 'Escape') setShowSuggestions(false);
+                    }}
                     className="pl-10 h-12 text-base"
                   />
+                  {/* Suggestions dropdown */}
+                  {showSuggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-20 overflow-hidden max-h-80 overflow-y-auto">
+                      {loadingSuggestions ? (
+                        <div className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Buscando...
+                        </div>
+                      ) : (
+                        suggestions.map((s, i) => (
+                          <button
+                            key={`${s.label}-${i}`}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSelectSuggestion(s)}
+                            className="w-full text-left px-3 py-2.5 hover:bg-accent transition-colors flex items-start gap-2.5 border-b border-border/40 last:border-b-0"
+                          >
+                            <div className="shrink-0 mt-0.5">
+                              {s.type === 'place' ? (
+                                <Building2 className="w-4 h-4 text-[#FF6B35]" />
+                              ) : (
+                                <MapPin className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{s.label}</p>
+                              {s.sublabel && (
+                                <p className="text-xs text-muted-foreground truncate">{s.sublabel}</p>
+                              )}
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
                 <Button
                   onClick={handleSearch}
@@ -182,9 +318,23 @@ const OrlandoConcierge = () => {
                   <Sparkles className="w-4 h-4 mr-2" />
                   Descobrir
                 </Button>
-                {address.length > 0 && address.length < 10 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleUseCurrentLocation}
+                  disabled={gpsLoading}
+                  className="w-full h-11 text-sm font-medium"
+                >
+                  {gpsLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <LocateFixed className="w-4 h-4 mr-2" />
+                  )}
+                  Usar minha localização atual
+                </Button>
+                {address.length > 0 && address.length < 10 && suggestions.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center">
-                    Digite o endereço completo (mínimo 10 caracteres)
+                    Digite o endereço completo (mínimo 10 caracteres) ou escolha uma sugestão
                   </p>
                 )}
               </div>
