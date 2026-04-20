@@ -268,26 +268,6 @@ async function autocompleteWithMapbox(
   return [...popular, ...addresses].slice(0, 8);
 }
 
-/** Retrieve coordinates for a previously suggested mapbox_id */
-async function retrieveSuggestionCoords(
-  mapboxId: string,
-  token: string,
-): Promise<{ lat: number; lng: number } | null> {
-  const sessionToken = crypto.randomUUID();
-  const url = `https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(mapboxId)}?session_token=${sessionToken}&access_token=${token}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    console.error("Mapbox retrieve failed:", res.status);
-    return null;
-  }
-  const data = await res.json();
-  const coords = data?.features?.[0]?.geometry?.coordinates;
-  if (!Array.isArray(coords) || coords.length !== 2) return null;
-  const [lng, lat] = coords as [number, number];
-  if (!isInsideOrlando(lat, lng)) return null;
-  return { lat, lng };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -298,34 +278,13 @@ serve(async (req) => {
     // === Modo autocomplete ===
     if (body?.mode === "autocomplete") {
       const q: string = typeof body?.query === "string" ? body.query.trim() : "";
-      if (q.length < 3 || !MAPBOX_TOKEN) {
+      if (q.length < 2 || !MAPBOX_TOKEN) {
         return new Response(JSON.stringify({ suggestions: [] }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const suggestions = await autocompleteWithMapbox(q, MAPBOX_TOKEN);
       return new Response(JSON.stringify({ suggestions }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // === Modo retrieve (resolver mapbox_id em coordenadas) ===
-    if (body?.mode === "retrieve") {
-      const id: string = typeof body?.mapbox_id === "string" ? body.mapbox_id : "";
-      if (!id || !MAPBOX_TOKEN) {
-        return new Response(JSON.stringify({ error: "mapbox_id obrigatório" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const coords = await retrieveSuggestionCoords(id, MAPBOX_TOKEN);
-      if (!coords) {
-        return new Response(JSON.stringify({ error: "Não foi possível obter as coordenadas." }), {
-          status: 422,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify(coords), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
