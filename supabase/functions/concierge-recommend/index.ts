@@ -104,44 +104,21 @@ function isValidCoord(v: unknown): v is number {
 }
 
 /**
- * Geocoding via Search Box API (suggest + retrieve) — cobertura completa de POIs.
- * Fallback: Geocoding v5 legacy (apenas endereços).
+ * Geocoding: 1) tenta match exato em hotéis populares; 2) Mapbox legacy v5.
  */
 async function geocodeWithMapbox(
   address: string,
   token: string,
 ): Promise<{ lat: number; lng: number } | null> {
-  // 1) Tentar Search Box API (suggest + retrieve)
-  try {
-    const sessionToken = crypto.randomUUID();
-    const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
-    const suggestUrl = `https://api.mapbox.com/search/searchbox/v1/suggest?q=${encodeURIComponent(address)}&country=us&bbox=${bbox}&proximity=${PROXIMITY}&limit=1&session_token=${sessionToken}&access_token=${token}`;
-    const sRes = await fetch(suggestUrl);
-    if (sRes.ok) {
-      const sData = await sRes.json();
-      const sug = sData?.suggestions?.[0];
-      if (sug?.mapbox_id) {
-        const retrieveUrl = `https://api.mapbox.com/search/searchbox/v1/retrieve/${sug.mapbox_id}?session_token=${sessionToken}&access_token=${token}`;
-        const rRes = await fetch(retrieveUrl);
-        if (rRes.ok) {
-          const rData = await rRes.json();
-          const coords = rData?.features?.[0]?.geometry?.coordinates;
-          if (Array.isArray(coords) && coords.length === 2) {
-            const [lng, lat] = coords as [number, number];
-            if (isInsideOrlando(lat, lng)) return { lat, lng };
-          }
-        }
-      }
-    } else {
-      console.warn("Search Box suggest failed:", sRes.status);
-    }
-  } catch (e) {
-    console.warn("Search Box error, falling back to legacy:", e);
+  // 1) Match local com lista curada (definida abaixo)
+  const popular = searchPopularPlaces(address);
+  if (popular.length > 0) {
+    return { lat: popular[0].lat, lng: popular[0].lng };
   }
 
-  // 2) Fallback: Geocoding v5 legacy
+  // 2) Geocoding v5 legacy
   const bbox = `${ORLANDO_BBOX.minLng},${ORLANDO_BBOX.minLat},${ORLANDO_BBOX.maxLng},${ORLANDO_BBOX.maxLat}`;
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?country=us&bbox=${bbox}&limit=1&access_token=${token}`;
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?country=us&bbox=${bbox}&proximity=${PROXIMITY}&limit=1&access_token=${token}`;
   const res = await fetch(url);
   if (!res.ok) {
     console.error("Mapbox legacy geocoding failed:", res.status);
