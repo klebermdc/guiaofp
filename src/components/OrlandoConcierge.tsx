@@ -73,7 +73,7 @@ const OrlandoConcierge = () => {
       return;
     }
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    if (address.trim().length < 3) {
+    if (address.trim().length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
