@@ -362,7 +362,7 @@ export default function Checkout() {
       return;
     }
 
-    if (!turnstileToken) {
+    if (!SKIP_TURNSTILE && !turnstileToken) {
       toast.error('Complete a verificação de segurança');
       return;
     }
@@ -385,16 +385,18 @@ export default function Checkout() {
 
     setIsProcessing(true);
 
-    // Verify Turnstile token server-side
-    const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
-      body: { token: turnstileToken },
-    });
+    // Verify Turnstile token server-side (skipped on native/dev)
+    if (!SKIP_TURNSTILE) {
+      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken },
+      });
 
-    if (!turnstileResult?.success) {
-      toast.error('Verificação de segurança falhou. Tente novamente.');
-      setTurnstileToken(null);
-      setIsProcessing(false);
-      return;
+      if (!turnstileResult?.success) {
+        toast.error('Verificação de segurança falhou. Tente novamente.');
+        setTurnstileToken(null);
+        setIsProcessing(false);
+        return;
+      }
     }
 
     const rawPhone = (formData.phone || userProfile.phone || '').replace(/\D/g, '');
@@ -908,19 +910,21 @@ export default function Checkout() {
                 )}
               </div>
 
-              <div className="flex justify-center">
-                <TurnstileWidget
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onVerify={handleTurnstileVerify}
-                  onExpire={handleTurnstileExpire}
-                />
-              </div>
+              {!SKIP_TURNSTILE && (
+                <div className="flex justify-center">
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onVerify={handleTurnstileVerify}
+                    onExpire={handleTurnstileExpire}
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"
                 size="lg"
                 className="w-full h-14 text-lg gradient-primary text-primary-foreground rounded-xl"
-                disabled={isProcessing || !termsAccepted || !turnstileToken}
+                disabled={isProcessing || !termsAccepted || (!SKIP_TURNSTILE && !turnstileToken)}
               >
                 {isProcessing ? (
                   <>
