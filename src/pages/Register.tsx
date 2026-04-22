@@ -146,18 +146,19 @@ export default function Register() {
         if (!turnstileToken) {
           toast.error('Complete a verificação de segurança.');
           setIsSubmitting(false);
-        return;
-      }
+          return;
+        }
 
-      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: turnstileToken },
-      });
+        const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+          body: { token: turnstileToken },
+        });
 
-      if (!turnstileResult?.success) {
-        toast.error('Verificação de segurança falhou. Tente novamente.');
-        setTurnstileToken(null);
-        setIsSubmitting(false);
-        return;
+        if (!turnstileResult?.success) {
+          toast.error('Verificação de segurança falhou. Tente novamente.');
+          setTurnstileToken(null);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Create user account
@@ -493,20 +494,22 @@ export default function Register() {
                 </ul>
               </div>
 
-              <div className="flex justify-center">
-                <TurnstileWidget
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onVerify={handleTurnstileVerify}
-                  onExpire={handleTurnstileExpire}
-                />
-              </div>
+              {!SKIP_TURNSTILE && (
+                <div className="flex justify-center">
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onVerify={handleTurnstileVerify}
+                    onExpire={handleTurnstileExpire}
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
                 className="w-full"
-                disabled={isSubmitting || !turnstileToken}
+                disabled={isSubmitting || (!SKIP_TURNSTILE && !turnstileToken)}
               >
                 {isSubmitting ? (
                   <>
