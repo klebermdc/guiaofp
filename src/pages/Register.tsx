@@ -25,8 +25,12 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.png';
 import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
 import TurnstileWidget from '@/components/TurnstileWidget';
+import { isNativeApp } from '@/lib/is-native-app';
 
 const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
+// Turnstile's widget can't validate from a Capacitor WebView origin
+// (`https://localhost`), so it's skipped in native builds and in dev.
+const SKIP_TURNSTILE = import.meta.env.DEV || isNativeApp();
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(100),
@@ -137,22 +141,24 @@ export default function Register() {
         return;
       }
 
-      // Verify Turnstile token
-      if (!turnstileToken) {
-        toast.error('Complete a verificação de segurança.');
-        setIsSubmitting(false);
-        return;
-      }
+      // Verify Turnstile token (skipped on native/dev)
+      if (!SKIP_TURNSTILE) {
+        if (!turnstileToken) {
+          toast.error('Complete a verificação de segurança.');
+          setIsSubmitting(false);
+          return;
+        }
 
-      const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: turnstileToken },
-      });
+        const { data: turnstileResult } = await supabase.functions.invoke('verify-turnstile', {
+          body: { token: turnstileToken },
+        });
 
-      if (!turnstileResult?.success) {
-        toast.error('Verificação de segurança falhou. Tente novamente.');
-        setTurnstileToken(null);
-        setIsSubmitting(false);
-        return;
+        if (!turnstileResult?.success) {
+          toast.error('Verificação de segurança falhou. Tente novamente.');
+          setTurnstileToken(null);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Create user account
@@ -488,20 +494,22 @@ export default function Register() {
                 </ul>
               </div>
 
-              <div className="flex justify-center">
-                <TurnstileWidget
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onVerify={handleTurnstileVerify}
-                  onExpire={handleTurnstileExpire}
-                />
-              </div>
+              {!SKIP_TURNSTILE && (
+                <div className="flex justify-center">
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onVerify={handleTurnstileVerify}
+                    onExpire={handleTurnstileExpire}
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"
                 variant="premium"
                 size="lg"
                 className="w-full"
-                disabled={isSubmitting || !turnstileToken}
+                disabled={isSubmitting || (!SKIP_TURNSTILE && !turnstileToken)}
               >
                 {isSubmitting ? (
                   <>
