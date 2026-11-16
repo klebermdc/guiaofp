@@ -44,26 +44,6 @@ async function sendPushNotification(
   }
 }
 
-async function sendWhatsAppNotification(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string,
-  template: string,
-  templateData: Record<string, string>
-): Promise<void> {
-  try {
-    await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ user_id: userId, template, template_data: templateData }),
-    });
-  } catch (error) {
-    console.error('WhatsApp notification error:', error);
-  }
-}
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr + 'T12:00:00');
@@ -152,15 +132,6 @@ const handler = async (req: Request): Promise<Response> => {
         tag: 'park-reminder',
         data: { url: '/dashboard', park: firstPark.park },
       });
-
-      // Send WhatsApp for Disney parks (critical reminder)
-      if (isDisneyPark && client.whatsapp) {
-        await sendWhatsAppNotification(supabaseUrl, supabaseServiceKey, client.user_id, 'park_reminder', {
-          name: client.responsible_name || 'Cliente',
-          park: firstPark.park,
-          multipass_status: hasMultipass ? 'confirmado ✅' : 'pendente ⚠️',
-        });
-      }
 
       notificationsSent++;
       notifiedClients.push(client.responsible_name || client.email);

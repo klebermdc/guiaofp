@@ -25,7 +25,6 @@ import { GuideStatsCards } from '@/components/guide/GuideStatsCards';
 import { ClientPortfolioCard } from '@/components/guide/ClientPortfolioCard';
 import { GuideCalendar } from '@/components/guide/GuideCalendar';
 import { SendPushNotification } from '@/components/guide/SendPushNotification';
-import { SendWhatsAppMessage } from '@/components/guide/SendWhatsAppMessage';
 import { CreatePremiumClient } from '@/components/guide/CreatePremiumClient';
 import { useGuideMultipassStatus } from '@/hooks/useGuideMultipassStatus';
 import logo from '@/assets/logo.png';
@@ -242,7 +241,6 @@ const GuideDashboard = () => {
         {viewMode === 'notifications' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
             <SendPushNotification clients={clients} />
-            <SendWhatsAppMessage clients={clients} />
           </div>
         )}
 

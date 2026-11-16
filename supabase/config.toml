@@ -33,14 +33,10 @@ verify_jwt = false
 [functions.suggest-restaurants]
 verify_jwt = false
 
-[functions.send-whatsapp]
-verify_jwt = false
 
 [functions.notify-park-day]
 verify_jwt = false
 
-[functions.utalk-webhook]
-verify_jwt = false
 
 [functions.notify-abandoned-cart]
 verify_jwt = false
