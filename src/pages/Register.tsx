@@ -27,7 +27,7 @@ import { usePlanPricing, formatPriceBRL } from '@/hooks/usePlanPricing';
 import TurnstileWidget from '@/components/TurnstileWidget';
 import { isNativeApp } from '@/lib/is-native-app';
 
-const TURNSTILE_SITE_KEY = '0x4AAAAAACs32oq0qnTFCG1M';
+const TURNSTILE_SITE_KEY = '0x4AAAAAAGDcPLFjPkqyowio';
 // Turnstile's widget can't validate from a Capacitor WebView origin
 // (`https://localhost`), so it's skipped in native builds and in dev.
 const SKIP_TURNSTILE = import.meta.env.DEV || isNativeApp();
