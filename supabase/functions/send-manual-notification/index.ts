@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Determine checkout URL based on plan type
     const checkoutPlan = planType || 'basic';
-    const checkoutUrl = `https://guiaofp.lovable.app/login?redirect=/checkout/${checkoutPlan}&recovery=true`;
+    const checkoutUrl = `https://ofpplanejador.com/login?redirect=/checkout/${checkoutPlan}&recovery=true`;
     if (!emails || emails.length === 0) {
       return new Response(
         JSON.stringify({ error: "No email recipients provided" }),

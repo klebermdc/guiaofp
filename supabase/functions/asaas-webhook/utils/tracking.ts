@@ -182,7 +182,7 @@ export async function sendServerTrackingEvent(
             event_time: eventTime,
             event_id: eventId,
             action_source: 'website',
-            event_source_url: trackingCtx?.page_location || 'https://guiaofp.lovable.app/checkout',
+            event_source_url: trackingCtx?.page_location || 'https://ofpplanejador.com/checkout',
             user_data: {
               em: hashedUserData.em,
               fn: hashedUserData.fn,

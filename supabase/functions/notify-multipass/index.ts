@@ -224,7 +224,7 @@ function getEmailTemplate(
               
               <p>Após comprar, confirme no app OFP Planejador para que seu guia saiba que está tudo certo! ✅</p>
               
-              <a href="https://guiaofp.lovable.app/dashboard" class="cta-button">Acessar meu painel</a>
+              <a href="https://ofpplanejador.com/dashboard" class="cta-button">Acessar meu painel</a>
             </div>
             <div class="footer">
               <p>OFP Planejador - Sua viagem perfeita para Orlando</p>
@@ -268,7 +268,7 @@ function getEmailTemplate(
                 <li>⭐ Rise of the Resistance</li>
               </ul>
               
-              <a href="https://guiaofp.lovable.app/dashboard" class="cta-button">Confirmar compra</a>
+              <a href="https://ofpplanejador.com/dashboard" class="cta-button">Confirmar compra</a>
             </div>
             <div class="footer">
               <p>OFP Planejador - Sua viagem perfeita para Orlando</p>
@@ -313,7 +313,7 @@ function getEmailTemplate(
               
               <p><strong>Não deixe para a última hora!</strong> Compre agora e confirme no app.</p>
               
-              <a href="https://guiaofp.lovable.app/dashboard" class="cta-button" style="background: #f59e0b;">Confirmar compra</a>
+              <a href="https://ofpplanejador.com/dashboard" class="cta-button" style="background: #f59e0b;">Confirmar compra</a>
             </div>
             <div class="footer">
               <p>OFP Planejador - Sua viagem perfeita para Orlando</p>
@@ -352,7 +352,7 @@ function getEmailTemplate(
             
             <p><strong>Se ainda não comprou:</strong> Faça AGORA! As melhores atrações podem esgotar os horários disponíveis.</p>
             
-            <a href="https://guiaofp.lovable.app/dashboard" class="cta-button" style="background: #dc3545;">Confirmar AGORA</a>
+            <a href="https://ofpplanejador.com/dashboard" class="cta-button" style="background: #dc3545;">Confirmar AGORA</a>
             
             <p style="margin-top: 20px; color: #666;">
               Em caso de dúvidas, entre em contato com seu guia pelo WhatsApp.
@@ -434,7 +434,7 @@ function getGuideEmailTemplate(
             ${clientsHtml}
             
             <p style="margin-top: 20px;">
-              <a href="https://guiaofp.lovable.app/guia-dashboard" style="color: #1e3a5f; font-weight: bold;">
+              <a href="https://ofpplanejador.com/guia-dashboard" style="color: #1e3a5f; font-weight: bold;">
                 Acessar Painel do Guia →
               </a>
             </p>

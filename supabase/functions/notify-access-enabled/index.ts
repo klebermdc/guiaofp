@@ -23,7 +23,7 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log("Sending access enabled notification to:", data.email);
 
-    const loginUrl = "https://guiaofp.lovable.app/login";
+    const loginUrl = "https://ofpplanejador.com/login";
     const customerName = data.nome_completo || "Cliente";
     const temporaryPassword = data.temporary_password;
 

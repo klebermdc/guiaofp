@@ -265,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
         userName = userName || 'Viajante';
         
         // Generate recovery URL
-        const recoveryUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/checkout/${cart.cart_type}?recover=${cart.id}`;
+        const recoveryUrl = `https://ofpplanejador.com/checkout/${cart.cart_type}?recover=${cart.id}`;
 
         // Send email
         const emailResponse = await resend.emails.send({

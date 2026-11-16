@@ -117,7 +117,7 @@ serve(async (req: Request): Promise<Response> => {
               ⚠️ <strong>Ação Necessária:</strong> Este cliente precisa ter o acesso liberado manualmente no painel administrativo conforme o plano contratado.
             </div>
             
-            <a href="https://guiaofp.lovable.app/admin" class="cta-button">
+            <a href="https://ofpplanejador.com/admin" class="cta-button">
               Acessar Painel Admin
             </a>
           </div>

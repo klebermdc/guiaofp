@@ -90,7 +90,7 @@ serve(async (req: Request): Promise<Response> => {
               <table role="presentation" style="width: 100%; margin: 30px 0;">
                 <tr>
                   <td style="text-align: center;">
-                    <a href="https://guiaofp.lovable.app/login" 
+                    <a href="https://ofpplanejador.com/login" 
                        style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
                       Acessar a Plataforma
                     </a>

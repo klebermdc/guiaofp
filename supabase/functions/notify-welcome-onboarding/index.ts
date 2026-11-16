@@ -22,7 +22,7 @@ serve(async (req: Request): Promise<Response> => {
     
     console.log("Sending welcome onboarding email to:", email);
 
-    const appUrl = "https://guiaofp.lovable.app";
+    const appUrl = "https://ofpplanejador.com";
 
     const emailHtml = `
       <!DOCTYPE html>

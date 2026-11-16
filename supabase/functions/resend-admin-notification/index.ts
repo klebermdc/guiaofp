@@ -148,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
       
       <div style="margin-top: 25px; text-align: center;">
-        <a href="https://guiaofp.lovable.app/admin" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+        <a href="https://ofpplanejador.com/admin" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
           Ver no Painel Admin
         </a>
       </div>
@@ -181,7 +181,7 @@ ${txData.coupon_code ? `- Cupom: ${txData.coupon_code}\n- Desconto: -${discountF
 
 Este email foi reenviado manualmente pelo painel administrativo.
 
-Ver no Painel Admin: https://guiaofp.lovable.app/admin
+Ver no Painel Admin: https://ofpplanejador.com/admin
 
 ---
 Este e um email automatico do sistema OFP Planejador.

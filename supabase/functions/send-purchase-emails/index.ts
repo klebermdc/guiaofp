@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const APP_URL = "https://guiaofp.lovable.app";
+const APP_URL = "https://ofpplanejador.com";
 const FROM_EMAIL = "OFP Planejador <contato@ofpplanejador.com>";
 const REPLY_TO_EMAIL = "contato@ofpplanejador.com";
 const COMPANY_NAME = "OFP Planejador";

@@ -3,7 +3,9 @@ import { rateLimit } from "../_middleware/rate-limit.ts";
 
 // CORS: restrict to explicit origin whitelist
 const ALLOWED_ORIGINS = [
-  "https://guiaofp.lovable.app",
+  "https://ofpplanejador.com",
+  "https://www.ofpplanejador.com",
+  "https://novo.ofpplanejador.com",
   "https://ofp.app",
   "https://app.ofp.app",
   "https://planner.ofp.app",
